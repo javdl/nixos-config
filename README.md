@@ -200,3 +200,13 @@ Create hashed password with `mkpasswd` to put in `/users/joost/nixos.nix`
 ```
 mkpasswd -m sha-512
 ```
+
+## No GPG keys folder fix (SSH keys also not copied)
+
+I had no GPG key installed on the host machine, so the copy of secrets errored out. To fix this, first install the GPG keys on the host machine. Then re-run the copy of the secrets to the VM.
+
+```
+export NIXADDR=<VM ip address>
+make vm/secrets
+```
+
