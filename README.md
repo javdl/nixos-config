@@ -190,3 +190,20 @@ your system may be changed in ways that you don't want. Read my source!
 
 I am still transitioning into a fully flaked setup. During this transition
 (which is indefinite, I'm in no rush), I'm using both.
+
+## Passwords
+
+Create hashed password string to put in `/users/joost/nixos.nix`
+### macOS
+
+```
+echo -n "yourstring" | shasum -a 512
+```
+
+### Linux
+
+ with `mkpasswd`:
+
+```
+mkpasswd -m sha-512
+```
