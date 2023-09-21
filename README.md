@@ -229,16 +229,9 @@ I am still transitioning into a fully flaked setup. During this transition
 
 ## Passwords
 
-Create hashed password string to put in `/users/joost/nixos.nix`
-### macOS
-
-```
-echo -n "yourstring" | shasum -a 512
-```
-
-### Linux
-
- with `mkpasswd`:
+Create hashed password with `mkpasswd` to put in `/users/joost/nixos.nix`
+(Google Cloud Shell has it installed by default)
+[NixOS Docs on User Management](https://nixpkgs-manual-sphinx-markedown-example.netlify.app/configuration/user-mgmt.xml.html)
 
 ```
 mkpasswd -m sha-512
