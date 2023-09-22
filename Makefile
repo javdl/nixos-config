@@ -99,6 +99,10 @@ vm/secrets:
 		--exclude='environment' \
 		$(HOME)/.ssh/ $(NIXUSER)@$(NIXADDR):~/.ssh
 
+vm/copyrepos:
+	rsync -av -e 'ssh $(SSH_OPTIONS)' \
+		$(HOME)/git/ $(NIXUSER)@$(NIXADDR):~/git
+
 # copy the Nix configurations into the VM.
 vm/copy:
 	rsync -av -e 'ssh $(SSH_OPTIONS) -p$(NIXPORT)' \
