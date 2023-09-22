@@ -40,6 +40,8 @@ in {
     pkgs.gopls
     pkgs.zigpkgs.master
 
+    pkgs.vscode
+
     # Node is required for Copilot.vim
     pkgs.nodejs
   ] ++ (lib.optionals isDarwin [
@@ -168,10 +170,10 @@ in {
 
   programs.git = {
     enable = true;
-    userName = "Mitchell Hashimoto";
-    userEmail = "mitchell.hashimoto@gmail.com";
+    userName = "Joost van der Laan";
+    userEmail = "joostvanderlaan@gmail.com";
     signing = {
-      key = "523D5DC389D273BC";
+      key = "ACAFA950";
       signByDefault = true;
     };
     aliases = {
