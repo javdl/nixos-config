@@ -235,7 +235,7 @@ I am still transitioning into a fully flaked setup. During this transition
 
 ## Passwords
 
-Create hashed password with `mkpasswd` to put in `/users/joost/nixos.nix`
+Create hashed password with `mkpasswd` to put in `users/joost/nixos.nix`
 (Google Cloud Shell has it installed by default)
 [NixOS Docs on User Management](https://nixpkgs-manual-sphinx-markedown-example.netlify.app/configuration/user-mgmt.xml.html)
 
@@ -251,4 +251,11 @@ I had no GPG key installed on the host machine, so the copy of secrets errored o
 export NIXADDR=<VM ip address>
 make vm/secrets
 ```
+## How to install a new package?
 
+Go to `home-manager.nix` in `users/joost`
+
+add, for examaple `pkgs.vscode`. You can look for packages with `nix search` or `nix --extra-experimental-features "nix-command flakes" search nixpkgs firefox
+`
+
+then run `make switch` from this repo's folder.
