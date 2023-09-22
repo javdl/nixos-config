@@ -215,6 +215,19 @@ I had no GPG key installed on the host machine, so the copy of secrets errored o
 export NIXADDR=<VM ip address>
 make vm/secrets
 ```
+
+## Git commands give a keychain error?
+
+The copied ssh config from the MacOS host can contain keychain settings.
+Lines with UseKeychain should look like:
+
+```conf
+IgnoreUnknown UseKeychain
+UseKeychain yes
+```
+
+Source: [https://www.unixtutorial.org/ssh-bad-configuration-option-usekeychain/](https://www.unixtutorial.org/ssh-bad-configuration-option-usekeychain/)
+
 ## How to install a new package?
 
 Go to `home-manager.nix` in `users/joost`
