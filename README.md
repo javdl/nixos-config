@@ -159,6 +159,12 @@ At this point, I never use Mac terminals ever again. I clone this repository
 in my VM and I use the other Make tasks such as `make test`, `make switch`, etc.
 to make changes my VM.
 
+If there is repos cloned to the host system, this will copy all from `~/git` folder to the VM.
+
+```
+$ make vm/copyrepos
+```
+
 ## Setup (macOS/Darwin)
 
 **THIS IS OPTIONAL AND UNRELATED TO THE VM WORK.** I recommend you ignore
