@@ -31,6 +31,7 @@ in {
   home.packages = [
     pkgs.asciinema
     pkgs.bat
+    pkgs.bottom
     pkgs.fd
     pkgs.fzf
     pkgs.gh
@@ -39,9 +40,6 @@ in {
     pkgs.ripgrep
     pkgs.tree
     pkgs.watch
-
-    pkgs.gopls
-    pkgs.zigpkgs.master
 
     pkgs.vscode
 
