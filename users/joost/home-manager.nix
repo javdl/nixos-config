@@ -29,6 +29,7 @@ in {
   home.packages = [
     pkgs.asciinema
     pkgs.bat
+    pkgs.bottom
     pkgs.fd
     pkgs.fzf
     pkgs.htop
@@ -37,9 +38,6 @@ in {
     pkgs.tree
     pkgs.watch
 
-    pkgs.gopls
-    pkgs.zigpkgs.master
-
     pkgs.vscode
 
     # Node is required for Copilot.vim
@@ -47,7 +45,6 @@ in {
   ] ++ (lib.optionals isDarwin [
     # This is automatically setup on Linux
     pkgs.cachix
-    pkgs.tailscale
   ]) ++ (lib.optionals isLinux [
     pkgs.chromium
     pkgs.firefox
