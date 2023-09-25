@@ -87,7 +87,13 @@
       firefox
       git
       vim
+
+      # CUDA
+      pciutils
+      file
       gnumake
+      gcc
+      cudatoolkit
     #  thunderbird
     ];
   };
