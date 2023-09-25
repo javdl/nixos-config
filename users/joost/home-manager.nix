@@ -192,6 +192,12 @@ in {
       github.user = "javdl";
       push.default = "tracking";
       init.defaultBranch = "main";
+
+      "filter \"lfs\"" = {
+          clean = "${pkgs.git-lfs}/bin/git-lfs clean -- %f";
+          smudge = "${pkgs.git-lfs}/bin/git-lfs smudge --skip -- %f";
+          required = true;
+        };
     };
   };
 
