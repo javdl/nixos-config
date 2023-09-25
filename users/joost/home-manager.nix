@@ -32,6 +32,7 @@ in {
     pkgs.asciinema
     pkgs.bat
     pkgs.bottom
+    pkgs.cachix
     pkgs.fd
     pkgs.fzf
     pkgs.gh
