@@ -35,6 +35,7 @@ in {
     pkgs.fd
     pkgs.fzf
     pkgs.gh
+    pkgs.git-lfs
     pkgs.htop
     pkgs.jq
     pkgs.ripgrep
