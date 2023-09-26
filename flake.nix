@@ -86,5 +86,11 @@
       system = "aarch64-darwin";
       user   = "joost";
     };
+
+    darwinConfigurations.mac-mini-m2 = mkDarwin "mac-mini-m2" {
+      inherit darwin nixpkgs home-manager overlays;
+      system = "aarch64-darwin";
+      user   = "joost";
+    };
   };
 }
