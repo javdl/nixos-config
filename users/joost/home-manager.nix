@@ -44,6 +44,7 @@ in {
     pkgs.watch
 
     pkgs.vscodium
+    pkgs.glab
 
     # Node is required for Copilot.vim
     pkgs.nodejs
