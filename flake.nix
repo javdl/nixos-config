@@ -89,7 +89,6 @@
 
     darwinConfigurations.mac-mini-m2 = mkSystem "mac-mini-m2" {
       system = "aarch64-darwin";
-      extra-platforms = "x86_64-darwin";
       user   = "joost";
       darwin = true;
     };
