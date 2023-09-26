@@ -51,7 +51,7 @@
     # Overlays is the list of overlays we want to apply from flake inputs.
     overlays = [
       inputs.neovim-nightly-overlay.overlay
-      inputs.zig.overlays.default
+      # inputs.zig.overlays.default
     ];
 
     mkSystem = import ./lib/mksystem.nix {
