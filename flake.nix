@@ -62,14 +62,8 @@
     };
   in {
     nixosConfigurations.vm-aarch64 = mkSystem "vm-aarch64" {
-      inherit nixpkgs home-manager;
       system = "aarch64-linux";
       user   = "joost";
-
-      overlays = overlays ++ [(final: prev: {
-        # Example of bringing in an unstable package:
-        # open-vm-tools = inputs.nixpkgs-unstable.legacyPackages.${prev.system}.open-vm-tools;
-      })];
     };
 
     nixosConfigurations.vm-aarch64-prl = mkSystem "vm-aarch64-prl" rec {
@@ -106,6 +100,7 @@
 
     darwinConfigurations.mac-mini-m2 = mkSystem "mac-mini-m2" {
       system = "aarch64-darwin";
+      extra-platforms = "x86_64-darwin";
       user   = "joost";
       darwin = true;
     };
