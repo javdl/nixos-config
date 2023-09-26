@@ -1,5 +1,17 @@
 # NixOS System Configurations
 
+This is an adaptation of [Mitchell Hashimoto's nixos-config repo](https://github.com/mitchellh/nixos-config)
+
+Some things I have added or changed:
+
+- my own cachix cache
+- AMD NVidia support on bare metal host
+
+TODO
+
+- CUDA / CuDNN support on bare metal
+- Window manager i3 from the original repo does not seem to work, it uses Gnome by default. Maybe want to set up i3 or Hyprland.
+
 This repository contains my NixOS system configurations. This repository
 isn't meant to be a turnkey solution to copying my setup or learning Nix,
 so I want to apologize to anyone trying to look for something "easy". I've
@@ -27,7 +39,7 @@ that modern computers are plenty fast enough for the best of both worlds.
 
 Here is what it ends up looking like:
 
-![Screenshot](https://raw.githubusercontent.com/mitchellh/nixos-config/main/.github/images/screenshot.png)
+![Screenshot](https://raw.githubusercontent.com/javdl/nixos-config/main/.github/images/screenshot.png)
 
 Note that I usually full screen the VM so there isn't actually a window,
 and I three-finger swipe or use other keyboard shortcuts to active that

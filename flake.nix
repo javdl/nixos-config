@@ -43,6 +43,8 @@
     nvim-treesitter.flake = false;
     vim-copilot.url = "github:github/copilot.vim/v1.11.1";
     vim-copilot.flake = false;
+    # Other packages (leave in as an example)
+    # zig.url = "github:mitchellh/zig-overlay";
   };
 
   outputs = { self, nixpkgs, home-manager, darwin, ... }@inputs: let
