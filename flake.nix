@@ -10,17 +10,17 @@
     # We use the unstable nixpkgs repo for some packages.
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixpkgs-unstable";
 
+    # Build a custom WSL installer
+    nixos-wsl.url = "github:nix-community/NixOS-WSL";
+    nixos-wsl.inputs.nixpkgs.follows = "nixpkgs";
+
     home-manager = {
       url = "github:nix-community/home-manager/release-23.05";
-
-      # We want to use the same set of nixpkgs as our system.
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
     darwin = {
       url = "github:LnL7/nix-darwin";
-
-      # We want to use the same set of nixpkgs as our system.
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -37,16 +37,20 @@
   };
 
   outputs = { self, nixpkgs, home-manager, darwin, ... }@inputs: let
-    mkDarwin = import ./lib/mkdarwin.nix;
-    mkVM = import ./lib/mkvm.nix;
+    # mkDarwin = import ./lib/mkdarwin.nix;
+    # mkVM = import ./lib/mkvm.nix;
 
     # Overlays is the list of overlays we want to apply from flake inputs.
     overlays = [
       inputs.neovim-nightly-overlay.overlay
       # inputs.zig.overlays.default
     ];
+
+    mkSystem = import ./lib/mksystem.nix {
+      inherit overlays nixpkgs inputs;
+    };
   in {
-    nixosConfigurations.vm-aarch64 = mkVM "vm-aarch64" {
+    nixosConfigurations.vm-aarch64 = mkSystem "vm-aarch64" {
       inherit nixpkgs home-manager;
       system = "aarch64-linux";
       user   = "joost";
@@ -57,40 +61,42 @@
       })];
     };
 
-    nixosConfigurations.vm-aarch64-prl = mkVM "vm-aarch64-prl" rec {
-      inherit overlays nixpkgs home-manager;
+    nixosConfigurations.vm-aarch64-prl = mkSystem "vm-aarch64-prl" rec {
       system = "aarch64-linux";
       user   = "joost";
     };
 
-    nixosConfigurations.vm-aarch64-utm = mkVM "vm-aarch64-utm" rec {
-      inherit overlays nixpkgs home-manager;
+    nixosConfigurations.vm-aarch64-utm = mkSystem "vm-aarch64-utm" rec {
       system = "aarch64-linux";
       user   = "joost";
     };
 
-    nixosConfigurations.vm-intel = mkVM "vm-intel" rec {
-      inherit nixpkgs home-manager overlays;
+    nixosConfigurations.vm-intel = mkSystem "vm-intel" rec {
       system = "x86_64-linux";
       user   = "joost";
     };
 
-    nixosConfigurations.amd-nvidia = mkVM "amd-nvidia" rec {
-      inherit nixpkgs home-manager overlays;
+    nixosConfigurations.wsl = mkSystem "wsl" {
+      system = "x86_64-linux";
+      user   = "joost";
+      wsl    = true;
+    };
+
+    nixosConfigurations.amd-nvidia = mkSystem "amd-nvidia" rec {
       system = "x86_64-linux";
       user   = "joost";
     };
 
-    darwinConfigurations.macbook-pro-m1 = mkDarwin "macbook-pro-m1" {
-      inherit darwin nixpkgs home-manager overlays;
+    darwinConfigurations.macbook-pro-m1 = mkSystem "macbook-pro-m1" {
       system = "aarch64-darwin";
       user   = "joost";
+      darwin = true;
     };
 
-    darwinConfigurations.mac-mini-m2 = mkDarwin "mac-mini-m2" {
-      inherit darwin nixpkgs home-manager overlays;
+    darwinConfigurations.mac-mini-m2 = mkSystem "mac-mini-m2" {
       system = "aarch64-darwin";
       user   = "joost";
+      darwin = true;
     };
   };
 }

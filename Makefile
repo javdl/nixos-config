@@ -7,7 +7,7 @@ NIXUSER ?= joost
 MAKEFILE_DIR := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 
 # The name of the nixosConfiguration in the flake
-NIXNAME ?= vm-aarch64
+NIXNAME ?= vm-intel
 
 # SSH options that are used. These aren't meant to be overridden but are
 # reused a lot so we just store them up here.
@@ -120,6 +120,7 @@ vm/switch:
 		sudo NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nixos-rebuild switch --flake \"/nix-config#${NIXNAME}\" \
 	"
 
-# Build an ISO image
-iso/nixos.iso:
-	cd iso; ./build.sh
+# Build a WSL installer
+.PHONY: wsl
+wsl:
+	 nix build ".#nixosConfigurations.wsl.config.system.build.installer"
