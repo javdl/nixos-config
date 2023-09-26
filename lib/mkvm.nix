@@ -12,7 +12,7 @@ nixpkgs.lib.nixosSystem rec {
     { nixpkgs.overlays = overlays; }
 
     ../hardware/${name}.nix
-    ../machines/${name}.nix
+    ../hosts/${name}.nix
     ../users/${user}/nixos.nix
     home-manager.nixosModules.home-manager {
       home-manager.useGlobalPkgs = true;

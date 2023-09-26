@@ -8,6 +8,7 @@
   imports =
     [ # Include the results of the hardware scan.
       ../hardware/amd-nvidia.nix
+      ../modules/nvidia-drivers.nix
     ];
 
   # Bootloader.
