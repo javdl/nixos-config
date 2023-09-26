@@ -32,8 +32,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Other packages
-    zig.url = "github:mitchellh/zig-overlay";
+    # Other packages (leave in as an example)
+    # zig.url = "github:mitchellh/zig-overlay";
   };
 
   outputs = { self, nixpkgs, home-manager, darwin, ... }@inputs: let
