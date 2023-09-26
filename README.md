@@ -84,7 +84,7 @@ Hyper-V and VMware Workstation Pro and it works great in either case.
 
 ## Setup (VM)
 
-Video: https://www.youtube.com/watch?v=ubDMLoWz76U
+Video: <https://www.youtube.com/watch?v=ubDMLoWz76U>
 
 **Note:** This setup guide will cover VMware Fusion because that is the
 hypervisor I use day to day. The configurations in this repository also
@@ -101,14 +101,14 @@ Create a VMware Fusion VM with the following settings. My configurations
 are made for VMware Fusion exclusively currently and you will have issues
 on other virtualization solutions without minor changes.
 
-  * ISO: NixOS 23.05 or later.
-  * Disk: SATA 150 GB+
-  * CPU/Memory: I give at least half my cores and half my RAM, as much as you can.
-  * Graphics: Full acceleration, full resolution, maximum graphics RAM.
-  * Network: Shared with my Mac.
-  * Remove sound card, remove video camera, remove printer.
-  * Profile: Disable almost all keybindings
-  * Boot Mode: UEFI
+- ISO: NixOS 23.05 or later.
+- Disk: SATA 150 GB+
+- CPU/Memory: I give at least half my cores and half my RAM, as much as you can.
+- Graphics: Full acceleration, full resolution, maximum graphics RAM.
+- Network: Shared with my Mac.
+- Remove sound card, remove video camera, remove printer.
+- Profile: Disable almost all keybindings
+- Boot Mode: UEFI
 
 Boot the VM, and using the graphical console, change the root password to "root":
 
@@ -134,7 +134,7 @@ Run `ifconfig` and get the IP address of the first device. It is probably
 set this to the `NIXADDR` env var:
 
 ```
-$ export NIXADDR=<VM ip address>
+export NIXADDR=<VM ip address>
 ```
 
 The Makefile assumes an Intel processor by default. If you are using an
@@ -142,7 +142,7 @@ ARM-based processor (M1, etc.), you must change `NIXNAME` so that the ARM-based
 configuration is used:
 
 ```
-$ export NIXNAME=vm-aarch64
+export NIXNAME=vm-aarch64
 ```
 
 **Other Hypervisors:** If you are using Parallels, use `vm-aarch64-prl`.
@@ -155,14 +155,14 @@ but will not setup any other configurations yet. This prepares the VM for
 any NixOS customization:
 
 ```
-$ make vm/bootstrap0
+make vm/bootstrap0
 ```
 
 After the VM reboots, run the full bootstrap, this will finalize the
 NixOS customization using this configuration:
 
 ```
-$ make vm/bootstrap
+make vm/bootstrap
 ```
 
 You should have a graphical functioning dev VM.
@@ -174,7 +174,7 @@ to make changes my VM.
 If there is repos cloned to the host system, this will copy all from `~/git` folder to the VM.
 
 ```
-$ make vm/copyrepos
+make vm/copyrepos
 ```
 
 ## Setup (macOS/Darwin)

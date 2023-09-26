@@ -48,6 +48,9 @@
   };
 
   outputs = { self, nixpkgs, home-manager, darwin, ... }@inputs: let
+    # mkDarwin = import ./lib/mkdarwin.nix;
+    # mkVM = import ./lib/mkvm.nix;
+
     # Overlays is the list of overlays we want to apply from flake inputs.
     overlays = [
       inputs.neovim-nightly-overlay.overlay
@@ -58,7 +61,7 @@
       inherit overlays nixpkgs inputs;
     };
   in {
-    nixosConfigurations.vm-aarch64 = mkVM "vm-aarch64" {
+    nixosConfigurations.vm-aarch64 = mkSystem "vm-aarch64" {
       inherit nixpkgs home-manager;
       system = "aarch64-linux";
       user   = "joost";
@@ -69,12 +72,6 @@
       })];
     };
 
-    nixosConfigurations.vm-aarch64-prl = mkVM "vm-aarch64-prl" rec {
-      inherit overlays nixpkgs home-manager;
-      system = "aarch64-linux";
-      user   = "joost";
-    };
-
     nixosConfigurations.vm-aarch64-prl = mkSystem "vm-aarch64-prl" rec {
       system = "aarch64-linux";
       user   = "joost";
@@ -82,7 +79,7 @@
 
     nixosConfigurations.vm-aarch64-utm = mkSystem "vm-aarch64-utm" rec {
       system = "aarch64-linux";
-      user   = "mitchellh";
+      user   = "joost";
     };
 
     nixosConfigurations.vm-intel = mkSystem "vm-intel" rec {
@@ -96,23 +93,21 @@
       wsl    = true;
     };
 
-    darwinConfigurations.macbook-pro-m1 = mkSystem "macbook-pro-m1" {
-    nixosConfigurations.amd-nvidia = mkVM "amd-nvidia" rec {
-      inherit nixpkgs home-manager overlays;
+    nixosConfigurations.amd-nvidia = mkSystem "amd-nvidia" rec {
       system = "x86_64-linux";
       user   = "joost";
     };
 
-    darwinConfigurations.macbook-pro-m1 = mkDarwin "macbook-pro-m1" {
-      inherit darwin nixpkgs home-manager overlays;
+    darwinConfigurations.macbook-pro-m1 = mkSystem "macbook-pro-m1" {
       system = "aarch64-darwin";
       user   = "joost";
+      darwin = true;
     };
 
-    darwinConfigurations.mac-mini-m2 = mkDarwin "mac-mini-m2" {
-      inherit darwin nixpkgs home-manager overlays;
+    darwinConfigurations.mac-mini-m2 = mkSystem "mac-mini-m2" {
       system = "aarch64-darwin";
       user   = "joost";
+      darwin = true;
     };
   };
 }

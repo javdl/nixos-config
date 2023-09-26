@@ -15,7 +15,7 @@ let
   isWSL = wsl;
 
   # The config files for this system.
-  machineConfig = ../machines/${name}.nix;
+  machineConfig = ../hosts/${name}.nix;
   userOSConfig = ../users/${user}/${if darwin then "darwin" else "nixos" }.nix;
   userHMConfig = ../users/${user}/home-manager.nix;
 
@@ -57,4 +57,8 @@ in systemFunc rec {
       };
     }
   ];
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> a6aa7a0 (add WSL)

@@ -43,7 +43,7 @@ in {
     pkgs.tree
     pkgs.watch
 
-    pkgs.vscode
+    pkgs.vscodium
 
     # Node is required for Copilot.vim
     pkgs.nodejs

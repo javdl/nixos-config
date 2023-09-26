@@ -8,7 +8,6 @@
   homebrew = {
     enable = true;
     casks  = [
-      "1password"
       "cleanshot"
       "discord"
       "google-chrome"
@@ -19,7 +18,6 @@
       "raycast"
       "rectangle"
       "screenflow"
-      "slack"
       "spotify"
     ];
   };
