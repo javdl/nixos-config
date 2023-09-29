@@ -40,7 +40,7 @@
       "rapidapi"
       "rectangle"
       "screenflow"
-      "sequel-pro"
+      "sequel-ace"
       "slack"
       "spotify"
       "sublime-text"
