@@ -202,6 +202,26 @@ some files may need to be deleted). That's it.
 is and always has been _my_ configurations. If you blindly run this,
 your system may be changed in ways that you don't want. Read my source!
 
+### Quick start bare metal
+
+Install Nix with the Nix installer from Determinate Systems:
+
+```sh
+curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
+```
+
+Clone this repo and run `make switch`, replace the NIXNAME with the configuration name you want to use:
+
+```sh
+cd ~
+git clone https://github.com/javdl/nixos-config.git
+cd nixos-config
+mkdir -p ~/.config/nix/
+echo "experimental-features = nix-command flakes" > ~/.config/nix/nix.conf
+export NIXNAME=crescendo
+make switch
+```
+
 ## Setup (WSL)
 
 **THIS IS OPTIONAL AND UNRELATED TO THE VM WORK.** I recommend you ignore
