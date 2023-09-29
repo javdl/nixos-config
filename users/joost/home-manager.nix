@@ -42,15 +42,15 @@ in {
     pkgs.tree
     pkgs.watch
 
-    pkgs.vscodium
     pkgs.glab
+    pkgs.tailscale
+    pkgs.vscodium
 
     # Node is required for Copilot.vim
     pkgs.nodejs
   ] ++ (lib.optionals isDarwin [
     # This is automatically setup on Linux
     pkgs.cachix
-    pkgs.tailscale
   ]) ++ (lib.optionals isLinux [
     pkgs.chromium
     pkgs.firefox
