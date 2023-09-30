@@ -25,7 +25,7 @@
       "gimp"
       "google-chrome"
       "google-cloud-sdk"
-      "google-photos-backup-and-sync"
+      "google-drive"
       "gpg-suite"
       "hammerspoon"
       "imageoptim"
