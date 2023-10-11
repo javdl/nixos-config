@@ -54,6 +54,8 @@ in {
   ]) ++ (lib.optionals isLinux [
     pkgs.chromium
     pkgs.firefox
+    pkgs.firefox-devedition
+    pkgs.brave
     pkgs.rofi
     pkgs.zathura
     pkgs.xfce.xfce4-terminal
