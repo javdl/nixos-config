@@ -243,6 +243,7 @@ export NIXNAME=HOSTNAME
 sudo nixos-rebuild switch --flake ".#${NIXNAME}" # same command as in Makefile
 ```
 - Copy the GPG key and SSH key onto the machine from an existing one (only the keys are needed, not other files in the `~/.ssh` or `~/.gnupg` folder)
+- Before the GPG key works with git, you might need to do a `gpgconf --kill gpg-agent` before it will pick up the new settings. (I've got a `signing failed: no pinentry` error.
 - Commit the changes and publish to git with the new host added.
 - On subsequent changes, you can use `make switch` instead of the nixos-rebuild command.
 
