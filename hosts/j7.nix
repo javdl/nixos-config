@@ -94,8 +94,9 @@
     description = "Joost van der Laan";
     extraGroups = [ "networkmanager" "wheel" ];
     packages = with pkgs; [
-      firefox
-    #  thunderbird
+      firefox-devedition
+      thunderbird
+      gnumake
     ];
   };
 
