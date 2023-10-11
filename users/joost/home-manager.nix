@@ -45,7 +45,9 @@ in {
 
     pkgs.glab
     pkgs.tailscale
-    pkgs.vscodium
+    # pkgs.vscodium # gives a blank screen on bare metal install
+    # pkgs.vscode # same problem ATM
+    pkgs.sublime4
 
     # Node is required for Copilot.vim
     pkgs.nodejs
@@ -103,9 +105,12 @@ in {
   dconf.settings = {
     "org/gnome/shell" = {
       favorite-apps = [
-        "firefox.desktop"
-        "kgx.desktop"
-        "codium.desktop"
+          "firefox.desktop"
+          "kitty.desktop"
+          "sublimetext4.desktop"
+        # "kgx.desktop" # Should be Gnome console. kgx in terminal to start it does work.
+        #"vscode.desktop"
+        # "codium.desktop"
         "org.gnome.Terminal.desktop"
         #"spotify.desktop"
         #"virt-manager.desktop"
@@ -286,7 +291,7 @@ in {
         { key = "C"; mods = "Command"; action = "Copy"; }
         { key = "Key0"; mods = "Command"; action = "ResetFontSize"; }
         { key = "Equals"; mods = "Command"; action = "IncreaseFontSize"; }
-        { key = "Subtract"; mods = "Command"; action = "DecreaseFontSize"; }
+        { key = "Minus"; mods = "Command"; action = "DecreaseFontSize"; }
       ];
     };
   };
