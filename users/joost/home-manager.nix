@@ -53,7 +53,6 @@ in {
     pkgs.cachix
   ]) ++ (lib.optionals isLinux [
     pkgs.chromium
-    pkgs.firefox
     pkgs.firefox-devedition
     pkgs.brave
     pkgs.rofi
@@ -195,6 +194,7 @@ in {
       credential.helper = "store"; # want to make this more secure
       github.user = "javdl";
       push.default = "tracking";
+      push.autoSetupRemote = true;
       init.defaultBranch = "main";
 
       "filter \"lfs\"" = {
