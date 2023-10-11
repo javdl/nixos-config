@@ -202,7 +202,7 @@ some files may need to be deleted). That's it.
 is and always has been _my_ configurations. If you blindly run this,
 your system may be changed in ways that you don't want. Read my source!
 
-### Quick start bare metal
+### Quick start (MacOS/Darwin) bare metal
 
 Install Nix with the Nix installer from Determinate Systems:
 
@@ -219,8 +219,32 @@ cd nixos-config
 mkdir -p ~/.config/nix/
 echo "experimental-features = nix-command flakes" > ~/.config/nix/nix.conf
 export NIXNAME=crescendo
-make switch
+sudo nixos-rebuild switch --flake ".#${NIXNAME}" # See also the Makefile. We
+# cannot use make switch however since it is not yet installed.
 ```
+
+
+## Setup (NixOS) bare metal
+
+**The below is partially tested**, it might need (tiny) changes.
+
+- Create install USB with latest NixOS
+- For systems with Nvidia GPU, choose `nomodeset` option for the installer
+- After install finished:
+- `sudo nano /etc/nixos/configuration.nix` and add `nix.settings.experimental-features = [ "nix-command" "flakes" ];`
+- `sudo nixos-rebuild switch`
+- `nix-shell -p git make`
+- `git clone https://github.com/javdl/nixos-config.git`
+- `cp /etc/nixos/configuration.nix ~/nixos-config/hosts/HOSTNAME.nix` and `cp /etc/nixos/hardware-configuration.nix ~/nixos-config/hosts/hardware/HOSTNAME.nix`
+- Edit the copied `configuration.nix` to make the include correct to `hardware/HOSTNAME.nix` folder
+- Edit `~/nixos-config/flake.nix` to add an entry for the new host.
+```sh
+export NIXNAME=HOSTNAME
+sudo nixos-rebuild switch --flake ".#${NIXNAME}" # same command as in Makefile
+```
+- Copy the GPG key and SSH key onto the machine from an existing one (only the keys are needed, not other files in the `~/.ssh` or `~/.gnupg` folder)
+- Commit the changes and publish to git with the new host added.
+- On subsequent changes, you can use `make switch` instead of the nixos-rebuild command.
 
 ## Setup (WSL)
 
