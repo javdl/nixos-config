@@ -80,6 +80,11 @@
       system = "x86_64-linux";
       user   = "joost";
     };
+    
+    nixosConfigurations.j7 = mkSystem "j7" rec {
+      system = "x86_64-linux";
+      user   = "joost";
+    };
 
     darwinConfigurations.macbook-pro-m1 = mkSystem "macbook-pro-m1" {
       system = "aarch64-darwin";
