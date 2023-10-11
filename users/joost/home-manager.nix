@@ -56,6 +56,8 @@ in {
   ]) ++ (lib.optionals (isLinux && !isWSL) [
     pkgs.chromium
     pkgs.firefox
+    pkgs.firefox-devedition
+    pkgs.brave
     pkgs.rofi
     pkgs.valgrind
     pkgs.zathura

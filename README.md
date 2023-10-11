@@ -233,13 +233,15 @@ sudo nixos-rebuild switch --flake ".#${NIXNAME}" # See also the Makefile. We
 - After install finished:
 - `sudo nano /etc/nixos/configuration.nix` and add `nix.settings.experimental-features = [ "nix-command" "flakes" ];`
 - `sudo nixos-rebuild switch`
-- `nix-shell -p git make`
+- `nix-shell -p git gnumake`
 - `git clone https://github.com/javdl/nixos-config.git`
 - `cp /etc/nixos/configuration.nix ~/nixos-config/hosts/HOSTNAME.nix` and `cp /etc/nixos/hardware-configuration.nix ~/nixos-config/hosts/hardware/HOSTNAME.nix`
 - Edit the copied `configuration.nix` to make the include correct to `hardware/HOSTNAME.nix` folder
 - Edit `~/nixos-config/flake.nix` to add an entry for the new host.
 ```sh
 export NIXNAME=HOSTNAME
+make switch
+# Or
 sudo nixos-rebuild switch --flake ".#${NIXNAME}" # same command as in Makefile
 ```
 - Copy the GPG key and SSH key onto the machine from an existing one (only the keys are needed, not other files in the `~/.ssh` or `~/.gnupg` folder)
