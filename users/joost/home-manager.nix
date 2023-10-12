@@ -48,6 +48,7 @@ in {
     # pkgs.vscodium # gives a blank screen on bare metal install
     # pkgs.vscode # same problem ATM
     pkgs.sublime4
+    pkgs.obsidian
 
     # Node is required for Copilot.vim
     pkgs.nodejs
