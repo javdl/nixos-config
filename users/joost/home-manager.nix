@@ -42,6 +42,9 @@ in {
     pkgs.tree
     pkgs.watch
 
+    pkgs.libwacom
+    pkgs.libinput
+
     pkgs.glab
     pkgs.tailscale
     # pkgs.vscodium # gives a blank screen on bare metal install
