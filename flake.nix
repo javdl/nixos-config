@@ -87,7 +87,7 @@
       wsl    = true;
     };
 
-    nixosConfigurations.amd-nvidia = mkSystem "amd-nvidia" rec {
+    nixosConfigurations.fu095 = mkSystem "fu095" rec {
       system = "x86_64-linux";
       user   = "joost";
     };

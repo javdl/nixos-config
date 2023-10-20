@@ -10,6 +10,8 @@
   # Since we're using fish as our shell
   programs.fish.enable = true;
 
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+
   users.users.joost = {
     isNormalUser = true;
     home = "/home/joost";
