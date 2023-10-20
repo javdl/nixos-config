@@ -9,6 +9,7 @@
     [ # Include the results of the hardware scan.
       ./hardware/j7.nix
       ../modules/nvidia-drivers.nix
+      ./baremetal-shared.nix
     ];
 
   # Bootloader.

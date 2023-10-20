@@ -9,6 +9,7 @@
     [ # Include the results of the hardware scan.
       ./hardware/fu095.nix
       ../modules/nvidia-drivers.nix
+      ./baremetal-shared.nix
     ];
 
   # Bootloader.
@@ -115,6 +116,8 @@
   environment.systemPackages = with pkgs; [
   vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
   #  wget
+  cudatoolkit_11
+  cloudflared
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
