@@ -7,7 +7,7 @@
 {
   imports =
     [ # Include the results of the hardware scan.
-      ./hardware/amd-nvidia.nix
+      ./hardware/fu095.nix
       ../modules/nvidia-drivers.nix
     ];
 
@@ -15,7 +15,7 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
-  networking.hostName = "nixos"; # Define your hostname.
+  networking.hostName = "fu095"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
   # Configure network proxy if necessary
@@ -85,7 +85,7 @@
     description = "joost";
     extraGroups = [ "networkmanager" "wheel" ];
     packages = with pkgs; [
-      firefox
+      firefox-devedition
       git
       vim
 
@@ -95,17 +95,25 @@
       gnumake
       gcc
       cudatoolkit
-    #  thunderbird
+      thunderbird
     ];
   };
+
+  # enable flakes
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
+  nixpkgs.config.permittedInsecurePackages = [
+                "openssl-1.1.1u" # For Sublimetext4, REMOVE WHEN OPENSSL 1.1 DOES NOT GET SECURITY UPDATES ANYMORE
+                "openssl-1.1.1v"
+              ];
+
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
-  #  vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
+  vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
   #  wget
   ];
 
