@@ -243,6 +243,8 @@ export NIXNAME=HOSTNAME
 make switch
 # Or
 sudo nixos-rebuild switch --flake ".#${NIXNAME}" # same command as in Makefile
+# Example with host J7
+cd ~/nixos-config && export NIXPKGS_ALLOW_INSECURE=1 && sudo nixos-rebuild switch --flake ".#j7"
 ```
 - Copy the GPG key and SSH key onto the machine from an existing one (only the keys are needed, not other files in the `~/.ssh` or `~/.gnupg` folder)
 - Before the GPG key works with git, you might need to do a `gpgconf --kill gpg-agent` before it will pick up the new settings. (I've got a `signing failed: no pinentry` error.
@@ -331,3 +333,9 @@ add, for examaple `pkgs.vscode`. You can look for packages with `nix search` or 
 `
 
 then run `make switch` from this repo's folder.
+
+The full command to update host `j7`, for example:
+
+```sh
+cd ~/nixos-config && export NIXPKGS_ALLOW_INSECURE=1 && sudo nixos-rebuild switch --flake ".#j7"
+```
