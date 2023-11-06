@@ -9,6 +9,7 @@
     [ # Include the results of the hardware scan.
       ./hardware/j7.nix
       ../modules/nvidia-drivers.nix
+      ./bare-metal-shared.nix
     ];
 
   # Bootloader.
@@ -19,8 +20,6 @@
   boot.initrd.secrets = {
     "/crypto_keyfile.bin" = null;
   };
-
-  virtualisation.docker.enable = true;
 
   # Enable swap on luks
   boot.initrd.luks.devices."luks-0d8223a5-7ee5-4d19-86e1-f7a9aa5b89f8".device = "/dev/disk/by-uuid/0d8223a5-7ee5-4d19-86e1-f7a9aa5b89f8";
@@ -105,10 +104,9 @@
   users.users.joost = {
     isNormalUser = true;
     description = "Joost van der Laan";
-    extraGroups = [ "networkmanager" "wheel" ];
+    extraGroups = [ "networkmanager" "wheel" "docker" ];
     packages = with pkgs; [
       firefox-devedition
-      thunderbird
       gnumake
     ];
   };
