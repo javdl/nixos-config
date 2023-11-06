@@ -20,13 +20,15 @@
     "/crypto_keyfile.bin" = null;
   };
 
+  virtualisation.docker.enable = true;
+
   # Enable swap on luks
   boot.initrd.luks.devices."luks-0d8223a5-7ee5-4d19-86e1-f7a9aa5b89f8".device = "/dev/disk/by-uuid/0d8223a5-7ee5-4d19-86e1-f7a9aa5b89f8";
   boot.initrd.luks.devices."luks-0d8223a5-7ee5-4d19-86e1-f7a9aa5b89f8".keyFile = "/crypto_keyfile.bin";
 
   # Enable virtualisation support
   virtualisation.libvirtd.enable = true;
-  users.extraUsers.joost.extraGroups = [ "libvirtd" ];
+  users.extraUsers.joost.extraGroups = [ "libvirtd" "docker" ];
 
   boot.extraModprobeConfig = ''
     options kvm_intel nested=1
