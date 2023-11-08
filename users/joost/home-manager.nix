@@ -48,13 +48,16 @@ in {
 
     pkgs.flyctl
     pkgs.glab
+    pkgs.obsidian
+    pkgs.pocketbase
+    pkgs.sublime4
     pkgs.tailscale
     pkgs.vscodium # gives a blank screen on bare metal install > Electron apps with Nvidia card in Wayland will. Either switch to X11 or use Integrated GPU from AMD or Intel and it will load fine
-    pkgs.sublime4
-    pkgs.obsidian
+    
 
     # Node is required for Copilot.vim
     pkgs.nodejs
+    pkgs.nodePackages.firebase-tools
   ] ++ (lib.optionals isDarwin [
     # This is automatically setup on Linux
     pkgs.cachix

@@ -9,7 +9,7 @@
     [ # Include the results of the hardware scan.
       ./hardware/j7.nix
       ../modules/nvidia-drivers.nix
-      ./bare-metal-shared.nix
+      ./bare-metal-shared-linux.nix
     ];
 
   # Bootloader.
@@ -24,10 +24,6 @@
   # Enable swap on luks
   boot.initrd.luks.devices."luks-0d8223a5-7ee5-4d19-86e1-f7a9aa5b89f8".device = "/dev/disk/by-uuid/0d8223a5-7ee5-4d19-86e1-f7a9aa5b89f8";
   boot.initrd.luks.devices."luks-0d8223a5-7ee5-4d19-86e1-f7a9aa5b89f8".keyFile = "/crypto_keyfile.bin";
-
-  # Enable virtualisation support
-  virtualisation.libvirtd.enable = true;
-  users.extraUsers.joost.extraGroups = [ "libvirtd" "docker" ];
 
   boot.extraModprobeConfig = ''
     options kvm_intel nested=1
@@ -98,7 +94,7 @@
   };
 
   # Enable touchpad support (enabled default in most desktopManager).
-  # services.xserver.libinput.enable = true;
+  services.xserver.libinput.enable = true;
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.joost = {

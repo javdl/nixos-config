@@ -32,6 +32,10 @@ in {
     "mupdf-1.17.0"
   ];
 
+  # Enable virtualisation support
+  virtualisation.libvirtd.enable = true;
+  users.extraUsers.joost.extraGroups = [ "libvirtd" "docker" ];
+
   # The global useDHCP flag is deprecated, therefore explicitly set to false here.
   # Per-interface useDHCP will be mandatory in the future, so this generated config
   # replicates the default behaviour.
@@ -99,7 +103,9 @@ in {
     killall
     niv
     rxvt_unicode
+    spotify
     thunderbird
+    vscode
     vscodium
     xclip
     
@@ -108,6 +114,7 @@ in {
     vscode = vscodium;
     vscodeExtensions = with vscode-extensions; [
       bbenoist.nix
+      golang.go
       ms-python.python
       ms-azuretools.vscode-docker
       ms-vscode-remote.remote-ssh
