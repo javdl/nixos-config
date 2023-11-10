@@ -106,10 +106,11 @@ in {
     rxvt_unicode
     spotify
     thunderbird
+    vlc
     vscode
     vscodium
     xclip
-    
+
 
     (vscode-with-extensions.override {
     vscode = vscodium;
