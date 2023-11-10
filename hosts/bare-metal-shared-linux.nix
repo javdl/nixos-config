@@ -107,8 +107,8 @@ in {
     spotify
     thunderbird
     vlc
-    vscode
-    vscodium
+    vscode-fhs
+    vscodium-fhs
     xclip
 
 
