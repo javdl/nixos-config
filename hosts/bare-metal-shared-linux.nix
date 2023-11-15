@@ -103,6 +103,7 @@ in {
     gnumake
     killall
     niv
+    python311
     rxvt_unicode
     spotify
     thunderbird
