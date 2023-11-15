@@ -36,6 +36,7 @@ in {
     pkgs.fd
     pkgs.fzf
     pkgs.git-lfs
+    pkgs.google-cloud-sdk
     pkgs.htop
     pkgs.httpie
     pkgs.jq
