@@ -37,10 +37,12 @@ in {
     pkgs.fzf
     pkgs.git-lfs
     pkgs.htop
+    pkgs.httpie
     pkgs.jq
     pkgs.ripgrep
     pkgs.tree
     pkgs.watch
+    pkgs.xh # for sending HTTP requests (like HTTPie)
 
     pkgs.libwacom
     pkgs.libinput
@@ -52,7 +54,7 @@ in {
     pkgs.sublime4
     pkgs.tailscale
     pkgs.vscodium # gives a blank screen on bare metal install > Electron apps with Nvidia card in Wayland will. Either switch to X11 or use Integrated GPU from AMD or Intel and it will load fine
-    
+
 
     # Node is required for Copilot.vim
     pkgs.nodejs
