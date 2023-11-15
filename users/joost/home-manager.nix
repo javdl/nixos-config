@@ -33,6 +33,7 @@ in {
     pkgs.bat
     pkgs.bottom
     pkgs.cachix
+    pkgs.dasht # Search API docs offline, in terminal or browser
     pkgs.fd
     pkgs.fzf
     pkgs.gh
