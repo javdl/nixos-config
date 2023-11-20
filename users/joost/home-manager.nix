@@ -14,6 +14,25 @@ let
     '' else ''
     cat "$1" | col -bx | bat --language man --style plain
   ''));
+
+  gdk = pkgs.google-cloud-sdk.withExtraComponents( with pkgs.google-cloud-sdk.components; [
+    gke-gcloud-auth-plugin
+    alpha
+    app-engine-go
+    # app-engine-python
+    beta
+    # bq
+    cloud-build-local
+    gsutil
+    kubectl
+    minikube
+    # pubsub-emulator
+    skaffold
+
+    # google-cloud-cli-skaffold
+    # google-cloud-cli-cloud-run-proxy
+  ]);
+
 in {
   # Home-manager 22.11 requires this be set. We never set it so we have
   # to use the old state version.
@@ -38,14 +57,17 @@ in {
     pkgs.fzf
     pkgs.gh
     pkgs.git-lfs
-    pkgs.google-cloud-sdk
+    gdk
+    # pkgs.google-cloud-sdk # See above, gdk with components list
     pkgs.htop
     pkgs.httpie
     pkgs.jq
+    pkgs.kubernetes-helm
     pkgs.ripgrep
     pkgs.tree
     pkgs.watch
     pkgs.xh # for sending HTTP requests (like HTTPie)
+
 
     pkgs.libwacom
     pkgs.libinput

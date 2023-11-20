@@ -339,3 +339,11 @@ The full command to update host `j7`, for example:
 ```sh
 cd ~/nixos-config && export NIXPKGS_ALLOW_INSECURE=1 && sudo nixos-rebuild switch --flake ".#j7"
 ```
+
+## What to do when there is a collision between two packages with the same name but different hash?
+
+Start with trying:
+
+```
+ sudo nix-store --verify --check-contents --repair
+```
