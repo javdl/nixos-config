@@ -114,13 +114,21 @@ in {
 
 
     (vscode-with-extensions.override {
-    vscode = vscodium;
+    # vscode = vscodium;
     vscodeExtensions = with vscode-extensions; [
       bbenoist.nix
+      eamodio.gitlens
+      # enkia.tokyo-night # theme
+      github.codespaces
+      github.copilot
       golang.go
+      # googlecloudtools.cloudcode
       ms-python.python
       ms-azuretools.vscode-docker
+      ms-toolsai.jupyter
       ms-vscode-remote.remote-ssh
+      vscode-icons-team.vscode-icons
+      
     ] ++ pkgs.vscode-utils.extensionsFromVscodeMarketplace [
       {
         name = "remote-ssh-edit";
