@@ -49,6 +49,7 @@ in {
   # not a huge list.
   home.packages = [
     pkgs.asciinema
+    pkgs.air # Live reload for Go
     pkgs.bat
     pkgs.bottom
     pkgs.cachix
