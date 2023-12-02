@@ -5,6 +5,15 @@ let
   # of a hack, I just flip it on as I need to develop gnome stuff
   # for now.
   linuxGnome = true;
+
+#  my-python-packages = ps: with ps; [
+#    poetry
+#    pip
+#    pandas
+#    requests
+    # other python packages
+#  ];
+
 in {
   # Be careful updating this.
   boot.kernelPackages = pkgs.linuxPackages_latest;
@@ -95,6 +104,7 @@ in {
     ];
   };
 
+
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
@@ -104,6 +114,9 @@ in {
     killall
     niv
     python311
+    python311Packages.pip
+    # python311.withPackages my-python-packages
+    # python311Packages.pip
     rxvt_unicode
     spotify
     thunderbird
@@ -111,6 +124,9 @@ in {
     vscode-fhs
     vscodium-fhs
     xclip
+
+
+
 
 
     (vscode-with-extensions.override {
