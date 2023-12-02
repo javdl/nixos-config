@@ -55,6 +55,7 @@ in {
     pkgs.cachix
     pkgs.dasht # Search API docs offline, in terminal or browser
     pkgs.fd
+    pkgs.ffmpeg_5 # libgl, needed for ML
     pkgs.fzf
     pkgs.git-lfs
     gdk
@@ -63,6 +64,8 @@ in {
     pkgs.httpie
     pkgs.jq
     pkgs.kubernetes-helm
+    pkgs.libGL # ML
+    pkgs.libGLU # ML
     pkgs.ripgrep
     pkgs.tree
     pkgs.watch
