@@ -125,6 +125,43 @@ in {
     vscodium-fhs
     xclip
 
+    # ML
+    git
+    gitRepo
+    gnupg
+    autoconf
+    curl
+    poetry
+    python311Packages.opencv4
+    # c
+    procps
+    gnumake
+    util-linux
+    m4
+    gperf
+    unzip
+    cudatoolkit
+    linuxPackages.nvidia_x11
+    libGLU
+    libGL
+    xorg.libXi
+    xorg.libXmu
+    freeglut
+    xorg.libXext
+    xorg.libX11
+    xorg.libXv
+    xorg.libXrandr
+    zlib
+    ncurses5
+    stdenv.cc
+    binutils
+    # ML libgl test fix
+    gcc13
+    SDL2
+    SDL2_ttf
+    SDL2_image
+    glfw
+    glew
 
 
 
@@ -144,7 +181,7 @@ in {
       ms-toolsai.jupyter
       ms-vscode-remote.remote-ssh
       vscode-icons-team.vscode-icons
-      
+
     ] ++ pkgs.vscode-utils.extensionsFromVscodeMarketplace [
       {
         name = "remote-ssh-edit";
