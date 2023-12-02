@@ -14,6 +14,9 @@
   # Load nvidia driver for Xorg and Wayland
   services.xserver.videoDrivers = ["nvidia"];
 
+  # Wayland and NVidia do not combine well. (example: Electron apps like VS code / codium wont work)
+  services.xserver.displayManager.gdm.wayland = false;
+
   systemd.services.nvidia-control-devices = {
     wantedBy = [ "multi-user.target" ];
     serviceConfig.ExecStart = "${pkgs.linuxPackages.nvidia_x11.bin}/bin/nvidia-smi";
