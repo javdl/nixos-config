@@ -152,6 +152,7 @@ in {
     gperf
     unzip
     cudatoolkit
+    # cudaPackages.tensorrt
     linuxPackages.nvidia_x11
     libGLU
     libGL
