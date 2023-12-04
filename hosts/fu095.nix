@@ -9,6 +9,7 @@
     [ # Include the results of the hardware scan.
       ./hardware/fu095.nix
       ../modules/nvidia-drivers.nix
+      ./bare-metal-shared-linux.nix
     ];
 
   # Bootloader.
@@ -85,16 +86,8 @@
     description = "joost";
     extraGroups = [ "networkmanager" "wheel" ];
     packages = with pkgs; [
+      vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
       firefox-devedition
-      git
-      vim
-
-      # CUDA
-      pciutils
-      file
-      gnumake
-      gcc
-      cudatoolkit
       thunderbird
     ];
   };
