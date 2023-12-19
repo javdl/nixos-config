@@ -119,7 +119,35 @@ in {
     killall
     niv
     rxvt_unicode
+    vscode-fhs
+    vscodium-fhs
     xclip
+
+    (vscode-with-extensions.override {
+    # vscode = vscodium;
+    vscodeExtensions = with vscode-extensions; [
+      bbenoist.nix
+      eamodio.gitlens
+      # enkia.tokyo-night # theme
+      github.codespaces
+      github.copilot
+      golang.go
+      # googlecloudtools.cloudcode
+      ms-python.python
+      ms-azuretools.vscode-docker
+      ms-toolsai.jupyter
+      ms-vscode-remote.remote-ssh
+      vscode-icons-team.vscode-icons
+      
+    ] ++ pkgs.vscode-utils.extensionsFromVscodeMarketplace [
+      {
+        name = "remote-ssh-edit";
+        publisher = "ms-vscode-remote";
+        version = "0.47.2";
+        sha256 = "1hp6gjh4xp2m1xlm1jsdzxw9d8frkiidhph6nvl24d0h8z34w49g";
+      }
+    ];
+  })
 
     # For hypervisors that support auto-resizing, this script forces it.
     # I've noticed not everyone listens to the udev events so this is a hack.
