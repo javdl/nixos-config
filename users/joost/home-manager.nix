@@ -155,6 +155,7 @@ in {
     "org/gnome/desktop/interface" = {
       color-scheme = "prefer-dark";
       enable-hot-corners = false;
+      scaling-factor = lib.hm.gvariant.mkUint32 2;
     };
     "org/gnome/desktop/wm/preferences" = {
       workspace-names = [ "Main" ];

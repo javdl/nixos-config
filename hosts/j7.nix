@@ -116,8 +116,8 @@
   nixpkgs.config.allowUnfreePredicate = _: true;
 
   nixpkgs.config.permittedInsecurePackages = [
-                "openssl-1.1.1u" # For Sublimetext4, REMOVE WHEN OPENSSL 1.1 DOES NOT GET SECURITY UPDATES ANYMORE
-                "openssl-1.1.1v"
+            "openssl-1.1.1w" # For Sublimetext4, REMOVE WHEN OPENSSL 1.1 DOES NOT GET SECURITY UPDATES ANYMORE
+            "electron-25.9.0"
               ];
 
   # List packages installed in system profile. To search, run:
