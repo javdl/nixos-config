@@ -91,7 +91,7 @@
       system = "x86_64-linux";
       user   = "joost";
     };
-    
+
     nixosConfigurations.j7 = mkSystem "j7" rec {
       system = "x86_64-linux";
       user   = "joost";

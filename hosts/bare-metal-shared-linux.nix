@@ -30,6 +30,9 @@ in {
   # Thunderbolt. Devices might need to be enrolled: https://nixos.wiki/wiki/Thunderbolt
   services.hardware.bolt.enable = true;
 
+  system.autoUpgrade.enable = true;
+  #system.autoUpgrade.allowReboot = true;
+
   nix = {
     # use unstable nix so we can access flakes
     package = pkgs.nixUnstable;
@@ -110,7 +113,7 @@ in {
   fonts = {
     fontDir.enable = true;
 
-    fonts = [
+    packages = [
       pkgs.fira-code
       pkgs.jetbrains-mono
     ];
