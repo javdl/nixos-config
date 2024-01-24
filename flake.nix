@@ -34,7 +34,7 @@
       # not very long... can safely switch back for 23.11.
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
-
+    
     # Other packages
     zig.url = "github:mitchellh/zig-overlay";
 

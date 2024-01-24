@@ -57,8 +57,4 @@ in systemFunc rec {
       };
     }
   ];
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> a6aa7a0 (add WSL)

@@ -98,7 +98,6 @@ in {
     pkgs.firefox-devedition
     # pkgs.brave
     pkgs.rofi
-    pkgs.valgrind
     pkgs.zathura
     pkgs.xfce.xfce4-terminal
   ]);
@@ -371,6 +370,14 @@ in {
     package = pkgs.neovim-nightly;
 
     withPython3 = true;
+    extraPython3Packages = (p: with p; [
+      # For nvim-magma
+      jupyter-client
+      cairosvg
+      plotly
+      #pnglatex
+      #kaleido
+    ]);
 
     plugins = with pkgs; [
       customVim.vim-copilot
@@ -384,7 +391,6 @@ in {
       customVim.vim-zig
       customVim.pigeon
       customVim.AfterColors
-
       customVim.vim-nord
       customVim.nvim-comment
       customVim.nvim-lspconfig
@@ -393,12 +399,10 @@ in {
       customVim.nvim-treesitter
       customVim.nvim-treesitter-playground
       customVim.nvim-treesitter-textobjects
-
       vimPlugins.vim-airline
       vimPlugins.vim-airline-themes
       vimPlugins.vim-eunuch
       vimPlugins.vim-gitgutter
-
       vimPlugins.vim-markdown
       vimPlugins.vim-nix
       vimPlugins.typescript-vim
