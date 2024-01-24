@@ -57,6 +57,7 @@ in {
     pkgs.fd
     pkgs.ffmpeg_5 # libgl, needed for ML
     pkgs.fzf
+    pkgs.gh
     pkgs.git-lfs
     gdk
     # pkgs.google-cloud-sdk # See above, gdk with components list
@@ -91,7 +92,8 @@ in {
   ] ++ (lib.optionals isDarwin [
     # This is automatically setup on Linux
     pkgs.cachix
-  ]) ++ (lib.optionals isLinux [
+    pkgs.tailscale
+  ]) ++ (lib.optionals (isLinux && !isWSL) [
     pkgs.chromium
     pkgs.firefox-devedition
     # pkgs.brave
@@ -325,7 +327,7 @@ in {
   };
 
   programs.alacritty = {
-    enable = true;
+    enable = !isWSL;
 
     settings = {
       env.TERM = "xterm-256color";
@@ -342,12 +344,12 @@ in {
   };
 
   programs.kitty = {
-    enable = true;
+    enable = !isWSL;
     extraConfig = builtins.readFile ./kitty;
   };
 
   programs.i3status = {
-    enable = isLinux;
+    enable = isLinux && !isWSL;
 
     general = {
       colors = true;
@@ -389,8 +391,6 @@ in {
       customVim.vim-zig
       customVim.pigeon
       customVim.AfterColors
-
-      customVim.vim-devicons
       customVim.vim-nord
       customVim.nvim-comment
       customVim.nvim-lspconfig
@@ -399,17 +399,20 @@ in {
       customVim.nvim-treesitter
       customVim.nvim-treesitter-playground
       customVim.nvim-treesitter-textobjects
-      customVim.nvim-magma
-
       vimPlugins.vim-airline
       vimPlugins.vim-airline-themes
       vimPlugins.vim-eunuch
       vimPlugins.vim-gitgutter
-
       vimPlugins.vim-markdown
       vimPlugins.vim-nix
       vimPlugins.typescript-vim
-    ];
+      vimPlugins.nvim-treesitter-parsers.elixir
+    ] ++ (lib.optionals (!isWSL) [
+      # This is causing a segfaulting while building our installer
+      # for WSL so just disable it for now. This is a pretty
+      # unimportant plugin anyway.
+      customVim.vim-devicons
+    ]);
 
     extraConfig = (import ./vim-config.nix) { inherit sources; };
   };
@@ -426,7 +429,7 @@ in {
   xresources.extraConfig = builtins.readFile ./Xresources;
 
   # Make cursor not tiny on HiDPI screens
-  home.pointerCursor = lib.mkIf isLinux {
+  home.pointerCursor = lib.mkIf (isLinux && !isWSL) {
     name = "Vanilla-DMZ";
     package = pkgs.vanilla-dmz;
     size = 128;

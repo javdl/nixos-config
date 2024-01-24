@@ -1,14 +1,14 @@
-{ pkgs, ... }:
+{ inputs, pkgs, ... }:
 
 {
   nixpkgs.overlays = import ../../lib/overlays.nix ++ [
-    (import ./vim.nix)
+    (import ./vim.nix { inherit inputs; })
+
   ];
 
   homebrew = {
     enable = true;
     casks  = [
-      "alfred"
       "authy"
       "bitwarden"
       "calibre"
@@ -38,6 +38,7 @@
       "obs"
       "postman"
       "rapidapi"
+      "raycast"
       "rectangle"
       "screenflow"
       "sequel-ace"

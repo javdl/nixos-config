@@ -1,3 +1,4 @@
+{ inputs }:
 self: super:
 
 let sources = import ../../nix/sources.nix; in rec {
@@ -5,7 +6,7 @@ let sources = import ../../nix/sources.nix; in rec {
   customVim = with self; {
     vim-copilot = vimUtils.buildVimPlugin {
       name = "vim-copilot";
-      src = sources.vim-copilot;
+      src = inputs.vim-copilot;
     };
 
     vim-cue = vimUtils.buildVimPlugin {
@@ -103,7 +104,7 @@ let sources = import ../../nix/sources.nix; in rec {
 
     nvim-treesitter = vimUtils.buildVimPlugin {
       name = "nvim-treesitter";
-      src = sources.nvim-treesitter;
+      src = inputs.nvim-treesitter;
     };
 
     nvim-treesitter-playground = vimUtils.buildVimPlugin {

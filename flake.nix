@@ -29,9 +29,20 @@
     # own. We can always try to remove that anytime.
     neovim-nightly-overlay = {
       url = "github:nix-community/neovim-nightly-overlay";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
 
+      # Only need unstable until the lpeg fix hits mainline, probably
+      # not very long... can safely switch back for 23.11.
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
+    };
+    
+    # Other packages
+    zig.url = "github:mitchellh/zig-overlay";
+
+    # Non-flakes
+    nvim-treesitter.url = "github:nvim-treesitter/nvim-treesitter/v0.9.1";
+    nvim-treesitter.flake = false;
+    vim-copilot.url = "github:github/copilot.vim/v1.11.1";
+    vim-copilot.flake = false;
     # Other packages (leave in as an example)
     # zig.url = "github:mitchellh/zig-overlay";
   };
