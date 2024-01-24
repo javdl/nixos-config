@@ -65,6 +65,8 @@ in {
   # replicates the default behaviour.
   networking.useDHCP = false;
 
+  systemd.network.wait-online.anyInterface = true; # block for no more than one interface, should prevent waiting 90secs at boot for network adapters
+
   # Virtualization settings
   virtualisation.docker.enable = true;
 
