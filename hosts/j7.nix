@@ -10,6 +10,7 @@
       ./hardware/j7.nix
       ../modules/nvidia-drivers.nix
       ./bare-metal-shared-linux.nix
+      ./all-shared.nix
     ];
 
   # Bootloader.

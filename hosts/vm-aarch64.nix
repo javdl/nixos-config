@@ -19,12 +19,6 @@
   nixpkgs.config.allowUnfree = true;
   nixpkgs.config.allowUnsupportedSystem = true;
 
-  nixpkgs.config.permittedInsecurePackages = [
-                "openssl-1.1.1u" # For Sublimetext4, REMOVE WHEN OPENSSL 1.1 DOES NOT GET SECURITY UPDATES ANYMORE
-                "openssl-1.1.1v"
-              ];
-
-
   # This works through our custom module imported above
   virtualisation.vmware.guest.enable = true;
 

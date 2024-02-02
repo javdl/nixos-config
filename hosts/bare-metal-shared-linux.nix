@@ -15,6 +15,7 @@ let
 #  ];
 
 in {
+
   # Be careful updating this.
   boot.kernelPackages = pkgs.linuxPackages_latest;
 

@@ -360,7 +360,3 @@ More generic info: [https://nixos.org/manual/nixos/stable/index.html#sec-upgradi
 ```sh
 sudo NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nixos-rebuild switch --upgrade --flake ".#vm-aarch64"
 ```
-
-```sh
-sudo NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 NIXPKGS_ALLOW_INSECURE=1 nixos-rebuild switch --upgrade --impure --flake ".#vm-aarch64"
-```

@@ -6,6 +6,7 @@ let
   # for now.
   linuxGnome = true;
 in {
+
   # Be careful updating this.
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
@@ -30,6 +31,8 @@ in {
   nixpkgs.config.permittedInsecurePackages = [
     # Needed for k2pdfopt 2.53.
     "mupdf-1.17.0"
+    "openssl-1.1.1w" # For Sublimetext4, REMOVE WHEN OPENSSL 1.1 DOES NOT GET SECURITY UPDATES ANYMORE
+    "electron-25.9.0"
   ];
 
   # Use the systemd-boot EFI boot loader.
