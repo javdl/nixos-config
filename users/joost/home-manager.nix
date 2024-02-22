@@ -76,6 +76,9 @@ in {
     pkgs.libwacom
     pkgs.libinput
 
+    pkgs.bitwarden
+    pkgs.bitwarden-cli
+    pkgs.bitwarden-menu # Dmenu/rofi frontend
     pkgs.flyctl
     pkgs.glab
     pkgs.obsidian
