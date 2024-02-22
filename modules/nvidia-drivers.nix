@@ -12,10 +12,11 @@
   };
 
   # Load nvidia driver for Xorg and Wayland
-  services.xserver.videoDrivers = ["nvidia"];
+  # services.xserver.videoDrivers = ["nvidia"];
+  services.xserver.videoDrivers = ["nouveau"]; # this works with gnome + wayland and Sway + wayland
 
   # Wayland and NVidia do not combine well. (example: Electron apps like VS code / codium wont work)
-  services.xserver.displayManager.gdm.wayland = false;
+  services.xserver.displayManager.gdm.wayland = true;
 
   systemd.services.nvidia-control-devices = {
     wantedBy = [ "multi-user.target" ];
