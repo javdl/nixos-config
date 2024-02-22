@@ -60,6 +60,17 @@
     LC_TIME = "nl_NL.UTF-8";
   };
 
+  # programs.hyprland = {
+  #   enable = true;
+  #   package = inputs.hyprland.package.${pkgs.system}.hyprland;
+  # };
+  programs.hyprland = {
+    # Install the packages from nixpkgs
+    enable = true;
+    # Whether to enable XWayland
+    xwayland.enable = true;
+  };
+
   # Enable the X11 windowing system.
   services.xserver.enable = true;
 
@@ -128,6 +139,10 @@
   #github-runner
   gitlab-runner
   #  wget
+
+  # Hyprland
+  xdg-desktop-portal-hyprland  
+  xwayland
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
