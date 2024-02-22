@@ -118,10 +118,11 @@ in {
       wf-recorder
       mako # notification daemon
       grim
-     #kanshi
+      #kanshi
       slurp
       alacritty # Alacritty is the default terminal in the config
-      dmenu # Dmenu is the default in the config but i recommend wofi since its wayland native
+      #dmenu # Dmenu is the default in the config but i recommend wofi since its wayland native
+      wofi
     ];
     extraSessionCommands = ''
       export SDL_VIDEODRIVER=wayland
@@ -145,6 +146,15 @@ in {
     packages = [
       pkgs.fira-code
       pkgs.jetbrains-mono
+      pkgs.noto-fonts
+      pkgs.noto-fonts-cjk
+      pkgs.noto-fonts-emoji
+      pkgs.liberation_ttf
+      pkgs.fira-code-symbols
+      pkgs.mplus-outline-fonts.githubRelease
+      pkgs.dina-font
+      pkgs.proggyfonts
+      pkgs.rubik
     ];
   };
 
@@ -155,6 +165,7 @@ in {
     brave
     cachix
     gnumake
+    gimp
     killall
     niv
     python311

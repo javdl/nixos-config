@@ -60,15 +60,13 @@
     LC_TIME = "nl_NL.UTF-8";
   };
 
-  # programs.hyprland = {
-  #   enable = true;
-  #   package = inputs.hyprland.package.${pkgs.system}.hyprland;
-  # };
   programs.hyprland = {
     # Install the packages from nixpkgs
     enable = true;
     # Whether to enable XWayland
     xwayland.enable = true;
+    # Optional, hint electron apps to use wayland:
+    # environment.sessionVariables.NIXOS_OZONE_WL = "1";
   };
 
   # Enable the X11 windowing system.
@@ -134,15 +132,32 @@
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
-  vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
-  firefox
-  #github-runner
-  gitlab-runner
-  #  wget
+    vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
+    firefox
+    #github-runner
+    gitlab-runner
+    #  wget
 
-  # Hyprland
-  xdg-desktop-portal-hyprland  
-  xwayland
+    # Hyprland
+    xdg-desktop-portal-hyprland  
+    xwayland
+    # must have
+    mako
+    pipewire
+    wireplumber
+    libsForQt5.polkit-kde-agent # not sure if this is correct
+    # qt5-wayland
+    libsForQt5.qt5.qtwayland
+    libsForQt5.qt5ct
+    # qt6-wayland
+    qt6.qtwayland
+    # useful
+    waybar
+    wofi
+    hyprpaper # wallpaper
+    hyprpicker # color picker
+    # hyprlock # lockscreen Not in nixos pkgs
+    # hypridle # idle behaviour Not in nixos pkgs   
   ];
 
   # Some programs need SUID wrappers, can be configured further or are

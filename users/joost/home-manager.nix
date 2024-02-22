@@ -87,7 +87,7 @@ in {
     pkgs.sublime4
     pkgs.tailscale
     pkgs.vscodium # gives a blank screen on bare metal install > Electron apps with Nvidia card in Wayland will. Either switch to X11 or use Integrated GPU from AMD or Intel and it will load fine
-
+    pkgs.zed
 
     # Node is required for Copilot.vim
     pkgs.nodejs
@@ -122,6 +122,12 @@ in {
   home.file.".inputrc".source = ./inputrc;
 
   xdg.configFile = {
+    "hypr/hyprland.conf".text = builtins.readFile ./hypr/hyprland.conf;
+    "hypr/hyprlock.conf".text = builtins.readFile ./hypr/hyprlock.conf;
+    "hypr/hypridle.conf".text = builtins.readFile ./hypr/hypridle.conf;
+    "wofi/config".text = builtins.readFile ./wofi/config;
+    # "wallpapers/04167_unreachable_3840x2160.png".text = builtins.readFile ./wallpapers/04167_unreachable_3840x2160.png;
+
     "i3/config".text = builtins.readFile ./i3;
     "rofi/config.rasi".text = builtins.readFile ./rofi;
 
