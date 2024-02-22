@@ -14,6 +14,8 @@
     nixos-wsl.url = "github:nix-community/NixOS-WSL";
     nixos-wsl.inputs.nixpkgs.follows = "nixpkgs";
 
+    hyprland.url = "github:hyprwm/Hyprland";
+
     home-manager = {
       url = "github:nix-community/home-manager/release-23.11";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -34,7 +36,7 @@
       # not very long... can safely switch back for 23.11.
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
-    
+
     # Other packages
     zig.url = "github:mitchellh/zig-overlay";
 
@@ -95,6 +97,7 @@
     nixosConfigurations.j7 = mkSystem "j7" rec {
       system = "x86_64-linux";
       user   = "joost";
+#      specialArgs = { inherit inputs; };
     };
 
     darwinConfigurations.macbook-pro-m1 = mkSystem "macbook-pro-m1" {

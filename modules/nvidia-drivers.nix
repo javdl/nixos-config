@@ -15,7 +15,7 @@
   services.xserver.videoDrivers = ["nvidia"];
 
   # Wayland and NVidia do not combine well. (example: Electron apps like VS code / codium wont work)
-  services.xserver.displayManager.gdm.wayland = false;
+  # services.xserver.displayManager.gdm.wayland = false;
 
   systemd.services.nvidia-control-devices = {
     wantedBy = [ "multi-user.target" ];
@@ -35,9 +35,9 @@
 
     # Use the NVidia open source kernel module (not to be confused with the
     # independent third-party "nouveau" open source driver).
-    # Support is limited to the Turing and later architectures. Full list of 
-    # supported GPUs is at: 
-    # https://github.com/NVIDIA/open-gpu-kernel-modules#compatible-gpus 
+    # Support is limited to the Turing and later architectures. Full list of
+    # supported GPUs is at:
+    # https://github.com/NVIDIA/open-gpu-kernel-modules#compatible-gpus
     # Only available from driver 515.43.04+
     # Currently alpha-quality/buggy, so false is currently the recommended setting.
     open = false;

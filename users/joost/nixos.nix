@@ -10,6 +10,13 @@
   # Since we're using fish as our shell
   programs.fish.enable = true;
 
+#  specialArgs = {inherit inputs; };
+
+#  programs.hyprland = {
+#      enable = true;
+#      package = inputs.hyprland.packages.${pkgs.system}.hyprland;
+#  };
+
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
   users.users.joost = {

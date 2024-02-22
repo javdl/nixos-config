@@ -2,7 +2,7 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ config, pkgs, ... }:
+{ config, inputs, pkgs, ... }:
 
 {
   imports =
@@ -60,18 +60,34 @@
     LC_TIME = "nl_NL.UTF-8";
   };
 
-  # Enable the X11 windowing system.
-  services.xserver.enable = true;
+  #---------------------------------------------------------------------
+  # Graphics
+  #---------------------------------------------------------------------
 
-  # Enable the GNOME Desktop Environment.
-  services.xserver.displayManager.gdm.enable = true;
-  services.xserver.desktopManager.gnome.enable = true;
+  # # Enable the X11 windowing system.
+  # services.xserver.enable = true;
 
-  # Configure keymap in X11
-  services.xserver = {
-    layout = "us";
-    xkbVariant = "";
-  };
+  # # Enable the GNOME Desktop Environment.
+  # services.xserver.displayManager.gdm.enable = true;
+  # services.xserver.desktopManager.gnome.enable = true;
+
+  # # Configure keymap in X11
+  # services.xserver = {
+  #   layout = "us";
+  #   xkbVariant = "";
+  # };
+
+  programs.hyprland = {
+      enable = true;
+      package = inputs.hyprland.package.${pkgs.system}.hyprland;
+    };
+
+#  services.dbus.enable = true;
+#  xdg.portal = {
+#    enable = true;
+#    wlr.enable = true;
+#    extraPortals = [ pkgs.xdg-desktop-portal-hyprland ];
+#  };
 
   # Enable CUPS to print documents.
   services.printing.enable = true;
@@ -103,6 +119,7 @@
     description = "Joost van der Laan";
     extraGroups = [ "networkmanager" "wheel" "docker" ];
     packages = with pkgs; [
+      git
       firefox-devedition
       gnumake
     ];
@@ -123,10 +140,25 @@
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
-  vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
+      vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
+      git
   firefox
   #github-runner
   gitlab-runner
+  dbus
+  #dbus-sway-environment
+  #configure-gtk
+  wayland
+  xdg-utils
+  glib
+  dracula-theme
+  gnome3.adwaita-icon-theme
+  grim
+  slurp
+  wl-clipboard
+  bemenu
+  mako
+  wdisplays
   #  wget
   ];
 

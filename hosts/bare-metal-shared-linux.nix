@@ -4,7 +4,7 @@ let
   # Turn this to true to use gnome instead of i3. This is a bit
   # of a hack, I just flip it on as I need to develop gnome stuff
   # for now.
-  linuxGnome = true;
+  linuxGnome = false;
 
 #  my-python-packages = ps: with ps; [
 #    poetry
@@ -47,8 +47,8 @@ in {
     # this, use your own, or toss it. Its typically safe to use a binary cache
     # since the data inside is checksummed.
     settings = {
-      substituters = ["https://javdl-nixos-config.cachix.org" "https://devenv.cachix.org"];
-      trusted-public-keys = ["javdl-nixos-config.cachix.org-1:6xuHXHavvpdfBLQq+RzxDAMxhWkea0NaYvLtDssDJIU=" "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="];
+      substituters = ["https://javdl-nixos-config.cachix.org" "https://devenv.cachix.org" "https://hyprland.cachix.org"];
+      trusted-public-keys = ["javdl-nixos-config.cachix.org-1:6xuHXHavvpdfBLQq+RzxDAMxhWkea0NaYvLtDssDJIU=" "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw=" "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="];
     };
   };
 
@@ -82,29 +82,29 @@ in {
     desktopManager.gnome.enable = true;
     displayManager.gdm.enable = true;
   } else {
-    enable = true;
-    layout = "us";
-    dpi = 220;
+    # enable = true;
+    # layout = "us";
+    # dpi = 220;
 
-    desktopManager = {
-      xterm.enable = false;
-      wallpaper.mode = "fill";
-    };
+    # desktopManager = {
+    #   xterm.enable = false;
+    #   wallpaper.mode = "fill";
+    # };
 
-    displayManager = {
-      defaultSession = "none+i3";
-      lightdm.enable = true;
+    # displayManager = {
+    #   defaultSession = "none+i3";
+    #   lightdm.enable = true;
 
-      # AARCH64: For now, on Apple Silicon, we must manually set the
-      # display resolution. This is a known issue with VMware Fusion.
-      sessionCommands = ''
-        ${pkgs.xorg.xset}/bin/xset r rate 200 40
-      '';
-    };
+    #   # AARCH64: For now, on Apple Silicon, we must manually set the
+    #   # display resolution. This is a known issue with VMware Fusion.
+    #   sessionCommands = ''
+    #     ${pkgs.xorg.xset}/bin/xset r rate 200 40
+    #   '';
+    # };
 
-    windowManager = {
-      i3.enable = true;
-    };
+    # windowManager = {
+    #   i3.enable = true;
+    # };
   };
 
   # Enable tailscale. We manually authenticate when we want with
