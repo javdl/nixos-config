@@ -12,8 +12,8 @@
   };
 
   # Load nvidia driver for Xorg and Wayland
-  # services.xserver.videoDrivers = ["nvidia"];
-  services.xserver.videoDrivers = ["nouveau"]; # this works with gnome + wayland and Sway + wayland
+  services.xserver.videoDrivers = ["nvidia"]; # Works only when using Radeon IGPU as main monitor with Gnome + Wayland + obsidian/vscode/electron apps (nvidia card can be used with driver as accellerator for AI)
+  # services.xserver.videoDrivers = ["nouveau"]; # this works with gnome + wayland and Sway + wayland
 
   # Wayland and NVidia do not combine well. (example: Electron apps like VS code / codium wont work)
   services.xserver.displayManager.gdm.wayland = true;
