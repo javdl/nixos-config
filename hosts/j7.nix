@@ -153,6 +153,7 @@
     qt6.qtwayland
     # useful
     waybar
+    font-awesome # waybar icons
     wofi
     hyprpaper # wallpaper
     hyprpicker # color picker
