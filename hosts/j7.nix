@@ -142,6 +142,8 @@
     xdg-desktop-portal-hyprland  
     xwayland
     # must have
+    libnotify # for notify-send
+    glib
     mako
     pipewire
     wireplumber
@@ -159,6 +161,7 @@
     hyprpicker # color picker
     # hyprlock # lockscreen Not in nixos pkgs
     # hypridle # idle behaviour Not in nixos pkgs   
+    mpd # best music player in the world
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
