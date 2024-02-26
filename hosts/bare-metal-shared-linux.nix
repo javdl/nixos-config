@@ -123,6 +123,7 @@ in {
       alacritty # Alacritty is the default terminal in the config
       #dmenu # Dmenu is the default in the config but i recommend wofi since its wayland native
       wofi
+      gtk3 # fixes issue where Kitty doesnt start after logging in to Hyprland.
     ];
     extraSessionCommands = ''
       export SDL_VIDEODRIVER=wayland
