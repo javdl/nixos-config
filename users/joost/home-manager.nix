@@ -128,6 +128,9 @@ in {
     "hypr/hyprlock.conf".text = builtins.readFile ./hypr/hyprlock.conf;
     "hypr/hypridle.conf".text = builtins.readFile ./hypr/hypridle.conf;
     "wofi/config".text = builtins.readFile ./wofi/config;
+    "waybar/config".text = builtins.readFile ./waybar/config;
+    "waybar/modules".text = builtins.readFile ./waybar/modules;
+    "waybar/style.css".text = builtins.readFile ./waybar/style.css;
     # "wallpapers/04167_unreachable_3840x2160.png".text = builtins.readFile ./wallpapers/04167_unreachable_3840x2160.png;
 
     "i3/config".text = builtins.readFile ./i3;
