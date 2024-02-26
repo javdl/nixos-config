@@ -8,8 +8,8 @@
   imports =
     [ # Include the results of the hardware scan.
       ./hardware/j7.nix
-      # ../modules/nvidia-drivers.nix
-      ../modules/amd-drivers.nix
+      ../modules/nvidia-drivers.nix
+      ../modules/amd-drivers.nix # IGPU
       ./bare-metal-shared-linux.nix
     ];
 
