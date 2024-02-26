@@ -173,7 +173,6 @@ in {
     python311Packages.pip
     # python311.withPackages my-python-packages
     # python311Packages.pip
-    protonvpn-gui
     rxvt_unicode
     spotify
     thunderbird
