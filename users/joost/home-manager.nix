@@ -134,6 +134,7 @@ in {
     "hypr/hyprland.conf".text = builtins.readFile ./hypr/hyprland.conf;
     "hypr/hyprlock.conf".text = builtins.readFile ./hypr/hyprlock.conf;
     "hypr/hypridle.conf".text = builtins.readFile ./hypr/hypridle.conf;
+    "hypr/hyprpaper.conf".text = builtins.readFile ./hypr/hyprpaper.conf;
     "wofi/config".text = builtins.readFile ./wofi/config;
     "waybar/config".text = builtins.readFile ./waybar/config;
     "waybar/modules".text = builtins.readFile ./waybar/modules;
