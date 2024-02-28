@@ -163,6 +163,7 @@
     # hyprlock # lockscreen Not in nixos pkgs
     # hypridle # idle behaviour Not in nixos pkgs   
     mpd # best music player in the world
+    libglvnd
   ];
 
   # Some programs need SUID wrappers, can be configured further or are

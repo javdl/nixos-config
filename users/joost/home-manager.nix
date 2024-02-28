@@ -84,9 +84,11 @@ in {
     pkgs.obsidian
     # pkgs.obs-studio
     pkgs.pocketbase
+    pkgs.protonvpn-cli
     pkgs.protonvpn-gui
     pkgs.sublime4
     pkgs.tailscale
+    pkgs.tailscale-systray
     pkgs.vscodium # gives a blank screen on bare metal install > Electron apps with Nvidia card in Wayland will. Either switch to X11 or use Integrated GPU from AMD or Intel and it will load fine
     pkgs.zed
 
@@ -132,6 +134,7 @@ in {
     "waybar/style.css".text = builtins.readFile ./waybar/style.css;
     "mpd/mpd.conf".text = builtins.readFile ./mpd/mpd.conf;
     "electron-flags.conf".text = builtins.readFile ./electron-flags.conf;
+    "electron-flags28.conf".source  = ./electron-flags.conf;
     "code-flags.conf".text = builtins.readFile ./code-flags.conf;
     
     # "wallpapers/04167_unreachable_3840x2160.png".text = builtins.readFile ./wallpapers/04167_unreachable_3840x2160.png;
