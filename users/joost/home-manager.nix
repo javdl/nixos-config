@@ -76,21 +76,27 @@ in {
     pkgs.libwacom
     pkgs.libinput
 
+    pkgs.bashmount # Easily mount (encrypted/usb) drives
     pkgs.bitwarden
     pkgs.bitwarden-cli
     pkgs.bitwarden-menu # Dmenu/rofi frontend
     pkgs.flyctl
     pkgs.glab
+    pkgs.neofetch
+    pkgs.nextcloud-client
     pkgs.obsidian
     # pkgs.obs-studio
     pkgs.pocketbase
     pkgs.protonvpn-cli
     pkgs.protonvpn-gui
+    pkgs.rpi-imager
     pkgs.sublime4
     pkgs.tailscale
     pkgs.tailscale-systray
     pkgs.vscodium # gives a blank screen on bare metal install > Electron apps with Nvidia card in Wayland will. Either switch to X11 or use Integrated GPU from AMD or Intel and it will load fine
-    pkgs.zed
+    pkgs.yubikey-manager
+
+    # pkgs.zed # zed editor is not available on linux yet
 
     # Node is required for Copilot.vim
     pkgs.nodejs
