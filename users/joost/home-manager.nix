@@ -22,7 +22,7 @@ let
     # app-engine-python
     beta
     # bq
-    cloud-build-local
+
     gsutil
     kubectl
     minikube
@@ -31,6 +31,9 @@ let
 
     # google-cloud-cli-skaffold
     # google-cloud-cli-cloud-run-proxy
+    #
+    # should not be enabled for darwin:
+    # cloud-build-local
   ]);
 
 in {
@@ -73,26 +76,14 @@ in {
     pkgs.xh # for sending HTTP requests (like HTTPie)
 
 
-    pkgs.libwacom
-    pkgs.libinput
 
     pkgs.bashmount # Easily mount (encrypted/usb) drives
-    # pkgs.bitwarden
-    pkgs.bitwarden-cli
-    pkgs.bitwarden-menu # Dmenu/rofi frontend
     pkgs.flyctl
     pkgs.glab
     pkgs.neofetch
-    pkgs.nextcloud-client
-    pkgs.obsidian
     # pkgs.obs-studio
     pkgs.pocketbase
-    pkgs.protonvpn-cli
-    pkgs.protonvpn-gui
-    pkgs.rpi-imager
-    pkgs.sublime4
     pkgs.tailscale
-    pkgs.tailscale-systray
     pkgs.vscodium # gives a blank screen on bare metal install > Electron apps with Nvidia card in Wayland will. Either switch to X11 or use Integrated GPU from AMD or Intel and it will load fine
     pkgs.yubikey-manager
 
@@ -112,6 +103,16 @@ in {
     pkgs.rofi
     pkgs.zathura
     pkgs.xfce.xfce4-terminal
+    pkgs.libwacom
+    pkgs.libinput
+    pkgs.bitwarden
+    pkgs.bitwarden-cli
+    pkgs.bitwarden-menu # Dmenu/rofi frontend
+    pkgs.nextcloud-client
+    pkgs.obsidian
+    pkgs.rpi-imager
+    pkgs.sublime4
+    pkgs.tailscale-systray
   ]);
 
   #---------------------------------------------------------------------
@@ -324,14 +325,15 @@ in {
     goPrivate = [ "github.com/javdl" "github.com/fuww" ];
   };
 
-  programs.obs-studio = {
-    enable = true;
-    plugins = with pkgs.obs-studio-plugins; [
-      # wlrobs # nix install error
-      obs-backgroundremoval
-      obs-pipewire-audio-capture
-    ];
-  };
+  # this should be disabled for darwin
+  # programs.obs-studio = {
+  #   enable = true;
+  #   plugins = with pkgs.obs-studio-plugins; [
+  #     # wlrobs # nix install error
+  #     obs-backgroundremoval
+  #     obs-pipewire-audio-capture
+  #   ];
+  # };
 
   programs.tmux = {
     enable = true;
