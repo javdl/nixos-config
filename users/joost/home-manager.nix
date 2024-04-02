@@ -105,7 +105,7 @@ in {
     pkgs.xfce.xfce4-terminal
     pkgs.libwacom
     pkgs.libinput
-    pkgs.bitwarden
+    # pkgs.bitwarden
     pkgs.bitwarden-cli
     pkgs.bitwarden-menu # Dmenu/rofi frontend
     pkgs.nextcloud-client
