@@ -164,6 +164,7 @@
     # hypridle # idle behaviour Not in nixos pkgs
     mpd # best music player in the world
     libglvnd
+    lmstudio
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
