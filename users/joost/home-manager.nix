@@ -111,7 +111,6 @@ in {
     pkgs.nextcloud-client
     pkgs.obsidian
     pkgs.rpi-imager
-    pkgs.sublime4
     pkgs.tailscale-systray
   ]);
 
