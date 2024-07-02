@@ -75,8 +75,6 @@ in {
     pkgs.watch
     pkgs.xh # for sending HTTP requests (like HTTPie)
 
-
-
     pkgs.bashmount # Easily mount (encrypted/usb) drives
     pkgs.flyctl
     pkgs.glab
@@ -395,7 +393,7 @@ in {
 
   programs.neovim = {
     enable = true;
-    package = pkgs.neovim-nightly;
+    package = inputs.neovim-nightly-overlay.packages.${pkgs.system}.default;
 
     withPython3 = true;
     extraPython3Packages = (p: with p; [
@@ -447,7 +445,7 @@ in {
 
   services.gpg-agent = {
     enable = isLinux;
-    pinentryFlavor = "tty";
+    pinentryPackage = pkgs.pinentry-tty;
 
     # cache the keys forever so we don't get asked for a password
     defaultCacheTtl = 31536000;

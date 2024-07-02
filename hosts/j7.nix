@@ -126,7 +126,7 @@
   nixpkgs.config.allowUnfreePredicate = _: true;
 
   nixpkgs.config.permittedInsecurePackages = [
-            "openssl-1.1.1w" # For Sublimetext4, REMOVE WHEN OPENSSL 1.1 DOES NOT GET SECURITY UPDATES ANYMORE
+            #"openssl-1.1.1w" # For Sublimetext4, REMOVE WHEN OPENSSL 1.1 DOES NOT GET SECURITY UPDATES ANYMORE
             "electron-25.9.0"
               ];
 
@@ -140,7 +140,7 @@
     #  wget
 
     # Hyprland
-    xdg-desktop-portal-hyprland  
+    xdg-desktop-portal-hyprland
     xwayland
     # must have
     libnotify # for notify-send
@@ -161,7 +161,7 @@
     hyprpaper # wallpaper
     hyprpicker # color picker
     # hyprlock # lockscreen Not in nixos pkgs
-    # hypridle # idle behaviour Not in nixos pkgs   
+    # hypridle # idle behaviour Not in nixos pkgs
     mpd # best music player in the world
     libglvnd
   ];
