@@ -88,7 +88,7 @@ in {
     # pkgs.zed # zed editor is not available on linux yet
 
     # Node is required for Copilot.vim
-    pkgs.nodejs
+    pkgs.nodejs_20
     pkgs.nodePackages.firebase-tools
   ] ++ (lib.optionals isDarwin [
     # This is automatically setup on Linux
