@@ -78,13 +78,13 @@ in {
   # setup windowing environment
   services.xserver = if linuxGnome then {
     enable = true;
-    layout = "us";
+    xkb.layout = "us";
     desktopManager.gnome.enable = true;
     displayManager.gdm.enable = true;
     # displayManager.gdm.wayland = true; # Enable Wayland in Gnome
   } else {
     enable = true;
-    layout = "us";
+    xkb.layout = "us";
     dpi = 220;
 
     desktopManager = {
