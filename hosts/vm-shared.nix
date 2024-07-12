@@ -133,6 +133,7 @@ in {
     niv
     rxvt_unicode
     xclip
+    zed-editor
 
     # For hypervisors that support auto-resizing, this script forces it.
     # I've noticed not everyone listens to the udev events so this is a hack.

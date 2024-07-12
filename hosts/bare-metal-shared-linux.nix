@@ -180,6 +180,7 @@ in {
     vscode-fhs
     vscodium-fhs
     xclip
+    zed-editor
 
     # # ML
     # pciutils
