@@ -375,4 +375,3 @@ sudo NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nixos-rebuild switch --upgrade --flake "
 
 Certain software **must** be installed for Hyprland to work properly.
 [https://wiki.hyprland.org/Useful-Utilities/Must-have/](https://wiki.hyprland.org/Useful-Utilities/Must-have/)
-

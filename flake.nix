@@ -105,6 +105,12 @@
       darwin = true;
     };
 
+    darwinConfigurations.mac-studio-m1 = mkSystem "mac-studio-m1" {
+      system = "aarch64-darwin";
+      user   = "joost";
+      darwin = true;
+    };
+
     darwinConfigurations.mac-mini-m2 = mkSystem "mac-mini-m2" {
       system = "aarch64-darwin";
       user   = "joost";

@@ -26,7 +26,7 @@ endif
 
 update:
 ifeq ($(UNAME), Darwin)
-    sudo nix flake update
+	sudo nix flake update
 	nix build --extra-experimental-features nix-command --extra-experimental-features flakes ".#darwinConfigurations.${NIXNAME}.system"
 	./result/sw/bin/darwin-rebuild switch --flake "$$(pwd)#${NIXNAME}"
 else
