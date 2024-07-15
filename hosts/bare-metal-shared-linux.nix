@@ -167,6 +167,7 @@ in {
     cachix
     gnumake
     gimp
+    gnome.nautilus
     killall
     niv
     python311
