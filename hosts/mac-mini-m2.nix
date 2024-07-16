@@ -44,7 +44,7 @@
   environment.shells = with pkgs; [ bashInteractive zsh fish ];
   environment.systemPackages = with pkgs; [
     cachix
-    zed-editor
+    # zed-editor # Broken
   ];
 
   # Enable tailscale. We manually authenticate when we want with

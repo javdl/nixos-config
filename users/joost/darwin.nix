@@ -49,6 +49,7 @@
       "typora"
       "visual-studio-code"
       "vlc"
+      "zed"
     ];
   };
 

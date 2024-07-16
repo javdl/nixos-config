@@ -212,15 +212,26 @@ curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix 
 
 Clone this repo and run `make switch`, replace the NIXNAME with the configuration name you want to use:
 
+**Initial setup.**
 ```sh
 cd ~
 git clone https://github.com/javdl/nixos-config.git
 cd nixos-config
 mkdir -p ~/.config/nix/
 echo "experimental-features = nix-command flakes" > ~/.config/nix/nix.conf
-export NIXNAME=crescendo
+```
+
+**Run it.**
+```sh
+export NIXNAME=mac-studio-m1
 sudo nixos-rebuild switch --flake ".#${NIXNAME}" # See also the Makefile. We
 # cannot use make switch however since it is not yet installed.
+```
+
+**Updates / changes** after the first install.
+```sh
+export NIXNAME=mac-studio-m1
+make switch
 ```
 
 
