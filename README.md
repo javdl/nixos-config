@@ -234,6 +234,10 @@ export NIXNAME=mac-studio-m1
 make switch
 ```
 
+### Brew
+
+Brew casks can be configured in `/users/joost/darwin.nix`
+
 
 ## Setup (NixOS) bare metal
 

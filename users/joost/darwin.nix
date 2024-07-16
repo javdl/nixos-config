@@ -9,15 +9,15 @@
   homebrew = {
     enable = true;
     casks  = [
-      "authy"
       "bitwarden"
       "calibre"
       "chromedriver"
       "cleanshot"
       "darktable"
       "digikam"
+      "dbeaver-community"
       "discord"
-      "docker"
+      # "docker"
       "dropbox"
       "element"
       "figma"
@@ -41,7 +41,6 @@
       "raycast"
       "rectangle"
       "screenflow"
-      "sequel-ace"
       "slack"
       "spotify"
       "sublime-text"
