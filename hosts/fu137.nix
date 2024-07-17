@@ -8,6 +8,9 @@
   imports =
     [ # Include the results of the hardware scan.
       ./hardware/fu137.nix
+      ../modules/nvidia-drivers.nix
+      ../modules/amd-drivers.nix # IGPU
+      ./bare-metal-shared-linux.nix
     ];
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
@@ -44,18 +47,18 @@
     LC_TIME = "nl_NL.UTF-8";
   };
 
-  # Enable the X11 windowing system.
-  services.xserver.enable = true;
+  # # Enable the X11 windowing system.
+  # services.xserver.enable = true;
 
-  # Enable the GNOME Desktop Environment.
-  services.xserver.displayManager.gdm.enable = true;
-  services.xserver.desktopManager.gnome.enable = true;
+  # # Enable the GNOME Desktop Environment.
+  # services.xserver.displayManager.gdm.enable = true;
+  # services.xserver.desktopManager.gnome.enable = true;
 
-  # Configure keymap in X11
-  services.xserver = {
-    layout = "us";
-    xkbVariant = "";
-  };
+  # # Configure keymap in X11
+  # services.xserver = {
+  #   layout = "us";
+  #   xkbVariant = "";
+  # };
 
   # Enable CUPS to print documents.
   services.printing.enable = true;
@@ -77,7 +80,7 @@
   };
 
   # Enable touchpad support (enabled default in most desktopManager).
-  # services.xserver.libinput.enable = true;
+  services.xserver.libinput.enable = true;
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.joost = {
@@ -86,6 +89,7 @@
     extraGroups = [ "networkmanager" "wheel" ];
     packages = with pkgs; [
     #  thunderbird
+    gnumake
     ];
   };
 
@@ -94,12 +98,43 @@
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
+  nixpkgs.config.allowUnfreePredicate = _: true;
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
-  #  vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
-  #  wget
+   vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
+   wget
+   glib
+    #github-runner
+    gitlab-runner
+    #  wget
+
+    # Hyprland
+    xdg-desktop-portal-hyprland
+    xwayland
+    # must have
+    libnotify # for notify-send
+    mako
+    pipewire
+    wireplumber
+    libsForQt5.polkit-kde-agent # not sure if this is correct
+    # qt5-wayland
+    libsForQt5.qt5.qtwayland
+    libsForQt5.qt5ct
+    # qt6-wayland
+    qt6.qtwayland
+    # useful
+    waybar
+    font-awesome # waybar icons
+    wofi
+    hyprpaper # wallpaper
+    hyprpicker # color picker
+    # hyprlock # lockscreen Not in nixos pkgs
+    # hypridle # idle behaviour Not in nixos pkgs
+    mpd # best music player in the world
+    libglvnd
+    lmstudio
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
