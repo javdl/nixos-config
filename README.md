@@ -250,9 +250,12 @@ Brew casks can be configured in `/users/joost/darwin.nix`
 - `sudo nixos-rebuild switch`
 - `nix-shell -p git gnumake`
 - `git clone https://github.com/javdl/nixos-config.git`
-- `cp /etc/nixos/configuration.nix ~/nixos-config/hosts/HOSTNAME.nix` and `cp /etc/nixos/hardware-configuration.nix ~/nixos-config/hosts/hardware/HOSTNAME.nix`
+- `cp /etc/nixos/configuration.nix ~/nixos-config/hosts/HOSTNAME.nix` and  
+`cp /etc/nixos/hardware-configuration.nix ~/nixos-config/hosts/hardware/HOSTNAME.nix`
 - Edit the copied `configuration.nix` to make the include correct to `hardware/HOSTNAME.nix` folder
 - Edit `~/nixos-config/flake.nix` to add an entry for the new host.
+- `git add .` to add the newly created files to git. Files must be in git for Nix to work with them. Commiting them is not necessary though.
+
 ```sh
 export NIXNAME=HOSTNAME
 make switch
@@ -262,8 +265,12 @@ sudo nixos-rebuild switch --flake ".#${NIXNAME}" # same command as in Makefile
 cd ~/nixos-config && export NIXPKGS_ALLOW_INSECURE=1 && sudo nixos-rebuild switch --flake ".#j7"
 ```
 - Copy the GPG key and SSH key onto the machine from an existing one (only the keys are needed, not other files in the `~/.ssh` or `~/.gnupg` folder)
+- The GPG `.asc` file can also be downloaded from secure storage and then imported. `gpg --import Joost_secret_key.asc` for both public and private keys.
 - Before the GPG key works with git, you might need to do a `gpgconf --kill gpg-agent` before it will pick up the new settings. (I've got a `signing failed: no pinentry` error.
-- Commit the changes and publish to git with the new host added.
+- Before the SSH key works you need to set permissions `chmod 600 ~/.ssh/id_ed25519`
+- Commit the changes and publish to git with the new host added.  
+`git remote set-url origin git@github.com:javdl/nixos-config.git`  
+and `git add . && git commit -m "add HOSTNAME" && git push`
 - On subsequent changes, you can use `make switch` instead of the nixos-rebuild command.
 
 ## Setup (WSL)
