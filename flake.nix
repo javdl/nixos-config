@@ -94,6 +94,12 @@
       user   = "joost";
     };
 
+    darwinConfigurations.fu146 = mkSystem "fu146" {
+      system = "aarch64-darwin";
+      user   = "joost";
+      darwin = true;
+    };
+
     nixosConfigurations.j7 = mkSystem "j7" rec {
       system = "x86_64-linux";
       user   = "joost";
