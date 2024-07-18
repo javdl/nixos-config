@@ -113,6 +113,7 @@
     packages = with pkgs; [
       firefox-devedition
       gnumake
+      pavucontrol
     ];
   };
 
