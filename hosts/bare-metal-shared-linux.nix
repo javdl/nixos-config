@@ -83,6 +83,11 @@ in {
   i18n.defaultLocale = "en_US.UTF-8";
 
   # setup windowing environment
+  services = {
+    displayManager = {
+      defaultSession = if linuxGnome then "gnome" else "none+i3";
+    };
+  };
   services.xserver = if linuxGnome then {
     enable = true;
     xkb.layout = "us";
@@ -100,7 +105,6 @@ in {
     };
 
     displayManager = {
-      defaultSession = "none+i3";
       lightdm.enable = true;
 
       # AARCH64: For now, on Apple Silicon, we must manually set the

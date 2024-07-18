@@ -26,6 +26,13 @@ in {
       substituters = ["https://javdl-nixos-config.cachix.org" "https://devenv.cachix.org"];
       trusted-public-keys = ["javdl-nixos-config.cachix.org-1:6xuHXHavvpdfBLQq+RzxDAMxhWkea0NaYvLtDssDJIU=" "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="];
     };
+    
+    # Automate garbage collection / Make sure boot does not get full
+    gc = {
+      automatic = true;
+      randomizedDelaySec = "14m";
+      options = "--delete-older-than 10d";
+    };
   };
 
   nixpkgs.config.permittedInsecurePackages = [
@@ -74,6 +81,11 @@ in {
   };
 
   # setup windowing environment
+  services = {
+    displayManager = {
+      defaultSession = if linuxGnome then "gnome" else "none+i3";
+    };
+  };
   services.xserver = if linuxGnome then {
     enable = true;
     layout = "us";
