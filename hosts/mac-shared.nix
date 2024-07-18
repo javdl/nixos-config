@@ -21,6 +21,13 @@ in {
             extra-substituters = ["https://javdl-nixos-config.cachix.org"];
             trusted-public-keys = ["javdl-nixos-config.cachix.org-1:6xuHXHavvpdfBLQq+RzxDAMxhWkea0NaYvLtDssDJIU="];
         };
+
+        # Automate garbage collection / Make sure boot does not get full
+        gc = {
+          automatic = true;
+          randomizedDelaySec = "14m";
+          options = "--delete-older-than 10d";
+        };
     };
 
     # nix.trustedUsers = [
