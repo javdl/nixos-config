@@ -56,6 +56,7 @@ in {
     pkgs.bat
     pkgs.bottom
     pkgs.cachix
+    pkgs.discord
     pkgs.dasht # Search API docs offline, in terminal or browser
     pkgs.fd
     pkgs.ffmpeg_5 # libgl, needed for ML
