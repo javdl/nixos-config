@@ -58,6 +58,7 @@ in {
     pkgs.cachix
     pkgs.discord
     pkgs.dasht # Search API docs offline, in terminal or browser
+    pkgs.devenv
     pkgs.fd
     pkgs.ffmpeg_5 # libgl, needed for ML
     pkgs.fzf
