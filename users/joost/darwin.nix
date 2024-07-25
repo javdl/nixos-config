@@ -35,6 +35,7 @@
       "librewolf"
       "libreoffice"
       "monodraw"
+      "mx-power-gadget"
       "obs"
       "postman"
       "rapidapi"
