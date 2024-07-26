@@ -89,6 +89,12 @@
       wsl    = true;
     };
 
+    nixosConfigurations.fumusic = mkSystem "fumusic" rec {
+      system = "x86_64-linux";
+      user   = "joost";
+    };
+
+
     nixosConfigurations.fu095 = mkSystem "fu095" rec {
       system = "x86_64-linux";
       user   = "joost";
