@@ -264,7 +264,7 @@ sudo nixos-rebuild switch --flake ".#${NIXNAME}" # same command as in Makefile
 # Example with host J7
 cd ~/nixos-config && export NIXPKGS_ALLOW_INSECURE=1 && sudo nixos-rebuild switch --flake ".#j7"
 ```
-- Copy the GPG key and SSH key onto the machine from an existing one (only the keys are needed, not other files in the `~/.ssh` or `~/.gnupg` folder)
+- Copy the GPG key and SSH key onto the machine from an existing one (only the keys are needed, not other files in the `~/.ssh` or `~/.gnupg` folder) `cp /run/media/joost/usbdrive/id_ed25519 /home/joost/.ssh/`
 - The GPG `.asc` file can also be downloaded from secure storage and then imported. `gpg --import Joost_secret_key.asc` for both public and private keys.
 - Before the GPG key works with git, you might need to do a `gpgconf --kill gpg-agent` before it will pick up the new settings. (I've got a `signing failed: no pinentry` error.
 - Before the SSH key works you need to set permissions `chmod 600 ~/.ssh/id_ed25519`
