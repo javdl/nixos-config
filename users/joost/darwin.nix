@@ -47,6 +47,7 @@
       "sublime-text"
       "thunderbird"
       "typora"
+      "veracrypt"
       "visual-studio-code"
       "vlc"
       "zed"
