@@ -8,8 +8,9 @@
   imports =
     [ # Include the results of the hardware scan.
       ./hardware/fu137.nix
-      ../modules/nvidia-drivers.nix
-      ../modules/amd-drivers.nix # IGPU
+#      ../modules/nvidia-drivers.nix
+#      ../modules/amd-drivers.nix # IGPU
+      ../modules/hyprland.nix
       ./bare-metal-shared-linux.nix
     ];
 
