@@ -7,11 +7,7 @@
 {
   imports =
     [ # Include the results of the hardware scan.
-      ./hardware/fu137.nix
-#      ../modules/nvidia-drivers.nix
-#      ../modules/amd-drivers.nix # IGPU
-      ../modules/hyprland.nix
-      ./bare-metal-shared-linux.nix
+      ./hardware/fumusic.nix
     ];
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
@@ -20,12 +16,19 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
-  networking.hostName = "fu137-4090-ML"; # Define your hostname.
+  networking.hostName = "fumusic"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
   # Configure network proxy if necessary
   # networking.proxy.default = "http://user:password@proxy:port/";
   # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
+  
+  # Disable the GNOME3/GDM auto-suspend feature that cannot be disabled in GUI!
+  # If no user is logged in, the machine will power down after 20 minutes.
+  systemd.targets.sleep.enable = false;
+  systemd.targets.suspend.enable = false;
+  systemd.targets.hibernate.enable = false;
+  systemd.targets.hybrid-sleep.enable = false;
 
   # Enable networking
   networking.networkmanager.enable = true;
@@ -48,18 +51,18 @@
     LC_TIME = "nl_NL.UTF-8";
   };
 
-  # # Enable the X11 windowing system.
-  # services.xserver.enable = true;
+  # Enable the X11 windowing system.
+  services.xserver.enable = true;
 
-  # # Enable the GNOME Desktop Environment.
-  # services.xserver.displayManager.gdm.enable = true;
-  # services.xserver.desktopManager.gnome.enable = true;
+  # Enable the GNOME Desktop Environment.
+  services.xserver.displayManager.gdm.enable = true;
+  services.xserver.desktopManager.gnome.enable = true;
 
-  # # Configure keymap in X11
-  # services.xserver = {
-  #   layout = "us";
-  #   xkbVariant = "";
-  # };
+  # Configure keymap in X11
+  services.xserver = {
+    layout = "us";
+    xkbVariant = "";
+  };
 
   # Enable CUPS to print documents.
   services.printing.enable = true;
@@ -81,82 +84,40 @@
   };
 
   # Enable touchpad support (enabled default in most desktopManager).
-  services.libinput.enable = true;
+  # services.xserver.libinput.enable = true;
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
-  users.users.joost = {
+  users.users.music = {
     isNormalUser = true;
-    description = "joost";
+    description = "music";
     extraGroups = [ "networkmanager" "wheel" ];
     packages = with pkgs; [
     #  thunderbird
-    gnumake
     ];
   };
+
+  # Enable automatic login for the user.
+  services.xserver.displayManager.autoLogin.enable = true;
+  services.xserver.displayManager.autoLogin.user = "music";
+
+  # Workaround for GNOME autologin: https://github.com/NixOS/nixpkgs/issues/103746#issuecomment-945091229
+  systemd.services."getty@tty1".enable = false;
+  systemd.services."autovt@tty1".enable = false;
 
   # Install firefox.
   programs.firefox.enable = true;
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
-  nixpkgs.config.allowUnfreePredicate = _: true;
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
-   vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
-   wget
-   chromium
-   glib
-    #github-runner
-    gitlab-runner
-    #  wget
-
-    # Hyprland
-    xdg-desktop-portal-hyprland
-    xwayland
-    # must have
-    libnotify # for notify-send
-    mako
-    pipewire
-    wireplumber
-    libsForQt5.polkit-kde-agent # not sure if this is correct
-    # qt5-wayland
-    libsForQt5.qt5.qtwayland
-    libsForQt5.qt5ct
-    # qt6-wayland
-    qt6.qtwayland
-    # useful
-    waybar
-    font-awesome # waybar icons
-    wofi
-    hyprpaper # wallpaper
-    hyprpicker # color picker
-    # hyprlock # lockscreen Not in nixos pkgs
-    # hypridle # idle behaviour Not in nixos pkgs
-    mpd # best music player in the world
-    libglvnd
-    lmstudio
+    gnumake
+    vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
+    wget
+    spotify
   ];
-
-  # Some programs need SUID wrappers, can be configured further or are
-  # started in user sessions.
-  # programs.mtr.enable = true;
-  # programs.gnupg.agent = {
-  #   enable = true;
-  #   enableSSHSupport = true;
-  # };
-
-  # List services that you want to enable:
-
-  # Enable the OpenSSH daemon.
-  # services.openssh.enable = true;
-
-  # Open ports in the firewall.
-  # networking.firewall.allowedTCPPorts = [ ... ];
-  # networking.firewall.allowedUDPPorts = [ ... ];
-  # Or disable the firewall altogether.
-  # networking.firewall.enable = false;
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
