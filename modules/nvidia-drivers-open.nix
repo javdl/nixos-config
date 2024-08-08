@@ -44,7 +44,7 @@
     # On the other hand;
     # Hyprland recommends using the open core driver if your GPU is supported.
     # Sway doesn't work at all with the closed source driver.
-    open = false;
+    open = true;
 
     # Enable the Nvidia settings menu,
 	# accessible via `nvidia-settings`.

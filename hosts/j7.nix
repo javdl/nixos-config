@@ -11,6 +11,7 @@
       ../modules/nvidia-drivers.nix
       ../modules/amd-drivers.nix # IGPU
       ../modules/hyprland.nix
+      ../modules/sway.nix
       ./bare-metal-shared-linux.nix
     ];
 
@@ -134,6 +135,7 @@
     xdg-desktop-portal-hyprland
     xwayland
     # must have
+    libdisplay-info
     libnotify # for notify-send
     glib
     mako

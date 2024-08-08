@@ -28,7 +28,8 @@ in {
   '';
   security.polkit.enable = true;
 
-  # Thunderbolt. Devices might need to be enrolled: https://nixos.wiki/wiki/Thunderbolt
+  # Thunderbolt. Devices might need to be enrolled:
+  # https://nixos.wiki/wiki/Thunderbolt
   services.hardware.bolt.enable = true;
 
   system.autoUpgrade.enable = true;
@@ -86,16 +87,19 @@ in {
   services = {
     displayManager = {
       # defaultSession = if linuxGnome then "gnome" else "none+i3";
-      defaultSession = if linuxGnome then "gnome" else "none+i3";
+      defaultSession = if linuxGnome then "gnome" else "sway";
     };
   };
+
+# To check if you are using Wayland, run the following command
+# echo $XDG_SESSION_TYPE
 
   services.xserver = if linuxGnome then {
     enable = true;
     xkb.layout = "us";
     desktopManager.gnome.enable = true;
     displayManager.gdm.enable = true;
-    # displayManager.gdm.wayland = true; # Enable Wayland in Gnome
+    displayManager.gdm.wayland = true; # Enable Wayland in Gnome
   } else {
     enable = true;
     xkb.layout = "us";
@@ -107,10 +111,16 @@ in {
     };
 
     displayManager = {
-      # lightdm.enable = true;
+      # lightdm.enable = true; # Does not work with wayland or Hyprland
 
-      sddm.enable = true;
-
+      sddm = {
+        enable = true;
+        enableHidpi = true;
+        autoNumlock = true;
+        wayland = {
+          enable = true;
+          };
+      };
       # AARCH64: For now, on Apple Silicon, we must manually set the
       # display resolution. This is a known issue with VMware Fusion.
       sessionCommands = ''
@@ -118,35 +128,9 @@ in {
       '';
     };
 
-    windowManager = {
-      i3.enable = true;
-    };
-  };
-
-  programs.sway = {
-    enable = true;
-    wrapperFeatures.gtk = true; # so that gtk works properly
-    extraPackages = with pkgs; [
-      swaylock
-      swayidle
-      wl-clipboard
-      wf-recorder
-      mako # notification daemon
-      grim
-      #kanshi
-      slurp
-      alacritty # Alacritty is the default terminal in the config
-      #dmenu # Dmenu is the default in the config but i recommend wofi since its wayland native
-      wofi
-      gtk3 # fixes issue where Kitty doesnt start after logging in to Hyprland.
-    ];
-    extraSessionCommands = ''
-      export SDL_VIDEODRIVER=wayland
-      export QT_QPA_PLATFORM=wayland
-      export QT_WAYLAND_DISABLE_WINDOWDECORATION="1"
-      export _JAVA_AWT_WM_NONREPARENTING=1
-      export MOZ_ENABLE_WAYLAND=1
-    '';
+     windowManager = {
+       i3.enable = true;
+     };
   };
 
   # Enable tailscale. We manually authenticate when we want with
