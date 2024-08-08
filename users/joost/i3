@@ -205,6 +205,6 @@ bindsym $mod+BackSpace mode "$mode_system"
 
      font pango:Fira Code 8
      colors {
-         background $back
+        #  background $back # does not work in Sway
      }
  }

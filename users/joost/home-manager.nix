@@ -464,4 +464,10 @@ in {
     size = 128;
     x11.enable = true;
   };
+
+  # fix for Inferior performance compared to other distributions
+
+# security.pam.loginLimits = [
+#   { domain = "@users"; item = "rtprio"; type = "-"; value = 1; }
+# ];
 }

@@ -10,6 +10,8 @@
       ./hardware/j7.nix
       ../modules/nvidia-drivers.nix
       ../modules/amd-drivers.nix # IGPU
+      ../modules/hyprland.nix
+      ../modules/sway.nix
       ./bare-metal-shared-linux.nix
     ];
 
@@ -59,15 +61,6 @@
     LC_PAPER = "nl_NL.UTF-8";
     LC_TELEPHONE = "nl_NL.UTF-8";
     LC_TIME = "nl_NL.UTF-8";
-  };
-
-  programs.hyprland = {
-    # Install the packages from nixpkgs
-    enable = true;
-    # Whether to enable XWayland
-    xwayland.enable = true;
-    # Optional, hint electron apps to use wayland:
-    # environment.sessionVariables.NIXOS_OZONE_WL = "1";
   };
 
   # Enable the X11 windowing system.
@@ -142,6 +135,7 @@
     xdg-desktop-portal-hyprland
     xwayland
     # must have
+    libdisplay-info
     libnotify # for notify-send
     glib
     mako
