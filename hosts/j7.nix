@@ -12,6 +12,7 @@
       ../modules/amd-drivers.nix # IGPU
       ../modules/hyprland.nix
       ../modules/sway.nix
+      # ../modules/programs.nix https://github.com/gpskwlkr/nixos-hyprland-flake/tree/main
       ./bare-metal-shared-linux.nix
     ];
 
