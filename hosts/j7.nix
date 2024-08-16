@@ -134,7 +134,7 @@
 
     # Hyprland
     xdg-desktop-portal-hyprland
-    xwayland
+    # xwayland Crashes in Sway and i3 when running chromium?
     # must have
     libdisplay-info
     libnotify # for notify-send

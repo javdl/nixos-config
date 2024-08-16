@@ -7,12 +7,15 @@ name:
   system,
   user,
   darwin ? false,
-  wsl ? false
+  wsl ? false,
+  raphael ? false
 }:
 
 let
   # True if this is a WSL system.
   isWSL = wsl;
+  # True if this is a Raphael iGPU system
+  isRaphael = raphael;
 
   # The config files for this system.
   machineConfig = ../hosts/${name}.nix;
@@ -33,6 +36,9 @@ in systemFunc rec {
 
     # Bring in WSL if this is a WSL build
     (if isWSL then inputs.nixos-wsl.nixosModules.wsl else {})
+
+    # Bring in AMD Raphael iGPI if this is a Raphael build
+    (if isRaphael then inputs.nixos-hardware.nixosModules.common-cpu-amd-raphael-igpu else {})
 
     machineConfig
     userOSConfig

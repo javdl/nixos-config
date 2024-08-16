@@ -7,8 +7,9 @@
 {
   imports =
     [ # Include the results of the hardware scan.
+     # <nixos-hardware/common/cpu/amd/raphael/igpu>
       ./hardware/fu137.nix
-#      ../modules/nvidia-drivers.nix
+ #     ../modules/nvidia-drivers-fu137-4090.nix
       ../modules/amd-drivers.nix # IGPU
       ../modules/hyprland.nix
       ../modules/sway.nix
@@ -115,7 +116,7 @@
 
     # Hyprland
     xdg-desktop-portal-hyprland
-    xwayland
+    # xwayland Crashes in Sway and i3?
     # must have
     libnotify # for notify-send
     mako

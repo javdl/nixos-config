@@ -10,6 +10,8 @@
     # We use the unstable nixpkgs repo for some packages.
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixpkgs-unstable";
 
+    nixos-hardware.url = "github:NixOS/nixos-hardware/master";
+
     # Build a custom WSL installer
     nixos-wsl.url = "github:nix-community/NixOS-WSL";
     nixos-wsl.inputs.nixpkgs.follows = "nixpkgs";
@@ -25,11 +27,6 @@
     };
 
     hyprland.url = "github:hyprwm/Hyprland";
-
-    firefox-addons = {
-            url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
-            inputs.nixpkgs.follows = "nixpkgs";
-        };
 
     # I think technically you're not supposed to override the nixpkgs
     # used by neovim but recently I had failures if I didn't pin to my
@@ -54,7 +51,7 @@
     # zig.url = "github:mitchellh/zig-overlay";
   };
 
-  outputs = { self, nixpkgs, home-manager, darwin, ... }@inputs: let
+  outputs = { self, nixpkgs, nixos-hardware, home-manager, darwin, ... }@inputs: let
     # mkDarwin = import ./lib/mkdarwin.nix;
     # mkVM = import ./lib/mkvm.nix;
 
@@ -105,9 +102,15 @@
       user   = "joost";
     };
 
+    # nixosConfigurations.fu137 = mkSystem "fu137" rec {
+    #   system = "x86_64-linux";
+    #   user   = "joost";
+    # };
+
     nixosConfigurations.fu137 = mkSystem "fu137" rec {
       system = "x86_64-linux";
       user   = "joost";
+      raphael = true;
     };
 
     darwinConfigurations.fu146 = mkSystem "fu146" {
