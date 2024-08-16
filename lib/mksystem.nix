@@ -8,7 +8,8 @@ name:
   user,
   darwin ? false,
   wsl ? false,
-  raphael ? false
+  raphael ? false,
+  pstate ? false,
 }:
 
 let
@@ -16,6 +17,7 @@ let
   isWSL = wsl;
   # True if this is a Raphael iGPU system
   isRaphael = raphael;
+  isPstate = pstate;
 
   # The config files for this system.
   machineConfig = ../hosts/${name}.nix;
@@ -39,6 +41,8 @@ in systemFunc rec {
 
     # Bring in AMD Raphael iGPI if this is a Raphael build
     (if isRaphael then inputs.nixos-hardware.nixosModules.common-cpu-amd-raphael-igpu else {})
+    # pstate for modern AMD CPUs
+    (if isPstate then inputs.nixos-hardware.nixosModules.common-cpu-amd-pstate else {})
 
     machineConfig
     userOSConfig

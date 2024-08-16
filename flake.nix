@@ -111,6 +111,7 @@
       system = "x86_64-linux";
       user   = "joost";
       raphael = true;
+      pstate = true; # for modern AMD cpu's
     };
 
     darwinConfigurations.fu146 = mkSystem "fu146" {
@@ -122,6 +123,8 @@
     nixosConfigurations.j7 = mkSystem "j7" rec {
       system = "x86_64-linux";
       user   = "joost";
+      raphael = true;
+      pstate = true;
     };
 
     darwinConfigurations.macbook-pro-m1 = mkSystem "macbook-pro-m1" {
