@@ -9,8 +9,9 @@
     [ # Include the results of the hardware scan.
       ./hardware/fu137.nix
 #      ../modules/nvidia-drivers.nix
-#      ../modules/amd-drivers.nix # IGPU
+      ../modules/amd-drivers.nix # IGPU
       ../modules/hyprland.nix
+      ../modules/sway.nix
       ./bare-metal-shared-linux.nix
     ];
 
