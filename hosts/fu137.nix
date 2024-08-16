@@ -9,7 +9,7 @@
     [ # Include the results of the hardware scan.
      # <nixos-hardware/common/cpu/amd/raphael/igpu>
       ./hardware/fu137.nix
- #     ../modules/nvidia-drivers-fu137-4090.nix
+      # ../modules/nvidia-drivers-535.nix
       ../modules/amd-drivers.nix # IGPU
       ../modules/hyprland.nix
       ../modules/sway.nix
