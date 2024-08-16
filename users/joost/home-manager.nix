@@ -145,7 +145,7 @@ in {
     "electron-flags28.conf".source  = ./electron-flags.conf;
     "code-flags.conf".text = builtins.readFile ./code-flags.conf;
 
-    # "wallpapers/04167_unreachable_3840x2160.png".text = builtins.readFile ./wallpapers/04167_unreachable_3840x2160.png;
+    "wallpapers/04167_unreachable_3840x2160.png".source = ./wallpapers/04167_unreachable_3840x2160.png;
 
     "i3/config".text = builtins.readFile ./i3;
     "rofi/config.rasi".text = builtins.readFile ./rofi;
