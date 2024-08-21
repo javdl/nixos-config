@@ -17,7 +17,9 @@ let
 in {
 
   # Be careful updating this.
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+  # boot.kernelPackages = pkgs.linuxPackages_latest;
+  boot.kernelPackages = pkgs.linuxKernel.packages.linux_6_9; # 6.10 gives problems with nvidia drivers
+
 
   # OBS virtual camera
   boot.extraModulePackages = with config.boot.kernelPackages; [
