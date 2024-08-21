@@ -154,8 +154,8 @@
     wofi
     hyprpaper # wallpaper
     hyprpicker # color picker
-    # hyprlock # lockscreen Not in nixos pkgs
-    # hypridle # idle behaviour Not in nixos pkgs
+    hyprlock # lockscreen Not in nixos pkgs
+    hypridle # idle behaviour Not in nixos pkgs
     mpd # best music player in the world
     libglvnd
     lmstudio
