@@ -151,6 +151,7 @@ in {
     packages = [
       pkgs.fira-code
       pkgs.jetbrains-mono
+      pkgs.font-awesome # waybar icons
       pkgs.noto-fonts
       pkgs.noto-fonts-cjk
       pkgs.noto-fonts-emoji

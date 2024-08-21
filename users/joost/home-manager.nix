@@ -50,6 +50,8 @@ in {
   # Packages I always want installed. Most packages I install using
   # per-project flakes sourced with direnv and nix-shell, so this is
   # not a huge list.
+  fonts.fontconfig.enable = true;
+
   home.packages = [
     pkgs.asciinema
     pkgs.air # Live reload for Go
@@ -77,6 +79,19 @@ in {
     pkgs.tree
     pkgs.watch
     pkgs.xh # for sending HTTP requests (like HTTPie)
+
+    pkgs.font-awesome # waybar icons
+    pkgs.fira-code
+    pkgs.fira-code-symbols
+    pkgs.jetbrains-mono
+    pkgs.liberation_ttf
+    pkgs.mplus-outline-fonts.githubRelease
+    pkgs.nerdfonts
+    pkgs.noto-fonts
+    pkgs.noto-fonts-cjk
+    pkgs.noto-fonts-emoji
+    pkgs.rubik
+    pkgs.proggyfonts
 
     pkgs.bashmount # Easily mount (encrypted/usb) drives
     pkgs.flyctl
