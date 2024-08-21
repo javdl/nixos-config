@@ -4,7 +4,10 @@
   imports =
     [    ];
 
-# Enable OpenGL
+  # Enable Nvidia for Docker
+  hardware.nvidia-container-toolkit.enable = true;
+
+  # Enable OpenGL
   hardware.opengl = {
     enable = true;
     driSupport = true;

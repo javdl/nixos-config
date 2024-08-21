@@ -87,9 +87,20 @@ in {
 
   # setup windowing environment
   services = {
-    displayManager = {
+    displayManager = if linuxGnome then {
+      defaultSession = "gnome";
       # defaultSession = if linuxGnome then "gnome" else "none+i3";
-      defaultSession = if linuxGnome then "gnome" else "sway";
+      # defaultSession = if linuxGnome then "gnome" else "sway";
+    } else {
+      defaultSession = "hyprland";
+      sddm = {
+        enable = true;
+        enableHidpi = true;
+        autoNumlock = true;
+        wayland = {
+          enable = true;
+          };
+      };
     };
   };
 
@@ -115,14 +126,6 @@ in {
     displayManager = {
       # lightdm.enable = true; # Does not work with wayland or Hyprland
 
-      sddm = {
-        enable = true;
-        enableHidpi = true;
-        autoNumlock = true;
-        wayland = {
-          enable = true;
-          };
-      };
       # AARCH64: For now, on Apple Silicon, we must manually set the
       # display resolution. This is a known issue with VMware Fusion.
       sessionCommands = ''
