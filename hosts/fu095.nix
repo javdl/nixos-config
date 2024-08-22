@@ -9,6 +9,7 @@
     [ # Include the results of the hardware scan.
       ./hardware/fu095.nix
       ../modules/nvidia-drivers.nix
+      ../modules/common-pc-ssd.nix
       ./bare-metal-shared-linux.nix
     ];
 

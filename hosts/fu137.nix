@@ -11,6 +11,7 @@
       ./hardware/fu137.nix
       # ../modules/nvidia-drivers-535.nix
       ../modules/amd-drivers.nix # IGPU
+      ../modules/common-pc-ssd.nix
       ../modules/hyprland.nix
       ../modules/sway.nix
       ./bare-metal-shared-linux.nix
