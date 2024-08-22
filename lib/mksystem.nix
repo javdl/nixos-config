@@ -10,6 +10,7 @@ name:
   wsl ? false,
   raphael ? false,
   pstate ? false,
+  zenpower ? false
 }:
 
 let
@@ -18,6 +19,7 @@ let
   # True if this is a Raphael iGPU system
   isRaphael = raphael;
   isPstate = pstate;
+  isZenpower = zenpower;
 
   # The config files for this system.
   machineConfig = ../hosts/${name}.nix;
@@ -43,6 +45,8 @@ in systemFunc rec {
     (if isRaphael then inputs.nixos-hardware.nixosModules.common-cpu-amd-raphael-igpu else {})
     # pstate for modern AMD CPUs
     (if isPstate then inputs.nixos-hardware.nixosModules.common-cpu-amd-pstate else {})
+    (if isZenpower then inputs.nixos-hardware.nixosModules.common-cpu-amd-zenpower else {})
+
 
     machineConfig
     userOSConfig

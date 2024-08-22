@@ -112,6 +112,7 @@
       user   = "joost";
       raphael = true;
       pstate = true; # for modern AMD cpu's
+      zenpower = true; # for modern AMD cpu's
     };
 
     darwinConfigurations.fu146 = mkSystem "fu146" {
@@ -125,6 +126,7 @@
       user   = "joost";
       raphael = true;
       pstate = true;
+      zenpower = true;
     };
 
     darwinConfigurations.macbook-pro-m1 = mkSystem "macbook-pro-m1" {
