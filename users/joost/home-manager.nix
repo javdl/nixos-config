@@ -83,6 +83,7 @@ in {
     pkgs.font-awesome # waybar icons
     pkgs.fira-code
     pkgs.fira-code-symbols
+    pkgs.ibm-plex
     pkgs.jetbrains-mono
     pkgs.liberation_ttf
     pkgs.mplus-outline-fonts.githubRelease
