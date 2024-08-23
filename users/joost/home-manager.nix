@@ -65,7 +65,6 @@ in {
     pkgs.ffmpeg_5 # libgl, needed for ML
     pkgs.fzf
     pkgs.gh
-    pkgs.github-desktop
     pkgs.git-lfs
     gdk
     # pkgs.google-cloud-sdk # See above, gdk with components list

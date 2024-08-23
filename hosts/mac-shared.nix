@@ -21,14 +21,11 @@ in {
             extra-substituters = ["https://javdl-nixos-config.cachix.org"];
             trusted-public-keys = ["javdl-nixos-config.cachix.org-1:6xuHXHavvpdfBLQq+RzxDAMxhWkea0NaYvLtDssDJIU="];
         };
-
-        # Automate garbage collection / Make sure boot does not get full
-        gc = {
-          automatic = true;
-          randomizedDelaySec = "14m";
-          options = "--delete-older-than 120d";
-        };
     };
+
+    # Allow unfree packages
+    nixpkgs.config.allowUnfree = true;
+    nixpkgs.config.allowUnfreePredicate = _: true;
 
     # nix.trustedUsers = [
     #     "@admin"
