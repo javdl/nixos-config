@@ -133,7 +133,7 @@
       system = "aarch64-darwin";
       user   = "joost";
       darwin = true;
-    }
+    };
 
     darwinConfigurations.macbook-air-m1 = mkSystem "macbook-air-m1" {
       system = "aarch64-darwin";
