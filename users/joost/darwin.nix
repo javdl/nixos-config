@@ -24,7 +24,7 @@
       "figma"
       "firefox"
       "gimp"
-      "github"
+      # "github" # only Intel, arm64 must be downloaded from website
       "google-chrome"
       "google-cloud-sdk"
       "google-drive"
