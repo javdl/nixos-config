@@ -164,6 +164,7 @@ in {
 
     "i3/config".text = builtins.readFile ./i3;
     "rofi/config.rasi".text = builtins.readFile ./rofi;
+    "zed/settings.json".text = builtins.readFile ./zed;
 
     # tree-sitter parsers
     "nvim/parser/proto.so".source = "${pkgs.tree-sitter-proto}/parser";
