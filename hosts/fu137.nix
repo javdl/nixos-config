@@ -9,7 +9,7 @@
     [ # Include the results of the hardware scan.
      # <nixos-hardware/common/cpu/amd/raphael/igpu>
       ./hardware/fu137.nix
-      # ../modules/nvidia-drivers-535.nix
+      ../modules/nvidia-drivers-535.nix
       ../modules/amd-drivers.nix # IGPU
       ../modules/common-pc-ssd.nix
       ../modules/hyprland.nix
@@ -153,7 +153,7 @@
   # List services that you want to enable:
 
   # Enable the OpenSSH daemon.
-  # services.openssh.enable = true;
+  services.openssh.enable = true;
 
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ ... ];

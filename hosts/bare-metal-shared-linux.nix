@@ -18,8 +18,10 @@ in {
 
   # Be careful updating this.
   # boot.kernelPackages = pkgs.linuxPackages_latest;
-  boot.kernelPackages = pkgs.linuxKernel.packages.linux_6_9; # 6.10 gives problems with nvidia drivers
+  boot.kernelPackages = pkgs.linuxKernel.packages.linux_6_6; # 6.10 gives problems with nvidia drivers, 6.6 is last LTS
 
+  # Electron an Chromium under Wayland
+  environment.sessionVariables.NIXOS_OZONE_WL = "1";
 
   # OBS virtual camera
   boot.extraModulePackages = with config.boot.kernelPackages; [
@@ -107,15 +109,12 @@ in {
 # To check if you are using Wayland, run the following command
 # echo $XDG_SESSION_TYPE
 
-  services.xserver = if linuxGnome then {
+services.xserver = {
     enable = true;
     xkb.layout = "us";
     desktopManager.gnome.enable = true;
-    displayManager.gdm.enable = true;
-    displayManager.gdm.wayland = true; # Enable Wayland in Gnome
-  } else {
-    enable = true;
-    xkb.layout = "us";
+    displayManager.gdm.enable = if linuxGnome then true else false;
+    displayManager.gdm.wayland = if linuxGnome then true else false;
     dpi = 220;
 
     desktopManager = {
