@@ -185,7 +185,7 @@ services.xserver = {
     vscode-fhs
     vscodium-fhs
     xclip
-    zed-editor
+    # zed-editor #broken
 
     # # ML
     # pciutils
