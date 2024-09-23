@@ -65,7 +65,6 @@ in {
     pkgs.ffmpeg_5 # libgl, needed for ML
     pkgs.fzf
     pkgs.gh
-    pkgs.github-desktop
     pkgs.git-lfs
     gdk
     # pkgs.google-cloud-sdk # See above, gdk with components list
@@ -165,6 +164,7 @@ in {
 
     "i3/config".text = builtins.readFile ./i3;
     "rofi/config.rasi".text = builtins.readFile ./rofi;
+    # "zed/settings.json".text = builtins.readFile ./zed.json; # breaks Zed; i.e. changing llm
 
     # tree-sitter parsers
     "nvim/parser/proto.so".source = "${pkgs.tree-sitter-proto}/parser";
