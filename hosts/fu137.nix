@@ -23,6 +23,9 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
+  boot.kernel.sysctl."net.ipv4.ip_forward" = true; # Docker
+  virtualisation.docker.enable = true;
+
   networking.hostName = "fu137-4090-ML"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
@@ -161,6 +164,16 @@
   # Or disable the firewall altogether.
   # networking.firewall.enable = false;
 
+  services = {
+    github-runners = {
+      runner = {
+        enable = true;
+        name = "runner";
+        tokenFile = "/home/joost/.fuww-github-runner-token";
+        url = "https://github.com/fuww";
+      };
+    };
+  };
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
   # on your system were taken. It‘s perfectly fine and recommended to leave
