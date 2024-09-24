@@ -42,7 +42,6 @@
       "postman"
       "rapidapi"
       "raycast"
-      "rectangle"
       "screenflow"
       "slack"
       "spotify"

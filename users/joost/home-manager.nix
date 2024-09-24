@@ -175,8 +175,6 @@ in {
     "nvim/queries/proto/textobjects.scm".source =
       ./textobjects.scm;
   } // (if isDarwin then {
-    # Rectangle.app. This has to be imported manually using the app.
-    "rectangle/RectangleConfig.json".text = builtins.readFile ./RectangleConfig.json;
   } else {}) // (if isLinux then {
     "ghostty/config".text = builtins.readFile ./ghostty.linux;
   } else {});
