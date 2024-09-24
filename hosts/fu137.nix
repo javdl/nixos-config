@@ -168,15 +168,15 @@
     github-runners = {
       runner = {
         enable = true;
-        name = "runner";
+        name = "fu137-AMD-RTX4090-runner";
         tokenFile = "/home/joost/.fuww-github-runner-token";
         url = "https://github.com/fuww";
       };
     };
   };
-  # This value determines the NixOS release from which the default
-  # settings for stateful data, like file locations and database versions
-  # on your system were taken. It‘s perfectly fine and recommended to leave
+  #       Th   is value determines the NixOS release from which the default
+  #       se   ttings for stateful data, like file locations and database versions
+  # on    your system were taken. It‘s perfectly fine and recommended to leave
   # this value at the release version of the first install of this system.
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
