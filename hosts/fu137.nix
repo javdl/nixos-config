@@ -23,6 +23,9 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
+  boot.kernel.sysctl."net.ipv4.ip_forward" = true; # Docker
+  virtualisation.docker.enable = true;
+
   networking.hostName = "fu137-4090-ML"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
@@ -161,9 +164,24 @@
   # Or disable the firewall altogether.
   # networking.firewall.enable = false;
 
-  # This value determines the NixOS release from which the default
-  # settings for stateful data, like file locations and database versions
-  # on your system were taken. It‘s perfectly fine and recommended to leave
+  services = {
+    github-runners = {
+      runner = {
+        enable = true;
+        name = "fu137-AMD-RTX4090-runner";
+        # We suggest using the fine-grained PATs https://search.nixos.org/options?channel=24.05&show=services.github-runners.%3Cname%3E.tokenFile&from=0&size=50&sort=relevance&type=packages&query=services.github-runner
+        # The file should contain exactly one line with the token without any newline.
+        # https://github.com/settings/personal-access-tokens/new
+        # echo -n 'token' > /home/joost/.fuww-github-runner-token
+        # Give it “Read and Write access to organization/repository self hosted runners”, depending on whether it is organization wide or per-repository.
+        tokenFile = "/home/joost/.fuww-github-runner-token";
+        url = "https://github.com/fuww";
+      };
+    };
+  };
+  #       Th   is value determines the NixOS release from which the default
+  #       se   ttings for stateful data, like file locations and database versions
+  # on    your system were taken. It‘s perfectly fine and recommended to leave
   # this value at the release version of the first install of this system.
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
