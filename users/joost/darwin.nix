@@ -9,7 +9,7 @@
   homebrew = {
     enable = true;
     casks  = [
-      "bitwarden"
+      # "bitwarden" Must be installed via Mac App Store for browser integration to work
       "calibre"
       "chromedriver"
       "cleanshot"
