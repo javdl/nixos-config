@@ -8,6 +8,10 @@
 
   homebrew = {
     enable = true;
+    brews = [
+      "aider"
+      "jq"
+      ];
     casks  = [
       # "bitwarden" Must be installed via Mac App Store for browser integration to work
       "calibre"
