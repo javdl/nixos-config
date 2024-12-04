@@ -75,6 +75,7 @@ in {
     pkgs.libGL # ML
     pkgs.libGLU # ML
     pkgs.ripgrep
+    pkgs.rustup
     pkgs.tree
     pkgs.watch
     pkgs.xh # for sending HTTP requests (like HTTPie)

@@ -250,7 +250,7 @@ Brew casks can be configured in `/users/joost/darwin.nix`
 - `sudo nixos-rebuild switch`
 - `nix-shell -p git gnumake`
 - `git clone https://github.com/javdl/nixos-config.git`
-- `cp /etc/nixos/configuration.nix ~/nixos-config/hosts/HOSTNAME.nix` and  
+- `cp /etc/nixos/configuration.nix ~/nixos-config/hosts/HOSTNAME.nix` and
 `cp /etc/nixos/hardware-configuration.nix ~/nixos-config/hosts/hardware/HOSTNAME.nix`
 - Edit the copied `configuration.nix` to make the include correct to `hardware/HOSTNAME.nix` folder
 - Edit `~/nixos-config/flake.nix` to add an entry for the new host.
@@ -268,8 +268,8 @@ cd ~/nixos-config && export NIXPKGS_ALLOW_INSECURE=1 && sudo nixos-rebuild switc
 - The GPG `.asc` file can also be downloaded from secure storage and then imported. `gpg --import Joost_secret_key.asc` for both public and private keys.
 - Before the GPG key works with git, you might need to do a `gpgconf --kill gpg-agent` before it will pick up the new settings. (I've got a `signing failed: no pinentry` error.
 - Before the SSH key works you need to set permissions `chmod 600 ~/.ssh/id_ed25519`
-- Commit the changes and publish to git with the new host added.  
-`git remote set-url origin git@github.com:javdl/nixos-config.git`  
+- Commit the changes and publish to git with the new host added.
+`git remote set-url origin git@github.com:javdl/nixos-config.git`
 and `git add . && git commit -m "add HOSTNAME" && git push`
 - On subsequent changes, you can use `make switch` instead of the nixos-rebuild command.
 
@@ -397,3 +397,15 @@ sudo NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nixos-rebuild switch --upgrade --flake "
 
 Certain software **must** be installed for Hyprland to work properly.
 [https://wiki.hyprland.org/Useful-Utilities/Must-have/](https://wiki.hyprland.org/Useful-Utilities/Must-have/)
+
+## MacOS 15 Sequoia upgrade
+
+When getting the error: `error: the user '_nixbld1' in the group 'nixbld' does not exist`
+
+Use this script to fix it:
+
+```sh
+curl --proto '=https' --tlsv1.2 -sSf -L https://github.com/NixOS/nix/raw/master/scripts/sequoia-nixbld-group-migration.sh | bash -s
+```
+
+Source: [https://discourse.nixos.org/t/macos-15-sequoia-update-clobbers-nixbld1-4-users/52223](https://discourse.nixos.org/t/macos-15-sequoia-update-clobbers-nixbld1-4-users/52223)
