@@ -62,7 +62,7 @@ in {
     pkgs.dasht # Search API docs offline, in terminal or browser
     pkgs.devenv
     pkgs.fd
-    pkgs.ffmpeg_5 # libgl, needed for ML
+    # pkgs.ffmpeg_5 # libgl, needed for ML
     pkgs.fzf
     pkgs.gh
     pkgs.git-lfs
@@ -89,7 +89,7 @@ in {
     pkgs.mplus-outline-fonts.githubRelease
     pkgs.nerdfonts
     pkgs.noto-fonts
-    pkgs.noto-fonts-cjk
+    pkgs.noto-fonts-cjk-sans
     pkgs.noto-fonts-emoji
     pkgs.rubik
     pkgs.proggyfonts

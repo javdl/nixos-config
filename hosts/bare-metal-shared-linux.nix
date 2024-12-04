@@ -152,7 +152,7 @@ services.xserver = {
       pkgs.jetbrains-mono
       pkgs.font-awesome # waybar icons
       pkgs.noto-fonts
-      pkgs.noto-fonts-cjk
+      pkgs.noto-fonts-cjk-sans
       pkgs.noto-fonts-emoji
       pkgs.liberation_ttf
       pkgs.fira-code-symbols

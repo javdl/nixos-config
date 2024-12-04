@@ -20,7 +20,6 @@ in {
 
   home.packages = [
     pkgs.cachix
-    pkgs.ffmpeg_5 # libgl, needed for ML
     pkgs.google-chrome
     pkgs.htop
     pkgs.neofetch
