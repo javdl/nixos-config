@@ -51,6 +51,7 @@ in systemFunc rec {
     machineConfig
     userOSConfig
     home-manager.home-manager {
+      home-manager.backupFileExtension = "backup";
       home-manager.useGlobalPkgs = true;
       home-manager.useUserPackages = true;
       home-manager.users.${user} = import userHMConfig {

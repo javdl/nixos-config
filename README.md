@@ -213,13 +213,7 @@ curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix 
 Clone this repo and run `make switch`, replace the NIXNAME with the configuration name you want to use:
 
 If you get errors: "ignoring untrusted substituter 'https://javdl-nixos-config.cachix.org', you are not a trusted user."
-make sure to add your user to the trusted users.''
-
-```sh
-echo "trusted-users = root joost" | sudo tee -a /etc/nix/nix.conf
-# and relaunch the daemon
-sudo launchctl kickstart -k system/org.nixos.nix-daemon
-```
+make sure to run `make` before running `make switch` to add the cachix cache.
 
 **Initial setup.**
 
