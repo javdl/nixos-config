@@ -75,10 +75,14 @@ in {
     pkgs.libGL # ML
     pkgs.libGLU # ML
     pkgs.ripgrep
-    pkgs.rustup
     pkgs.tree
     pkgs.watch
     pkgs.xh # for sending HTTP requests (like HTTPie)
+
+    pkgs.rustup
+    pkgs.rust-script
+    pkgs.rustc
+    pkgs.pre-commit
 
     pkgs.font-awesome # waybar icons
     pkgs.fira-code
