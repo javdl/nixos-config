@@ -212,7 +212,17 @@ curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix 
 
 Clone this repo and run `make switch`, replace the NIXNAME with the configuration name you want to use:
 
+If you get errors: "ignoring untrusted substituter 'https://javdl-nixos-config.cachix.org', you are not a trusted user."
+make sure to add your user to the trusted users.''
+
+```sh
+echo "trusted-users = root joost" | sudo tee -a /etc/nix/nix.conf
+# and relaunch the daemon
+sudo launchctl kickstart -k system/org.nixos.nix-daemon
+```
+
 **Initial setup.**
+
 ```sh
 cd ~
 git clone https://github.com/javdl/nixos-config.git
@@ -222,6 +232,7 @@ echo "experimental-features = nix-command flakes" > ~/.config/nix/nix.conf
 ```
 
 **Run it.**
+
 ```sh
 export NIXNAME=mac-studio-m1
 sudo nixos-rebuild switch --flake ".#${NIXNAME}" # See also the Makefile. We
@@ -229,6 +240,7 @@ sudo nixos-rebuild switch --flake ".#${NIXNAME}" # See also the Makefile. We
 ```
 
 **Updates / changes** after the first install.
+
 ```sh
 export NIXNAME=mac-studio-m1
 make switch
@@ -237,7 +249,6 @@ make switch
 ### Brew
 
 Brew casks can be configured in `/users/joost/darwin.nix`
-
 
 ## Setup (NixOS) bare metal
 
@@ -251,7 +262,7 @@ Brew casks can be configured in `/users/joost/darwin.nix`
 - `nix-shell -p git gnumake`
 - `git clone https://github.com/javdl/nixos-config.git`
 - `cp /etc/nixos/configuration.nix ~/nixos-config/hosts/HOSTNAME.nix` and
-`cp /etc/nixos/hardware-configuration.nix ~/nixos-config/hosts/hardware/HOSTNAME.nix`
+  `cp /etc/nixos/hardware-configuration.nix ~/nixos-config/hosts/hardware/HOSTNAME.nix`
 - Edit the copied `configuration.nix` to make the include correct to `hardware/HOSTNAME.nix` folder
 - Edit `~/nixos-config/flake.nix` to add an entry for the new host.
 - `git add .` to add the newly created files to git. Files must be in git for Nix to work with them. Commiting them is not necessary though.
@@ -264,13 +275,14 @@ sudo nixos-rebuild switch --flake ".#${NIXNAME}" # same command as in Makefile
 # Example with host J7
 cd ~/nixos-config && export NIXPKGS_ALLOW_INSECURE=1 && sudo nixos-rebuild switch --flake ".#j7"
 ```
+
 - Copy the GPG key and SSH key onto the machine from an existing one (only the keys are needed, not other files in the `~/.ssh` or `~/.gnupg` folder) `cp /run/media/joost/usbdrive/id_ed25519 /home/joost/.ssh/`
 - The GPG `.asc` file can also be downloaded from secure storage and then imported. `gpg --import Joost_secret_key.asc` for both public and private keys.
 - Before the GPG key works with git, you might need to do a `gpgconf --kill gpg-agent` before it will pick up the new settings. (I've got a `signing failed: no pinentry` error.
 - Before the SSH key works you need to set permissions `chmod 600 ~/.ssh/id_ed25519`
 - Commit the changes and publish to git with the new host added.
-`git remote set-url origin git@github.com:javdl/nixos-config.git`
-and `git add . && git commit -m "add HOSTNAME" && git push`
+  `git remote set-url origin git@github.com:javdl/nixos-config.git`
+  and `git add . && git commit -m "add HOSTNAME" && git push`
 - On subsequent changes, you can use `make switch` instead of the nixos-rebuild command.
 
 ## Setup (WSL)
@@ -387,7 +399,6 @@ In short, change references of 23.05 to 23.11 for the sources in flake.nix, then
 [An example commit can be seen here](https://github.com/mitchellh/nixos-config/commit/2056c76904c2b1f38c139ed645522bbdffa394a5)
 
 More generic info: [https://nixos.org/manual/nixos/stable/index.html#sec-upgrading](https://nixos.org/manual/nixos/stable/index.html#sec-upgrading)
-
 
 ```sh
 sudo NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nixos-rebuild switch --upgrade --flake ".#vm-aarch64"
