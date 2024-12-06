@@ -1,5 +1,7 @@
 { config, pkgs, ... }: {
 
+  system.stateVersion = 5;
+
   # Mac Studio M1 office desk Joost
   networking.hostName = "fu146";
 
