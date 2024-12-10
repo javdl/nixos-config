@@ -84,6 +84,19 @@ in {
     pkgs.rustc
     pkgs.pre-commit
 
+    pkgs.aider-chat
+    pkgs.darktable
+    pkgs.dbeaver-bin
+    pkgs.discord
+    pkgs.element-web
+    pkgs.gimp
+    pkgs.google-chrome
+    pkgs.inkscape
+    pkgs.postman
+    pkgs.slack
+    pkgs.spotify
+    pkgs.telegram-desktop
+
     pkgs.font-awesome # waybar icons
     pkgs.fira-code
     pkgs.fira-code-symbols
@@ -119,6 +132,7 @@ in {
     # This is automatically setup on Linux
     pkgs.cachix
     pkgs.tailscale
+    pkgs.raycast # only for MacOS
   ]) ++ (lib.optionals (isLinux && !isWSL) [
     pkgs.chromium
     pkgs.firefox-devedition

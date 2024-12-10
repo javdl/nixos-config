@@ -9,7 +9,6 @@
   homebrew = {
     enable = true;
     brews = [
-      "aider"
       "jq"
       ];
     casks  = [
@@ -18,24 +17,18 @@
       "chromedriver"
       "cleanshot"
       "cursor"
-      "darktable"
       "digikam"
-      "dbeaver-community"
-      "discord"
+      # "dbeaver-community"
       # "docker"
       "dropbox"
-      "element"
       "figma"
       "firefox"
-      "gimp"
       # "github" # only Intel, arm64 must be downloaded from website
-      "google-chrome"
-      "google-cloud-sdk"
+      # "google-cloud-sdk" # see gdk
       "google-drive"
       "gpg-suite"
       "hammerspoon"
       "imageoptim"
-      "inkscape"
       "istat-menus"
       "licecap"
       "librewolf"
@@ -43,17 +36,10 @@
       "monodraw"
       "mx-power-gadget"
       "obs"
-      "postman"
       "rapidapi"
-      "raycast"
-      "rectangle"
       "screenflow"
-      "slack"
-      "spotify"
       "sublime-text"
-      "telegram"
       "thunderbird"
-      "typora"
       "veracrypt"
       "visual-studio-code"
       "vlc"
