@@ -11,11 +11,11 @@
     services.xserver.videoDrivers = ["amdgpu"];
 
     # AMDVLK
-    hardware.opengl.extraPackages = with pkgs; [
+    hardware.graphics.extraPackages = with pkgs; [
       amdvlk
     ];
-    # For 32 bit applications 
-    hardware.opengl.extraPackages32 = with pkgs; [
+    # For 32 bit applications
+    hardware.graphics.extraPackages32 = with pkgs; [
       driversi686Linux.amdvlk
     ];
 }

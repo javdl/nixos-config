@@ -171,7 +171,7 @@ services.xserver = {
     cachix
     gnumake
     gimp
-    gnome.nautilus
+    nautilus
     killall
     niv
     python311

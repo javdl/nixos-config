@@ -113,6 +113,7 @@ in {
 
     pkgs.bashmount # Easily mount (encrypted/usb) drives
     pkgs.flyctl
+    pkgs.git-crypt
     pkgs.glab
     pkgs.neofetch
     pkgs.nixd # Nix language server, used by Zed
