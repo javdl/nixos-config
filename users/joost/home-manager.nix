@@ -79,9 +79,10 @@ in {
     pkgs.watch
     pkgs.xh # for sending HTTP requests (like HTTPie)
 
-    pkgs.rustup # rust-analyzer, cargo # installed by rustup
-    pkgs.rust-script
-    pkgs.rustc
+    # Rust should be in flake.nix for each project, not globally installed:
+    # pkgs.rustup # rust-analyzer, cargo # installed by rustup
+    # pkgs.rust-script
+    # pkgs.rustc
     pkgs.pre-commit
 
     pkgs.aider-chat
