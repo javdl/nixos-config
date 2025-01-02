@@ -178,7 +178,7 @@ services.xserver = {
     python311Packages.pip
     # python311.withPackages my-python-packages
     # python311Packages.pip
-    rxvt_unicode
+    rxvt-unicode-unwrapped
     spotify
     thunderbird
     vlc
