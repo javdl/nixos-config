@@ -79,7 +79,7 @@ in {
     pkgs.watch
     pkgs.xh # for sending HTTP requests (like HTTPie)
 
-    pkgs.rustup
+    pkgs.rustup # rust-analyzer, cargo # installed by rustup
     pkgs.rust-script
     pkgs.rustc
     pkgs.pre-commit
