@@ -18,7 +18,7 @@
       "cleanshot"
       "cursor"
       "digikam"
-      # "dbeaver-community"
+      "dbeaver-community" # dbeaver-bin doesnt work on MacOS?
       # "docker"
       "dropbox"
       "figma"
