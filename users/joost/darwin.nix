@@ -33,6 +33,7 @@
       "licecap"
       "librewolf"
       "libreoffice"
+      "macfuse"
       "monodraw"
       "mx-power-gadget"
       "obs"

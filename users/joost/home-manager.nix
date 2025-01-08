@@ -63,6 +63,7 @@ in {
     pkgs.devenv
     pkgs.fd
     # pkgs.ffmpeg_5 # libgl, needed for ML
+    pkgs.ffmpeg
     pkgs.fzf
     pkgs.gh
     pkgs.git-lfs
@@ -70,10 +71,12 @@ in {
     # pkgs.google-cloud-sdk # See above, gdk with components list
     pkgs.htop
     pkgs.httpie
+    pkgs.imagemagick
     pkgs.jq
     pkgs.kubernetes-helm
     pkgs.libGL # ML
     pkgs.libGLU # ML
+    pkgs.libheif
     pkgs.ripgrep
     pkgs.tree
     pkgs.watch
@@ -84,6 +87,10 @@ in {
     # pkgs.rust-script
     # pkgs.rustc
     pkgs.pre-commit
+    pkgs.wasm-pack
+
+    pkgs.python3
+    pkgs.poetry
 
     pkgs.aider-chat
     pkgs.darktable
@@ -122,6 +129,7 @@ in {
     pkgs.python3
     pkgs.pocketbase
     pkgs.tailscale
+    pkgs.transmission_4
     pkgs.vscodium # gives a blank screen on bare metal install > Electron apps with Nvidia card in Wayland will. Either switch to X11 or use Integrated GPU from AMD or Intel and it will load fine
     pkgs.yubikey-manager
 
@@ -151,6 +159,7 @@ in {
     pkgs.obsidian
     pkgs.rpi-imager
     pkgs.tailscale-systray
+    pkgs.baobab # Disk usage, gnome only
   ]);
 
   #---------------------------------------------------------------------
