@@ -414,3 +414,9 @@ curl --proto '=https' --tlsv1.2 -sSf -L https://github.com/NixOS/nix/raw/master/
 ```
 
 Source: [https://discourse.nixos.org/t/macos-15-sequoia-update-clobbers-nixbld1-4-users/52223](https://discourse.nixos.org/t/macos-15-sequoia-update-clobbers-nixbld1-4-users/52223)
+
+## git folder symlink to external disk
+
+```sh
+ln -s /Volumes/4TBMacData/git $HOME/git
+```
