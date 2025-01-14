@@ -22,7 +22,7 @@
     };
 
     darwin = {
-      url = "github:LnL7/nix-darwin";
+      url = "github:LnL7/nix-darwin/nix-darwin-24.11";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -33,32 +33,49 @@
     # own. We can always try to remove that anytime.
     neovim-nightly-overlay = {
       url = "github:nix-community/neovim-nightly-overlay";
-
-      # Only need unstable until the lpeg fix hits mainline, probably
-      # not very long... can safely switch back for 23.11.
-      inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
 
     # Other packages
+    jujutsu.url = "github:martinvonz/jj";
     zig.url = "github:mitchellh/zig-overlay";
 
     # Non-flakes
-    nvim-treesitter.url = "github:nvim-treesitter/nvim-treesitter/v0.9.1";
+    nvim-conform.url = "github:stevearc/conform.nvim/v7.1.0";
+    nvim-conform.flake = false;
+    nvim-dressing.url = "github:stevearc/dressing.nvim";
+    nvim-dressing.flake = false;
+    nvim-gitsigns.url = "github:lewis6991/gitsigns.nvim/v0.9.0";
+    nvim-gitsigns.flake = false;
+    nvim-lspconfig.url = "github:neovim/nvim-lspconfig";
+    nvim-lspconfig.flake = false;
+    nvim-lualine.url ="github:nvim-lualine/lualine.nvim";
+    nvim-lualine.flake = false;
+    nvim-nui.url = "github:MunifTanjim/nui.nvim";
+    nvim-nui.flake = false;
+    nvim-plenary.url = "github:nvim-lua/plenary.nvim";
+    nvim-plenary.flake = false;
+    nvim-telescope.url = "github:nvim-telescope/telescope.nvim/0.1.8";
+    nvim-telescope.flake = false;
+    nvim-treesitter.url = "github:nvim-treesitter/nvim-treesitter/v0.9.2";
     nvim-treesitter.flake = false;
-    vim-copilot.url = "github:github/copilot.vim/v1.11.1";
+    nvim-web-devicons.url = "github:nvim-tree/nvim-web-devicons";
+    nvim-web-devicons.flake = false;
+    vim-copilot.url = "github:github/copilot.vim/v1.41.0";
     vim-copilot.flake = false;
-    # Other packages (leave in as an example)
-    # zig.url = "github:mitchellh/zig-overlay";
+    vim-misc.url = "github:mitchellh/vim-misc";
+    vim-misc.flake = false;
   };
 
   outputs = { self, nixpkgs, nixos-hardware, home-manager, darwin, ... }@inputs: let
-    # mkDarwin = import ./lib/mkdarwin.nix;
-    # mkVM = import ./lib/mkvm.nix;
-
     # Overlays is the list of overlays we want to apply from flake inputs.
     overlays = [
-      # inputs.neovim-nightly-overlay.overlay
-      # inputs.zig.overlays.default
+      inputs.jujutsu.overlays.default
+      inputs.zig.overlays.default
+
+      (final: prev: {
+        # gh CLI on stable has bugs.
+        gh = inputs.nixpkgs-unstable.legacyPackages.${prev.system}.gh;
+      })
     ];
 
     mkSystem = import ./lib/mksystem.nix {

@@ -66,6 +66,7 @@ in {
     pkgs.ffmpeg
     pkgs.fzf
     pkgs.gh
+    # pkgs.ghostty
     pkgs.git-lfs
     gdk
     # pkgs.google-cloud-sdk # See above, gdk with components list
@@ -211,6 +212,7 @@ in {
     "rectangle/RectangleConfig.json".text = builtins.readFile ./RectangleConfig.json;
   } else {}) // (if isLinux then {
     "ghostty/config".text = builtins.readFile ./ghostty.linux;
+    "jj/config.toml".source = ./jujutsu.toml;
   } else {});
 
   # Gnome settings
@@ -373,6 +375,13 @@ in {
     goPrivate = [ "github.com/javdl" "github.com/fuww" ];
   };
 
+  programs.jujutsu = {
+    enable = true;
+
+    # I don't use "settings" because the path is wrong on macOS at
+    # the time of writing this.
+  };
+
   # this should be disabled for darwin
   # programs.obs-studio = {
   #   enable = true;
@@ -468,6 +477,7 @@ in {
       customVim.vim-zig
       customVim.pigeon
       customVim.AfterColors
+
       customVim.vim-nord
       customVim.nvim-comment
       customVim.nvim-lspconfig
@@ -476,8 +486,10 @@ in {
       customVim.nvim-treesitter
       customVim.nvim-treesitter-playground
       customVim.nvim-treesitter-textobjects
+
       vimPlugins.vim-airline
       vimPlugins.vim-airline-themes
+
       vimPlugins.vim-eunuch
       vimPlugins.vim-gitgutter
       vimPlugins.vim-markdown
@@ -512,10 +524,4 @@ in {
     size = 128;
     x11.enable = true;
   };
-
-  # fix for Inferior performance compared to other distributions
-
-# security.pam.loginLimits = [
-#   { domain = "@users"; item = "rtprio"; type = "-"; value = 1; }
-# ];
 }
