@@ -176,8 +176,12 @@ in {
     MANPAGER = "${manpager}/bin/manpager";
   };
 
-  home.file.".gdbinit".source = ./gdbinit;
-  home.file.".inputrc".source = ./inputrc;
+  home.file = {
+    ".gdbinit".source = ./gdbinit;
+    ".inputrc".source = ./inputrc;
+  } // (if isDarwin then {
+    "Library/Application Support/jj/config.toml".source = ./jujutsu.toml;
+  } else {});
 
   xdg.configFile = {
     "hypr/hyprland.conf".text = builtins.readFile ./hypr/hyprland.conf;
