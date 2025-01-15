@@ -83,8 +83,8 @@ in {
     pkgs.watch
     pkgs.xh # for sending HTTP requests (like HTTPie)
 
-    # Rust should be in flake.nix for each project, not globally installed:
-    # pkgs.rustup # rust-analyzer, cargo # installed by rustup
+    # Rust should be in flake.nix for each project. However, those configs do need an initial Cargo.lock.Therefore, to create new projects we want Rust globally installed.
+    pkgs.rustup # rust-analyzer, cargo # installed by rustup
     # pkgs.rust-script
     # pkgs.rustc
     pkgs.pre-commit
@@ -93,6 +93,7 @@ in {
     pkgs.python3
     pkgs.poetry
 
+    pkgs.aichat
     pkgs.aider-chat
     pkgs.darktable
     pkgs.dbeaver-bin
