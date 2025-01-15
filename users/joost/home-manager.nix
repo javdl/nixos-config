@@ -58,7 +58,6 @@ in {
     pkgs.bat
     pkgs.bottom
     pkgs.cachix
-    pkgs.discord
     pkgs.dasht # Search API docs offline, in terminal or browser
     pkgs.devenv
     pkgs.fd
