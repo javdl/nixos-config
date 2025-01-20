@@ -37,7 +37,7 @@
 
     # Other packages
     jujutsu.url = "github:martinvonz/jj";
-    zig.url = "github:mitchellh/zig-overlay";
+    # zig.url = "github:mitchellh/zig-overlay";
 
     # Non-flakes
     nvim-conform.url = "github:stevearc/conform.nvim/v7.1.0";
@@ -70,7 +70,7 @@
     # Overlays is the list of overlays we want to apply from flake inputs.
     overlays = [
       inputs.jujutsu.overlays.default
-      inputs.zig.overlays.default
+      # inputs.zig.overlays.default
 
       (final: prev: {
         # gh CLI on stable has bugs.

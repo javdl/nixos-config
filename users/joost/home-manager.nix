@@ -55,6 +55,8 @@ in {
   home.packages = [
     pkgs.asciinema
     pkgs.air # Live reload for Go
+    pkgs.alacritty
+    pkgs.kitty
     pkgs.bat
     pkgs.bottom
     pkgs.cachix
@@ -88,6 +90,7 @@ in {
     # pkgs.rustc
     pkgs.pre-commit
     pkgs.wasm-pack
+    pkgs.fermyon-spin
 
     pkgs.python3
     pkgs.poetry
@@ -124,6 +127,7 @@ in {
     pkgs.flyctl
     pkgs.git-crypt
     pkgs.glab
+    pkgs.k9s # Kuberenetes CLI
     pkgs.neofetch
     pkgs.nixd # Nix language server, used by Zed
     # pkgs.obs-studio
@@ -478,7 +482,7 @@ in {
       customVim.vim-misc
       customVim.vim-pgsql
       customVim.vim-tla
-      customVim.vim-zig
+      # customVim.vim-zig
       customVim.pigeon
       customVim.AfterColors
 
