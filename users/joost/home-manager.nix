@@ -148,6 +148,7 @@ in {
     pkgs.cachix
     pkgs.tailscale
     pkgs.raycast # only for MacOS
+    pkgs.pinentry_mac
   ]) ++ (lib.optionals (isLinux && !isWSL) [
     pkgs.chromium
     pkgs.firefox-devedition
@@ -185,6 +186,11 @@ in {
     ".inputrc".source = ./inputrc;
   } // (if isDarwin then {
     "Library/Application Support/jj/config.toml".source = ./jujutsu.toml;
+    ".gnupg/gpg-agent.conf".text = ''
+      pinentry-program ${pkgs.pinentry_mac}/Applications/pinentry-mac.app/Contents/MacOS/pinentry-mac
+      default-cache-ttl 600
+      max-cache-ttl 7200
+    '';
   } else {});
 
   xdg.configFile = {
@@ -277,7 +283,10 @@ in {
     enable = true;
     shellOptions = [];
     historyControl = [ "ignoredups" "ignorespace" ];
-    initExtra = builtins.readFile ./bashrc;
+    initExtra = ''
+      ${builtins.readFile ./bashrc}
+      export GPG_TTY=$(tty)
+    '';
 
     shellAliases = {
       ga = "git add";
@@ -292,14 +301,14 @@ in {
     };
   };
 
-  programs.direnv= {
+  programs.direnv = {
     enable = true;
     enableBashIntegration = true; # see note on other shells below
     nix-direnv.enable = true;
 
     config = {
       whitelist = {
-        prefix= [
+        prefix = [
           "$HOME/code/go/src/github.com/fuww"
           "$HOME/code/go/src/github.com/javdl"
         ];
@@ -307,6 +316,13 @@ in {
         exact = ["$HOME/.envrc"];
       };
     };
+  };
+
+  programs.zsh = {
+    enable = true;
+    initExtra = ''
+      export GPG_TTY=$(tty)
+    '';
   };
 
   programs.fish = {
@@ -317,6 +333,7 @@ in {
       "source ${sources.theme-bobthefish}/functions/fish_title.fish"
       (builtins.readFile ./config.fish)
       "set -g SHELL ${pkgs.fish}/bin/fish"
+      "set -gx GPG_TTY (tty)"
     ]));
 
     shellAliases = {
