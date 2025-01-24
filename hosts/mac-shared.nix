@@ -18,7 +18,8 @@ in {
         # this, use your own, or toss it. Its typically safe to use a binary cache
         # since the data inside is checksummed.
         settings = {
-            extra-substituters = ["https://javdl-nixos-config.cachix.org"];
+            trusted-users = [ "root" "joost" ];
+            extra-substituters = ["https://javdl-nixos-config.cachix.org" "https://cache.nixos.org/"];
             trusted-public-keys = ["javdl-nixos-config.cachix.org-1:6xuHXHavvpdfBLQq+RzxDAMxhWkea0NaYvLtDssDJIU="];
         };
     };
