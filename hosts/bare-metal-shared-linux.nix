@@ -186,54 +186,6 @@ services.xserver = {
     vscode-fhs
     vscodium-fhs
     xclip
-    # zed-editor #broken
-
-    # # ML
-    # pciutils
-    # file
-    # git
-    # gitRepo
-    # gnupg
-    # autoconf
-    # curl
-    # poetry
-    # python311Packages.opencv4
-    # # c
-    # procps
-    # gnumake
-    # util-linux
-    # m4
-    # gperf
-    # unzip
-    # cudatoolkit
-    # # cudaPackages.tensorrt
-    # linuxPackages.nvidia_x11
-    # libGLU
-    # libGL
-    # xorg.libXi
-    # xorg.libXmu
-    # freeglut
-    # xorg.libXext
-    # xorg.libX11
-    # xorg.libXv
-    # xorg.libXrandr
-    # zlib
-    # ncurses5
-    # stdenv.cc
-    # binutils
-    # # ML libgl test fix
-    # gcc13
-    # SDL2
-    # SDL2_ttf
-    # SDL2_image
-    # glfw
-    # glew
-    # # ML 3
-    # # libstdcxx5
-    # gcc
-
-
-
 
     (vscode-with-extensions.override {
     # vscode = vscodium;

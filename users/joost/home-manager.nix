@@ -164,6 +164,7 @@ in {
     pkgs.nextcloud-client
     pkgs.obsidian
     pkgs.rpi-imager
+    # pkgs.sublime4 # needs old openssl?
     pkgs.tailscale-systray
     pkgs.baobab # Disk usage, gnome only
   ]);
