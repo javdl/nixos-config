@@ -38,6 +38,8 @@ in systemFunc rec {
     # the overlays are available globally.
     { nixpkgs.overlays = overlays; }
 
+    inputs.vscode-server.nixosModules.default
+
     # Bring in WSL if this is a WSL build
     (if isWSL then inputs.nixos-wsl.nixosModules.wsl else {})
 
