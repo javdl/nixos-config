@@ -82,6 +82,13 @@ in {
   systemd.network.wait-online.anyInterface = true; # block for no more than one interface, prevents waiting 90secs at boot for network adapters, as long as at least 1 is connected.
   # systemd.services.NetworkManager-wait-online.enable = false; # this does not work. so instead we use the above to wait for 1 interface. Skips the 90sec wait.
 
+  # Disable the GNOME3/GDM auto-suspend feature that cannot be disabled in GUI!
+  # If no user is logged in, the machine will power down after 20 minutes.
+  systemd.targets.sleep.enable = false;
+  systemd.targets.suspend.enable = false;
+  systemd.targets.hibernate.enable = false;
+  systemd.targets.hybrid-sleep.enable = false;
+
   # Virtualization settings
   virtualisation.docker.enable = true;
 
@@ -166,6 +173,7 @@ in {
     brave
     cachix
     gnumake
+    ghostty
     gimp
     nautilus
     killall
