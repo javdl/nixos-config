@@ -36,7 +36,8 @@
     options kvm ignore_msrs=1
   '';
 
-  networking.hostName = "j7-nixos"; # Define your hostname.
+
+  networking.hostName = "j7"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
   # Configure network proxy if necessary

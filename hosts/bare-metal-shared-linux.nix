@@ -93,8 +93,6 @@ in {
   # out or delete all of this.
   services.tailscale.enable = true;
 
-  services.vscode-server.enable = true;
-
   # Manage fonts. We pull these from a secret directory since most of these
   # fonts require a purchase.
   fonts = {

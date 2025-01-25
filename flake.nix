@@ -28,10 +28,6 @@
 
     hyprland.url = "github:hyprwm/Hyprland";
 
-    # VS code remote SSH
-    vscode-server.url = "github:nix-community/nixos-vscode-server";
-
-
     # I think technically you're not supposed to override the nixpkgs
     # used by neovim but recently I had failures if I didn't pin to my
     # own. We can always try to remove that anytime.
@@ -70,7 +66,7 @@
     vim-misc.flake = false;
   };
 
-  outputs = { self, nixpkgs, nixos-hardware, home-manager, darwin, vscode-server, ... }@inputs: let
+  outputs = { self, nixpkgs, nixos-hardware, home-manager, darwin, ... }@inputs: let
     # Overlays is the list of overlays we want to apply from flake inputs.
     overlays = [
       inputs.jujutsu.overlays.default
