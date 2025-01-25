@@ -17,19 +17,19 @@ let
 in {
 
   # Be careful updating this.
-  # boot.kernelPackages = pkgs.linuxPackages_latest;
-  boot.kernelPackages = pkgs.linuxKernel.packages.linux_6_6; # 6.10 gives problems with nvidia drivers, 6.6 is last LTS
+  boot.kernelPackages = pkgs.linuxPackages_latest;
+  #boot.kernelPackages = pkgs.linuxKernel.packages.linux_6_6; # 6.10 gives problems with nvidia drivers, 6.6 is last LTS
 
   # Electron an Chromium under Wayland
   environment.sessionVariables.NIXOS_OZONE_WL = "1";
 
   # OBS virtual camera
-  boot.extraModulePackages = with config.boot.kernelPackages; [
-    v4l2loopback
-  ];
-  boot.extraModprobeConfig = ''
-    options v4l2loopback devices=1 video_nr=1 card_label="OBS Cam" exclusive_caps=1
-  '';
+#  boot.extraModulePackages = with config.boot.kernelPackages; [
+#    v4l2loopback
+#  ];
+#  boot.extraModprobeConfig = ''
+#    options v4l2loopback devices=1 video_nr=1 card_label="OBS Cam" exclusive_caps=1
+#  '';
   security.polkit.enable = true;
 
   # Thunderbolt. Devices might need to be enrolled:
@@ -180,8 +180,8 @@ services.xserver = {
     # python311.withPackages my-python-packages
     # python311Packages.pip
     rxvt-unicode-unwrapped
-    spotify
-    thunderbird
+    #spotify
+    #thunderbird
     vlc
     vscode-fhs
     vscodium-fhs
@@ -195,7 +195,7 @@ services.xserver = {
       # enkia.tokyo-night # theme
       github.codespaces
       github.copilot
-      golang.go
+      #golang.go
       # googlecloudtools.cloudcode
       ms-python.python
       ms-azuretools.vscode-docker

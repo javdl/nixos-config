@@ -8,11 +8,11 @@
   imports =
     [ # Include the results of the hardware scan.
       ./hardware/j7.nix
-      ../modules/nvidia-drivers.nix
+      #../modules/nvidia-drivers.nix
       ../modules/amd-drivers.nix # IGPU
       ../modules/common-pc-ssd.nix
-      ../modules/hyprland.nix
-      ../modules/sway.nix
+      #../modules/hyprland.nix
+      #../modules/sway.nix
       # ../modules/programs.nix https://github.com/gpskwlkr/nixos-hyprland-flake/tree/main
       ./bare-metal-shared-linux.nix
     ];
@@ -121,7 +121,7 @@
 
   nixpkgs.config.permittedInsecurePackages = [
             #"openssl-1.1.1w" # For Sublimetext4, REMOVE WHEN OPENSSL 1.1 DOES NOT GET SECURITY UPDATES ANYMORE
-            "electron-25.9.0"
+            #"electron-25.9.0"
               ];
 
   # List packages installed in system profile. To search, run:
