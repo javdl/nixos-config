@@ -1,11 +1,6 @@
 { config, pkgs, lib, currentSystem, currentSystemName,... }:
 
 let
-  # Turn this to true to use gnome instead of i3. This is a bit
-  # of a hack, I just flip it on as I need to develop gnome stuff
-  # for now.
-  linuxGnome = true;
-
 #  my-python-packages = ps: with ps; [
 #    poetry
 #    pip
@@ -15,6 +10,11 @@ let
 #  ];
 
 in {
+
+  imports = [
+    ../modules/specialization/plasma.nix
+    ../modules/specialization/i3.nix
+  ];
 
   # Be careful updating this.
   boot.kernelPackages = pkgs.linuxPackages_latest;
@@ -88,56 +88,6 @@ in {
   # Select internationalisation properties.
   i18n.defaultLocale = "en_US.UTF-8";
 
-  # setup windowing environment
-  services = {
-    displayManager = if linuxGnome then {
-      defaultSession = "gnome";
-      # defaultSession = if linuxGnome then "gnome" else "none+i3";
-      # defaultSession = if linuxGnome then "gnome" else "sway";
-    } else {
-      defaultSession = "hyprland";
-      sddm = {
-        enable = true;
-        enableHidpi = true;
-        autoNumlock = true;
-        wayland = {
-          enable = true;
-          };
-      };
-    };
-  };
-
-# To check if you are using Wayland, run the following command
-# echo $XDG_SESSION_TYPE
-
-services.xserver = {
-    enable = true;
-    xkb.layout = "us";
-    desktopManager.gnome.enable = true;
-    displayManager.gdm.enable = if linuxGnome then true else false;
-    displayManager.gdm.wayland = if linuxGnome then true else false;
-    dpi = 220;
-
-    desktopManager = {
-      xterm.enable = false;
-      wallpaper.mode = "fill";
-    };
-
-    displayManager = {
-      # lightdm.enable = true; # Does not work with wayland or Hyprland
-
-      # AARCH64: For now, on Apple Silicon, we must manually set the
-      # display resolution. This is a known issue with VMware Fusion.
-      sessionCommands = ''
-        ${pkgs.xorg.xset}/bin/xset r rate 200 40
-      '';
-    };
-
-     windowManager = {
-       i3.enable = true;
-     };
-  };
-
   # Enable tailscale. We manually authenticate when we want with
   # "sudo tailscale up". If you don't use tailscale, you should comment
   # out or delete all of this.
@@ -164,10 +114,55 @@ services.xserver = {
     ];
   };
 
+  networking.extraHosts = ''
+    0.0.0.0 telemetry.crewai.com
+  '';
+
+  # Looking at https://github.com/ollama/ollama/tree/main/llm
+  # needs to update llama.cpp to a newer version that supports the
+  # .#opencl version in the llama.cpp flake. Then hopefully provide
+  # options to build with that. Otherwise look at the docker containers:
+  #
+  # ghcr.io/ggerganov/llama.cpp:light-intel-b3868
+  # ghcr.io/ggerganov/llama.cpp:server-intel-b3868
+  #
+  # They have the binaries but not the libraries. I'd need both to link
+  # with ollama
+  services.ollama.enable = true;
+  services.open-webui = {
+    enable = true;
+    port = 3001;
+  };
+
+  # TODO: try when not broken: services.private-gpt.enable = true;
+  # TODO: try comfyanonymous/ComfyUI pkg?
+
+  #python3SystemPackages = with pkgs.python3Packages; [
+  #  # vllm
+  #  instructor
+  #  huggingface-hub
+  #  llm
+  #  local.llm-claude-3
+  #  local.llm-ollama
+  #];
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
+    aichat
+    aider-chat
+    code-cursor
+    fabric-ai
+    #local.files-to-prompt
+    lmstudio # to try, open-webui-like?
+    #local.magic-cli
+    mods # pipe command output to a question
+    openai-whisper
+    pandoc # Test html -> markdown
+    #local.repopack # Testing
+    shell-gpt # $ sgpt ...
+    tgpt # $ tgpt question
+
     brave
     cachix
     gnumake
@@ -186,6 +181,9 @@ services.xserver = {
     vscode-fhs
     vscodium-fhs
     xclip
+
+    argc
+    jq
 
     (vscode-with-extensions.override {
     # vscode = vscodium;
@@ -224,6 +222,14 @@ services.xserver = {
     # if the clipboard sill works.
     gtkmm3
   ];
+
+  # Our default non-specialised desktop environment.
+  services.xserver = lib.mkIf (config.specialisation != {}) {
+    enable = true;
+    xkb.layout = "us";
+    desktopManager.gnome.enable = true;
+    displayManager.gdm.enable = true;
+  };
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
