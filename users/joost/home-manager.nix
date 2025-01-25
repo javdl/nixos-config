@@ -236,6 +236,7 @@ in {
     "org/gnome/shell" = {
       favorite-apps = [
           "firefox.desktop"
+          "ghostty.desktop"
           "kitty.desktop"
           "sublimetext4.desktop"
         # "kgx.desktop" # Should be Gnome console. kgx in terminal to start it does work.
