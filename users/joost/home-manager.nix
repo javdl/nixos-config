@@ -135,7 +135,6 @@ in {
     pkgs.pocketbase
     pkgs.tailscale
     pkgs.transmission_4
-    pkgs.vscodium # gives a blank screen on bare metal install > Electron apps with Nvidia card in Wayland will. Either switch to X11 or use Integrated GPU from AMD or Intel and it will load fine
     pkgs.yubikey-manager
 
     # pkgs.zed # Broken
@@ -278,6 +277,35 @@ in {
   #---------------------------------------------------------------------
   # Programs
   #---------------------------------------------------------------------
+
+  programs.vscode = {
+    enable = true;
+    package = pkgs.vscode;
+    extensions = with pkgs.vscode-extensions; [
+      bbenoist.nix
+      eamodio.gitlens
+      github.codespaces
+      github.copilot
+      ms-python.python
+      ms-azuretools.vscode-docker
+      ms-toolsai.jupyter
+      ms-vscode-remote.remote-ssh
+      vscode-icons-team.vscode-icons
+    ] ++ pkgs.vscode-utils.extensionsFromVscodeMarketplace [
+      {
+        name = "remote-ssh-edit";
+        publisher = "ms-vscode-remote";
+        version = "0.117.2025012415";
+        sha256 = "1hp6gjh4xp2m1xlm1jsdzxw9d8frkiidhph6nvl24d0h8z34w49g";
+      }
+      {
+        name = "claude-dev";
+        publisher = "saoudrizwan";
+        version = "3.2.5";
+        sha256 = "sha256-aJnN5zjF6tvUSMqVklNgCgpsfBNi1vw0i66BBFgHB1o=";
+      }
+    ];
+  };
 
   programs.gpg.enable = !isDarwin;
 
