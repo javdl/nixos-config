@@ -189,8 +189,8 @@ in {
     #spotify
     #thunderbird
     vlc
-    vscode-fhs
-    vscodium-fhs
+    # vscode-fhs
+    # vscodium-fhs
     xclip
 
     argc

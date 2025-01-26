@@ -1,19 +1,18 @@
-{
-  lib,
-  stdenv,
-  nixpkgs,
-  callPackage,
-  fetchurl,
-  nixosTests,
-  commandLineArgs ? "",
-  useVSCodeRipgrep ? stdenv.hostPlatform.isDarwin,
+{ lib
+, stdenv
+, fetchurl
+, nixosTests
+, pkgs
+, commandLineArgs ? ""
+, useVSCodeRipgrep ? stdenv.hostPlatform.isDarwin
 }:
+
 # https://windsurf-stable.codeium.com/api/update/linux-x64/stable/latest
 let
   version = "1.1.0"; # "windsurfVersion"
   hash = "c418a14b63f051e96dafb37fe06f1fe0b10ba3c8"; # "version"
 in
-  callPackage "${nixpkgs}/pkgs/applications/editors/vscode/generic.nix" rec {
+  pkgs.callPackage "${pkgs.path}/pkgs/applications/editors/vscode/generic.nix" rec {
     inherit commandLineArgs useVSCodeRipgrep version;
 
     pname = "windsurf";

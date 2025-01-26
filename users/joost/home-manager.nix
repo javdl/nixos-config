@@ -136,6 +136,7 @@ in {
     pkgs.tailscale
     pkgs.transmission_4
     pkgs.yubikey-manager
+    pkgs.windsurf # The first agentic IDE
 
     # pkgs.zed # Broken
 
@@ -278,34 +279,35 @@ in {
   # Programs
   #---------------------------------------------------------------------
 
-  programs.vscode = {
-    enable = true;
-    package = pkgs.vscode;
-    extensions = with pkgs.vscode-extensions; [
-      bbenoist.nix
-      eamodio.gitlens
-      github.codespaces
-      github.copilot
-      ms-python.python
-      ms-azuretools.vscode-docker
-      ms-toolsai.jupyter
-      ms-vscode-remote.remote-ssh
-      vscode-icons-team.vscode-icons
-    ] ++ pkgs.vscode-utils.extensionsFromVscodeMarketplace [
-      {
-        name = "remote-ssh-edit";
-        publisher = "ms-vscode-remote";
-        version = "0.117.2025012415";
-        sha256 = "1hp6gjh4xp2m1xlm1jsdzxw9d8frkiidhph6nvl24d0h8z34w49g";
-      }
-      {
-        name = "claude-dev";
-        publisher = "saoudrizwan";
-        version = "3.2.5";
-        sha256 = "sha256-aJnN5zjF6tvUSMqVklNgCgpsfBNi1vw0i66BBFgHB1o=";
-      }
-    ];
-  };
+  # disabled to prevent collision with Windsurf
+  # programs.vscode = {
+  #   enable = true;
+  #   package = pkgs.vscode;
+  #   extensions = with pkgs.vscode-extensions; [
+  #     bbenoist.nix
+  #     eamodio.gitlens
+  #     github.codespaces
+  #     github.copilot
+  #     ms-python.python
+  #     ms-azuretools.vscode-docker
+  #     ms-toolsai.jupyter
+  #     ms-vscode-remote.remote-ssh
+  #     vscode-icons-team.vscode-icons
+  #   ] ++ pkgs.vscode-utils.extensionsFromVscodeMarketplace [
+  #     {
+  #       name = "remote-ssh-edit";
+  #       publisher = "ms-vscode-remote";
+  #       version = "0.117.2025012415";
+  #       sha256 = "1hp6gjh4xp2m1xlm1jsdzxw9d8frkiidhph6nvl24d0h8z34w49g";
+  #     }
+  #     {
+  #       name = "claude-dev";
+  #       publisher = "saoudrizwan";
+  #       version = "3.2.5";
+  #       sha256 = "sha256-aJnN5zjF6tvUSMqVklNgCgpsfBNi1vw0i66BBFgHB1o=";
+  #     }
+  #   ];
+  # };
 
   programs.gpg.enable = !isDarwin;
 
