@@ -136,7 +136,6 @@ in {
     pkgs.tailscale
     pkgs.transmission_4
     pkgs.yubikey-manager
-    pkgs.windsurf # The first agentic IDE
 
     # pkgs.zed # Broken
 
@@ -166,6 +165,7 @@ in {
     pkgs.rpi-imager
     # pkgs.sublime4 # needs old openssl?
     pkgs.tailscale-systray
+    pkgs.windsurf
     pkgs.baobab # Disk usage, gnome only
   ]);
 
