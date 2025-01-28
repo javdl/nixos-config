@@ -86,6 +86,7 @@ in {
 
     # Rust should be in flake.nix for each project. However, those configs do need an initial Cargo.lock.Therefore, to create new projects we want Rust globally installed.
     pkgs.rustup # rust-analyzer, cargo # installed by rustup
+    pkgs.cargo-generate # create project from git template
     # pkgs.rust-script
     # pkgs.rustc
     pkgs.pre-commit

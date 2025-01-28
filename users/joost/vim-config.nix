@@ -6,20 +6,60 @@ let g:vim_home_path = "~/.vim"
 
 " This works on NixOS 21.05
 let vim_misc_path = split(&packpath, ",")[0] . "/pack/home-manager/start/vim-misc/vimrc.vim"
-if filereadable(vim_misc_path)
+if filereadable(vim_misc_path) && !has('nvim')
   execute "source " . vim_misc_path
 endif
 
 " This works on NixOS 21.11
 let vim_misc_path = split(&packpath, ",")[0] . "/pack/home-manager/start/vimplugin-vim-misc/vimrc.vim"
-if filereadable(vim_misc_path)
+if filereadable(vim_misc_path) && !has('nvim')
   execute "source " . vim_misc_path
 endif
 
 " This works on NixOS 22.11
 let vim_misc_path = split(&packpath, ",")[0] . "/pack/myNeovimPackages/start/vimplugin-vim-misc/vimrc.vim"
-if filereadable(vim_misc_path)
+if filereadable(vim_misc_path) && !has('nvim')
   execute "source " . vim_misc_path
+endif
+
+" Neovim-specific settings when using vim-misc
+if has('nvim')
+  set mouse=a
+  set termguicolors
+  set clipboard+=unnamedplus
+  
+  " Basic settings from vim-misc that we still want
+  set encoding=utf-8
+  set autoread
+  set backspace=2
+  set colorcolumn=80
+  set hidden
+  set laststatus=2
+  set number
+  set ruler
+  set t_Co=256
+  set scrolloff=999
+  set showmatch
+  set showmode
+  set splitbelow
+  set splitright
+  set visualbell
+  
+  " Color scheme settings
+  syntax on
+  colorscheme onehalfdark
+  
+  " Search settings
+  set hlsearch
+  set ignorecase
+  set incsearch
+  set smartcase
+  
+  " Tab settings
+  set expandtab
+  set tabstop=4
+  set softtabstop=4
+  set shiftwidth=4
 endif
 
 lua <<EOF
