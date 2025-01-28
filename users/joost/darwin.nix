@@ -25,6 +25,7 @@
       "firefox"
       # "github" # only Intel, arm64 must be downloaded from website
       # "google-cloud-sdk" # see gdk
+      "geekbench"
       "ghostty" # broken in nixpkgs
       "google-drive"
       "gpg-suite"

@@ -112,7 +112,6 @@ in {
     pkgs.dbeaver-bin
     pkgs.discord
     pkgs.element-web
-    pkgs.geekbench
     pkgs.gimp
     pkgs.google-chrome
     pkgs.inkscape
@@ -172,6 +171,7 @@ in {
     # pkgs.bitwarden
     pkgs.bitwarden-cli
     pkgs.bitwarden-menu # Dmenu/rofi frontend
+    pkgs.geekbench
     pkgs.nextcloud-client
     pkgs.obsidian
     pkgs.rpi-imager
