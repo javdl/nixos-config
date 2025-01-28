@@ -47,6 +47,7 @@ if has('nvim')
   
   " Color scheme settings
   syntax on
+  set runtimepath+=pack/*/start/onehalf/vim
   colorscheme onehalfdark
   
   " Search settings
