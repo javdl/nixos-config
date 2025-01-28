@@ -101,6 +101,7 @@ in {
     pkgs.dbeaver-bin
     pkgs.discord
     pkgs.element-web
+    pkgs.geekbench
     pkgs.gimp
     pkgs.google-chrome
     pkgs.inkscape
