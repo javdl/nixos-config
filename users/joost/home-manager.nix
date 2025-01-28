@@ -7,6 +7,16 @@ let
   isDarwin = pkgs.stdenv.isDarwin;
   isLinux = pkgs.stdenv.isLinux;
 
+  # Get unstable packages
+  pkgsUnstable = import inputs.nixpkgs-unstable {
+    inherit (pkgs) system;
+    inherit (pkgs.config) allowUnfree;
+    config = {
+      allowUnfree = true;
+      allowUnsupportedSystem = true;
+    };
+  };
+
   # For our MANPAGER env var
   # https://github.com/sharkdp/bat/issues/1145
   manpager = (pkgs.writeShellScriptBin "manpager" (if isDarwin then ''
@@ -91,7 +101,7 @@ in {
     # pkgs.rustc
     pkgs.pre-commit
     pkgs.wasm-pack
-    pkgs.fermyon-spin
+    pkgsUnstable.fermyon-spin  # Use unstable version
 
     pkgs.python3
     pkgs.poetry
