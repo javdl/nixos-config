@@ -38,7 +38,11 @@
 
 
   networking.hostName = "j7"; # Define your hostname.
-  # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
+
+  # Interfaces are these on my AMD X670E
+  networking.interfaces.enp9s0.useDHCP = true;
+  networking.interfaces.enp10s0.useDHCP = true;
+  networking.interfaces.wlp8s0.useDHCP = true;
 
   # Configure network proxy if necessary
   # networking.proxy.default = "http://user:password@proxy:port/";
