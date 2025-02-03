@@ -39,10 +39,11 @@
 
   networking.hostName = "j7"; # Define your hostname.
 
-  # Interfaces are these on my AMD X670E
-  networking.interfaces.enp9s0.useDHCP = true;
-  networking.interfaces.enp10s0.useDHCP = true;
-  networking.interfaces.wlp8s0.useDHCP = true;
+  # Interfaces are these on my AMD X670E >> Do not use DHCP, use network-manager instead
+
+  # networking.interfaces.enp9s0.useDHCP = true;
+  # networking.interfaces.enp10s0.useDHCP = true;
+  # networking.interfaces.wlp8s0.useDHCP = true;
 
   # Configure network proxy if necessary
   # networking.proxy.default = "http://user:password@proxy:port/";
@@ -51,6 +52,9 @@
   # Enable networking
   networking.networkmanager.enable = true;
 
+  systemd.network.wait-online.anyInterface = true; # block for no more than one interface
+  networking.dhcpcd.wait = "background";
+  
   # Set your time zone.
   time.timeZone = "Europe/Amsterdam";
 
