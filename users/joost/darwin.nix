@@ -8,8 +8,12 @@
 
   homebrew = {
     enable = true;
+    taps = [
+      "surrealdb/tap"
+    ];
     brews = [
       "jq"
+      "surrealdb/tap/surreal"
       ];
     casks  = [
       # "bitwarden" Must be installed via Mac App Store for browser integration to work
@@ -26,6 +30,7 @@
       # "github" # only Intel, arm64 must be downloaded from website
       # "google-cloud-sdk" # see gdk
       "geekbench"
+      "geekbench-ai"
       "ghostty" # broken in nixpkgs
       "google-drive"
       "gpg-suite"
