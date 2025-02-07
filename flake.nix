@@ -171,6 +171,12 @@
       darwin = true;
     };
 
+    darwinConfigurations.mac-mini-m4 = mkSystem "mac-mini-m4" {
+      system = "aarch64-darwin";
+      user   = "joost";
+      darwin = true;
+    };
+
     darwinConfigurations.crescendo = mkSystem "crescendo" {
       system = "aarch64-darwin";
       user   = "joost";
