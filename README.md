@@ -40,6 +40,7 @@ that modern computers are plenty fast enough for the best of both worlds.
 Here is what it ends up looking like:
 
 ![Screenshot](https://raw.githubusercontent.com/javdl/nixos-config/main/.github/images/screenshot.png)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fjavdl%2Fnixos-config.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fjavdl%2Fnixos-config?ref=badge_shield)
 
 Note that I usually full screen the VM so there isn't actually a window,
 and I three-finger swipe or use other keyboard shortcuts to active that
@@ -402,6 +403,9 @@ sudo NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nixos-rebuild switch --upgrade --flake "
 
 Certain software **must** be installed for Hyprland to work properly.
 [https://wiki.hyprland.org/Useful-Utilities/Must-have/](https://wiki.hyprland.org/Useful-Utilities/Must-have/)
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fjavdl%2Fnixos-config.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fjavdl%2Fnixos-config?ref=badge_large)
 
 ## MacOS 15 Sequoia upgrade
 
