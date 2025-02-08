@@ -26,6 +26,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/0.1";
+
     hyprland.url = "github:hyprwm/Hyprland";
 
     # I think technically you're not supposed to override the nixpkgs

@@ -47,6 +47,9 @@ in systemFunc rec {
     (if isPstate then inputs.nixos-hardware.nixosModules.common-cpu-amd-pstate else {})
     (if isZenpower then inputs.nixos-hardware.nixosModules.common-cpu-amd-zenpower else {})
 
+    # Add Determinate on Darwin
+    (if darwin then inputs.determinate.darwinModules.default else {})
+
 
     machineConfig
     userOSConfig
