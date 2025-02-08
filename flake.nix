@@ -27,6 +27,7 @@
     };
 
     determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/0.1";
+    fh.url = "https://flakehub.com/f/DeterminateSystems/fh/*";
 
     hyprland.url = "github:hyprwm/Hyprland";
 
