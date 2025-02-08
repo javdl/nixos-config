@@ -7,6 +7,16 @@ let
   isDarwin = pkgs.stdenv.isDarwin;
   isLinux = pkgs.stdenv.isLinux;
 
+  # Get unstable packages
+  pkgsUnstable = import inputs.nixpkgs-unstable {
+    inherit (pkgs) system;
+    inherit (pkgs.config) allowUnfree;
+    config = {
+      allowUnfree = true;
+      allowUnsupportedSystem = true;
+    };
+  };
+
   # For our MANPAGER env var
   # https://github.com/sharkdp/bat/issues/1145
   manpager = (pkgs.writeShellScriptBin "manpager" (if isDarwin then ''
@@ -50,40 +60,93 @@ in {
   # Packages I always want installed. Most packages I install using
   # per-project flakes sourced with direnv and nix-shell, so this is
   # not a huge list.
+  fonts.fontconfig.enable = true;
+
   home.packages = [
     pkgs.asciinema
     pkgs.air # Live reload for Go
+    pkgs.alacritty
+    pkgs.kitty
     pkgs.bat
     pkgs.bottom
     pkgs.cachix
-    pkgs.discord
     pkgs.dasht # Search API docs offline, in terminal or browser
+    pkgs.devenv
     pkgs.fd
-    pkgs.ffmpeg_5 # libgl, needed for ML
+    # pkgs.ffmpeg_5 # libgl, needed for ML
+    pkgs.ffmpeg
     pkgs.fzf
     pkgs.gh
+    # pkgs.ghostty
     pkgs.git-lfs
     gdk
     # pkgs.google-cloud-sdk # See above, gdk with components list
     pkgs.htop
     pkgs.httpie
+    pkgs.imagemagick
     pkgs.jq
     pkgs.kubernetes-helm
     pkgs.libGL # ML
     pkgs.libGLU # ML
+    pkgs.libheif
     pkgs.ripgrep
     pkgs.tree
     pkgs.watch
     pkgs.xh # for sending HTTP requests (like HTTPie)
 
+    # Rust should be in flake.nix for each project. However, those configs do need an initial Cargo.lock.Therefore, to create new projects we want Rust globally installed.
+    pkgs.rustup # rust-analyzer, cargo # installed by rustup
+    pkgs.cargo-generate # create project from git template
+    # pkgs.rust-script
+    # pkgs.rustc
+    pkgs.pre-commit
+    pkgs.wasm-pack
+    pkgsUnstable.fermyon-spin  # Use unstable version
+
+    pkgs.python3
+    pkgs.poetry
+
+    pkgs.aichat
+    pkgs.aider-chat
+    pkgs.darktable
+    pkgs.dbeaver-bin
+    pkgs.discord
+    pkgs.element-web
+    pkgs.gimp
+    pkgs.google-chrome
+    pkgs.inkscape
+    pkgs.postman
+    pkgs.slack
+    pkgs.spotify
+    pkgs.telegram-desktop
+
+    pkgs.font-awesome # waybar icons
+    pkgs.fira-code
+    pkgs.fira-code-symbols
+    pkgs.ibm-plex
+    pkgs.jetbrains-mono
+    pkgs.liberation_ttf
+    pkgs.mplus-outline-fonts.githubRelease
+    pkgs.nerdfonts
+    pkgs.noto-fonts
+    pkgs.noto-fonts-cjk-sans
+    pkgs.noto-fonts-emoji
+    pkgs.rubik
+    pkgs.proggyfonts
+
     pkgs.bashmount # Easily mount (encrypted/usb) drives
     pkgs.flyctl
+    pkgs.git-crypt
     pkgs.glab
+    pkgs.k9s # Kuberenetes CLI
     pkgs.neofetch
+    pkgs.nixd # Nix language server, used by Zed
     # pkgs.obs-studio
+    pkgs.python3
     pkgs.pocketbase
+    pkgs.surrealdb
     pkgs.tailscale
-    pkgs.vscodium # gives a blank screen on bare metal install > Electron apps with Nvidia card in Wayland will. Either switch to X11 or use Integrated GPU from AMD or Intel and it will load fine
+    pkgs.transmission_4
     pkgs.yubikey-manager
 
     # pkgs.zed # Broken
@@ -95,6 +158,8 @@ in {
     # This is automatically setup on Linux
     pkgs.cachix
     pkgs.tailscale
+    pkgs.raycast # only for MacOS
+    pkgs.pinentry_mac
   ]) ++ (lib.optionals (isLinux && !isWSL) [
     pkgs.chromium
     pkgs.firefox-devedition
@@ -107,10 +172,14 @@ in {
     # pkgs.bitwarden
     pkgs.bitwarden-cli
     pkgs.bitwarden-menu # Dmenu/rofi frontend
+    pkgs.geekbench
     pkgs.nextcloud-client
     pkgs.obsidian
     pkgs.rpi-imager
+    # pkgs.sublime4 # needs old openssl?
     pkgs.tailscale-systray
+    pkgs.windsurf
+    pkgs.baobab # Disk usage, gnome only
   ]);
 
   #---------------------------------------------------------------------
@@ -126,8 +195,17 @@ in {
     MANPAGER = "${manpager}/bin/manpager";
   };
 
-  home.file.".gdbinit".source = ./gdbinit;
-  home.file.".inputrc".source = ./inputrc;
+  home.file = {
+    ".gdbinit".source = ./gdbinit;
+    ".inputrc".source = ./inputrc;
+  } // (if isDarwin then {
+    "Library/Application Support/jj/config.toml".source = ./jujutsu.toml;
+    ".gnupg/gpg-agent.conf".text = ''
+      pinentry-program ${pkgs.pinentry_mac}/Applications/pinentry-mac.app/Contents/MacOS/pinentry-mac
+      default-cache-ttl 600
+      max-cache-ttl 7200
+    '';
+  } else {});
 
   xdg.configFile = {
     "hypr/hyprland.conf".text = builtins.readFile ./hypr/hyprland.conf;
@@ -143,10 +221,11 @@ in {
     "electron-flags28.conf".source  = ./electron-flags.conf;
     "code-flags.conf".text = builtins.readFile ./code-flags.conf;
 
-    # "wallpapers/04167_unreachable_3840x2160.png".text = builtins.readFile ./wallpapers/04167_unreachable_3840x2160.png;
+    "wallpapers/04167_unreachable_3840x2160.png".source = ./wallpapers/04167_unreachable_3840x2160.png;
 
     "i3/config".text = builtins.readFile ./i3;
     "rofi/config.rasi".text = builtins.readFile ./rofi;
+    # "zed/settings.json".text = builtins.readFile ./zed.json; # breaks Zed; i.e. changing llm
 
     # tree-sitter parsers
     "nvim/parser/proto.so".source = "${pkgs.tree-sitter-proto}/parser";
@@ -161,6 +240,7 @@ in {
     "rectangle/RectangleConfig.json".text = builtins.readFile ./RectangleConfig.json;
   } else {}) // (if isLinux then {
     "ghostty/config".text = builtins.readFile ./ghostty.linux;
+    "jj/config.toml".source = ./jujutsu.toml;
   } else {});
 
   # Gnome settings
@@ -169,6 +249,7 @@ in {
     "org/gnome/shell" = {
       favorite-apps = [
           "firefox.desktop"
+          "ghostty.desktop"
           "kitty.desktop"
           "sublimetext4.desktop"
         # "kgx.desktop" # Should be Gnome console. kgx in terminal to start it does work.
@@ -211,13 +292,46 @@ in {
   # Programs
   #---------------------------------------------------------------------
 
+  # disabled to prevent collision with Windsurf
+  # programs.vscode = {
+  #   enable = true;
+  #   package = pkgs.vscode;
+  #   extensions = with pkgs.vscode-extensions; [
+  #     bbenoist.nix
+  #     eamodio.gitlens
+  #     github.codespaces
+  #     github.copilot
+  #     ms-python.python
+  #     ms-azuretools.vscode-docker
+  #     ms-toolsai.jupyter
+  #     ms-vscode-remote.remote-ssh
+  #     vscode-icons-team.vscode-icons
+  #   ] ++ pkgs.vscode-utils.extensionsFromVscodeMarketplace [
+  #     {
+  #       name = "remote-ssh-edit";
+  #       publisher = "ms-vscode-remote";
+  #       version = "0.117.2025012415";
+  #       sha256 = "1hp6gjh4xp2m1xlm1jsdzxw9d8frkiidhph6nvl24d0h8z34w49g";
+  #     }
+  #     {
+  #       name = "claude-dev";
+  #       publisher = "saoudrizwan";
+  #       version = "3.2.5";
+  #       sha256 = "sha256-aJnN5zjF6tvUSMqVklNgCgpsfBNi1vw0i66BBFgHB1o=";
+  #     }
+  #   ];
+  # };
+
   programs.gpg.enable = !isDarwin;
 
   programs.bash = {
     enable = true;
     shellOptions = [];
     historyControl = [ "ignoredups" "ignorespace" ];
-    initExtra = builtins.readFile ./bashrc;
+    initExtra = ''
+      ${builtins.readFile ./bashrc}
+      export GPG_TTY=$(tty)
+    '';
 
     shellAliases = {
       ga = "git add";
@@ -232,14 +346,14 @@ in {
     };
   };
 
-  programs.direnv= {
+  programs.direnv = {
     enable = true;
     enableBashIntegration = true; # see note on other shells below
     nix-direnv.enable = true;
 
     config = {
       whitelist = {
-        prefix= [
+        prefix = [
           "$HOME/code/go/src/github.com/fuww"
           "$HOME/code/go/src/github.com/javdl"
         ];
@@ -247,6 +361,13 @@ in {
         exact = ["$HOME/.envrc"];
       };
     };
+  };
+
+  programs.zsh = {
+    enable = true;
+    initExtra = ''
+      export GPG_TTY=$(tty)
+    '';
   };
 
   programs.fish = {
@@ -257,6 +378,7 @@ in {
       "source ${sources.theme-bobthefish}/functions/fish_title.fish"
       (builtins.readFile ./config.fish)
       "set -g SHELL ${pkgs.fish}/bin/fish"
+      "set -gx GPG_TTY (tty)"
     ]));
 
     shellAliases = {
@@ -321,6 +443,13 @@ in {
     enable = true;
     goPath = "code/go";
     goPrivate = [ "github.com/javdl" "github.com/fuww" ];
+  };
+
+  programs.jujutsu = {
+    enable = true;
+
+    # I don't use "settings" because the path is wrong on macOS at
+    # the time of writing this.
   };
 
   # this should be disabled for darwin
@@ -415,9 +544,10 @@ in {
       customVim.vim-misc
       customVim.vim-pgsql
       customVim.vim-tla
-      customVim.vim-zig
+      # customVim.vim-zig
       customVim.pigeon
       customVim.AfterColors
+
       customVim.vim-nord
       customVim.nvim-comment
       customVim.nvim-lspconfig
@@ -426,8 +556,10 @@ in {
       customVim.nvim-treesitter
       customVim.nvim-treesitter-playground
       customVim.nvim-treesitter-textobjects
+
       vimPlugins.vim-airline
       vimPlugins.vim-airline-themes
+
       vimPlugins.vim-eunuch
       vimPlugins.vim-gitgutter
       vimPlugins.vim-markdown

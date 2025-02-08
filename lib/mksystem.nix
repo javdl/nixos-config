@@ -7,12 +7,19 @@ name:
   system,
   user,
   darwin ? false,
-  wsl ? false
+  wsl ? false,
+  raphael ? false,
+  pstate ? false,
+  zenpower ? false
 }:
 
 let
   # True if this is a WSL system.
   isWSL = wsl;
+  # True if this is a Raphael iGPU system
+  isRaphael = raphael;
+  isPstate = pstate;
+  isZenpower = zenpower;
 
   # The config files for this system.
   machineConfig = ../hosts/${name}.nix;
@@ -34,9 +41,20 @@ in systemFunc rec {
     # Bring in WSL if this is a WSL build
     (if isWSL then inputs.nixos-wsl.nixosModules.wsl else {})
 
+    # Bring in AMD Raphael iGPI if this is a Raphael build
+    (if isRaphael then inputs.nixos-hardware.nixosModules.common-cpu-amd-raphael-igpu else {})
+    # pstate for modern AMD CPUs
+    (if isPstate then inputs.nixos-hardware.nixosModules.common-cpu-amd-pstate else {})
+    (if isZenpower then inputs.nixos-hardware.nixosModules.common-cpu-amd-zenpower else {})
+
+    # Add Determinate on Darwin
+    (if darwin then inputs.determinate.darwinModules.default else {})
+
+
     machineConfig
     userOSConfig
     home-manager.home-manager {
+      home-manager.backupFileExtension = "backup";
       home-manager.useGlobalPkgs = true;
       home-manager.useUserPackages = true;
       home-manager.users.${user} = import userHMConfig {

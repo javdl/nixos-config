@@ -8,44 +8,47 @@
 
   homebrew = {
     enable = true;
+    taps = [
+      "surrealdb/tap"
+    ];
+    brews = [
+      "jq"
+      "surrealdb/tap/surreal"
+      ];
     casks  = [
-      "bitwarden"
+      # "bitwarden" Must be installed via Mac App Store for browser integration to work
       "calibre"
       "chromedriver"
       "cleanshot"
-      "darktable"
+      "cursor"
       "digikam"
-      "dbeaver-community"
-      "discord"
+      "dbeaver-community" # dbeaver-bin doesnt work on MacOS?
       # "docker"
       "dropbox"
-      "element"
       "figma"
       "firefox"
-      "gimp"
-      "google-chrome"
-      "google-cloud-sdk"
+      # "github" # only Intel, arm64 must be downloaded from website
+      # "google-cloud-sdk" # see gdk
+      "geekbench"
+      "geekbench-ai"
+      "ghostty" # broken in nixpkgs
       "google-drive"
       "gpg-suite"
       "hammerspoon"
       "imageoptim"
-      "inkscape"
       "istat-menus"
       "licecap"
       "librewolf"
       "libreoffice"
+      "macfuse"
       "monodraw"
+      "mx-power-gadget"
       "obs"
-      "postman"
       "rapidapi"
-      "raycast"
-      "rectangle"
       "screenflow"
-      "slack"
-      "spotify"
       "sublime-text"
       "thunderbird"
-      "typora"
+      "veracrypt"
       "visual-studio-code"
       "vlc"
       "zed"

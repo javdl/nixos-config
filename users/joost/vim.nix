@@ -44,14 +44,24 @@ let sources = import ../../nix/sources.nix; in rec {
       src = sources.vim-tla;
     };
 
-    vim-zig = vimUtils.buildVimPlugin {
-      name = "zig.vim";
-      src = sources.vim-zig;
-    };
+    # vim-zig = vimUtils.buildVimPlugin {
+    #   name = "zig.vim";
+    #   src = sources.vim-zig;
+    # };
 
     dracula = vimUtils.buildVimPlugin {
       name = "dracula";
       src = sources.vim-dracula;
+    };
+
+    onehalf = vimUtils.buildVimPlugin {
+      name = "onehalf";
+      src = pkgs.fetchFromGitHub {
+        owner = "sonph";
+        repo = "onehalf";
+        rev = "v2.0.0";
+        sha256 = "1jx8k5kqxj7kml1v9ydm4yk6mzz5v3a61f2hgqmc145qf1qxyz1g";
+      };
     };
 
     pigeon = vimUtils.buildVimPlugin {

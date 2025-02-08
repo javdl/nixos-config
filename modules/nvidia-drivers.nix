@@ -4,15 +4,16 @@
   imports =
     [    ];
 
-# Enable OpenGL
-  hardware.opengl = {
+  # Enable Nvidia for Docker
+  hardware.nvidia-container-toolkit.enable = true;
+
+  # Enable OpenGL
+  hardware.graphics = {
     enable = true;
-    driSupport = true;
-    driSupport32Bit = true;
   };
 
   # Load nvidia driver for Xorg and Wayland
-  services.xserver.videoDrivers = ["nvidia"]; # Works only when using Radeon IGPU as main monitor with Gnome + Wayland + obsidian/vscode/electron apps (nvidia card can be used with driver as accellerator for AI)
+  services.xserver.videoDrivers = ["nvidia"]; # Does not work with Sway, even when the main monitor is connected to iGPU. Works only when using Radeon IGPU as main monitor with Gnome + Wayland + obsidian/vscode/electron apps (nvidia card can be used with driver as accellerator for AI)
   # services.xserver.videoDrivers = ["nouveau"]; # this works with gnome + wayland and Sway + wayland
 
   # Wayland and NVidia do not combine well. (example: Electron apps like VS code / codium wont work)
@@ -36,12 +37,14 @@
 
     # Use the NVidia open source kernel module (not to be confused with the
     # independent third-party "nouveau" open source driver).
-    # Support is limited to the Turing and later architectures. Full list of 
-    # supported GPUs is at: 
-    # https://github.com/NVIDIA/open-gpu-kernel-modules#compatible-gpus 
+    # Support is limited to the Turing and later architectures. Full list of
+    # supported GPUs is at:
+    # https://github.com/NVIDIA/open-gpu-kernel-modules#compatible-gpus
     # Only available from driver 515.43.04+
     # Currently alpha-quality/buggy, so false is currently the recommended setting.
-    # On the other hand; Hyprland recommends using the open core driver if your GPU is supported. 
+    # On the other hand;
+    # Hyprland recommends using the open core driver if your GPU is supported.
+    # Sway doesn't work at all with the closed source driver.
     open = false;
 
     # Enable the Nvidia settings menu,

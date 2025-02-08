@@ -5,24 +5,28 @@
     # Pin our primary nixpkgs repository. This is the main nixpkgs repository
     # we'll use for our configurations. Be very careful changing this because
     # it'll impact your entire system.
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-24.05";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-24.11";
 
     # We use the unstable nixpkgs repo for some packages.
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixpkgs-unstable";
+
+    nixos-hardware.url = "github:NixOS/nixos-hardware/master";
 
     # Build a custom WSL installer
     nixos-wsl.url = "github:nix-community/NixOS-WSL";
     nixos-wsl.inputs.nixpkgs.follows = "nixpkgs";
 
     home-manager = {
-      url = "github:nix-community/home-manager/release-24.05";
+      url = "github:nix-community/home-manager/release-24.11";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
     darwin = {
-      url = "github:LnL7/nix-darwin";
+      url = "github:LnL7/nix-darwin/nix-darwin-24.11";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/0.1";
 
     hyprland.url = "github:hyprwm/Hyprland";
 
@@ -31,32 +35,49 @@
     # own. We can always try to remove that anytime.
     neovim-nightly-overlay = {
       url = "github:nix-community/neovim-nightly-overlay";
-
-      # Only need unstable until the lpeg fix hits mainline, probably
-      # not very long... can safely switch back for 23.11.
-      inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
 
     # Other packages
-    zig.url = "github:mitchellh/zig-overlay";
+    jujutsu.url = "github:martinvonz/jj";
+    # zig.url = "github:mitchellh/zig-overlay";
 
     # Non-flakes
-    nvim-treesitter.url = "github:nvim-treesitter/nvim-treesitter/v0.9.1";
+    nvim-conform.url = "github:stevearc/conform.nvim/v7.1.0";
+    nvim-conform.flake = false;
+    nvim-dressing.url = "github:stevearc/dressing.nvim";
+    nvim-dressing.flake = false;
+    nvim-gitsigns.url = "github:lewis6991/gitsigns.nvim/v0.9.0";
+    nvim-gitsigns.flake = false;
+    nvim-lspconfig.url = "github:neovim/nvim-lspconfig";
+    nvim-lspconfig.flake = false;
+    nvim-lualine.url ="github:nvim-lualine/lualine.nvim";
+    nvim-lualine.flake = false;
+    nvim-nui.url = "github:MunifTanjim/nui.nvim";
+    nvim-nui.flake = false;
+    nvim-plenary.url = "github:nvim-lua/plenary.nvim";
+    nvim-plenary.flake = false;
+    nvim-telescope.url = "github:nvim-telescope/telescope.nvim/0.1.8";
+    nvim-telescope.flake = false;
+    nvim-treesitter.url = "github:nvim-treesitter/nvim-treesitter/v0.9.2";
     nvim-treesitter.flake = false;
-    vim-copilot.url = "github:github/copilot.vim/v1.11.1";
+    nvim-web-devicons.url = "github:nvim-tree/nvim-web-devicons";
+    nvim-web-devicons.flake = false;
+    vim-copilot.url = "github:github/copilot.vim/v1.41.0";
     vim-copilot.flake = false;
-    # Other packages (leave in as an example)
-    # zig.url = "github:mitchellh/zig-overlay";
+    vim-misc.url = "github:mitchellh/vim-misc";
+    vim-misc.flake = false;
   };
 
-  outputs = { self, nixpkgs, home-manager, darwin, ... }@inputs: let
-    # mkDarwin = import ./lib/mkdarwin.nix;
-    # mkVM = import ./lib/mkvm.nix;
-
+  outputs = { self, nixpkgs, nixos-hardware, home-manager, darwin, ... }@inputs: let
     # Overlays is the list of overlays we want to apply from flake inputs.
     overlays = [
-      # inputs.neovim-nightly-overlay.overlay
+      inputs.jujutsu.overlays.default
       # inputs.zig.overlays.default
+
+      (final: prev: {
+        # gh CLI on stable has bugs.
+        gh = inputs.nixpkgs-unstable.legacyPackages.${prev.system}.gh;
+      })
     ];
 
     mkSystem = import ./lib/mksystem.nix {
@@ -89,14 +110,29 @@
       wsl    = true;
     };
 
+    nixosConfigurations.fumusic = mkSystem "fumusic" rec {
+      system = "x86_64-linux";
+      user   = "joost";
+    };
+
+
     nixosConfigurations.fu095 = mkSystem "fu095" rec {
       system = "x86_64-linux";
       user   = "joost";
     };
 
+    darwinConfigurations.fu129 = mkSystem "fu129" {
+      system = "aarch64-darwin";
+      user   = "joost";
+      darwin = true;
+    };
+
     nixosConfigurations.fu137 = mkSystem "fu137" rec {
       system = "x86_64-linux";
       user   = "joost";
+      raphael = true;
+      pstate = true; # for modern AMD cpu's
+      zenpower = true; # for modern AMD cpu's
     };
 
     darwinConfigurations.fu146 = mkSystem "fu146" {
@@ -108,9 +144,18 @@
     nixosConfigurations.j7 = mkSystem "j7" rec {
       system = "x86_64-linux";
       user   = "joost";
+      raphael = true;
+      pstate = true;
+      zenpower = true;
     };
 
     darwinConfigurations.macbook-pro-m1 = mkSystem "macbook-pro-m1" {
+      system = "aarch64-darwin";
+      user   = "joost";
+      darwin = true;
+    };
+
+    darwinConfigurations.macbook-air-m1 = mkSystem "macbook-air-m1" {
       system = "aarch64-darwin";
       user   = "joost";
       darwin = true;
@@ -123,6 +168,12 @@
     };
 
     darwinConfigurations.mac-mini-m2 = mkSystem "mac-mini-m2" {
+      system = "aarch64-darwin";
+      user   = "joost";
+      darwin = true;
+    };
+
+    darwinConfigurations.mac-mini-m4 = mkSystem "mac-mini-m4" {
       system = "aarch64-darwin";
       user   = "joost";
       darwin = true;

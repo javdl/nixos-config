@@ -8,8 +8,12 @@
   imports =
     [ # Include the results of the hardware scan.
       ./hardware/j7.nix
-      ../modules/nvidia-drivers.nix
+      #../modules/nvidia-drivers.nix
       ../modules/amd-drivers.nix # IGPU
+      ../modules/common-pc-ssd.nix
+      #../modules/hyprland.nix
+      #../modules/sway.nix
+      # ../modules/programs.nix https://github.com/gpskwlkr/nixos-hyprland-flake/tree/main
       ./bare-metal-shared-linux.nix
     ];
 
@@ -34,7 +38,12 @@
 
 
   networking.hostName = "j7"; # Define your hostname.
-  # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
+
+  # Interfaces are these on my AMD X670E >> Do not use DHCP, use network-manager instead
+
+  # networking.interfaces.enp9s0.useDHCP = true;
+  # networking.interfaces.enp10s0.useDHCP = true;
+  # networking.interfaces.wlp8s0.useDHCP = true;
 
   # Configure network proxy if necessary
   # networking.proxy.default = "http://user:password@proxy:port/";
@@ -43,6 +52,9 @@
   # Enable networking
   networking.networkmanager.enable = true;
 
+  systemd.network.wait-online.anyInterface = true; # block for no more than one interface
+  networking.dhcpcd.wait = "background";
+  
   # Set your time zone.
   time.timeZone = "Europe/Amsterdam";
 
@@ -60,28 +72,6 @@
     LC_TELEPHONE = "nl_NL.UTF-8";
     LC_TIME = "nl_NL.UTF-8";
   };
-
-  programs.hyprland = {
-    # Install the packages from nixpkgs
-    enable = true;
-    # Whether to enable XWayland
-    xwayland.enable = true;
-    # Optional, hint electron apps to use wayland:
-    # environment.sessionVariables.NIXOS_OZONE_WL = "1";
-  };
-
-  # Enable the X11 windowing system.
-#  services.xserver.enable = true;
-
-  # Enable the GNOME Desktop Environment.
-#  services.xserver.displayManager.gdm.enable = true;
-#  services.xserver.desktopManager.gnome.enable = true;
-
-  # Configure keymap in X11
-#  services.xserver = {
-#    layout = "us";
-#    xkbVariant = "";
-#  };
 
   # Enable CUPS to print documents.
   services.printing.enable = true;
@@ -126,7 +116,7 @@
 
   nixpkgs.config.permittedInsecurePackages = [
             #"openssl-1.1.1w" # For Sublimetext4, REMOVE WHEN OPENSSL 1.1 DOES NOT GET SECURITY UPDATES ANYMORE
-            "electron-25.9.0"
+            #"electron-25.9.0"
               ];
 
   # List packages installed in system profile. To search, run:
@@ -140,8 +130,9 @@
 
     # Hyprland
     xdg-desktop-portal-hyprland
-    xwayland
+    # xwayland Crashes in Sway and i3 when running chromium?
     # must have
+    libdisplay-info
     libnotify # for notify-send
     glib
     mako
@@ -159,8 +150,8 @@
     wofi
     hyprpaper # wallpaper
     hyprpicker # color picker
-    # hyprlock # lockscreen Not in nixos pkgs
-    # hypridle # idle behaviour Not in nixos pkgs
+    hyprlock # lockscreen Not in nixos pkgs
+    hypridle # idle behaviour Not in nixos pkgs
     mpd # best music player in the world
     libglvnd
     lmstudio

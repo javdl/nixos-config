@@ -1,11 +1,13 @@
 { config, pkgs, lib, currentSystem, currentSystemName,... }:
 
 let
-  # Turn this to true to use gnome instead of i3. This is a bit
-  # of a hack, I just flip it on as I need to develop gnome stuff
-  # for now.
-  linuxGnome = false;
+
 in {
+
+  imports = [
+    ../modules/specialization/plasma.nix
+    ../modules/specialization/i3.nix
+  ];
 
   # Be careful updating this.
   boot.kernelPackages = pkgs.linuxPackages_latest;
@@ -23,15 +25,16 @@ in {
     # this, use your own, or toss it. Its typically safe to use a binary cache
     # since the data inside is checksummed.
     settings = {
-      substituters = ["https://javdl-nixos-config.cachix.org" "https://devenv.cachix.org"];
+      trusted-users = [ "root" "joost" ];
+      substituters = ["https://javdl-nixos-config.cachix.org" "https://devenv.cachix.org" "https://cache.nixos.org/"];
       trusted-public-keys = ["javdl-nixos-config.cachix.org-1:6xuHXHavvpdfBLQq+RzxDAMxhWkea0NaYvLtDssDJIU=" "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="];
     };
-    
+
     # Automate garbage collection / Make sure boot does not get full
     gc = {
       automatic = true;
       randomizedDelaySec = "14m";
-      options = "--delete-older-than 10d";
+      options = "--delete-older-than 120d";
     };
   };
 
@@ -39,7 +42,6 @@ in {
     # Needed for k2pdfopt 2.53.
     "mupdf-1.17.0"
     # "openssl-1.1.1w" # For Sublimetext4, REMOVE WHEN OPENSSL 1.1 DOES NOT GET SECURITY UPDATES ANYMORE
-    "electron-25.9.0"
   ];
 
   # Use the systemd-boot EFI boot loader.
@@ -80,41 +82,11 @@ in {
     };
   };
 
-  # setup windowing environment
-  services = {
-    displayManager = {
-      defaultSession = if linuxGnome then "gnome" else "none+i3";
-    };
-  };
-  services.xserver = if linuxGnome then {
+  services.xserver = lib.mkIf (config.specialisation != {}) {
     enable = true;
-    layout = "us";
+    xkb.layout = "us";
     desktopManager.gnome.enable = true;
     displayManager.gdm.enable = true;
-  } else {
-    enable = true;
-    layout = "us";
-    dpi = 220;
-
-    desktopManager = {
-      xterm.enable = false;
-      wallpaper.mode = "fill";
-    };
-
-    displayManager = {
-      defaultSession = "none+i3";
-      lightdm.enable = true;
-
-      # AARCH64: For now, on Apple Silicon, we must manually set the
-      # display resolution. This is a known issue with VMware Fusion.
-      sessionCommands = ''
-        ${pkgs.xorg.xset}/bin/xset r rate 200 40
-      '';
-    };
-
-    windowManager = {
-      i3.enable = true;
-    };
   };
 
   # Enable tailscale. We manually authenticate when we want with
