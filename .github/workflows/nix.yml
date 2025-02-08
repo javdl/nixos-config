@@ -13,7 +13,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
-      - uses: cachix/install-nix-action@v16
+      - uses: cachix/install-nix-action@v30
       # TODO: add a binary cache
       # - uses: cachix/cachix-action@v10
       #   with:
