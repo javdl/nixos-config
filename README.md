@@ -423,4 +423,4 @@ Source: [https://discourse.nixos.org/t/macos-15-sequoia-update-clobbers-nixbld1-
 
 ```sh
 ln -s /Volumes/4TBMacData/git $HOME/git
-
+```
