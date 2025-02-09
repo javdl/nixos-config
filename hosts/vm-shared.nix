@@ -30,10 +30,6 @@ in {
       trusted-public-keys = ["javdl-nixos-config.cachix.org-1:6xuHXHavvpdfBLQq+RzxDAMxhWkea0NaYvLtDssDJIU=" "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="];
     };
 
-    # Allow unfree packages
-    nixpkgs.config.allowUnfree = true;
-    nixpkgs.config.allowUnfreePredicate = _: true;
-
     # Automate garbage collection / Make sure boot does not get full
     gc = {
       automatic = true;
@@ -41,6 +37,10 @@ in {
       options = "--delete-older-than 120d";
     };
   };
+
+  # Allow unfree packages
+  nixpkgs.config.allowUnfree = true;
+  nixpkgs.config.allowUnfreePredicate = _: true;
 
   nixpkgs.config.permittedInsecurePackages = [
     # Needed for k2pdfopt 2.53.
