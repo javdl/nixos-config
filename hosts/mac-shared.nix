@@ -26,11 +26,11 @@ in {
 
     # Allow unfree packages
     nixpkgs.config.allowUnfree = true;
-    # nixpkgs.config.allowUnfreePredicate = _: true;
+    nixpkgs.config.allowUnfreePredicate = _: true;
 
-    nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
-                 "discord"
-               ];
+    # nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
+    #              "discord"
+    #            ];
 
 
     # nix.trustedUsers = [
