@@ -38,6 +38,7 @@ let
     minikube
     # pubsub-emulator
     skaffold
+    terraform-tools
 
     # google-cloud-cli-skaffold
     # google-cloud-cli-cloud-run-proxy
