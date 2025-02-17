@@ -145,7 +145,7 @@ in {
     # pkgs.obs-studio
     pkgs.python3
     pkgs.pocketbase
-    pkgs.surrealdb
+    # pkgs.surrealdb # Builds from src
     pkgs.tailscale
     pkgs.transmission_4
     pkgs.yubikey-manager

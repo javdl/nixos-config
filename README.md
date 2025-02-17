@@ -208,7 +208,7 @@ your system may be changed in ways that you don't want. Read my source!
 Install Nix with the Nix installer from Determinate Systems:
 
 ```sh
-curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
+curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install --determinate
 ```
 
 Clone this repo and run `make switch`, replace the NIXNAME with the configuration name you want to use:
