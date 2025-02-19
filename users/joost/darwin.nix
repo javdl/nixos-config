@@ -51,6 +51,7 @@
       "veracrypt"
       "visual-studio-code"
       "vlc"
+      "wacom-tablet"
       "zed"
     ];
   };
