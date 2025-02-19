@@ -64,8 +64,8 @@
     nvim-web-devicons.flake = false;
     vim-copilot.url = "github:github/copilot.vim/v1.41.0";
     vim-copilot.flake = false;
-    vim-misc.url = "github:mitchellh/vim-misc";
-    vim-misc.flake = false;
+    # vim-misc.url = "github:mitchellh/vim-misc";
+    # vim-misc.flake = false;
   };
 
   outputs = { self, nixpkgs, nixos-hardware, home-manager, darwin, ... }@inputs: let

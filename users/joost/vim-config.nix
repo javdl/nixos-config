@@ -27,7 +27,7 @@ if has('nvim')
   set mouse=a
   set termguicolors
   set clipboard+=unnamedplus
-  
+
   " Basic settings from vim-misc that we still want
   set encoding=utf-8
   set autoread
@@ -44,18 +44,18 @@ if has('nvim')
   set splitbelow
   set splitright
   set visualbell
-  
+
   " Color scheme settings
   syntax on
   set runtimepath+=pack/*/start/onehalf/vim
   colorscheme onehalfdark
-  
+
   " Search settings
   set hlsearch
   set ignorecase
   set incsearch
   set smartcase
-  
+
   " Tab settings
   set expandtab
   set tabstop=4
@@ -67,14 +67,6 @@ lua <<EOF
 ---------------------------------------------------------------------
 -- Add our custom treesitter parsers
 local parser_config = require "nvim-treesitter.parsers".get_parser_configs()
-
-parser_config.proto = {
-  install_info = {
-    url = "${sources.tree-sitter-proto}", -- local path or git repo
-    files = {"src/parser.c"}
-  },
-  filetype = "proto", -- if filetype does not agrees with parser name
-}
 
 ---------------------------------------------------------------------
 -- Add our treesitter textobjects

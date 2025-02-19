@@ -44,6 +44,7 @@
       "monodraw"
       "mx-power-gadget"
       "obs"
+      "obsidian"
       "rapidapi"
       "screenflow"
       "sublime-text"
