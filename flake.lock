@@ -1007,7 +1007,8 @@
         "nvim-telescope": "nvim-telescope",
         "nvim-treesitter": "nvim-treesitter",
         "nvim-web-devicons": "nvim-web-devicons",
-        "vim-copilot": "vim-copilot"
+        "vim-copilot": "vim-copilot",
+        "vim-misc": "vim-misc"
       }
     },
     "rust-analyzer-src": {
@@ -1113,6 +1114,22 @@
         "owner": "github",
         "ref": "v1.41.0",
         "repo": "copilot.vim",
+        "type": "github"
+      }
+    },
+    "vim-misc": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1733436556,
+        "narHash": "sha256-Y51mnZn5n5sf92jGHiv1bPAax4iPupMKHOUuhVf5qX0=",
+        "owner": "javdl",
+        "repo": "vim-misc",
+        "rev": "8a086ed5fc2db211aee4c798b36097e0057642c8",
+        "type": "github"
+      },
+      "original": {
+        "owner": "javdl",
+        "repo": "vim-misc",
         "type": "github"
       }
     },
