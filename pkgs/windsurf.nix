@@ -23,7 +23,7 @@ in
 
     src = fetchurl {
       url = "https://windsurf-stable.codeiumdata.com/linux-x64/stable/${hash}/Windsurf-linux-x64-${version}.tar.gz";
-      hash = "sha256-6dcf686038c6587410b25dd041a748a59593164b6c3ffb31935abef1325bfa8c"; # sha256 of b39ddacf0afe6ceed41d502ad22c9d3f4f73ed92bdaef1763fb34aa063e650c3
+      hash = "sha256-bc9oYDjGWHQQsl3QQadIpZWTFktsP/sxk1q+8TJb+ow="; # sha256 of b39ddacf0afe6ceed41d502ad22c9d3f4f73ed92bdaef1763fb34aa063e650c3
     };
 
     sourceRoot = "Windsurf";
