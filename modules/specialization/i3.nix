@@ -7,16 +7,13 @@
       extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
       config.common.default = "*";
     };
-    services = {
-      xserver = {
-        enable = true;
-        xkb.layout = "us";
-        dpi = 220;
-        desktopManager = {
-          xterm.enable = false;
-          wallpaper.mode = "fill";
-        };
-        windowManager.i3.enable = true;
+    services.xserver = {
+      enable = true;
+      xkb.layout = "us";
+      dpi = 220;
+      desktopManager = {
+        xterm.enable = false;
+        wallpaper.mode = "fill";
       };
       displayManager = {
         defaultSession = "none+i3";
@@ -28,6 +25,7 @@
           ${pkgs.xorg.xset}/bin/xset r rate 200 40
         '';
       };
+      windowManager.i3.enable = true;
     };
   };
 }
