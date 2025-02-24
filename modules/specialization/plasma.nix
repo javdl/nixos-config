@@ -12,5 +12,8 @@
       };
     };
     services.desktopManager.plasma6.enable = true;
+    
+    # Force KDE's ssh-askpass over Seahorse's
+    programs.ssh.askPassword = lib.mkForce "${pkgs.plasma5Packages.ksshaskpass}/bin/ksshaskpass";
   };
 }
