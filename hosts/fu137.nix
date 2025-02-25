@@ -161,6 +161,7 @@
         # https://github.com/settings/personal-access-tokens/new
         # echo -n 'token' > /home/joost/.fuww-github-runner-token
         # Give it “Read and Write access to organization/repository self hosted runners”, depending on whether it is organization wide or per-repository.
+        # JL: op personal account heb je die niet, daar een ouderwetse access token maken met manage_runners:org access.
         tokenFile = "/home/joost/.fuww-github-runner-token";
         url = "https://github.com/fuww";
       };

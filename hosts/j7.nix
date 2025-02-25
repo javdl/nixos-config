@@ -176,6 +176,29 @@
   # Or disable the firewall altogether.
   # networking.firewall.enable = false;
 
+    services = {
+    github-runners = {
+      # We suggest using the fine-grained PATs 
+      # https://search.nixos.org/options?channel=24.05&show=services.github-runners.%3Cname%3E.tokenFile&from=0&size=50&sort=relevance&type=packages&query=services.github-runner
+      # The file should contain exactly one line with the token without any newline.
+      # https://github.com/settings/personal-access-tokens/new
+      # echo -n 'token' > /home/joost/.github-runner-token
+      # Give it “Read and Write access to organization/repository self hosted runners”, depending on whether it is organization wide or per-repository.
+      runner = {
+        enable = true;
+        name = "j7-runner";
+        tokenFile = "/home/joost/.github-runner-token";
+        url = "https://github.com/javdl";
+      };
+      runner2fuww = {
+        enable = true;
+        name = "j7-fuww-runner";
+        tokenFile = "/home/joost/.fuww-github-runner-token";
+        url = "https://github.com/fuww";
+      };
+    };
+  };
+
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
   # on your system were taken. It‘s perfectly fine and recommended to leave
