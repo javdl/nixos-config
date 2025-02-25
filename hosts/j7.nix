@@ -190,13 +190,19 @@
         # voor een personal account beide geven. Daar kun je nl. alleen per repo
         # een url instellen, niet voor je hele username. https://github.com/javdl
         # werkt dus niet.
-      runner = {
+      runner1 = {
         enable = true;
         name = "j7-runner";
         tokenFile = "/home/joost/.github-runner-token";
         url = "https://github.com/javdl/nixos-config";
       };
-      runner2fuww = { # will show in systemctl as github-runner-runner2fuww.service
+      runner2 = {
+        enable = true;
+        name = "j7-runner";
+        tokenFile = "/home/joost/.github-runner-token";
+        url = "https://github.com/javdl/top200-rs";
+      };
+      runner99fuww = { # will show in systemctl as github-runner-runner2fuww.service
         enable = true;
         name = "j7-fuww-runner";
         tokenFile = "/home/joost/.fuww-github-runner-token";
