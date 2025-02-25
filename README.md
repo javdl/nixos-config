@@ -1,5 +1,10 @@
 # NixOS System Configurations
 
+[![Build 🏗️ and Cache ❄️](https://github.com/javdl/nixos-config/actions/workflows/fh.yml/badge.svg)](https://github.com/javdl/nixos-config/actions/workflows/fh.yml)
+[![Dependabot Updates](https://github.com/javdl/nixos-config/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/javdl/nixos-config/actions/workflows/dependabot/dependabot-updates)
+[![Flake ❄️ Checker ✅](https://github.com/javdl/nixos-config/actions/workflows/flake-checker.yml/badge.svg)](https://github.com/javdl/nixos-config/actions/workflows/flake-checker.yml)
+[![Flake ❄️ Lock 🔒️ Updater ✨](https://github.com/javdl/nixos-config/actions/workflows/lock-updater.yml/badge.svg)](https://github.com/javdl/nixos-config/actions/workflows/lock-updater.yml)
+
 This is an adaptation of [Mitchell Hashimoto's nixos-config repo](https://github.com/mitchellh/nixos-config)
 
 Some things I have added or changed:
