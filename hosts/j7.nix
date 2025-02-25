@@ -182,7 +182,8 @@
         # https://search.nixos.org/options?channel=24.05&show=services.github-runners.%3Cname%3E.tokenFile&from=0&size=50&sort=relevance&type=packages&query=services.github-runner
         # The file should contain exactly one line with the token without any newline.
         # https://github.com/settings/personal-access-tokens/new
-        # echo -n 'token' > /home/joost/.github-runner-token
+        # echo -n 'TOKEN' > /home/joost/.github-runner-token
+        # echo -n 'TOKEN' > /home/joost/.fuww-github-runner-token
         # Give it “Read and Write access to organization/repository self hosted runners”, depending on whether it is organization wide or per-repository.
         # JL: op personal account heb je die niet, daar een classic PAT maken met `manage_runners:org` AND `repo` access.
         # For classic PATs:
