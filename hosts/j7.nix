@@ -192,17 +192,17 @@
         # werkt dus niet.
       runner1 = {
         enable = true;
-        name = "j7-runner";
+        name = "j7-runner-nixos-config";
         tokenFile = "/home/joost/.github-runner-token";
         url = "https://github.com/javdl/nixos-config";
       };
       runner2 = {
         enable = true;
-        name = "j7-runner";
+        name = "j7-runner-top200-rs";
         tokenFile = "/home/joost/.github-runner-token";
         url = "https://github.com/javdl/top200-rs";
       };
-      runner99fuww = { # will show in systemctl as github-runner-runner2fuww.service
+      runner2fuww = { # will show in systemctl as github-runner-runner2fuww.service
         enable = true;
         name = "j7-fuww-runner";
         tokenFile = "/home/joost/.fuww-github-runner-token";
