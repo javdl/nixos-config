@@ -184,14 +184,19 @@
         # https://github.com/settings/personal-access-tokens/new
         # echo -n 'token' > /home/joost/.github-runner-token
         # Give it “Read and Write access to organization/repository self hosted runners”, depending on whether it is organization wide or per-repository.
-        # JL: op personal account heb je die niet, daar een ouderwetse access token maken met manage_runners:org access.
+        # JL: op personal account heb je die niet, daar een classic PAT maken met `manage_runners:org` AND `repo` access.
+        # For classic PATs:
+        # Make sure the PAT has a scope of admin:org for organization-wide registrations or a scope of repo for a single repository.
+        # voor een personal account beide geven. Daar kun je nl. alleen per repo
+        # een url instellen, niet voor je hele username. https://github.com/javdl
+        # werkt dus niet.
       runner = {
-        enable = false;
+        enable = true;
         name = "j7-runner";
         tokenFile = "/home/joost/.github-runner-token";
-        url = "https://github.com/javdl";
+        url = "https://github.com/javdl/nixos-config";
       };
-      runner2fuww = {
+      runner2fuww = { # will show in systemctl as github-runner-runner2fuww.service
         enable = true;
         name = "j7-fuww-runner";
         tokenFile = "/home/joost/.fuww-github-runner-token";
