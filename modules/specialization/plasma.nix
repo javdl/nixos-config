@@ -1,10 +1,8 @@
 # KDE Plasma (Wayland)
 { pkgs, lib, ... }: {
   specialisation.plasma.configuration = {
-    services = {
-      xserver = {
-        enable = true;
-      };
+    services.xserver = {
+      enable = true;
       displayManager = {
         gdm.enable = lib.mkForce false;
         sddm = {
