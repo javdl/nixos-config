@@ -54,7 +54,7 @@
 
   systemd.network.wait-online.anyInterface = true; # block for no more than one interface
   networking.dhcpcd.wait = "background";
-  
+
   # Set your time zone.
   time.timeZone = "Europe/Amsterdam";
 
@@ -176,14 +176,14 @@
   # Or disable the firewall altogether.
   # networking.firewall.enable = false;
 
-    services = {
+  services = {
     github-runners = {
-      # We suggest using the fine-grained PATs 
+      # We suggest using the fine-grained PATs
         # https://search.nixos.org/options?channel=24.05&show=services.github-runners.%3Cname%3E.tokenFile&from=0&size=50&sort=relevance&type=packages&query=services.github-runner
         # The file should contain exactly one line with the token without any newline.
         # https://github.com/settings/personal-access-tokens/new
-        # echo -n 'TOKEN' > /home/joost/.github-runner-token
-        # echo -n 'TOKEN' > /home/joost/.fuww-github-runner-token
+        # echo -n 'TOKEN' > $HOME/.github-runner-token
+        # echo -n 'TOKEN' > $HOME/.fuww-github-runner-token
         # Give it “Read and Write access to organization/repository self hosted runners”, depending on whether it is organization wide or per-repository.
         # JL: op personal account heb je die niet, daar een classic PAT maken met `manage_runners:org` AND `repo` access.
         # For classic PATs:
@@ -194,19 +194,19 @@
       runner1 = {
         enable = true;
         name = "j7-runner-nixos-config";
-        tokenFile = "/home/joost/.github-runner-token";
+        tokenFile = "$HOME/.github-runner-token";
         url = "https://github.com/javdl/nixos-config";
       };
       runner2 = {
         enable = true;
         name = "j7-runner-top200-rs";
-        tokenFile = "/home/joost/.github-runner-token";
+        tokenFile = "$HOME/.github-runner-token";
         url = "https://github.com/javdl/top200-rs";
       };
       runner2fuww = { # will show in systemctl as github-runner-runner2fuww.service
         enable = true;
         name = "j7-fuww-runner";
-        tokenFile = "/home/joost/.fuww-github-runner-token";
+        tokenFile = "$HOME/.fuww-github-runner-token";
         url = "https://github.com/fuww";
       };
     };

@@ -17,6 +17,8 @@
       ];
     casks  = [
       # "bitwarden" Must be installed via Mac App Store for browser integration to work
+      "affinity-designer"
+      "affinity-photo"
       "calibre"
       "chromedriver"
       "cleanshot"
