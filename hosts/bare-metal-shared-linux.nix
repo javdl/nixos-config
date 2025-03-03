@@ -103,6 +103,7 @@ in {
   # "sudo tailscale up". If you don't use tailscale, you should comment
   # out or delete all of this.
   services.tailscale.enable = true;
+  services.resolved.enable = true;
 
   # Manage fonts. We pull these from a secret directory since most of these
   # fonts require a purchase.

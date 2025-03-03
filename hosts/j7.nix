@@ -194,19 +194,19 @@
       runner1 = {
         enable = true;
         name = "j7-runner-nixos-config";
-        tokenFile = "$HOME/.github-runner-token";
+        tokenFile = "/home/joost/.github-runner-token";
         url = "https://github.com/javdl/nixos-config";
       };
       runner2 = {
         enable = true;
         name = "j7-runner-top200-rs";
-        tokenFile = "$HOME/.github-runner-token";
+        tokenFile = "/home/joost/.github-runner-token";
         url = "https://github.com/javdl/top200-rs";
       };
       runner2fuww = { # will show in systemctl as github-runner-runner2fuww.service
         enable = true;
         name = "j7-fuww-runner";
-        tokenFile = "$HOME/.fuww-github-runner-token";
+        tokenFile = "/home/joost/.fuww-github-runner-token";
         url = "https://github.com/fuww";
       };
     };
