@@ -104,6 +104,9 @@ in {
   # out or delete all of this.
   services.tailscale.enable = true;
   services.resolved.enable = true;
+  # Per Enabling HTTPS in the Tailscale documentation, run the following:
+  # sudo tailscale cert ${MACHINE_NAME}.${TAILNET_NAME} # = full domain from tailscale web ui
+
 
   # Manage fonts. We pull these from a secret directory since most of these
   # fonts require a purchase.

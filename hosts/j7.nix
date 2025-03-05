@@ -50,7 +50,48 @@
   # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
 
   # Enable networking
-  networking.networkmanager.enable = true;
+  # networking.networkmanager.enable = true; # uitgezet bij fixed ip addresses
+  # maar ik kan wel zien dat 10G een tijdje werkt voordat hij uitvalt:
+  # eno1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+  #       ether 08:bf:b8:13:95:eb  txqueuelen 1000  (Ethernet)
+  #       RX packets 467940  bytes 367269975 (350.2 MiB)
+  #       RX errors 0  dropped 12  overruns 0  frame 0
+  #       TX packets 619759  bytes 447718556 (426.9 MiB)
+  #       TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+  #       device memory 0x80800000-808fffff
+  
+  networking = {
+    interfaces.en01 = { # 10G op mobo, valt steeds uit
+      ipv4.addresses = [{
+        address = "172.20.0.10";
+        prefixLength = 24;
+      }];
+    };
+    interfaces.en02 = {
+      # ipv6.addresses = [{
+      #   address = "2a01:4f8:1c1b:16d0::1";
+      #   prefixLength = 64;
+      # }];
+      ipv4.addresses = [{
+        address = "172.20.0.11";
+        prefixLength = 24;
+      }];
+    };
+    interfaces.wlp8s0 = {
+      ipv4.addresses = [{
+        address = "172.20.0.12";
+        prefixLength = 24;
+      }];
+    };
+    defaultGateway = {
+      address = "172.20.0.1";
+      interface = "eno2";
+    };
+    # defaultGateway6 = {
+    #   address = "fe80::1";
+    #   interface = "ens3";
+    # };
+  };
 
   systemd.network.wait-online.anyInterface = true; # block for no more than one interface
   networking.dhcpcd.wait = "background";
