@@ -59,7 +59,7 @@
   #       TX packets 619759  bytes 447718556 (426.9 MiB)
   #       TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
   #       device memory 0x80800000-808fffff
-  
+
   networking = {
     interfaces.en01 = { # 10G op mobo, valt steeds uit
       ipv4.addresses = [{
@@ -91,6 +91,12 @@
     #   address = "fe80::1";
     #   interface = "ens3";
     # };
+    nameservers = [
+      "172.20.0.1"
+      "9.9.9.9"
+      "8.8.8.8"
+      "8.8.4.4"
+    ];
   };
 
   systemd.network.wait-online.anyInterface = true; # block for no more than one interface
