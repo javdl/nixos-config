@@ -9,11 +9,9 @@
   homebrew = {
     enable = true;
     taps = [
-      "surrealdb/tap"
     ];
     brews = [
       "jq"
-      "surrealdb/tap/surreal"
       ];
     casks  = [
       # "bitwarden" Must be installed via Mac App Store for browser integration to work
