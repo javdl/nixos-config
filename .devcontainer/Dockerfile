@@ -42,9 +42,10 @@ RUN mkdir -p /workspace /home/node/.claude && \
 
 WORKDIR /workspace
 
-RUN wget https://github.com/dandavison/delta/releases/download/0.18.2/git-delta_0.18.2_arm64.deb && \
-  sudo dpkg -i git-delta_0.18.2_arm64.deb && \
-  rm git-delta_0.18.2_arm64.deb
+RUN ARCH=$(dpkg --print-architecture) && \
+  wget "https://github.com/dandavison/delta/releases/download/0.18.2/git-delta_0.18.2_${ARCH}.deb" && \
+  sudo dpkg -i "git-delta_0.18.2_${ARCH}.deb" && \
+  rm "git-delta_0.18.2_${ARCH}.deb"
 
 # Set up non-root user
 USER node
@@ -66,8 +67,7 @@ RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/
   -x
 
 # Install Claude
-# TODO(ben): Add this back in when we have a public release
-# RUN npm install -g @anthropic-ai/claude-code
+RUN npm install -g @anthropic-ai/claude-code
 
 # Copy and set up firewall script
 COPY init-firewall.sh /usr/local/bin/
