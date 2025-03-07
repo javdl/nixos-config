@@ -14,6 +14,7 @@ RUN apt update && apt install -y less \
   unzip \
   gnupg2 \
   gh \
+  ripgrep \
   iptables \
   ipset \
   iproute2 \
