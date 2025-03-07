@@ -1,17 +1,13 @@
+# NixOS configuration for user joost
 { pkgs, inputs, ... }:
 
 {
-  # https://github.com/nix-community/home-manager/pull/2408
-  environment.pathsToLink = [ "/share/fish" ];
+  imports = [
+    # Import common system configuration
+    ../common/system.nix
+  ];
 
-  # Add ~/.local/bin to PATH
-  environment.localBinInPath = true;
-
-  # Since we're using fish as our shell
-  programs.fish.enable = true;
-
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
-
+  # User account configuration
   users.users.joost = {
     isNormalUser = true;
     home = "/home/joost";
@@ -23,6 +19,13 @@
     ];
   };
 
+  # User-specific system packages
+  environment.systemPackages = with pkgs; [
+    docker
+    docker-compose
+  ];
+
+  # Load vim overlays
   nixpkgs.overlays = import ../../lib/overlays.nix ++ [
     (import ./vim.nix { inherit inputs; })
   ];
