@@ -73,6 +73,11 @@ in {
     pkgs.cachix
     pkgs.dasht # Search API docs offline, in terminal or browser
     pkgs.devenv
+    pkgs.docker
+    pkgs.docker-compose
+    pkgs.podman
+    pkgs.podman-tui
+    pkgs.colima
     pkgs.fd
     # pkgs.ffmpeg_5 # libgl, needed for ML
     pkgs.ffmpeg
@@ -159,7 +164,7 @@ in {
     # This is automatically setup on Linux
     pkgs.cachix
     pkgs.tailscale
-    pkgs.raycast # only for MacOS
+    pkgs.raycast
     pkgs.pinentry_mac
   ]) ++ (lib.optionals (isLinux && !isWSL) [
     pkgs.chromium
@@ -176,6 +181,7 @@ in {
     pkgs.geekbench
     pkgs.nextcloud-client
     pkgs.obsidian
+    pkgs.podman-desktop
     pkgs.rpi-imager
     # pkgs.sublime4 # needs old openssl?
     pkgs.tailscale-systray
@@ -368,8 +374,53 @@ in {
 
   programs.zsh = {
     enable = true;
+    enableCompletion = true;
+    autosuggestion.enable = true;
+    syntaxHighlighting.enable = true;
+
+     shellAliases = {
+      ga = "git add";
+      gc = "git commit";
+      gco = "git checkout";
+      gcp = "git cherry-pick";
+      gdiff = "git diff";
+      gl = "git prettylog";
+      gp = "git push";
+      gs = "git status";
+      gt = "git tag";
+    } // (if isLinux then {
+      # Two decades of using a Mac has made this such a strong memory
+      # that I'm just going to keep it consistent.
+      pbcopy = "xclip";
+      pbpaste = "xclip -o";
+    } else {});
+
     initExtra = ''
       export GPG_TTY=$(tty)
+
+      # Fix insecure completion files
+      autoload -Uz compinit
+      # Only run compinit once a day
+      if [[ -n "$(find "$HOME/.zcompdump" -mtime +1 2>/dev/null)" ]]; then
+        compinit
+      else
+        compinit -C
+      fi
+
+      # Fix permissions on completion directory
+      zstyle ':completion:*' use-cache on
+      zstyle ':completion:*' cache-path "$HOME/.zcompcache"
+
+      # Skip the not really helpful global compinit
+      skip_global_compinit=1
+    '';
+
+    # This ensures proper sourcing of home-manager environment variables
+    envExtra = ''
+      # Make sure home-manager variables are sourced
+      if [ -e "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh" ]; then
+        . "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"
+      fi
     '';
   };
 
