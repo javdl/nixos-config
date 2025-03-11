@@ -9,8 +9,8 @@
 
 # https://windsurf-stable.codeium.com/api/update/linux-x64/stable/latest
 let
-  version = "1.3.10"; # "windsurfVersion"
-  hash = "61d65579650f356494469f86c21fb953834289a0"; # "version"
+  version = "1.4.6"; # "windsurfVersion"
+  hash = "724a915b3b4c73cea3d2c93fc85672d6aa3961e0"; # "version"
 in
   pkgs.callPackage "${pkgs.path}/pkgs/applications/editors/vscode/generic.nix" rec {
     inherit commandLineArgs useVSCodeRipgrep version;
