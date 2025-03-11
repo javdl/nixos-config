@@ -200,6 +200,8 @@ in {
     EDITOR = "nvim";
     PAGER = "less -FirSwX";
     MANPAGER = "${manpager}/bin/manpager";
+    NPM_CONFIG_PREFIX = "$HOME/.npm-global";
+    PATH = "$HOME/.npm-global/bin:$PATH";
   };
 
   home.file = {
