@@ -111,6 +111,7 @@ in {
 
     pkgs.python3
     pkgs.poetry
+    pkgs.uv
 
     pkgs.aichat
     pkgs.aider-chat
