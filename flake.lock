@@ -594,11 +594,11 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1741939777,
-        "narHash": "sha256-Ng4oVO1W1gwN02NxbNs8XXCcx6FypIMUwE3Ks9IPPbU=",
+        "lastModified": 1741960251,
+        "narHash": "sha256-R+FKD24Ya3vSZRxYxwE0p71A5vM0IQwRuosyVeji8SE=",
         "owner": "martinvonz",
         "repo": "jj",
-        "rev": "4e5260dad2e858091f1c54e262a45b59fefdc33e",
+        "rev": "1f751e28ccb46c9f6c6ac77f7f6198cce3f51634",
         "type": "github"
       },
       "original": {
@@ -867,11 +867,11 @@
     "nvim-lualine": {
       "flake": false,
       "locked": {
-        "lastModified": 1741851570,
-        "narHash": "sha256-7Oqe+vh2M4zOQIoa2KdHg2RirtQPdYBYLKcNaA1vsfE=",
+        "lastModified": 1741948622,
+        "narHash": "sha256-wXfaxtfJJtIPjTi8MCVKU97XuWwXP9femHQxLK9Zl34=",
         "owner": "nvim-lualine",
         "repo": "lualine.nvim",
-        "rev": "02d61f515e7d88e1b02366ca972aecf2768d53df",
+        "rev": "edf4b24861fa5d586058ff2c9e8982bb971f7098",
         "type": "github"
       },
       "original": {
