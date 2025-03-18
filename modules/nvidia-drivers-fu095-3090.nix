@@ -8,8 +8,8 @@
   services.xserver.videoDrivers = ["nvidia"];
 
 
-# Enable OpenGL
-  hardware.opengl = {
+# Enable Graphics
+  hardware.graphics = {
     enable = true;
   };
 
