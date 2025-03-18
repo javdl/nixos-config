@@ -429,3 +429,18 @@ Source: [https://discourse.nixos.org/t/macos-15-sequoia-update-clobbers-nixbld1-
 ```sh
 ln -s /Volumes/4TBMacData/git $HOME/git
 ```
+
+## AI coding
+
+## Install Claude Code
+
+```bash
+npm install -g @anthropic-ai/claude-code
+```
+
+## Tutorials
+
+https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/tutorials](https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/tutorials)
+
+## Context priming
+Read README.md, CLAUDE.md docs/*, and run git ls-files to understand this codebase.
