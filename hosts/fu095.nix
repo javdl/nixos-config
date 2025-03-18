@@ -94,8 +94,9 @@
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
-  vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
-  #  wget
+    vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
+    gitlab-runner
+    #  wget
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
@@ -109,13 +110,31 @@
   # List services that you want to enable:
 
   # Enable the OpenSSH daemon.
-  # services.openssh.enable = true;
+  services.openssh.enable = true;
 
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ ... ];
   # networking.firewall.allowedUDPPorts = [ ... ];
   # Or disable the firewall altogether.
   # networking.firewall.enable = false;
+
+  services = {
+    github-runners = {
+      # We suggest using the fine-grained PATs
+      # https://search.nixos.org/options?channel=24.05&show=services.github-runners.%3Cname%3E.tokenFile&from=0&size=50&sort=relevance&type=packages&query=services.github-runner
+      # The file should contain exactly one line with the token without any newline.
+      # https://github.com/settings/personal-access-tokens/new
+      # echo -n 'TOKEN' > $HOME/.github-runner-token
+      # Give it "Read and Write access to organization/repository self hosted runners", depending on whether it is organization wide or per-repository.
+      # JL: op personal account heb je die niet, daar een classic PAT maken met `manage_runners:org` AND `repo` access.
+      runnerfuww = { # will show in systemctl as github-runner-runnerfuww.service
+        enable = true;
+        name = "fu095-3090-fuww-runner";
+        tokenFile = "/home/joost/.fuww-github-runner-token";
+        url = "https://github.com/fuww";
+      };
+    };
+  };
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
