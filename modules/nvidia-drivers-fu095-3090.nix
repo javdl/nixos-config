@@ -4,23 +4,22 @@
   imports =
     [    ];
 
+  # Load nvidia driver for Xorg and Wayland
+  services.xserver.videoDrivers = ["nvidia"];
+
+
 # Enable OpenGL
   hardware.opengl = {
     enable = true;
-    #driSupport32Bit = true;
   };
-
-  # Load nvidia driver for Xorg and Wayland
-  services.xserver.videoDrivers = ["nvidia"]; # Does not work with Sway, even when the main monitor is connected to iGPU. Works only when using Radeon IGPU as main monitor with Gnome + Wayland + obsidian/vscode/electron apps (nvidia card can be used with driver as accellerator for AI)
-  # services.xserver.videoDrivers = ["nouveau"]; # this works with gnome + wayland and Sway + wayland
 
   # Wayland and NVidia do not combine well. (example: Electron apps like VS code / codium wont work)
-  #services.xserver.displayManager.gdm.wayland = true;
+  services.xserver.displayManager.gdm.wayland = true;
 
-  systemd.services.nvidia-control-devices = {
-    wantedBy = [ "multi-user.target" ];
-    serviceConfig.ExecStart = "${pkgs.linuxPackages.nvidia_x11.bin}/bin/nvidia-smi";
-  };
+   systemd.services.nvidia-control-devices = {
+     wantedBy = [ "multi-user.target" ];
+     serviceConfig.ExecStart = "${pkgs.linuxPackages.nvidia_x11.bin}/bin/nvidia-smi";
+   };
 
   hardware.nvidia = {
 
@@ -43,7 +42,7 @@
     # On the other hand;
     # Hyprland recommends using the open core driver if your GPU is supported.
     # Sway doesn't work at all with the closed source driver.
-    open = true;
+    open = false;
 
     # Enable the Nvidia settings menu,
 	# accessible via `nvidia-settings`.

@@ -8,7 +8,7 @@
   imports =
     [ # Include the results of the hardware scan.
       ./hardware/fu095.nix
-      ../modules/nvidia-drivers.nix
+      ../modules/nvidia-drivers-fu095-3090.nix
       ../modules/common-pc-ssd.nix
       ./bare-metal-shared-linux.nix
     ];
@@ -16,6 +16,9 @@
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
+
+  # Pin to a specific kernel version known to work with NVIDIA 565.77
+  boot.kernelPackages = pkgs.linuxPackages_6_6;  # Or another compatible version
 
   networking.hostName = "fu095"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.

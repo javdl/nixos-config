@@ -17,7 +17,7 @@ in {
   ];
 
   # Be careful updating this.
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+  #boot.kernelPackages = pkgs.linuxPackages_latest;
   #boot.kernelPackages = pkgs.linuxKernel.packages.linux_6_6; # 6.10 gives problems with nvidia drivers, 6.6 is last LTS
 
   # Electron an Chromium under Wayland

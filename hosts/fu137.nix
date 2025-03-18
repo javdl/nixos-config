@@ -17,6 +17,8 @@
       ./bare-metal-shared-linux.nix
     ];
 
+  boot.kernelPackages = pkgs.linuxPackages_latest;
+
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
   # Bootloader.
