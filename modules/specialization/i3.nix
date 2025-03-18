@@ -16,15 +16,15 @@
         wallpaper.mode = "fill";
       };
       displayManager = {
-        defaultSession = "none+i3";
-        gdm.enable = lib.mkForce false;
-        lightdm.enable = lib.mkForce true;
-        # AARCH64: For now, on Apple Silicon, we must manually set the
-        # display resolution. This is a known issue with VMware Fusion.
-        sessionCommands = ''
-          ${pkgs.xorg.xset}/bin/xset r rate 200 40
-        '';
-      };
+      defaultSession = "none+i3";
+      gdm.enable = lib.mkForce false;
+      lightdm.enable = lib.mkForce true;
+      # AARCH64: For now, on Apple Silicon, we must manually set the
+      # display resolution. This is a known issue with VMware Fusion.
+      sessionCommands = ''
+        ${pkgs.xorg.xset}/bin/xset r rate 200 40
+      '';
+    };
       windowManager.i3.enable = true;
     };
   };
