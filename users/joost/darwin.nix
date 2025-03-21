@@ -45,6 +45,7 @@
       "monodraw"
       "mx-power-gadget"
       "obs"
+      "piwix" # offline wikipedia<D-s>
       "obsidian"
       "rapidapi"
       "screenflow"
