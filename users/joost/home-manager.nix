@@ -126,6 +126,7 @@ in {
     pkgs.slack
     pkgs.spotify
     pkgs.telegram-desktop
+    pkgs.signal-desktop
 
     pkgs.font-awesome # waybar icons
     pkgs.fira-code
@@ -140,6 +141,8 @@ in {
     pkgs.noto-fonts-emoji
     pkgs.rubik
     pkgs.proggyfonts
+    pkgs.yabai # tiling window manager
+    pkgs.skhd # hotkeys for yabai
 
     pkgs.bashmount # Easily mount (encrypted/usb) drives
     pkgs.flyctl

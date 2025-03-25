@@ -45,9 +45,9 @@
       "monodraw"
       "mx-power-gadget"
       "obs"
-      "piwix" # offline wikipedia<D-s>
       "obsidian"
       "rapidapi"
+      "raycast" # for searching nix GUI apps (nix doesnt put bin in Applications folder so macos search doesnt work)
       "screenflow"
       "sublime-text"
       "thunderbird"
@@ -57,6 +57,11 @@
       "wacom-tablet"
       "zed"
     ];
+    masApps = { # to find ID, App Store > Share > Copy link
+      "Bitwarden" = 1352778147;
+      # "Kiwix" = 997079563;
+      "Tacx Training" = 892366151;
+    };
   };
 
   # The user should already exist, but we need to set this up so Nix knows

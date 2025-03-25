@@ -17,6 +17,13 @@ TODO
 - CUDA / CuDNN support on bare metal
 - Window manager i3 from the original repo does not seem to work, it uses Gnome by default. Maybe want to set up i3 or Hyprland.
 
+### Manual install
+
+Software that cannot (yet) be installed via Nix or Brew or Mac App Store:
+
+- [DaVinci Resolve Studio](https://www.blackmagicdesign.com/support/family/davinci-resolve-and-fusion)
+- [Switch Spotlight hotkey to Raycast](https://manual.raycast.com/hotkey) - Raycast is a must to find GUI apps installed via Nix. Regular spotlight does not find them because it doesn't work with symlinks.
+
 This repository contains my NixOS system configurations. This repository
 isn't meant to be a turnkey solution to copying my setup or learning Nix,
 so I want to apologize to anyone trying to look for something "easy". I've
