@@ -165,6 +165,7 @@ in {
     pkgs.nodejs
     pkgs.nodePackages.firebase-tools
   ] ++ (lib.optionals isDarwin [
+    pkgs.aerospace
     # This is automatically setup on Linux
     pkgs.cachix
     pkgs.tailscale
@@ -251,7 +252,9 @@ in {
 
   } // (if isDarwin then {
     # Rectangle.app. This has to be imported manually using the app.
-    "rectangle/RectangleConfig.json".text = builtins.readFile ./RectangleConfig.json;
+    # "rectangle/RectangleConfig.json".text = builtins.readFile ./RectangleConfig.json;
+    "skhdrc".text = builtins.readFile ./skhdrc;
+    "aerospace/aerospace.toml".text = builtins.readFile ./aerospace.toml;
   } else {}) // (if isLinux then {
     "ghostty/config".text = builtins.readFile ./ghostty.linux;
     "jj/config.toml".source = ./jujutsu.toml;
