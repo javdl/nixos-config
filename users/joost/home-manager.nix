@@ -168,9 +168,11 @@ in {
     pkgs.aerospace
     # This is automatically setup on Linux
     pkgs.cachix
-    pkgs.tailscale
-    pkgs.raycast
     pkgs.pinentry_mac
+    pkgs.raycast
+    pkgs.sketchybar
+    pkgs.sketchybar-app-font
+    pkgs.tailscale
   ]) ++ (lib.optionals (isLinux && !isWSL) [
     pkgs.chromium
     pkgs.firefox-devedition
@@ -253,8 +255,26 @@ in {
   } // (if isDarwin then {
     # Rectangle.app. This has to be imported manually using the app.
     # "rectangle/RectangleConfig.json".text = builtins.readFile ./RectangleConfig.json;
-    "skhdrc".text = builtins.readFile ./skhdrc;
+    "skhd/skhdrc".text = builtins.readFile ./skhdrc;
     "aerospace/aerospace.toml".text = builtins.readFile ./aerospace.toml;
+    "sketchybar/sketchybarrc".text = builtins.readFile ./sketchybar/sketchybarrc;
+    "sketchybar/colors.sh".text = builtins.readFile ./sketchybar/colors.sh;
+    "sketchybar/icons.sh".text = builtins.readFile ./sketchybar/icons.sh;
+    "sketchybar/plugins" = {
+          source = ./sketchybar/plugins;
+          recursive = true;
+          executable = true;
+        };
+    "sketchybar/items" = {
+          source = ./sketchybar/items;
+          recursive = true;
+          executable = true;
+        };
+    "sketchybar/helper" = {
+          source = ./sketchybar/helper;
+          recursive = true;
+          executable = true;
+        };
   } else {}) // (if isLinux then {
     "ghostty/config".text = builtins.readFile ./ghostty.linux;
     "jj/config.toml".source = ./jujutsu.toml;
