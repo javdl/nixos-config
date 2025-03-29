@@ -58,9 +58,10 @@
       "zed"
     ];
     masApps = { # to find ID, App Store > Share > Copy link
-      "Bitwarden" = 1352778147;
-      # "Kiwix" = 997079563;
-      "Tacx Training" = 892366151;
+      # masApps reinstall or do a slow check on each run. Manual install is the best option I guess.
+      # "Bitwarden" = 1352778147;
+      # # "Kiwix" = 997079563;
+      # "Tacx Training" = 892366151;
     };
   };
 

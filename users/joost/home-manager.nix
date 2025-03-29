@@ -257,7 +257,10 @@ in {
     # "rectangle/RectangleConfig.json".text = builtins.readFile ./RectangleConfig.json;
     "skhd/skhdrc".text = builtins.readFile ./skhdrc;
     "aerospace/aerospace.toml".text = builtins.readFile ./aerospace.toml;
-    "sketchybar/sketchybarrc".text = builtins.readFile ./sketchybar/sketchybarrc;
+    "sketchybar/sketchybarrc" = {
+      source = ./sketchybar/sketchybarrc;
+      executable = true;
+    };
     "sketchybar/colors.sh".text = builtins.readFile ./sketchybar/colors.sh;
     "sketchybar/icons.sh".text = builtins.readFile ./sketchybar/icons.sh;
     "sketchybar/plugins" = {

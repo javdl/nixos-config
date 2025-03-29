@@ -50,6 +50,10 @@ automatically-unhide-macos-hidden-apps = false
 # run = ['layout floating', 'move-node-to-workspace S']  # The callback itself
 
 [[on-window-detected]]
+if.app-name-regex-substring = 'signal'
+run = 'layout floating'
+
+[[on-window-detected]]
 if.app-name-regex-substring = 'telegram'
 run = 'layout floating'
 
@@ -67,10 +71,6 @@ run = 'layout floating'
 
 [[on-window-detected]]
 if.app-name-regex-substring = 'elgato'
-run = 'layout floating'
-
-[[on-window-detected]]
-if.app-name-regex-substring = 'dicord'
 run = 'layout floating'
 
 [[on-window-detected]]
