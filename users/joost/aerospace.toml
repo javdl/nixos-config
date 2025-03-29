@@ -18,7 +18,7 @@ enable-normalization-opposite-orientation-for-nested-containers = true
 # See: https://nikitabobko.github.io/AeroSpace/guide#layouts
 # The 'accordion-padding' specifies the size of accordion padding
 # You can set 0 to disable the padding feature
-accordion-padding = 300
+# accordion-padding = 300
 
 # Possible values: tiles|accordion
 default-root-container-layout = 'tiles'
@@ -48,6 +48,10 @@ automatically-unhide-macos-hidden-apps = false
 # if.during-aerospace-startup = true
 # check-further-callbacks = true
 # run = ['layout floating', 'move-node-to-workspace S']  # The callback itself
+
+[[on-window-detected]]
+if.app-name-regex-substring = 'superwhisper'
+run = 'layout floating'
 
 [[on-window-detected]]
 if.app-name-regex-substring = 'signal'
