@@ -95,6 +95,7 @@ in {
     pkgs.libGL # ML
     pkgs.libGLU # ML
     pkgs.libheif
+    # pkgs.ollama # outdated, use brew
     pkgs.ripgrep
     pkgs.tree
     pkgs.watch
