@@ -141,8 +141,6 @@ in {
     pkgs.noto-fonts-emoji
     pkgs.rubik
     pkgs.proggyfonts
-    pkgs.yabai # tiling window manager
-    pkgs.skhd # hotkeys for yabai
 
     pkgs.bashmount # Easily mount (encrypted/usb) drives
     pkgs.flyctl
@@ -172,7 +170,9 @@ in {
     pkgs.raycast
     pkgs.sketchybar
     pkgs.sketchybar-app-font
+    pkgs.skhd # hotkeys for yabai
     pkgs.tailscale
+    pkgs.yabai # tiling window manager
   ]) ++ (lib.optionals (isLinux && !isWSL) [
     pkgs.chromium
     pkgs.firefox-devedition

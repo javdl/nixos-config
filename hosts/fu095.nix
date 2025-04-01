@@ -8,21 +8,15 @@
   imports =
     [ # Include the results of the hardware scan.
       ./hardware/fu095.nix
-      ../modules/nvidia-drivers-fu095-3090.nix
-      ../modules/common-pc-ssd.nix
-      ./bare-metal-shared-linux.nix
     ];
 
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
-  # Pin to a specific kernel version known to work with NVIDIA 565.77
-  boot.kernelPackages = pkgs.linuxPackages_6_6;  # Or another compatible version
-
-  networking.hostName = "fu095"; # Define your hostname.
+  networking.hostName = "nixos"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
-
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
   # Configure network proxy if necessary
   # networking.proxy.default = "http://user:password@proxy:port/";
   # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
@@ -48,6 +42,19 @@
     LC_TIME = "nl_NL.UTF-8";
   };
 
+  # Enable the X11 windowing system.
+  services.xserver.enable = true;
+
+  # Enable the GNOME Desktop Environment.
+  services.xserver.displayManager.gdm.enable = true;
+  services.xserver.desktopManager.gnome.enable = true;
+
+  # Configure keymap in X11
+  services.xserver.xkb = {
+    layout = "us";
+    variant = "";
+  };
+
   # Enable CUPS to print documents.
   services.printing.enable = true;
 
@@ -68,7 +75,7 @@
   };
 
   # Enable touchpad support (enabled default in most desktopManager).
-  # services.libinput.enable = true;
+  # services.xserver.libinput.enable = true;
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.joost = {
@@ -76,27 +83,21 @@
     description = "joost";
     extraGroups = [ "networkmanager" "wheel" ];
     packages = with pkgs; [
-      vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
-      firefox-devedition
-      thunderbird
+    #  thunderbird
     ];
   };
 
-  # enable flakes
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  # Install firefox.
+  programs.firefox.enable = true;
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
-  nixpkgs.config.permittedInsecurePackages = [
-              ];
-
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
-    vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
-    gitlab-runner
-    #  wget
+  #  vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
+  #  wget
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
@@ -110,7 +111,7 @@
   # List services that you want to enable:
 
   # Enable the OpenSSH daemon.
-  services.openssh.enable = true;
+  # services.openssh.enable = true;
 
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ ... ];
@@ -118,30 +119,12 @@
   # Or disable the firewall altogether.
   # networking.firewall.enable = false;
 
-  services = {
-    github-runners = {
-      # We suggest using the fine-grained PATs
-      # https://search.nixos.org/options?channel=24.05&show=services.github-runners.%3Cname%3E.tokenFile&from=0&size=50&sort=relevance&type=packages&query=services.github-runner
-      # The file should contain exactly one line with the token without any newline.
-      # https://github.com/settings/personal-access-tokens/new
-      # echo -n 'TOKEN' > $HOME/.github-runner-token
-      # Give it "Read and Write access to organization/repository self hosted runners", depending on whether it is organization wide or per-repository.
-      # JL: op personal account heb je die niet, daar een classic PAT maken met `manage_runners:org` AND `repo` access.
-      runnerfuww = { # will show in systemctl as github-runner-runnerfuww.service
-        enable = true;
-        name = "fu095-3090-fuww-runner";
-        tokenFile = "/home/joost/.fuww-github-runner-token";
-        url = "https://github.com/fuww";
-      };
-    };
-  };
-
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
   # on your system were taken. It‘s perfectly fine and recommended to leave
   # this value at the release version of the first install of this system.
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
-  system.stateVersion = "23.05"; # Did you read the comment?
+  system.stateVersion = "24.11"; # Did you read the comment?
 
 }
