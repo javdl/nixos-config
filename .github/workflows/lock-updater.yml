@@ -22,7 +22,7 @@ jobs:
       - uses: DeterminateSystems/flakehub-cache-action@main
       - uses: DeterminateSystems/update-flake-lock@main
         with:
-          token: ${{ secrets.GH_TOKEN }}
+          token: ${{ secrets.GH_TOKEN_FOR_UPDATES }}
           pr-title: "chore: update flake.lock"
           # Labels to be set on the PR
           pr-labels: |
