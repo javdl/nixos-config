@@ -52,7 +52,9 @@
       "rapidapi"
       "raycast" # for searching nix GUI apps (nix doesnt put bin in Applications folder so macos search doesnt work)
       "screenflow"
+      # "screenpipe" outdated on brew
       "sublime-text"
+      "superwhisper"
       "thunderbird"
       "veracrypt"
       "visual-studio-code"
