@@ -626,7 +626,6 @@ in {
       customVim.vim-copilot
       customVim.vim-cue
       customVim.vim-fish
-      customVim.vim-fugitive
       customVim.vim-glsl
       customVim.vim-misc
       customVim.vim-pgsql
@@ -637,12 +636,15 @@ in {
 
       customVim.vim-nord
       customVim.nvim-comment
+      customVim.nvim-copilot-chat
+      customVim.nvim-conform
+      customVim.nvim-gitsigns
+      customVim.nvim-lualine
       customVim.nvim-lspconfig
+      customVim.nvim-nui
       customVim.nvim-plenary # required for telescope
+      customVim.nvim-snacks # replacement for nvim-dressing
       customVim.nvim-telescope
-
-      vimPlugins.vim-airline
-      vimPlugins.vim-airline-themes
 
       vimPlugins.vim-eunuch
       vimPlugins.vim-gitgutter

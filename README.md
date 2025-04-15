@@ -452,3 +452,16 @@ https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/tutorials](https
 
 ## Context priming
 Read README.md, CLAUDE.md docs/*, and run git ls-files to understand this codebase.
+
+## Add commits from the "OG" repo from Mitchell Hashimoto
+
+```bash
+git remote add upstream git@github.com:mitchellh/nixos-config.git
+git fetch upstream
+git log upstream/main
+git cherry-pick <commit>
+
+# example
+git cherry-pick 1fa2c834308e061e60a459f607d684740fc7fcd4
+git cherry-pick 1fa2c8
+```

@@ -815,6 +815,22 @@
         "type": "github"
       }
     },
+    "nvim-copilot-chat": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1744183503,
+        "narHash": "sha256-XMrjDUvQjkW9tlTubVou2RMQfOfzmMFlQAWgCx3/4y4=",
+        "owner": "CopilotC-Nvim",
+        "repo": "CopilotChat.nvim",
+        "rev": "a89f5f1162b04a0962e5f4c3cdf248a81e7e53cb",
+        "type": "github"
+      },
+      "original": {
+        "owner": "CopilotC-Nvim",
+        "repo": "CopilotChat.nvim",
+        "type": "github"
+      }
+    },
     "nvim-dressing": {
       "flake": false,
       "locked": {
@@ -912,6 +928,38 @@
         "type": "github"
       }
     },
+    "nvim-rust": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1669559182,
+        "narHash": "sha256-70kp644jOtJ4wguty/SUFX+YEsoxW12LGg3vZh7BdPY=",
+        "owner": "rust-lang",
+        "repo": "rust.vim",
+        "rev": "889b9a7515db477f4cb6808bef1769e53493c578",
+        "type": "github"
+      },
+      "original": {
+        "owner": "rust-lang",
+        "repo": "rust.vim",
+        "type": "github"
+      }
+    },
+    "nvim-snacks": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1740868622,
+        "narHash": "sha256-Gw0Bp2YeoESiBLs3NPnqke3xwEjuiQDDU1CPofrhtig=",
+        "owner": "folke",
+        "repo": "snacks.nvim",
+        "rev": "bc0630e43be5699bb94dadc302c0d21615421d93",
+        "type": "github"
+      },
+      "original": {
+        "owner": "folke",
+        "repo": "snacks.nvim",
+        "type": "github"
+      }
+    },
     "nvim-telescope": {
       "flake": false,
       "locked": {
@@ -929,20 +977,19 @@
         "type": "github"
       }
     },
-    "nvim-treesitter": {
+    "nvim-treesitter-context": {
       "flake": false,
       "locked": {
-        "lastModified": 1705679158,
-        "narHash": "sha256-zAyiitJIgOCZTB0CmgNt0MHENM70SOHLIoWrVwOJKFg=",
+        "lastModified": 1743773493,
+        "narHash": "sha256-4nvtD4Tz20o3bjWIJdt0grEvq3UQ+iqM+Fs0RNS3qRM=",
         "owner": "nvim-treesitter",
-        "repo": "nvim-treesitter",
-        "rev": "f197a15b0d1e8d555263af20add51450e5aaa1f0",
+        "repo": "nvim-treesitter-context",
+        "rev": "439789a9a8df9639ecd749bb3286b77117024a6f",
         "type": "github"
       },
       "original": {
         "owner": "nvim-treesitter",
-        "ref": "v0.9.2",
-        "repo": "nvim-treesitter",
+        "repo": "nvim-treesitter-context",
         "type": "github"
       }
     },
@@ -998,13 +1045,17 @@
         "nixpkgs": "nixpkgs_5",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "nvim-conform": "nvim-conform",
+        "nvim-copilot-chat": "nvim-copilot-chat",
         "nvim-dressing": "nvim-dressing",
         "nvim-gitsigns": "nvim-gitsigns",
         "nvim-lspconfig": "nvim-lspconfig",
         "nvim-lualine": "nvim-lualine",
         "nvim-nui": "nvim-nui",
         "nvim-plenary": "nvim-plenary",
+        "nvim-rust": "nvim-rust",
+        "nvim-snacks": "nvim-snacks",
         "nvim-telescope": "nvim-telescope",
+        "nvim-treesitter-context": "nvim-treesitter-context",
         "nvim-web-devicons": "nvim-web-devicons",
         "vim-copilot": "vim-copilot",
         "vim-misc": "vim-misc"

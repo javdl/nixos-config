@@ -106,5 +106,28 @@ require'nvim-treesitter.configs'.setup {
   },
 }
 
+
+---------------------------------------------------------------------
+-- Gitsigns
+
+require('gitsigns').setup()
+
+---------------------------------------------------------------------
+-- Lualine
+
+require('lualine').setup()
+
+---------------------------------------------------------------------
+-- Cinnamon
+
+-- require('cinnamon').setup()
+-- require('cinnamon').setup {
+--  extra_keymaps = true,
+--  override_keymaps = true,
+--  scroll_limit = -1,
+--}
+
+vim.opt.termsync = false
+
 EOF
 ''

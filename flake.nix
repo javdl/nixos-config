@@ -42,6 +42,8 @@
     # zig.url = "github:mitchellh/zig-overlay";
 
     # Non-flakes
+    nvim-copilot-chat.url = "github:CopilotC-Nvim/CopilotChat.nvim";
+    nvim-copilot-chat.flake = false;
     nvim-conform.url = "github:stevearc/conform.nvim/v7.1.0";
     nvim-conform.flake = false;
     nvim-dressing.url = "github:stevearc/dressing.nvim";
@@ -56,9 +58,14 @@
     nvim-nui.flake = false;
     nvim-plenary.url = "github:nvim-lua/plenary.nvim";
     nvim-plenary.flake = false;
+    nvim-rust.url = "github:rust-lang/rust.vim";
+    nvim-rust.flake = false;
+    nvim-snacks.url = "github:folke/snacks.nvim";
+    nvim-snacks.flake = false;
     nvim-telescope.url = "github:nvim-telescope/telescope.nvim/0.1.8";
     nvim-telescope.flake = false;
-
+    nvim-treesitter-context.url = "github:nvim-treesitter/nvim-treesitter-context";
+    nvim-treesitter-context.flake = false;
     nvim-web-devicons.url = "github:nvim-tree/nvim-web-devicons";
     nvim-web-devicons.flake = false;
     vim-copilot.url = "github:github/copilot.vim/v1.41.0";

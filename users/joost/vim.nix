@@ -19,11 +19,6 @@ let sources = import ../../nix/sources.nix; in rec {
       src = sources.vim-fish;
     };
 
-    vim-fugitive = vimUtils.buildVimPlugin {
-      name = "vim-fugitive";
-      src = sources.vim-fugitive;
-    };
-
     vim-glsl = vimUtils.buildVimPlugin {
       name = "vim-glsl";
       src = sources.vim-glsl;
@@ -31,7 +26,7 @@ let sources = import ../../nix/sources.nix; in rec {
 
     vim-misc = vimUtils.buildVimPlugin {
       name = "vim-misc";
-      src = sources.vim-misc;
+      src = inputs.vim-misc;
     };
 
     vim-pgsql = vimUtils.buildVimPlugin {
@@ -95,9 +90,39 @@ let sources = import ../../nix/sources.nix; in rec {
       buildPhase = ":";
     };
 
+    nvim-copilot-chat = vimUtils.buildVimPlugin {
+         name = "nvim-copilot-chat";
+         src = inputs.nvim-copilot-chat;
+    };
+
+    nvim-conform = vimUtils.buildVimPlugin {
+          name = "nvim-conform";
+          src = inputs.nvim-conform;
+    };
+
+    nvim-dressing = vimUtils.buildVimPlugin {
+          name = "nvim-dressing";
+          src = inputs.nvim-dressing;
+    };
+
+    nvim-gitsigns = vimUtils.buildVimPlugin {
+          name = "nvim-gitsigns";
+          src = inputs.nvim-gitsigns;
+    };
+
     nvim-magma = vimUtils.buildVimPlugin {
       name = "nvim-magma";
       src = sources.nvim-magma;
+    };
+
+    nvim-lualine = vimUtils.buildVimPlugin {
+           name = "nvim-lualine";
+           src = inputs.nvim-lualine;
+    };
+
+    nvim-nui = vimUtils.buildVimPlugin {
+          name = "nvim-nui";
+          src = inputs.nvim-nui;
     };
 
     nvim-plenary = vimUtils.buildVimPlugin {
@@ -106,20 +131,26 @@ let sources = import ../../nix/sources.nix; in rec {
       buildPhase = ":";
     };
 
+    nvim-rust = vimUtils.buildVimPlugin {
+      name = "nvim-rust";
+      src = sources.nvim-rust;
+      buildPhase = ":";
+    };
+
+    nvim-snacks = vimUtils.buildVimPlugin {
+          name = "nvim-snacks";
+          src = inputs.nvim-snacks;
+    };
+
     nvim-telescope = vimUtils.buildVimPlugin {
       name = "nvim-telescope";
       src = sources.nvim-telescope;
       buildPhase = ":";
     };
 
-    nvim-treesitter = vimUtils.buildVimPlugin {
-      name = "nvim-treesitter";
-      src = inputs.nvim-treesitter;
-    };
-
-    nvim-treesitter-playground = vimUtils.buildVimPlugin {
-      name = "nvim-treesitter-playground";
-      src = sources.nvim-treesitter-playground;
+    nvim-treesitter-context = vimUtils.buildVimPlugin {
+          name = "nvim-treesitter-context";
+          src = inputs.nvim-treesitter-context;
     };
 
     nvim-lspconfig = vimUtils.buildVimPlugin {
@@ -129,11 +160,6 @@ let sources = import ../../nix/sources.nix; in rec {
       # We have to do this because the build phase runs tests which require
       # git and I don't know how to get git into here.
       buildPhase = ":";
-    };
-
-    nvim-lspinstall = vimUtils.buildVimPlugin {
-      name = "nvim-lspinstall";
-      src = sources.nvim-lspinstall;
     };
 
     nvim-treesitter-textobjects = vimUtils.buildVimPlugin {
