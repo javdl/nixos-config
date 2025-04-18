@@ -55,6 +55,7 @@
       # "screenpipe" outdated on brew
       "sublime-text"
       "superwhisper"
+      "tailscale" # GUI apps via Brew
       "thunderbird"
       "veracrypt"
       "visual-studio-code"
