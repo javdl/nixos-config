@@ -164,6 +164,13 @@ vim.opt.termsync = false
    strategies = {
      chat = {
        adapter = "gemini",
+       keymaps = {
+          completion = {
+            modes = { i = "<C-/>" },
+            callback = "keymaps.completion",
+            description = "Completion Menu",
+          },
+        },
      },
      inline = {
        adapter = "gemini",
