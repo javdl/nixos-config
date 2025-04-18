@@ -638,8 +638,7 @@ in {
 
       customVim.vim-nord
       customVim.nvim-comment
-      customVim.nvim-copilot-chat
-      customVim.nvim-conform
+      customVim.nvim-codecompanion      customVim.nvim-conform
       customVim.nvim-gitsigns
       customVim.nvim-lualine
       customVim.nvim-lspconfig

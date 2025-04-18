@@ -129,5 +129,65 @@ require('lualine').setup()
 
 vim.opt.termsync = false
 
+---------------------------------------------------------------------
+-- CodeCompanion
+
+ require("codecompanion").setup({
+   adapters = {
+     gemini = function()
+       return require("codecompanion.adapters").extend("gemini", {
+         env = {
+           api_key = "cmd:op read op://Private/Gemini_API/credential --no-newline",
+         },
+         schema = {
+           model = {
+             default = "gemini-2.5-pro-exp-03-25",
+           },
+         },
+       })
+     end,
+   },
+   display = {
+     chat = {
+       show_header_separator = true,
+       -- show_settings = true,
+       show_references = true,
+       show_token_count = true,
+       window = {
+         opts = {
+           number = false,
+           signcolumn = "no",
+         },
+       },
+     },
+   },
+   strategies = {
+     chat = {
+       adapter = "gemini",
+     },
+     inline = {
+       adapter = "gemini",
+     },
+   },
+ })
+ vim.keymap.set(
+   { "n", "v" },
+   "<C-a>",
+   "<cmd>CodeCompanionActions<cr>",
+   { noremap = true, silent = true }
+ )
+ vim.keymap.set(
+   { "n" },
+   "<C-c>",
+   "<cmd>CodeCompanionChat Toggle<cr>",
+   { noremap = true, silent = true }
+ )
+ vim.keymap.set(
+   { "v" },
+   "<C-c>",
+   "<cmd>CodeCompanionChat Add<cr>",
+   { noremap = true, silent = true }
+ )
+
 EOF
 ''

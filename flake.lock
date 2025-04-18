@@ -798,6 +798,22 @@
         "type": "github"
       }
     },
+    "nvim-codecompanion": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1744791306,
+        "narHash": "sha256-tQk3UBgiotr9CFyDsQA71xALVgUOAmBtejk37Wtnk/o=",
+        "owner": "olimorris",
+        "repo": "codecompanion.nvim",
+        "rev": "071f738ac152690b5518612dfbd17e1249ad819a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "olimorris",
+        "repo": "codecompanion.nvim",
+        "type": "github"
+      }
+    },
     "nvim-conform": {
       "flake": false,
       "locked": {
@@ -812,22 +828,6 @@
         "owner": "stevearc",
         "ref": "v7.1.0",
         "repo": "conform.nvim",
-        "type": "github"
-      }
-    },
-    "nvim-copilot-chat": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1744183503,
-        "narHash": "sha256-XMrjDUvQjkW9tlTubVou2RMQfOfzmMFlQAWgCx3/4y4=",
-        "owner": "CopilotC-Nvim",
-        "repo": "CopilotChat.nvim",
-        "rev": "a89f5f1162b04a0962e5f4c3cdf248a81e7e53cb",
-        "type": "github"
-      },
-      "original": {
-        "owner": "CopilotC-Nvim",
-        "repo": "CopilotChat.nvim",
         "type": "github"
       }
     },
@@ -1044,8 +1044,8 @@
         "nixos-wsl": "nixos-wsl",
         "nixpkgs": "nixpkgs_5",
         "nixpkgs-unstable": "nixpkgs-unstable",
+        "nvim-codecompanion": "nvim-codecompanion",
         "nvim-conform": "nvim-conform",
-        "nvim-copilot-chat": "nvim-copilot-chat",
         "nvim-dressing": "nvim-dressing",
         "nvim-gitsigns": "nvim-gitsigns",
         "nvim-lspconfig": "nvim-lspconfig",
