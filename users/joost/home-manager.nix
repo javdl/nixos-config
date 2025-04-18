@@ -391,6 +391,8 @@ in {
   programs.direnv = {
     enable = true;
     enableBashIntegration = true; # see note on other shells below
+    enableZshIntegration = true;
+    enableNushellIntegration = true;
     nix-direnv.enable = true;
 
     config = {
@@ -662,6 +664,28 @@ in {
     ]);
 
     extraConfig = (import ./vim-config.nix) { inherit sources; };
+  };
+
+  programs.atuin = {
+    enable = true;
+    enableFishIntegration = true;
+    enableNushellIntegration = true;
+    settings = {
+      show_tabs = false;
+      style = "compact";
+    };
+  };
+
+  programs.nushell = {
+    enable = true;
+    configFile.source = ./config.nu;
+    shellAliases = shellAliases;
+  };
+
+  programs.oh-my-posh = {
+    enable = true;
+    enableNushellIntegration = true;
+    settings = builtins.fromJSON (builtins.readFile ./omp.json);
   };
 
   services.gpg-agent = {
