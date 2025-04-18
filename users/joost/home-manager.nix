@@ -679,7 +679,23 @@ in {
   programs.nushell = {
     enable = true;
     configFile.source = ./config.nu;
-    shellAliases = shellAliases;
+    # shellAliases = shellAliases;
+    shellAliases = {
+      ga = "git add";
+      gc = "git commit";
+      gco = "git checkout";
+      gcp = "git cherry-pick";
+      gdiff = "git diff";
+      gl = "git prettylog";
+      gp = "git push";
+      gs = "git status";
+      gt = "git tag";
+    } // (if isLinux then {
+      # Two decades of using a Mac has made this such a strong memory
+      # that I'm just going to keep it consistent.
+      pbcopy = "xclip";
+      pbpaste = "xclip -o";
+    } else {});
   };
 
   programs.oh-my-posh = {
