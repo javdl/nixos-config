@@ -60,7 +60,8 @@
       "veracrypt"
       "visual-studio-code"
       "vlc"
-      "wacom-tablet"
+      "vmware-fusion"
+      # "wacom-tablet" # Disabled because you need a Broadcom profile. Login & Download here: https://support.broadcom.com/group/ecx/productdownloads?subfamily=VMware%20Fusion&freeDownloads=true What a shitshow!
       "zed"
     ];
     masApps = { # to find ID, App Store > Share > Copy link
