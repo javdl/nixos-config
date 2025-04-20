@@ -35,6 +35,7 @@
       "geekbench"
       "geekbench-ai"
       "ghostty" # broken in nixpkgs
+      "github" # desktop
       "google-drive"
       "gpg-suite"
       "hammerspoon"
@@ -60,8 +61,8 @@
       "veracrypt"
       "visual-studio-code"
       "vlc"
-      "vmware-fusion"
-      # "wacom-tablet" # Disabled because you need a Broadcom profile. Login & Download here: https://support.broadcom.com/group/ecx/productdownloads?subfamily=VMware%20Fusion&freeDownloads=true What a shitshow!
+      # "vmware-fusion" # Disabled because you need a Broadcom profile. Login & Download here: https://support.broadcom.com/group/ecx/productdownloads?subfamily=VMware%20Fusion&freeDownloads=true What a shitshow!
+      "wacom-tablet"
       "zed"
     ];
     masApps = { # to find ID, App Store > Share > Copy link
