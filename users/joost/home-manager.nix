@@ -6,7 +6,7 @@ let
   sources = import ../../nix/sources.nix;
   isDarwin = pkgs.stdenv.isDarwin;
   isLinux = pkgs.stdenv.isLinux;
-  
+
   # Import shared configuration
   shared = import ../shared-home-manager.nix {
     inherit isWSL inputs pkgs lib sources isDarwin isLinux;
@@ -119,7 +119,7 @@ in {
     pkgs.darktable
     pkgs.dbeaver-bin
     pkgs.discord
-    pkgs.element-web
+    # pkgs.element-web  # Temporarily disabled due to nodejs build failures
     pkgs.gimp
     pkgs.google-chrome
     pkgs.inkscape
@@ -161,7 +161,7 @@ in {
     # pkgs.zed # Broken
 
     # Node is required for Copilot.vim
-    pkgs.nodejs
+    pkgs.nodejs_22
     pkgs.nodePackages.firebase-tools
   ] ++ (lib.optionals isDarwin [
     pkgs.aerospace

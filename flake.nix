@@ -38,7 +38,7 @@
     };
 
     # Other packages
-    jujutsu.url = "github:martinvonz/jj";
+    # jujutsu.url = "github:martinvonz/jj";
     # zig.url = "github:mitchellh/zig-overlay";
 
     # Non-flakes
@@ -77,7 +77,7 @@
   outputs = { self, nixpkgs, nixos-hardware, home-manager, darwin, ... }@inputs: let
     # Overlays is the list of overlays we want to apply from flake inputs.
     overlays = [
-      inputs.jujutsu.overlays.default
+      # inputs.jujutsu.overlays.default
       # inputs.zig.overlays.default
 
       (final: prev: {
@@ -86,6 +86,7 @@
 
         # Want the latest version of these
         nushell = inputs.nixpkgs-unstable.legacyPackages.${prev.system}.nushell;
+        jujutsu = inputs.nixpkgs-unstable.legacyPackages.${prev.system}.jujutsu;
 
         # ibus = ibus_stable;
         # ibus_stable = inputs.nixpkgs.legacyPackages.${prev.system}.ibus;
@@ -176,6 +177,12 @@
     };
 
     darwinConfigurations.mac-studio-m1 = mkSystem "mac-studio-m1" {
+      system = "aarch64-darwin";
+      user   = "joost";
+      darwin = true;
+    };
+
+    darwinConfigurations.mac-studio-m2 = mkSystem "mac-studio-m2" {
       system = "aarch64-darwin";
       user   = "joost";
       darwin = true;
