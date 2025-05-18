@@ -220,7 +220,7 @@ your system may be changed in ways that you don't want. Read my source!
 
 Install Nix with the Nix installer from Determinate Systems:
 
-```sh
+```bash
 curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install --determinate
 ```
 
@@ -231,7 +231,7 @@ make sure to run `make` before running `make switch` to add the cachix cache.
 
 **Initial setup.**
 
-```sh
+```bash
 cd ~
 git clone https://github.com/javdl/nixos-config.git
 cd nixos-config
@@ -241,7 +241,7 @@ echo "experimental-features = nix-command flakes" > ~/.config/nix/nix.conf
 
 **Run it.**
 
-```sh
+```bash
 export NIXNAME=mac-studio-m1
 sudo nixos-rebuild switch --flake ".#${NIXNAME}" # See also the Makefile. We
 # cannot use make switch however since it is not yet installed.
@@ -249,7 +249,7 @@ sudo nixos-rebuild switch --flake ".#${NIXNAME}" # See also the Makefile. We
 
 **Updates / changes** after the first install.
 
-```sh
+```bash
 export NIXNAME=mac-studio-m1
 make switch
 ```
@@ -275,7 +275,7 @@ Brew casks can be configured in `/users/joost/darwin.nix`
 - Edit `~/nixos-config/flake.nix` to add an entry for the new host.
 - `git add .` to add the newly created files to git. Files must be in git for Nix to work with them. Commiting them is not necessary though.
 
-```sh
+```bash
 export NIXNAME=HOSTNAME
 make switch
 # Or
@@ -378,7 +378,7 @@ then run `make switch` from this repo's folder.
 
 The full command to update host `j7`, for example:
 
-```sh
+```bash
 cd ~/nixos-config && sudo nixos-rebuild switch --flake ".#j7"
 ```
 
@@ -408,7 +408,7 @@ In short, change references of 23.05 to 23.11 for the sources in flake.nix, then
 
 More generic info: [https://nixos.org/manual/nixos/stable/index.html#sec-upgrading](https://nixos.org/manual/nixos/stable/index.html#sec-upgrading)
 
-```sh
+```bash
 sudo NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nixos-rebuild switch --upgrade --flake ".#vm-aarch64"
 ```
 
@@ -426,7 +426,7 @@ When getting the error: `error: the user '_nixbld1' in the group 'nixbld' does n
 
 Use this script to fix it:
 
-```sh
+```bash
 curl --proto '=https' --tlsv1.2 -sSf -L https://github.com/NixOS/nix/raw/master/scripts/sequoia-nixbld-group-migration.sh | bash -s
 ```
 
@@ -434,7 +434,7 @@ Source: [https://discourse.nixos.org/t/macos-15-sequoia-update-clobbers-nixbld1-
 
 ## git folder symlink to external disk
 
-```sh
+```bash
 ln -s /Volumes/4TBMacData/git $HOME/git
 ```
 
@@ -464,4 +464,10 @@ git cherry-pick <commit>
 # example
 git cherry-pick 1fa2c834308e061e60a459f607d684740fc7fcd4
 git cherry-pick 1fa2c8
+```
+
+## Check where dependencies come from
+
+```bash
+nix why-depends .#darwinConfigurations.mac-studio-m2.system pkgs.nodejs_20
 ```
