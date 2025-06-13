@@ -9,11 +9,11 @@
   homebrew = {
     enable = true;
     taps = [
+      "bearcove/tap"
     ];
     brews = [
-      "jq"
-      "baobab"
-      ];
+      "bearcove/tap/home"
+    ];
     casks  = [
       # "bitwarden" Must be installed via Mac App Store for browser integration to work
       "affinity-designer"
@@ -50,6 +50,7 @@
       "obs"
       "obsidian"
       "ollama"
+      "orbstack"
       "rapidapi"
       "raycast" # for searching nix GUI apps (nix doesnt put bin in Applications folder so macos search doesnt work)
       "screenflow"

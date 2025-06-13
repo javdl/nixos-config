@@ -471,3 +471,17 @@ git cherry-pick 1fa2c8
 ```bash
 nix why-depends .#darwinConfigurations.mac-studio-m2.system pkgs.nodejs_20
 ```
+
+## Use GitHub authentication with Nix to prevent rate limiting
+
+To use GitHub authentication with Nix, you need to:
+
+  1. Create a GitHub personal access token:
+    - Go to https://github.com/settings/tokens
+    - Create a new token with read:packages scope
+  2. Add it to your nix configuration:
+
+```conf
+ #~/.config/nix/nix.conf
+ access-tokens = github.com=ghp_YOUR_GITHUB_TOKEN_HERE
+ ```
