@@ -77,7 +77,7 @@ in {
     pkgs.docker-compose
     pkgs.podman
     pkgs.podman-tui
-    pkgs.colima
+    # pkgs.colima # orbstack moet betere performance hebben
     pkgs.fd
     # pkgs.ffmpeg_5 # libgl, needed for ML
     pkgs.ffmpeg
