@@ -140,10 +140,10 @@ let sources = import ../../nix/sources.nix; in rec {
       buildPhase = ":";
     };
 
-    nvim-snacks = vimUtils.buildVimPlugin {
-          name = "nvim-snacks";
-          src = inputs.nvim-snacks;
-    };
+    # nvim-snacks = vimUtils.buildVimPlugin {
+    #       name = "nvim-snacks";
+    #       src = inputs.nvim-snacks;
+    # };
 
     nvim-telescope = vimUtils.buildVimPlugin {
       name = "nvim-telescope";

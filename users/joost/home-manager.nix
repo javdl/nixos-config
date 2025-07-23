@@ -75,8 +75,8 @@ in {
     pkgs.devenv
     pkgs.docker
     pkgs.docker-compose
-    pkgs.podman
-    pkgs.podman-tui
+    # pkgs.podman
+    # pkgs.podman-tui
     # pkgs.colima # orbstack moet betere performance hebben
     pkgs.fd
     # pkgs.ffmpeg_5 # libgl, needed for ML
@@ -91,10 +91,10 @@ in {
     pkgs.httpie
     pkgs.imagemagick
     pkgs.jq
-    pkgs.kubernetes-helm
-    pkgs.libGL # ML
-    pkgs.libGLU # ML
-    pkgs.libheif
+    # pkgs.kubernetes-helm
+    # pkgs.libGL # ML
+    # pkgs.libGLU # ML
+    # pkgs.libheif
     # pkgs.ollama # outdated, use brew
     pkgs.ripgrep
     pkgs.tree
@@ -108,7 +108,7 @@ in {
     # pkgs.rustc
     pkgs.pre-commit
     pkgs.wasm-pack
-    pkgsUnstable.fermyon-spin  # Use unstable version
+    # pkgsUnstable.fermyon-spin  # Use unstable version
 
     pkgs.python3
     pkgs.poetry
@@ -126,9 +126,9 @@ in {
     pkgs.postman
     pkgs.slack
     pkgs.spotify
-    pkgs.telegram-desktop
-    pkgs.signal-desktop
+    # pkgs.telegram-desktop
 
+    # Fonts
     pkgs.font-awesome # waybar icons
     pkgs.fira-code
     pkgs.fira-code-symbols
@@ -192,6 +192,7 @@ in {
     pkgs.podman-desktop
     pkgs.rpi-imager
     # pkgs.sublime4 # needs old openssl?
+    pkgs.signal-desktop
     pkgs.tailscale-systray
     pkgs.windsurf
     pkgs.baobab # Disk usage, gnome only
@@ -374,7 +375,7 @@ in {
 
      shellAliases = shared.shellAliases;
 
-    initExtra = ''
+    initContent = ''
       export GPG_TTY=$(tty)
 
       # Fix insecure completion files
@@ -566,7 +567,7 @@ in {
       customVim.nvim-lspconfig
       customVim.nvim-nui
       customVim.nvim-plenary # required for telescope
-      customVim.nvim-snacks # replacement for nvim-dressing
+      # customVim.nvim-snacks # replacement for nvim-dressing
       customVim.nvim-telescope
 
       vimPlugins.vim-eunuch
