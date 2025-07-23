@@ -136,6 +136,7 @@ in {
     pkgs.jetbrains-mono
     pkgs.liberation_ttf
     pkgs.mplus-outline-fonts.githubRelease
+    pkgs.nerd-fonts.caskaydia-mono # Cascadia Code with Nerd Font patches
     # pkgs.nerdfonts # Changed: nerdfonts separated into individual packages
     pkgs.noto-fonts
     pkgs.noto-fonts-cjk-sans
@@ -237,7 +238,7 @@ in {
 
     "i3/config".text = builtins.readFile ./i3;
     "rofi/config.rasi".text = builtins.readFile ./rofi;
-    # "zed/settings.json".text = builtins.readFile ./zed.json; # breaks Zed; i.e. changing llm
+    "zed/settings.json".text = builtins.readFile ./zed.json;
 
     # tree-sitter parsers
     # "nvim/parser/proto.so".source = "${pkgs.tree-sitter-proto}/parser";
@@ -550,6 +551,26 @@ in {
     settings = {
       env.TERM = "xterm-256color";
 
+      font = {
+        normal = {
+          family = "CaskaydiaMono Nerd Font";
+          style = "Regular";
+        };
+        bold = {
+          family = "CaskaydiaMono Nerd Font";
+          style = "Bold";
+        };
+        italic = {
+          family = "CaskaydiaMono Nerd Font";
+          style = "Italic";
+        };
+        bold_italic = {
+          family = "CaskaydiaMono Nerd Font";
+          style = "Bold Italic";
+        };
+        size = 14.0;
+      };
+
       key_bindings = [
         { key = "K"; mods = "Command"; chars = "ClearHistory"; }
         { key = "V"; mods = "Command"; action = "Paste"; }
@@ -633,6 +654,11 @@ in {
     ];
 
     extraConfig = ''
+      " Set font for GUI Neovim
+      if has('gui_running') || exists('g:neovide')
+        set guifont=CaskaydiaMono\ Nerd\ Font:h14
+      endif
+
       " Enable Rose Pine theme (default)
       colorscheme rose-pine
       set background=dark

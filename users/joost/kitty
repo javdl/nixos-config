@@ -1,5 +1,5 @@
-font_family Fira Code
-font_size 12.0
+font_family CaskaydiaMono Nerd Font
+font_size 14.0
 
 #--------------------------------------------------------------------
 # Key bindings
@@ -22,45 +22,43 @@ map super+ctrl+p        scroll_to_prompt -1
 map super+ctrl+n        scroll_to_prompt 1
 
 #--------------------------------------------------------------------
-# Theme
+# Theme - Rose Pine
 #--------------------------------------------------------------------
-# Based on https://github.com/sonph/onehalf
-# By https://github.com/dbinary
 
-foreground            #dcdfe4
-background            #282c34
-selection_foreground  #000000
-selection_background  #FFFACD
-url_color             #0087BD
+foreground            #e0def4
+background            #191724
+selection_foreground  #e0def4
+selection_background  #403d52
+url_color             #c4a7e7
 
 # black
-color0   #282c34
-color8   #5d677a
+color0   #26233a
+color8   #6e6a86
 
 # red
-color1   #e06c75
-color9   #e06c75
+color1   #eb6f92
+color9   #eb6f92
 
 # green
-color2   #98c379
-color10  #98c379
+color2   #31748f
+color10  #31748f
 
 # yellow
-color3   #e5c07b
-color11  #e5c07b
+color3   #f6c177
+color11  #f6c177
 
 # blue
-color4  #61afef
-color12 #61afef
+color4  #9ccfd8
+color12 #9ccfd8
 
 # magenta
-color5   #c678dd
-color13  #c678dd
+color5   #c4a7e7
+color13  #c4a7e7
 
 # cyan
-color6   #56b6c2
-color14  #56b6c2
+color6   #ebbcba
+color14  #ebbcba
 
 # white
-color7   #dcdfe4
-color15  #dcdfe4
+color7   #e0def4
+color15  #e0def4
