@@ -4,3 +4,4 @@ iso/nixos.iso
 .aider*
 .env
 .qodo
+backup.tar.gz
