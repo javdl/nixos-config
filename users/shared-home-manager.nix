@@ -28,6 +28,10 @@ in {
     lsa = "eza --icons --group-directories-first -a"; # ls including hidden files
     lt = "eza --icons --group-directories-first --tree --level=2"; # Tree view 2 levels deep
     lta = "eza --icons --group-directories-first --tree --level=2 -a"; # Tree view with hidden files
+    
+    # Omakub-style TUI aliases
+    lzg = "lazygit"; # Launch lazygit
+    lzd = "lazydocker"; # Launch lazydocker
   } // (if isLinux then {
     # Two decades of using a Mac has made this such a strong memory
     # that I'm just going to keep it consistent.

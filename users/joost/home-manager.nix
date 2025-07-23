@@ -67,6 +67,8 @@ in {
     pkgs.air # Live reload for Go
     pkgs.alacritty
     pkgs.kitty
+    pkgs.lazydocker
+    pkgs.lazygit
     pkgs.bat
     pkgs.bottom
     pkgs.cachix
@@ -78,6 +80,7 @@ in {
     # pkgs.podman-tui
     # pkgs.colima # orbstack moet betere performance hebben
     pkgs.eza # Modern replacement for ls
+    pkgs.fastfetch
     pkgs.fd
     # pkgs.ffmpeg_5 # libgl, needed for ML
     pkgs.ffmpeg
@@ -95,7 +98,7 @@ in {
     # pkgs.libGL # ML
     # pkgs.libGLU # ML
     # pkgs.libheif
-    # pkgs.ollama # outdated, use brew
+    pkgs.ollama
     pkgs.ripgrep
     pkgs.tree
     pkgs.watch
