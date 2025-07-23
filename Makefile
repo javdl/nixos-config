@@ -19,7 +19,7 @@ UNAME := $(shell uname)
 switch:
 ifeq ($(UNAME), Darwin)
 	nix build --extra-experimental-features nix-command --extra-experimental-features flakes ".#darwinConfigurations.${NIXNAME}.system"
-	./result/sw/bin/darwin-rebuild switch --flake "$$(pwd)#${NIXNAME}"
+	sudo ./result/sw/bin/darwin-rebuild switch --flake "$$(pwd)#${NIXNAME}"
 else
 	sudo NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nixos-rebuild switch --flake ".#${NIXNAME}"
 endif
@@ -28,7 +28,7 @@ update:
 ifeq ($(UNAME), Darwin)
 	sudo nix --extra-experimental-features nix-command --extra-experimental-features flakes flake update
 	nix build --extra-experimental-features nix-command --extra-experimental-features flakes ".#darwinConfigurations.${NIXNAME}.system"
-	./result/sw/bin/darwin-rebuild switch --flake "$$(pwd)#${NIXNAME}"
+	sudo ./result/sw/bin/darwin-rebuild switch --flake "$$(pwd)#${NIXNAME}"
 else
 	sudo nix flake update
 	sudo NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nixos-rebuild switch --flake ".#${NIXNAME}"
@@ -37,7 +37,7 @@ endif
 upgrade:
 ifeq ($(UNAME), Darwin)
 	nix build --extra-experimental-features nix-command --extra-experimental-features flakes ".#darwinConfigurations.${NIXNAME}.system"
-	./result/sw/bin/darwin-rebuild switch --upgrade --flake "$$(pwd)#${NIXNAME}"
+	sudo ./result/sw/bin/darwin-rebuild switch --upgrade --flake "$$(pwd)#${NIXNAME}"
 else
 	sudo NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nixos-rebuild switch --upgrade --flake ".#${NIXNAME}"
 endif
@@ -45,7 +45,7 @@ endif
 test:
 ifeq ($(UNAME), Darwin)
 	nix build ".#darwinConfigurations.${NIXNAME}.system"
-	./result/sw/bin/darwin-rebuild test --flake "$$(pwd)#${NIXNAME}"
+	sudo ./result/sw/bin/darwin-rebuild test --flake "$$(pwd)#${NIXNAME}"
 else
 	sudo NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nixos-rebuild test --flake ".#$(NIXNAME)"
 endif
