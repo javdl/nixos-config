@@ -11,6 +11,7 @@ let
 in {
   # Common shell aliases for both users
   shellAliases = {
+    # Git aliases
     ga = "git add";
     gc = "git commit";
     gco = "git checkout";
@@ -20,6 +21,13 @@ in {
     gp = "git push";
     gs = "git status";
     gt = "git tag";
+    
+    # Omakub-style shell tool aliases
+    ff = "fzf --preview 'bat --style=numbers --color=always --line-range :500 {}'"; # Fuzzy find with preview
+    ls = "eza --icons --group-directories-first"; # Better ls with icons
+    lsa = "eza --icons --group-directories-first -a"; # ls including hidden files
+    lt = "eza --icons --group-directories-first --tree --level=2"; # Tree view 2 levels deep
+    lta = "eza --icons --group-directories-first --tree --level=2 -a"; # Tree view with hidden files
   } // (if isLinux then {
     # Two decades of using a Mac has made this such a strong memory
     # that I'm just going to keep it consistent.

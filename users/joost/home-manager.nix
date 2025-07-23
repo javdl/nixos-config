@@ -77,6 +77,7 @@ in {
     # pkgs.podman
     # pkgs.podman-tui
     # pkgs.colima # orbstack moet betere performance hebben
+    pkgs.eza # Modern replacement for ls
     pkgs.fd
     # pkgs.ffmpeg_5 # libgl, needed for ML
     pkgs.ffmpeg
@@ -100,6 +101,7 @@ in {
     pkgs.watch
     pkgs.xh # for sending HTTP requests (like HTTPie)
     pkgs.zellij # Terminal workspace with batteries included
+    pkgs.zoxide # Fast cd command that learns your habits
 
     # Rust should be in flake.nix for each project. However, those configs do need an initial Cargo.lock.Therefore, to create new projects we want Rust globally installed.
     pkgs.rustup # rust-analyzer, cargo # installed by rustup
@@ -685,6 +687,17 @@ in {
       show_tabs = false;
       style = "compact";
     };
+  };
+
+  programs.zoxide = {
+    enable = true;
+    enableBashIntegration = true;
+    enableZshIntegration = true;
+    enableFishIntegration = true;
+    enableNushellIntegration = true;
+    options = [
+      "--cmd cd" # Make 'cd' command use zoxide
+    ];
   };
 
   programs.nushell = {
