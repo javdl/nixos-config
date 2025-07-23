@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(git fetch:*)",
-      "Bash(git cherry-pick:*)"
+      "Bash(git cherry-pick:*)",
+      "Bash(nix search:*)"
     ]
   },
   "enableAllProjectMcpServers": false

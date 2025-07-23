@@ -99,6 +99,7 @@ in {
     pkgs.tree
     pkgs.watch
     pkgs.xh # for sending HTTP requests (like HTTPie)
+    pkgs.zellij # Terminal workspace with batteries included
 
     # Rust should be in flake.nix for each project. However, those configs do need an initial Cargo.lock.Therefore, to create new projects we want Rust globally installed.
     pkgs.rustup # rust-analyzer, cargo # installed by rustup
@@ -392,6 +393,62 @@ in {
 
       # Skip the not really helpful global compinit
       skip_global_compinit=1
+
+      # Rose Pine colors for zsh
+      export ROSE_PINE_BASE="#191724"
+      export ROSE_PINE_SURFACE="#1f1d2e"
+      export ROSE_PINE_OVERLAY="#26233a"
+      export ROSE_PINE_MUTED="#6e6a86"
+      export ROSE_PINE_SUBTLE="#908caa"
+      export ROSE_PINE_TEXT="#e0def4"
+      export ROSE_PINE_LOVE="#eb6f92"
+      export ROSE_PINE_GOLD="#f6c177"
+      export ROSE_PINE_ROSE="#ebbcba"
+      export ROSE_PINE_PINE="#31748f"
+      export ROSE_PINE_FOAM="#9ccfd8"
+      export ROSE_PINE_IRIS="#c4a7e7"
+      export ROSE_PINE_HL_LOW="#21202e"
+      export ROSE_PINE_HL_MED="#403d52"
+      export ROSE_PINE_HL_HIGH="#524f67"
+
+      # Apply Rose Pine colors to zsh syntax highlighting
+      typeset -gA ZSH_HIGHLIGHT_STYLES
+      ZSH_HIGHLIGHT_STYLES[comment]="fg=#6e6a86"
+      ZSH_HIGHLIGHT_STYLES[alias]="fg=#9ccfd8"
+      ZSH_HIGHLIGHT_STYLES[suffix-alias]="fg=#9ccfd8"
+      ZSH_HIGHLIGHT_STYLES[global-alias]="fg=#9ccfd8"
+      ZSH_HIGHLIGHT_STYLES[function]="fg=#ebbcba"
+      ZSH_HIGHLIGHT_STYLES[command]="fg=#9ccfd8"
+      ZSH_HIGHLIGHT_STYLES[precommand]="fg=#9ccfd8,italic"
+      ZSH_HIGHLIGHT_STYLES[autodirectory]="fg=#f6c177,italic"
+      ZSH_HIGHLIGHT_STYLES[single-hyphen-option]="fg=#f6c177"
+      ZSH_HIGHLIGHT_STYLES[double-hyphen-option]="fg=#f6c177"
+      ZSH_HIGHLIGHT_STYLES[back-quoted-argument]="fg=#c4a7e7"
+      ZSH_HIGHLIGHT_STYLES[builtin]="fg=#ebbcba"
+      ZSH_HIGHLIGHT_STYLES[reserved-word]="fg=#ebbcba"
+      ZSH_HIGHLIGHT_STYLES[hashed-command]="fg=#ebbcba"
+      ZSH_HIGHLIGHT_STYLES[commandseparator]="fg=#eb6f92"
+      ZSH_HIGHLIGHT_STYLES[command-substitution-delimiter]="fg=#e0def4"
+      ZSH_HIGHLIGHT_STYLES[command-substitution-delimiter-unquoted]="fg=#e0def4"
+      ZSH_HIGHLIGHT_STYLES[process-substitution-delimiter]="fg=#e0def4"
+      ZSH_HIGHLIGHT_STYLES[back-quoted-argument-delimiter]="fg=#eb6f92"
+      ZSH_HIGHLIGHT_STYLES[back-double-quoted-argument]="fg=#eb6f92"
+      ZSH_HIGHLIGHT_STYLES[back-dollar-quoted-argument]="fg=#eb6f92"
+      ZSH_HIGHLIGHT_STYLES[quoted-argument]="fg=#f6c177"
+      ZSH_HIGHLIGHT_STYLES[single-quoted-argument]="fg=#f6c177"
+      ZSH_HIGHLIGHT_STYLES[double-quoted-argument]="fg=#f6c177"
+      ZSH_HIGHLIGHT_STYLES[dollar-quoted-argument]="fg=#f6c177"
+      ZSH_HIGHLIGHT_STYLES[rc-quote]="fg=#f6c177"
+      ZSH_HIGHLIGHT_STYLES[dollar-double-quoted-argument]="fg=#e0def4"
+      ZSH_HIGHLIGHT_STYLES[back-double-quoted-argument]="fg=#e0def4"
+      ZSH_HIGHLIGHT_STYLES[back-dollar-quoted-argument]="fg=#e0def4"
+      ZSH_HIGHLIGHT_STYLES[assign]="fg=#e0def4"
+      ZSH_HIGHLIGHT_STYLES[redirection]="fg=#e0def4"
+      ZSH_HIGHLIGHT_STYLES[named-fd]="fg=#e0def4"
+      ZSH_HIGHLIGHT_STYLES[numeric-fd]="fg=#e0def4"
+      ZSH_HIGHLIGHT_STYLES[arg0]="fg=#e0def4"
+      ZSH_HIGHLIGHT_STYLES[default]="fg=#e0def4"
+      ZSH_HIGHLIGHT_STYLES[unknown-token]="fg=#eb6f92,bold"
     '';
 
     # This ensures proper sourcing of home-manager environment variables
@@ -544,6 +601,15 @@ in {
       # Custom vim plugins from flake inputs
       customVim.vim-copilot
 
+      # Themes
+      vimPlugins.rose-pine  # Default theme
+      vimPlugins.tokyonight-nvim
+      vimPlugins.catppuccin-nvim
+      vimPlugins.nord-nvim
+      vimPlugins.everforest
+      vimPlugins.gruvbox-nvim
+      vimPlugins.kanagawa-nvim
+
       # Standard vim plugins from nixpkgs
       vimPlugins.telescope-nvim
       vimPlugins.plenary-nvim # required for telescope
@@ -566,7 +632,23 @@ in {
       vimPlugins.nvim-treesitter.withAllGrammars
     ];
 
-    extraConfig = "";
+    extraConfig = ''
+      " Enable Rose Pine theme (default)
+      colorscheme rose-pine
+      set background=dark
+
+      " Theme switching shortcuts
+      nnoremap <leader>t1 :colorscheme rose-pine<CR>
+      nnoremap <leader>t2 :colorscheme tokyonight<CR>
+      nnoremap <leader>t3 :colorscheme catppuccin<CR>
+      nnoremap <leader>t4 :colorscheme nord<CR>
+      nnoremap <leader>t5 :colorscheme everforest<CR>
+      nnoremap <leader>t6 :colorscheme gruvbox<CR>
+      nnoremap <leader>t7 :colorscheme kanagawa<CR>
+
+      " Quick theme list
+      nnoremap <leader>tt :echo "Themes: 1=Rose Pine, 2=Tokyo Night, 3=Catppuccin, 4=Nord, 5=Everforest, 6=Gruvbox, 7=Kanagawa"<CR>
+    '';
   };
 
   programs.atuin = {
@@ -584,12 +666,67 @@ in {
     configFile.source = ./config.nu;
     # shellAliases = shellAliases;
     shellAliases = shared.shellAliases;
+    extraConfig = ''
+      # Rose Pine theme colors for nushell
+      let rose_pine_theme = {
+        # Special
+        background: '#191724'
+        foreground: '#e0def4'
+
+        # Colors
+        black: '#26233a'
+        red: '#eb6f92'
+        green: '#31748f'
+        yellow: '#f6c177'
+        blue: '#9ccfd8'
+        magenta: '#c4a7e7'
+        cyan: '#ebbcba'
+        white: '#e0def4'
+
+        # Bright colors
+        bright_black: '#6e6a86'
+        bright_red: '#eb6f92'
+        bright_green: '#31748f'
+        bright_yellow: '#f6c177'
+        bright_blue: '#9ccfd8'
+        bright_magenta: '#c4a7e7'
+        bright_cyan: '#ebbcba'
+        bright_white: '#e0def4'
+      }
+
+      # Set the theme
+      $env.config = ($env.config | default {})
+      $env.config.color_config = $rose_pine_theme
+    '';
   };
 
   programs.oh-my-posh = {
     enable = true;
     enableNushellIntegration = true;
     settings = builtins.fromJSON (builtins.readFile ./omp.json);
+  };
+
+  programs.zellij = {
+    enable = true;
+    settings = {
+      default_shell = "nu";
+      theme = "rose-pine";
+      themes = {
+        rose-pine = {
+          fg = "#e0def4";
+          bg = "#191724";
+          black = "#26233a";
+          red = "#eb6f92";
+          green = "#31748f";
+          yellow = "#f6c177";
+          blue = "#9ccfd8";
+          magenta = "#c4a7e7";
+          cyan = "#ebbcba";
+          white = "#e0def4";
+          orange = "#f6c177";
+        };
+      };
+    };
   };
 
   services.gpg-agent = {
