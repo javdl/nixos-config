@@ -229,6 +229,12 @@ Clone this repo and run `make switch`, replace the NIXNAME with the configuratio
 If you get errors: "ignoring untrusted substituter 'https://javdl-nixos-config.cachix.org', you are not a trusted user."
 make sure to run `make` before running `make switch` to add the cachix cache.
 
+### Login to use FlakeHub Cache
+
+```bash
+determinate-nixd login
+```
+
 **Initial setup.**
 
 ```bash

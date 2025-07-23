@@ -136,7 +136,7 @@ in {
     pkgs.jetbrains-mono
     pkgs.liberation_ttf
     pkgs.mplus-outline-fonts.githubRelease
-    pkgs.nerdfonts
+    # pkgs.nerdfonts # Changed: nerdfonts separated into individual packages
     pkgs.noto-fonts
     pkgs.noto-fonts-cjk-sans
     pkgs.noto-fonts-emoji
@@ -612,7 +612,7 @@ in {
 
   services.gpg-agent = {
     enable = isLinux;
-    pinentryPackage = pkgs.pinentry-tty;
+    pinentry.package = pkgs.pinentry-tty;
 
     # cache the keys forever so we don't get asked for a password
     defaultCacheTtl = 31536000;
