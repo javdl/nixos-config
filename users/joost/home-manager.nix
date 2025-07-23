@@ -541,30 +541,21 @@ in {
     ]);
 
     plugins = with pkgs; [
-      # Custom vim plugins removed with niv/vim.nix
-      # customVim.vim-copilot
-      # customVim.vim-cue
-      # customVim.vim-fish
-      # customVim.vim-glsl
-      # customVim.vim-misc
-      # customVim.vim-pgsql
-      # customVim.vim-tla
-      # customVim.vim-zig
-      # customVim.pigeon
-      # customVim.AfterColors
-      # customVim.vim-nord
-      # customVim.nvim-comment
-      # customVim.nvim-codecompanion
-      # customVim.nvim-conform
-      # customVim.nvim-gitsigns
-      # customVim.nvim-lualine
-      # customVim.nvim-lspconfig
-      # customVim.nvim-nui
-      # customVim.nvim-plenary
-      # customVim.nvim-snacks
-      # customVim.nvim-telescope
-      # customVim.vim-devicons
+      # Custom vim plugins from flake inputs
+      customVim.vim-copilot
 
+      # Standard vim plugins from nixpkgs
+      vimPlugins.telescope-nvim
+      vimPlugins.plenary-nvim # required for telescope
+      vimPlugins.nvim-lspconfig
+      vimPlugins.gitsigns-nvim
+      vimPlugins.lualine-nvim
+      vimPlugins.conform-nvim
+      vimPlugins.dressing-nvim
+      vimPlugins.nui-nvim
+      vimPlugins.rust-vim
+      vimPlugins.nvim-treesitter-context
+      vimPlugins.nvim-web-devicons
       vimPlugins.vim-eunuch
       vimPlugins.vim-gitgutter
       vimPlugins.vim-markdown
