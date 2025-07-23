@@ -257,6 +257,7 @@ in {
   } // (if isDarwin then {
     # Rectangle.app. This has to be imported manually using the app.
     # "rectangle/RectangleConfig.json".text = builtins.readFile ./RectangleConfig.json;
+    "ghostty/config".text = builtins.readFile ./ghostty.conf;
     "skhd/skhdrc".text = builtins.readFile ./skhdrc;
     "aerospace/aerospace.toml".text = builtins.readFile ./aerospace.toml;
     "sketchybar/sketchybarrc" = {
@@ -383,6 +384,11 @@ in {
 
     initContent = ''
       export GPG_TTY=$(tty)
+
+      # Auto-start Zellij if in Ghostty and not already in Zellij
+      if [[ "$TERM_PROGRAM" == "ghostty" ]] && [[ -z "$ZELLIJ" ]]; then
+        exec zellij
+      fi
 
       # Fix insecure completion files
       autoload -Uz compinit

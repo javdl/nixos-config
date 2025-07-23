@@ -32,6 +32,10 @@ in {
     # Omakub-style TUI aliases
     lzg = "lazygit"; # Launch lazygit
     lzd = "lazydocker"; # Launch lazydocker
+    
+    # Zellij shortcuts
+    z = "zellij"; # Start zellij
+    za = "zellij attach -c"; # Attach or create new session
   } // (if isLinux then {
     # Two decades of using a Mac has made this such a strong memory
     # that I'm just going to keep it consistent.
