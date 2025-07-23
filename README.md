@@ -408,14 +408,15 @@ sudo nixos-rebuild switch --flake ".#j7"
 
 ## How to upgrade to latest nixos?
 
-In short, change references of 23.05 to 23.11 for the sources in flake.nix, then rebuild with the `--upgrade` flag.
+In short, change references of 23.05 to 23.11 for the sources in flake.nix, then rebuild.
 
 [An example commit can be seen here](https://github.com/mitchellh/nixos-config/commit/2056c76904c2b1f38c139ed645522bbdffa394a5)
 
 More generic info: [https://nixos.org/manual/nixos/stable/index.html#sec-upgrading](https://nixos.org/manual/nixos/stable/index.html#sec-upgrading)
 
 ```bash
-sudo NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nixos-rebuild switch --upgrade --flake ".#vm-aarch64"
+nix flake update
+make switch
 ```
 
 ## Hyprland
