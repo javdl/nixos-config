@@ -188,7 +188,6 @@ in {
     gimp
     nautilus
     killall
-    niv
     python311
     python311Packages.pip
     # python311.withPackages my-python-packages

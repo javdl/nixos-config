@@ -3,13 +3,12 @@
 { config, lib, pkgs, ... }:
 
 let
-  sources = import ../../nix/sources.nix;
   isDarwin = pkgs.stdenv.isDarwin;
   isLinux = pkgs.stdenv.isLinux;
 
   # Import shared configuration
   shared = import ../shared-home-manager.nix {
-    inherit isWSL inputs pkgs lib sources isDarwin isLinux;
+    inherit isWSL inputs pkgs lib isDarwin isLinux;
   };
 
   # Get unstable packages
@@ -407,9 +406,6 @@ in {
   programs.fish = {
     enable = true;
     interactiveShellInit = lib.strings.concatStrings (lib.strings.intersperse "\n" ([
-      "source ${sources.theme-bobthefish}/functions/fish_prompt.fish"
-      "source ${sources.theme-bobthefish}/functions/fish_right_prompt.fish"
-      "source ${sources.theme-bobthefish}/functions/fish_title.fish"
       (builtins.readFile ./config.fish)
       "set -g SHELL ${pkgs.fish}/bin/fish"
       "set -gx GPG_TTY (tty)"
@@ -488,9 +484,6 @@ in {
       set -g @dracula-show-weather false
 
       bind -n C-k send-keys "clear"\; send-keys "Enter"
-
-      run-shell ${sources.tmux-pain-control}/pain_control.tmux
-      run-shell ${sources.tmux-dracula}/dracula.tmux
     '';
   };
 
@@ -548,27 +541,29 @@ in {
     ]);
 
     plugins = with pkgs; [
-      customVim.vim-copilot
-      customVim.vim-cue
-      customVim.vim-fish
-      customVim.vim-glsl
-      customVim.vim-misc
-      customVim.vim-pgsql
-      customVim.vim-tla
+      # Custom vim plugins removed with niv/vim.nix
+      # customVim.vim-copilot
+      # customVim.vim-cue
+      # customVim.vim-fish
+      # customVim.vim-glsl
+      # customVim.vim-misc
+      # customVim.vim-pgsql
+      # customVim.vim-tla
       # customVim.vim-zig
-      customVim.pigeon
-      customVim.AfterColors
-
-      customVim.vim-nord
-      customVim.nvim-comment
-      customVim.nvim-codecompanion      customVim.nvim-conform
-      customVim.nvim-gitsigns
-      customVim.nvim-lualine
-      customVim.nvim-lspconfig
-      customVim.nvim-nui
-      customVim.nvim-plenary # required for telescope
-      # customVim.nvim-snacks # replacement for nvim-dressing
-      customVim.nvim-telescope
+      # customVim.pigeon
+      # customVim.AfterColors
+      # customVim.vim-nord
+      # customVim.nvim-comment
+      # customVim.nvim-codecompanion
+      # customVim.nvim-conform
+      # customVim.nvim-gitsigns
+      # customVim.nvim-lualine
+      # customVim.nvim-lspconfig
+      # customVim.nvim-nui
+      # customVim.nvim-plenary
+      # customVim.nvim-snacks
+      # customVim.nvim-telescope
+      # customVim.vim-devicons
 
       vimPlugins.vim-eunuch
       vimPlugins.vim-gitgutter
@@ -578,14 +573,9 @@ in {
       vimPlugins.nvim-treesitter-parsers.elixir
       vimPlugins.nvim-treesitter
       vimPlugins.nvim-treesitter.withAllGrammars
-    ] ++ (lib.optionals (!isWSL) [
-      # This is causing a segfaulting while building our installer
-      # for WSL so just disable it for now. This is a pretty
-      # unimportant plugin anyway.
-      customVim.vim-devicons
-    ]);
+    ];
 
-    extraConfig = (import ./vim-config.nix) { inherit sources; };
+    extraConfig = "";
   };
 
   programs.atuin = {

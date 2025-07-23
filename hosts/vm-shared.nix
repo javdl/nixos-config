@@ -118,7 +118,6 @@ in {
     cachix
     gnumake
     killall
-    niv
     rxvt-unicode-unwrapped
     xclip
     zed-editor

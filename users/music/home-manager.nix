@@ -3,13 +3,12 @@
 { config, lib, pkgs, ... }:
 
 let
-  sources = import ../../nix/sources.nix;
   isDarwin = pkgs.stdenv.isDarwin;
   isLinux = pkgs.stdenv.isLinux;
 
   # Import shared configuration
   shared = import ../shared-home-manager.nix {
-    inherit isWSL inputs pkgs lib sources isDarwin isLinux;
+    inherit isWSL inputs pkgs lib isDarwin isLinux;
   };
 
   # Use shared manpager
@@ -87,9 +86,6 @@ in {
   programs.fish = {
     enable = true;
     interactiveShellInit = lib.strings.concatStrings (lib.strings.intersperse "\n" ([
-      "source ${sources.theme-bobthefish}/functions/fish_prompt.fish"
-      "source ${sources.theme-bobthefish}/functions/fish_right_prompt.fish"
-      "source ${sources.theme-bobthefish}/functions/fish_title.fish"
       (builtins.readFile ./config.fish)
       "set -g SHELL ${pkgs.fish}/bin/fish"
     ]));

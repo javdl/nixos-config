@@ -1,4 +1,4 @@
-{ isWSL, inputs, pkgs, lib, sources, isDarwin, isLinux }:
+{ isWSL, inputs, pkgs, lib, isDarwin, isLinux }:
 
 let
   # For our MANPAGER env var
@@ -40,14 +40,12 @@ in {
     MANPAGER = "${manpager}/bin/manpager";
   };
 
-  # Common fish plugins
-  fishPlugins = map (n: {
-    name = n;
-    src = sources.${n};
-  }) [
-    "fish-fzf"
-    "fish-foreign-env"
-    "theme-bobthefish"
+  # Common fish plugins - removed with niv
+  fishPlugins = [
+    # Fish plugins were previously managed by niv
+    # "fish-fzf"
+    # "fish-foreign-env"
+    # "theme-bobthefish"
   ];
 
   # Common direnv configuration
