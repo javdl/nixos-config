@@ -671,11 +671,11 @@ in {
       endif
 
       " Enable Rose Pine theme (default)
-      colorscheme rose-pine
+      colorscheme rosepine
       set background=dark
 
       " Theme switching shortcuts
-      nnoremap <leader>t1 :colorscheme rose-pine<CR>
+      nnoremap <leader>t1 :colorscheme rosepine<CR>
       nnoremap <leader>t2 :colorscheme tokyonight<CR>
       nnoremap <leader>t3 :colorscheme catppuccin<CR>
       nnoremap <leader>t4 :colorscheme nord<CR>
