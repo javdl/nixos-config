@@ -833,11 +833,6 @@ in {
     '';
   };
 
-  programs.oh-my-posh = {
-    enable = false;
-    enableNushellIntegration = false;
-    settings = builtins.fromJSON (builtins.readFile ./omp.json);
-  };
 
   programs.starship = {
     enable = true;
