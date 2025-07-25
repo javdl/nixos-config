@@ -834,8 +834,8 @@ in {
   };
 
   programs.oh-my-posh = {
-    enable = true;
-    enableNushellIntegration = true;
+    enable = false;
+    enableNushellIntegration = false;
     settings = builtins.fromJSON (builtins.readFile ./omp.json);
   };
 
@@ -844,7 +844,7 @@ in {
     enableBashIntegration = true;
     enableZshIntegration = true;
     enableFishIntegration = true;
-    enableNushellIntegration = false; # We're using oh-my-posh for nushell
+    enableNushellIntegration = true;
     settings = builtins.fromTOML (builtins.readFile ./starship.toml);
   };
 
