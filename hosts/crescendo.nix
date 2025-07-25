@@ -1,4 +1,7 @@
 { config, pkgs, ... }: {
+  imports = [
+    ../modules/cachix.nix
+  ];
 
   system.stateVersion = 5;
 
@@ -26,14 +29,7 @@
       keep-outputs = true
       keep-derivations = true
     '';
-
-    # public binary cache that I use for all my derivations. You can keep
-    # this, use your own, or toss it. Its typically safe to use a binary cache
-    # since the data inside is checksummed.
-    settings = {
-      substituters = ["https://javdl-nixos-config.cachix.org"];
-      trusted-public-keys = ["javdl-nixos-config.cachix.org-1:6xuHXHavvpdfBLQq+RzxDAMxhWkea0NaYvLtDssDJIU="];
-    };
+    # Cache settings moved to ../modules/cachix.nix
   };
 
   # zsh is the default shell on Mac and we want to make sure that we're
@@ -58,7 +54,6 @@
 
   environment.shells = with pkgs; [ bashInteractive zsh fish ];
   environment.systemPackages = with pkgs; [
-    cachix
   ];
 
   # Enable tailscale. We manually authenticate when we want with

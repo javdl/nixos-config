@@ -7,6 +7,7 @@ in {
   imports = [
     ../modules/specialization/plasma.nix
     ../modules/specialization/i3.nix
+    ../modules/cachix.nix
   ];
 
   # Be careful updating this.
@@ -21,14 +22,7 @@ in {
       keep-derivations = true
     '';
 
-    # public binary cache that I use for all my derivations. You can keep
-    # this, use your own, or toss it. Its typically safe to use a binary cache
-    # since the data inside is checksummed.
-    settings = {
-      trusted-users = [ "root" "joost" ];
-      substituters = ["https://javdl-nixos-config.cachix.org" "https://devenv.cachix.org" "https://cache.nixos.org/"];
-      trusted-public-keys = ["javdl-nixos-config.cachix.org-1:6xuHXHavvpdfBLQq+RzxDAMxhWkea0NaYvLtDssDJIU=" "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="];
-    };
+    # Cache settings moved to ../modules/cachix.nix
 
     # Automate garbage collection / Make sure boot does not get full
     gc = {
@@ -115,7 +109,6 @@ in {
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
-    cachix
     gnumake
     killall
     rxvt-unicode-unwrapped
