@@ -1,0 +1,131 @@
+# Rose Pine theme for Starship prompt
+# Get editor completions based on the config schema
+"$schema" = 'https://starship.rs/config-schema.json'
+
+# Set the default palette to Rose Pine
+palette = "rosepine"
+
+# Define Rose Pine color palette
+[palettes.rosepine]
+base = "#191724"
+surface = "#1f1d2e"
+overlay = "#26233a"
+muted = "#6e6a86"
+subtle = "#908caa"
+text = "#e0def4"
+love = "#eb6f92"
+gold = "#f6c177"
+rose = "#ebbcba"
+pine = "#31748f"
+foam = "#9ccfd8"
+iris = "#c4a7e7"
+highlightlow = "#21202e"
+highlightmed = "#403d52"
+highlighthigh = "#524f67"
+
+# Prompt format
+format = """
+[┌───────────────────>](bold muted)
+[│](bold muted) $username$hostname$directory$git_branch$git_status$cmd_duration
+[└─](bold muted)$character """
+
+# Configure prompt modules
+[username]
+style_user = "bold iris"
+style_root = "bold love"
+format = "[$user]($style) "
+show_always = false
+
+[hostname]
+ssh_only = true
+format = "[@$hostname](bold gold) "
+
+[directory]
+style = "bold foam"
+truncation_length = 3
+truncate_to_repo = true
+format = "[$path]($style) "
+
+[git_branch]
+symbol = " "
+style = "bold rose"
+format = "[$symbol$branch]($style) "
+
+[git_status]
+style = "bold love"
+format = "[$all_status$ahead_behind]($style) "
+
+[character]
+success_symbol = "[❯](bold foam)"
+error_symbol = "[❯](bold love)"
+vicmd_symbol = "[❮](bold pine)"
+
+[cmd_duration]
+min_time = 2_000
+style = "bold gold"
+format = "[$duration]($style) "
+
+# Language-specific modules with Rose Pine colors
+[nodejs]
+style = "bold foam"
+symbol = " "
+
+[rust]
+style = "bold rose"
+symbol = " "
+
+[python]
+style = "bold gold"
+symbol = " "
+
+[golang]
+style = "bold foam"
+symbol = " "
+
+[java]
+style = "bold love"
+symbol = " "
+
+[lua]
+style = "bold pine"
+symbol = " "
+
+[docker_context]
+style = "bold iris"
+symbol = " "
+
+[package]
+style = "bold muted"
+symbol = " "
+
+# System information modules
+[memory_usage]
+disabled = false
+threshold = 80
+style = "bold love"
+format = "[$symbol$ram]($style) "
+
+[battery]
+full_symbol = " "
+charging_symbol = " "
+discharging_symbol = " "
+unknown_symbol = " "
+empty_symbol = " "
+
+[[battery.display]]
+threshold = 20
+style = "bold love"
+
+[[battery.display]]
+threshold = 50
+style = "bold gold"
+
+[[battery.display]]
+threshold = 80
+style = "bold foam"
+
+[time]
+disabled = false
+style = "bold muted"
+format = "[$time]($style) "
+time_format = "%R"

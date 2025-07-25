@@ -1,14 +1,14 @@
 /** ********** Fonts ********** **/
 * {
-    font-family: "JetBrains Mono", "Iosevka Nerd Font", archcraft, sans-serif;
+    font-family: "CaskaydiaMono Nerd Font", "JetBrains Mono", "Iosevka Nerd Font", archcraft, sans-serif;
     font-size: 12px;
 }
 
 /** ********** Waybar Window ********** **/
 window#waybar {
-    background-color: #1e1e2e;
-	color: #1e1e2e;
-    border-bottom: 2px solid #313244;
+    background-color: #191724;
+	color: #e0def4;
+    border-bottom: 2px solid #403d52;
     transition-property: background-color;
     transition-duration: .5s;
 }
@@ -19,12 +19,12 @@ window#waybar.hidden {
 
 /** ********** Backlight ********** **/
 #backlight {
-	background-color: #cba6f7;
+	background-color: #c4a7e7;
 }
 
 /** ********** Battery ********** **/
 #battery {
-	background-color: #f9e2af;
+	background-color: #f6c177;
 }
 
 #battery.charging {
@@ -35,13 +35,13 @@ window#waybar.hidden {
 
 @keyframes blink {
     to {
-        color: #000000;
+        color: #191724;
     }
 }
 
 #battery.critical:not(.charging) {
-	background-color: #f38ba8;
-    color: #f38ba8;
+	background-color: #eb6f92;
+    color: #e0def4;
     animation-name: blink;
     animation-duration: 0.5s;
     animation-timing-function: linear;
@@ -51,27 +51,31 @@ window#waybar.hidden {
 
 /** ********** Clock ********** **/
 #clock {
-	background-color: #a6e3a1;
+	background-color: #31748f;
+	color: #e0def4;
 }
 
 /** ********** CPU ********** **/
 #cpu {
-	background-color: #89dceb;
+	background-color: #9ccfd8;
+	color: #191724;
 }
 
 /** ********** Memory ********** **/
 #memory {
-	background-color: #eba0ac;
+	background-color: #eb6f92;
+	color: #e0def4;
 }
 
 /** ********** Disk ********** **/
 #disk {
-	background-color: #b4befe;
+	background-color: #c4a7e7;
+	color: #191724;
 }
 
 /** ********** Tray ********** **/
 #tray {
-	background-color: #cdd6f4;
+	background-color: #26233a;
 }
 #tray > .passive {
     -gtk-icon-effect: dim;
@@ -84,19 +88,23 @@ window#waybar.hidden {
 
 /** ********** MPD ********** **/
 #mpd {
-	background-color: #94e2d5;
+	background-color: #9ccfd8;
+	color: #191724;
 }
 
 #mpd.disconnected {
-	background-color: #f38ba8;
+	background-color: #eb6f92;
+	color: #e0def4;
 }
 
 #mpd.stopped {
-	background-color: #f5c2e7;
+	background-color: #ebbcba;
+	color: #191724;
 }
 
 #mpd.playing {
-	background-color: #74c7ec;
+	background-color: #31748f;
+	color: #e0def4;
 }
 
 #mpd.paused {
@@ -104,25 +112,28 @@ window#waybar.hidden {
 
 /** ********** Pulseaudio ********** **/
 #pulseaudio {
-	background-color: #fab387;
+	background-color: #f6c177;
+	color: #191724;
 }
 
 #pulseaudio.bluetooth {
-	background-color: #f5c2e7;
+	background-color: #ebbcba;
+	color: #191724;
 }
 #pulseaudio.muted {
-	background-color: #313244;
-	color: #cdd6f4;
+	background-color: #403d52;
+	color: #908caa;
 }
 
 /** ********** Network ********** **/
 #network {
-	background-color: #89b4fa;
+	background-color: #31748f;
+	color: #e0def4;
 }
 
 #network.disconnected,#network.disabled {
-	background-color: #313244;
-	color: #cdd6f4;
+	background-color: #403d52;
+	color: #908caa;
 }
 #network.linked {
 }
@@ -139,28 +150,32 @@ window#waybar.hidden {
 }
 
 #custom-menu {
-	background-color: #f5c2e7;
+	background-color: #ebbcba;
+	color: #191724;
 	margin-left: 6px;
 	padding: 2px 6px;
 	font-size: 16px;
 }
 
 #custom-power {
-	background-color: #f38ba8;
+	background-color: #eb6f92;
+	color: #e0def4;
 	margin-right: 6px;
 	padding: 2px 8px;
 	font-size: 16px;
 }
 
 #custom-updater {
-	background-color: #e6ed7b;
+	background-color: #f6c177;
+	color: #191724;
 	margin-right: 6px;
 	padding: 2px 8px;
 	font-size: 12px;
 }
 
 #custom-weather {
-	background-color: #cba6f7;
+	background-color: #c4a7e7;
+	color: #191724;
 	margin-right: 6px;
 	padding: 2px 8px;
 	font-size: 12px;

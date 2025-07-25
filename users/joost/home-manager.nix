@@ -66,6 +66,7 @@ in {
     pkgs.asciinema
     pkgs.air # Live reload for Go
     pkgs.alacritty
+    pkgs.btop
     pkgs.kitty
     pkgs.lazydocker
     pkgs.lazygit
@@ -564,27 +565,27 @@ in {
 
       # Rose Pine theme
       set -g mode-style "fg=#e0def4,bg=#403d52"
-      
+
       set -g message-style "fg=#e0def4,bg=#26233a"
       set -g message-command-style "fg=#e0def4,bg=#26233a"
-      
+
       set -g pane-border-style "fg=#403d52"
       set -g pane-active-border-style "fg=#c4a7e7"
-      
+
       set -g status "on"
       set -g status-justify "left"
-      
+
       set -g status-style "fg=#e0def4,bg=#191724"
-      
+
       set -g status-left-length "100"
       set -g status-right-length "100"
-      
+
       set -g status-left-style NONE
       set -g status-right-style NONE
-      
+
       set -g status-left "#[fg=#26233a,bg=#ebbcba,bold] #S #[fg=#ebbcba,bg=#191724,nobold,nounderscore,noitalics]"
       set -g status-right "#[fg=#191724,bg=#191724,nobold,nounderscore,noitalics]#[fg=#ebbcba,bg=#191724] #{prefix_highlight} #[fg=#403d52,bg=#191724,nobold,nounderscore,noitalics]#[fg=#e0def4,bg=#403d52] %Y-%m-%d  %I:%M %p #[fg=#c4a7e7,bg=#403d52,nobold,nounderscore,noitalics]#[fg=#26233a,bg=#c4a7e7,bold] #h "
-      
+
       setw -g window-status-activity-style "underscore,fg=#6e6a86,bg=#191724"
       setw -g window-status-separator ""
       setw -g window-status-style "NONE,fg=#6e6a86,bg=#191724"
@@ -629,29 +630,29 @@ in {
         { key = "Equals"; mods = "Command"; action = "IncreaseFontSize"; }
         { key = "Minus"; mods = "Command"; action = "DecreaseFontSize"; }
       ];
-      
+
       # Rose Pine theme colors
       colors = {
         primary = {
           background = "#191724";
           foreground = "#e0def4";
         };
-        
+
         cursor = {
           text = "#e0def4";
           cursor = "#524f67";
         };
-        
+
         vi_mode_cursor = {
           text = "#e0def4";
           cursor = "#524f67";
         };
-        
+
         selection = {
           text = "#e0def4";
           background = "#403d52";
         };
-        
+
         normal = {
           black = "#26233a";
           red = "#eb6f92";
@@ -662,7 +663,7 @@ in {
           cyan = "#ebbcba";
           white = "#e0def4";
         };
-        
+
         bright = {
           black = "#6e6a86";
           red = "#eb6f92";
@@ -836,6 +837,15 @@ in {
     enable = true;
     enableNushellIntegration = true;
     settings = builtins.fromJSON (builtins.readFile ./omp.json);
+  };
+
+  programs.starship = {
+    enable = true;
+    enableBashIntegration = true;
+    enableZshIntegration = true;
+    enableFishIntegration = true;
+    enableNushellIntegration = false; # We're using oh-my-posh for nushell
+    settings = builtins.fromTOML (builtins.readFile ./starship.toml);
   };
 
   programs.zellij = {
