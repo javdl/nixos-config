@@ -1,0 +1,51 @@
+#!/usr/bin/env sh
+
+# Rose Pine theme colors
+export ROSE_PINE_BASE="191724"
+export ROSE_PINE_SURFACE="1f1d2e"
+export ROSE_PINE_OVERLAY="26233a"
+export ROSE_PINE_MUTED="6e6a86"
+export ROSE_PINE_SUBTLE="908caa"
+export ROSE_PINE_TEXT="e0def4"
+export ROSE_PINE_LOVE="eb6f92"
+export ROSE_PINE_GOLD="f6c177"
+export ROSE_PINE_ROSE="ebbcba"
+export ROSE_PINE_PINE="31748f"
+export ROSE_PINE_FOAM="9ccfd8"
+export ROSE_PINE_IRIS="c4a7e7"
+export ROSE_PINE_HIGHLIGHT_LOW="21202e"
+export ROSE_PINE_HIGHLIGHT_MED="403d52"
+export ROSE_PINE_HIGHLIGHT_HIGH="524f67"
+
+# global settings
+yabai -m config mouse_follows_focus          off
+yabai -m config focus_follows_mouse          off
+yabai -m config window_origin_display        default
+yabai -m config window_placement             second_child
+yabai -m config window_topmost               off
+yabai -m config window_shadow                on
+yabai -m config window_opacity               off
+yabai -m config window_opacity_duration      0.0
+yabai -m config active_window_opacity        1.0
+yabai -m config normal_window_opacity        0.90
+yabai -m config window_border                off
+yabai -m config window_border_width          6
+yabai -m config active_window_border_color   0xff${ROSE_PINE_IRIS}
+yabai -m config normal_window_border_color   0xff${ROSE_PINE_OVERLAY}
+yabai -m config insert_feedback_color        0xff${ROSE_PINE_GOLD}
+yabai -m config split_ratio                  0.50
+yabai -m config auto_balance                 off
+yabai -m config mouse_modifier               fn
+yabai -m config mouse_action1                move
+yabai -m config mouse_action2                resize
+yabai -m config mouse_drop_action            swap
+
+# general space settings
+yabai -m config layout                       bsp
+yabai -m config top_padding                  12
+yabai -m config bottom_padding               12
+yabai -m config left_padding                 12
+yabai -m config right_padding                12
+yabai -m config window_gap                   06
+
+echo "yabai configuration loaded.."
