@@ -197,7 +197,7 @@ in {
     pkgs.obsidian
     pkgs.podman-desktop
     pkgs.rpi-imager
-    # pkgs.sublime4 # needs old openssl?
+    # pkgs.sublime4 # do not install, needs old openssl?
     pkgs.signal-desktop
     pkgs.tailscale-systray
     # pkgs.windsurf  # Replaced with VS Code
@@ -218,6 +218,8 @@ in {
     ".inputrc".source = ./inputrc;
   } // (if isDarwin then {
     "Library/Application Support/jj/config.toml".source = ./jujutsu.toml;
+    "Library/Application Support/Sublime Text/Packages/User/Preferences.sublime-settings".text = builtins.readFile ./sublime-preferences.json;
+    "Library/Application Support/Sublime Text/Packages/User/Package Control.sublime-settings".text = builtins.readFile ./sublime-package-control.json;
     ".gnupg/gpg-agent.conf".text = ''
       pinentry-program ${pkgs.pinentry_mac}/Applications/pinentry-mac.app/Contents/MacOS/pinentry-mac
       default-cache-ttl 600
@@ -284,6 +286,8 @@ in {
   } else {}) // (if isLinux then {
     "ghostty/config".text = builtins.readFile ./ghostty.linux;
     "jj/config.toml".source = ./jujutsu.toml;
+    "sublime-text/Packages/User/Preferences.sublime-settings".text = builtins.readFile ./sublime-preferences.json;
+    "sublime-text/Packages/User/Package Control.sublime-settings".text = builtins.readFile ./sublime-package-control.json;
   } else {});
 
   # Gnome settings
