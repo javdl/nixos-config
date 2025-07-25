@@ -200,7 +200,7 @@ in {
     # pkgs.sublime4 # needs old openssl?
     pkgs.signal-desktop
     pkgs.tailscale-systray
-    pkgs.windsurf
+    # pkgs.windsurf  # Replaced with VS Code
     pkgs.baobab # Disk usage, gnome only
   ]);
 
@@ -294,7 +294,7 @@ in {
           "firefox.desktop"
           "com.mitchellh.ghostty.desktop"
           "kitty.desktop"
-          "windsurf.desktop"
+          "code.desktop"
           # "kitty.desktop"
         # "kgx.desktop" # Should be Gnome console. kgx in terminal to start it does work.
         #"vscode.desktop"
@@ -320,35 +320,34 @@ in {
   # Programs
   #---------------------------------------------------------------------
 
-  # disabled to prevent collision with Windsurf
-  # programs.vscode = {
-  #   enable = true;
-  #   package = pkgs.vscode;
-  #   extensions = with pkgs.vscode-extensions; [
-  #     bbenoist.nix
-  #     eamodio.gitlens
-  #     github.codespaces
-  #     github.copilot
-  #     ms-python.python
-  #     ms-azuretools.vscode-docker
-  #     ms-toolsai.jupyter
-  #     ms-vscode-remote.remote-ssh
-  #     vscode-icons-team.vscode-icons
-  #   ] ++ pkgs.vscode-utils.extensionsFromVscodeMarketplace [
-  #     {
-  #       name = "remote-ssh-edit";
-  #       publisher = "ms-vscode-remote";
-  #       version = "0.117.2025012415";
-  #       sha256 = "1hp6gjh4xp2m1xlm1jsdzxw9d8frkiidhph6nvl24d0h8z34w49g";
-  #     }
-  #     {
-  #       name = "claude-dev";
-  #       publisher = "saoudrizwan";
-  #       version = "3.2.5";
-  #       sha256 = "sha256-aJnN5zjF6tvUSMqVklNgCgpsfBNi1vw0i66BBFgHB1o=";
-  #     }
-  #   ];
-  # };
+  programs.vscode = {
+    enable = true;
+    package = pkgs.vscode;
+    profiles.default = {
+      extensions = with pkgs.vscode-extensions; [
+        bbenoist.nix
+        eamodio.gitlens
+        github.codespaces
+        github.copilot
+        github.copilot-chat
+        ms-python.python
+        ms-azuretools.vscode-docker
+        ms-toolsai.jupyter
+        ms-vscode-remote.remote-ssh
+        vscode-icons-team.vscode-icons
+        mvllow.rose-pine  # Rose Pine theme
+      ];
+
+      userSettings = {
+        "workbench.colorTheme" = "Rosé Pine";
+        "editor.fontFamily" = "CaskaydiaMono Nerd Font";
+        "editor.fontSize" = 14;
+        "editor.fontLigatures" = true;
+        "terminal.integrated.fontFamily" = "CaskaydiaMono Nerd Font";
+        "terminal.integrated.fontSize" = 14;
+      };
+    };
+  };
 
   programs.gpg.enable = !isDarwin;
 
