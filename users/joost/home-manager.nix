@@ -211,6 +211,16 @@ in {
   home.sessionVariables = shared.sessionVariables // {
     NPM_CONFIG_PREFIX = "$HOME/.npm-global";
     PATH = "$HOME/.npm-global/bin:$PATH";
+    # Rose Pine theme for fzf
+    FZF_DEFAULT_OPTS = ''
+      --color=fg:#e0def4,bg:#191724,hl:#c4a7e7
+      --color=fg+:#e0def4,bg+:#26233a,hl+:#c4a7e7
+      --color=info:#9ccfd8,prompt:#eb6f92,pointer:#f6c177
+      --color=marker:#ebbcba,spinner:#f6c177,header:#9ccfd8
+      --color=border:#403d52,label:#6e6a86,query:#e0def4
+      --border="rounded" --border-label="" --preview-window="border-rounded" --prompt="> "
+      --marker=">" --pointer="◆" --separator="─" --scrollbar="│"
+    '';
   };
 
   home.file = {
@@ -240,6 +250,7 @@ in {
     "electron-flags.conf".text = builtins.readFile ./electron-flags.conf;
     "electron-flags28.conf".source  = ./electron-flags.conf;
     "code-flags.conf".text = builtins.readFile ./code-flags.conf;
+    "btop/btop.conf".text = builtins.readFile ./btop.conf;
 
     "wallpapers/04167_unreachable_3840x2160.png".source = ./wallpapers/04167_unreachable_3840x2160.png;
 
@@ -551,9 +562,34 @@ in {
     extraConfig = ''
       set -ga terminal-overrides ",*256col*:Tc"
 
-      set -g @dracula-show-battery false
-      set -g @dracula-show-network false
-      set -g @dracula-show-weather false
+      # Rose Pine theme
+      set -g mode-style "fg=#e0def4,bg=#403d52"
+      
+      set -g message-style "fg=#e0def4,bg=#26233a"
+      set -g message-command-style "fg=#e0def4,bg=#26233a"
+      
+      set -g pane-border-style "fg=#403d52"
+      set -g pane-active-border-style "fg=#c4a7e7"
+      
+      set -g status "on"
+      set -g status-justify "left"
+      
+      set -g status-style "fg=#e0def4,bg=#191724"
+      
+      set -g status-left-length "100"
+      set -g status-right-length "100"
+      
+      set -g status-left-style NONE
+      set -g status-right-style NONE
+      
+      set -g status-left "#[fg=#26233a,bg=#ebbcba,bold] #S #[fg=#ebbcba,bg=#191724,nobold,nounderscore,noitalics]"
+      set -g status-right "#[fg=#191724,bg=#191724,nobold,nounderscore,noitalics]#[fg=#ebbcba,bg=#191724] #{prefix_highlight} #[fg=#403d52,bg=#191724,nobold,nounderscore,noitalics]#[fg=#e0def4,bg=#403d52] %Y-%m-%d  %I:%M %p #[fg=#c4a7e7,bg=#403d52,nobold,nounderscore,noitalics]#[fg=#26233a,bg=#c4a7e7,bold] #h "
+      
+      setw -g window-status-activity-style "underscore,fg=#6e6a86,bg=#191724"
+      setw -g window-status-separator ""
+      setw -g window-status-style "NONE,fg=#6e6a86,bg=#191724"
+      setw -g window-status-format "#[fg=#191724,bg=#191724,nobold,nounderscore,noitalics]#[default] #I  #W #F #[fg=#191724,bg=#191724,nobold,nounderscore,noitalics]"
+      setw -g window-status-current-format "#[fg=#191724,bg=#403d52,nobold,nounderscore,noitalics]#[fg=#e0def4,bg=#403d52,bold] #I  #W #F #[fg=#403d52,bg=#191724,nobold,nounderscore,noitalics]"
 
       bind -n C-k send-keys "clear"\; send-keys "Enter"
     '';
@@ -593,6 +629,51 @@ in {
         { key = "Equals"; mods = "Command"; action = "IncreaseFontSize"; }
         { key = "Minus"; mods = "Command"; action = "DecreaseFontSize"; }
       ];
+      
+      # Rose Pine theme colors
+      colors = {
+        primary = {
+          background = "#191724";
+          foreground = "#e0def4";
+        };
+        
+        cursor = {
+          text = "#e0def4";
+          cursor = "#524f67";
+        };
+        
+        vi_mode_cursor = {
+          text = "#e0def4";
+          cursor = "#524f67";
+        };
+        
+        selection = {
+          text = "#e0def4";
+          background = "#403d52";
+        };
+        
+        normal = {
+          black = "#26233a";
+          red = "#eb6f92";
+          green = "#31748f";
+          yellow = "#f6c177";
+          blue = "#9ccfd8";
+          magenta = "#c4a7e7";
+          cyan = "#ebbcba";
+          white = "#e0def4";
+        };
+        
+        bright = {
+          black = "#6e6a86";
+          red = "#eb6f92";
+          green = "#31748f";
+          yellow = "#f6c177";
+          blue = "#9ccfd8";
+          magenta = "#c4a7e7";
+          cyan = "#ebbcba";
+          white = "#e0def4";
+        };
+      };
     };
   };
 
