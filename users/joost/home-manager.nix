@@ -161,7 +161,7 @@ in {
     pkgs.python3
     pkgs.pocketbase
     # pkgs.surrealdb # Builds from src
-    pkgs.tailscale
+    # pkgs.tailscale # install via Brew to prevent system extension problems on macos
     pkgs.transmission_4
     pkgs.yubikey-manager
 
@@ -756,11 +756,11 @@ in {
       endif
 
       " Enable Rose Pine theme (default)
-      colorscheme rosepine
+      colorscheme rose-pine
       set background=dark
 
       " Theme switching shortcuts
-      nnoremap <leader>t1 :colorscheme rosepine<CR>
+      nnoremap <leader>t1 :colorscheme rose-pine<CR>
       nnoremap <leader>t2 :colorscheme tokyonight<CR>
       nnoremap <leader>t3 :colorscheme catppuccin<CR>
       nnoremap <leader>t4 :colorscheme nord<CR>
