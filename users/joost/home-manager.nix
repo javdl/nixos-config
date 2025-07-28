@@ -226,6 +226,13 @@ in {
   home.file = {
     ".gdbinit".source = ./gdbinit;
     ".inputrc".source = ./inputrc;
+    ".claude/settings.json".source = ./claude/settings.json;
+    # "claude/CLAUDE.md".source = ./claude/CLAUDE.md;
+    # "claude/.mcp.json".source = ./claude/.mcp.json;
+    # "claude/commands/fix-github-issue.md".source = ./claude/commands/fix-github-issue.md;
+
+    "zed/settings.json".text = builtins.readFile ./zed.json;
+
   } // (if isDarwin then {
     "Library/Application Support/jj/config.toml".source = ./jujutsu.toml;
     "Library/Application Support/Sublime Text/Packages/User/Preferences.sublime-settings".text = builtins.readFile ./sublime-preferences.json;
@@ -238,6 +245,7 @@ in {
   } else {});
 
   xdg.configFile = {
+    # Linux only
     "hypr/hyprland.conf".text = builtins.readFile ./hypr/hyprland.conf;
     "hypr/hyprlock.conf".text = builtins.readFile ./hypr/hyprlock.conf;
     "hypr/hypridle.conf".text = builtins.readFile ./hypr/hypridle.conf;
@@ -252,17 +260,10 @@ in {
     "code-flags.conf".text = builtins.readFile ./code-flags.conf;
     "btop/btop.conf".text = builtins.readFile ./btop.conf;
 
-    # Claude configuration
-    "claude" = {
-      source = ./claude;
-      recursive = true;
-    };
-
     "wallpapers/04167_unreachable_3840x2160.png".source = ./wallpapers/04167_unreachable_3840x2160.png;
 
     "i3/config".text = builtins.readFile ./i3;
     "rofi/config.rasi".text = builtins.readFile ./rofi;
-    "zed/settings.json".text = builtins.readFile ./zed.json;
 
     # tree-sitter parsers
     # "nvim/parser/proto.so".source = "${pkgs.tree-sitter-proto}/parser";
@@ -274,8 +275,6 @@ in {
     #   ./textobjects.scm;
 
   } // (if isDarwin then {
-    # Rectangle.app. This has to be imported manually using the app.
-    # "rectangle/RectangleConfig.json".text = builtins.readFile ./RectangleConfig.json;
     "ghostty/config".text = builtins.readFile ./ghostty.conf;
     "skhd/skhdrc".text = builtins.readFile ./skhdrc;
     "aerospace/aerospace.toml".text = builtins.readFile ./aerospace.toml;
@@ -889,4 +888,17 @@ in {
     size = 128;
     x11.enable = true;
   };
+
+  # Install Claude Code on activation
+  home.activation.installClaudeCode = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    PATH="${pkgs.nodejs_20}/bin:$PATH"
+    export NPM_CONFIG_PREFIX="$HOME/.npm-global"
+
+    if ! command -v claude >/dev/null 2>&1; then
+      echo "Installing Claude Code..."
+      npm install -g @anthropic-ai/claude-code
+    else
+      echo "Claude Code is already installed at $(which claude)"
+    fi
+  '';
 }
