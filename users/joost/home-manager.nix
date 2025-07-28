@@ -220,7 +220,6 @@ in {
       --color=marker:#ebbcba,spinner:#f6c177,header:#9ccfd8
       --color=border:#403d52,label:#6e6a86,query:#e0def4
       --border="rounded" --border-label="" --preview-window="border-rounded" --prompt="> "
-      --marker=">" --pointer="◆" --separator="─" --scrollbar="│"
     '';
   };
 
