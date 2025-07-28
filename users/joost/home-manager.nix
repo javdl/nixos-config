@@ -213,14 +213,14 @@ in {
     NPM_CONFIG_PREFIX = "$HOME/.npm-global";
     PATH = "$HOME/.npm-global/bin:$PATH";
     # Rose Pine theme for fzf
-    FZF_DEFAULT_OPTS = ''
-      --color=fg:#e0def4,bg:#191724,hl:#c4a7e7
-      --color=fg+:#e0def4,bg+:#26233a,hl+:#c4a7e7
-      --color=info:#9ccfd8,prompt:#eb6f92,pointer:#f6c177
-      --color=marker:#ebbcba,spinner:#f6c177,header:#9ccfd8
-      --color=border:#403d52,label:#6e6a86,query:#e0def4
-      --border="rounded" --border-label="" --preview-window="border-rounded" --prompt="> "
-    '';
+    # FZF_DEFAULT_OPTS = ''
+    #   --color=fg:#e0def4,bg:#191724,hl:#c4a7e7
+    #   --color=fg+:#e0def4,bg+:#26233a,hl+:#c4a7e7
+    #   --color=info:#9ccfd8,prompt:#eb6f92,pointer:#f6c177
+    #   --color=marker:#ebbcba,spinner:#f6c177,header:#9ccfd8
+    #   --color=border:#403d52,label:#6e6a86,query:#e0def4
+    #   --border="rounded" --border-label="" --preview-window="border-rounded" --prompt="> "
+    # '';
   };
 
   home.file = {
@@ -251,6 +251,12 @@ in {
     "electron-flags28.conf".source  = ./electron-flags.conf;
     "code-flags.conf".text = builtins.readFile ./code-flags.conf;
     "btop/btop.conf".text = builtins.readFile ./btop.conf;
+
+    # Claude configuration
+    "claude" = {
+      source = ./claude;
+      recursive = true;
+    };
 
     "wallpapers/04167_unreachable_3840x2160.png".source = ./wallpapers/04167_unreachable_3840x2160.png;
 

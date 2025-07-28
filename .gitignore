@@ -5,3 +5,4 @@ iso/nixos.iso
 .env
 .qodo
 backup.tar.gz
+settings.local.json
