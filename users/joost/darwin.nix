@@ -17,6 +17,7 @@
       # "bitwarden" Must be installed via Mac App Store for browser integration to work
       "affinity-designer"
       "affinity-photo"
+      "balenaetcher"
       "calibre"
       "chatgpt"
       "claude"
