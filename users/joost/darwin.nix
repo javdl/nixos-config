@@ -1,9 +1,6 @@
 { inputs, pkgs, ... }:
 
 {
-  nixpkgs.overlays = [
-    (import ./vim.nix { inherit inputs; })
-  ];
 
   homebrew = {
     enable = true;

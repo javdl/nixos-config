@@ -23,7 +23,4 @@
     ];
   };
 
-  nixpkgs.overlays = [
-    (import ./vim.nix { inherit inputs; })
-  ];
 }
