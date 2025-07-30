@@ -124,6 +124,7 @@ in {
     pkgs.aider-chat
     pkgs.darktable
     pkgs.dbeaver-bin
+    pkgs.devcontainer
     pkgs.discord
     # pkgs.element-web  # Temporarily disabled due to nodejs build failures
     pkgs.gimp
