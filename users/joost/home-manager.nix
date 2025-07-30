@@ -717,8 +717,6 @@ in {
     ]);
 
     plugins = with pkgs; [
-      # Custom vim plugins from flake inputs
-      customVim.vim-copilot
 
       # Themes
       vimPlugins.rose-pine  # Default theme

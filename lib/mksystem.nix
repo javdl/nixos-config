@@ -16,6 +16,10 @@ name:
 let
   # True if this is a WSL system.
   isWSL = wsl;
+
+  # True if Linux, which is a heuristic for not being Darwin.
+  isLinux = !darwin && !isWSL;
+
   # True if this is a Raphael iGPU system
   isRaphael = raphael;
   isPstate = pstate;
@@ -50,6 +54,8 @@ in systemFunc rec {
     (if isPstate then inputs.nixos-hardware.nixosModules.common-cpu-amd-pstate else {})
     (if isZenpower then inputs.nixos-hardware.nixosModules.common-cpu-amd-zenpower else {})
 
+    # Snapd on Linux
+    (if isLinux then inputs.nix-snapd.nixosModules.default else {})
 
     machineConfig
     userOSConfig

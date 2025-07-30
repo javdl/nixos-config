@@ -16,6 +16,10 @@
     nixos-wsl.url = "github:nix-community/NixOS-WSL";
     nixos-wsl.inputs.nixpkgs.follows = "nixpkgs";
 
+    # snapd
+    nix-snapd.url = "github:nix-community/nix-snapd";
+    nix-snapd.inputs.nixpkgs.follows = "nixpkgs";
+
     home-manager = {
       url = "github:nix-community/home-manager/release-25.05";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -41,37 +45,6 @@
     # jujutsu.url = "github:martinvonz/jj";
     # zig.url = "github:mitchellh/zig-overlay";
 
-    # Non-flakes
-    nvim-codecompanion.url = "github:olimorris/codecompanion.nvim";
-    nvim-codecompanion.flake = false;
-    nvim-conform.url = "github:stevearc/conform.nvim/v7.1.0";
-    nvim-conform.flake = false;
-    nvim-dressing.url = "github:stevearc/dressing.nvim";
-    nvim-dressing.flake = false;
-    nvim-gitsigns.url = "github:lewis6991/gitsigns.nvim/v0.9.0";
-    nvim-gitsigns.flake = false;
-    nvim-lspconfig.url = "github:neovim/nvim-lspconfig";
-    nvim-lspconfig.flake = false;
-    nvim-lualine.url ="github:nvim-lualine/lualine.nvim";
-    nvim-lualine.flake = false;
-    nvim-nui.url = "github:MunifTanjim/nui.nvim";
-    nvim-nui.flake = false;
-    nvim-plenary.url = "github:nvim-lua/plenary.nvim";
-    nvim-plenary.flake = false;
-    nvim-rust.url = "github:rust-lang/rust.vim";
-    nvim-rust.flake = false;
-    # nvim-snacks.url = "github:folke/snacks.nvim";
-    # nvim-snacks.flake = false;
-    nvim-telescope.url = "github:nvim-telescope/telescope.nvim/0.1.8";
-    nvim-telescope.flake = false;
-    nvim-treesitter-context.url = "github:nvim-treesitter/nvim-treesitter-context";
-    nvim-treesitter-context.flake = false;
-    nvim-web-devicons.url = "github:nvim-tree/nvim-web-devicons";
-    nvim-web-devicons.flake = false;
-    vim-copilot.url = "github:github/copilot.vim/v1.41.0";
-    vim-copilot.flake = false;
-    vim-misc.url = "github:javdl/vim-misc";
-    vim-misc.flake = false;
   };
 
   outputs = { self, nixpkgs, nixos-hardware, home-manager, darwin, ... }@inputs: let
@@ -85,8 +58,9 @@
         gh = inputs.nixpkgs-unstable.legacyPackages.${prev.system}.gh;
 
         # Want the latest version of these
+        claude-code = inputs.nixpkgs-unstable.legacyPackages.${prev.system}.claude-code;
         nushell = inputs.nixpkgs-unstable.legacyPackages.${prev.system}.nushell;
-        jujutsu = inputs.nixpkgs-unstable.legacyPackages.${prev.system}.jujutsu;
+
 
         # ibus = ibus_stable;
         # ibus_stable = inputs.nixpkgs.legacyPackages.${prev.system}.ibus;
