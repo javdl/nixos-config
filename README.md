@@ -485,3 +485,13 @@ To use GitHub authentication with Nix, you need to:
  #~/.config/nix/nix.conf
  access-tokens = github.com=ghp_YOUR_GITHUB_TOKEN_HERE
  ```
+
+## Use Chezmoi for dotfiles management
+
+I've setup Chezmoi for dotfiles management and syncing across machines. The repo [github.com/javdl/dotfiles.git](https://github.com/javdl/dotfiles.git) can be initialized via chezmoi like this:
+
+```bash
+chezmoi init https://github.com/javdl/dotfiles.git
+```
+
+For more details on adding new dotfiles, making changes, see the [Chezmoi documentation](https://www.chezmoi.io/quick-start/).

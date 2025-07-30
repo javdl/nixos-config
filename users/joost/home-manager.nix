@@ -51,6 +51,9 @@ in {
   # to use the old state version.
   home.stateVersion = "18.09";
 
+  # We manage our own Nushell config via Chezmoi
+  home.shell.enableNushellIntegration = false;
+
   xdg.enable = true;
 
   #---------------------------------------------------------------------
@@ -67,6 +70,7 @@ in {
     pkgs.air # Live reload for Go
     pkgs.alacritty
     pkgs.btop
+    pkgs.chezmoi
     pkgs.kitty
     pkgs.lazydocker
     pkgs.lazygit
@@ -235,7 +239,6 @@ in {
     "zed/settings.json".text = builtins.readFile ./zed.json;
 
   } // (if isDarwin then {
-    "Library/Application Support/jj/config.toml".source = ./jujutsu.toml;
     "Library/Application Support/Sublime Text/Packages/User/Preferences.sublime-settings".text = builtins.readFile ./sublime-preferences.json;
     "Library/Application Support/Sublime Text/Packages/User/Package Control.sublime-settings".text = builtins.readFile ./sublime-package-control.json;
     ".gnupg/gpg-agent.conf".text = ''
@@ -302,7 +305,6 @@ in {
         };
   } else {}) // (if isLinux then {
     "ghostty/config".text = builtins.readFile ./ghostty.linux;
-    "jj/config.toml".source = ./jujutsu.toml;
     "sublime-text/Packages/User/Preferences.sublime-settings".text = builtins.readFile ./sublime-preferences.json;
     "sublime-text/Packages/User/Package Control.sublime-settings".text = builtins.readFile ./sublime-package-control.json;
   } else {});
@@ -384,15 +386,20 @@ in {
     shellAliases = shared.shellAliases;
   };
 
-  programs.direnv = {
-    enable = true;
-    enableBashIntegration = true; # see note on other shells below
-    enableZshIntegration = true;
-    enableNushellIntegration = true;
-    nix-direnv.enable = true;
+  programs.direnv= {
+      enable = true;
 
-    config = shared.direnvConfig;
-  };
+      config = {
+        whitelist = {
+          prefix= [
+            "$HOME/code/go/src/github.com/fuww"
+            "$HOME/code/go/src/github.com/javdl"
+          ];
+
+          exact = ["$HOME/.envrc"];
+        };
+      };
+    };
 
   programs.zsh = {
     enable = true;
@@ -801,41 +808,41 @@ in {
 
   programs.nushell = {
     enable = true;
-    configFile.source = ./config.nu;
-    # shellAliases = shellAliases;
-    shellAliases = shared.shellAliases;
-    extraConfig = ''
-      # Rose Pine theme colors for nushell
-      let rose_pine_theme = {
-        # Special
-        background: '#191724'
-        foreground: '#e0def4'
+    # configFile.source = ./config.nu;
+    # # shellAliases = shellAliases;
+    # shellAliases = shared.shellAliases;
+    # extraConfig = ''
+    #   # Rose Pine theme colors for nushell
+    #   let rose_pine_theme = {
+    #     # Special
+    #     background: '#191724'
+    #     foreground: '#e0def4'
 
-        # Colors
-        black: '#26233a'
-        red: '#eb6f92'
-        green: '#31748f'
-        yellow: '#f6c177'
-        blue: '#9ccfd8'
-        magenta: '#c4a7e7'
-        cyan: '#ebbcba'
-        white: '#e0def4'
+    #     # Colors
+    #     black: '#26233a'
+    #     red: '#eb6f92'
+    #     green: '#31748f'
+    #     yellow: '#f6c177'
+    #     blue: '#9ccfd8'
+    #     magenta: '#c4a7e7'
+    #     cyan: '#ebbcba'
+    #     white: '#e0def4'
 
-        # Bright colors
-        bright_black: '#6e6a86'
-        bright_red: '#eb6f92'
-        bright_green: '#31748f'
-        bright_yellow: '#f6c177'
-        bright_blue: '#9ccfd8'
-        bright_magenta: '#c4a7e7'
-        bright_cyan: '#ebbcba'
-        bright_white: '#e0def4'
-      }
+    #     # Bright colors
+    #     bright_black: '#6e6a86'
+    #     bright_red: '#eb6f92'
+    #     bright_green: '#31748f'
+    #     bright_yellow: '#f6c177'
+    #     bright_blue: '#9ccfd8'
+    #     bright_magenta: '#c4a7e7'
+    #     bright_cyan: '#ebbcba'
+    #     bright_white: '#e0def4'
+    #   }
 
-      # Set the theme
-      $env.config = ($env.config | default {})
-      $env.config.color_config = $rose_pine_theme
-    '';
+    #   # Set the theme
+    #   $env.config = ($env.config | default {})
+    #   $env.config.color_config = $rose_pine_theme
+    # '';
   };
 
 
