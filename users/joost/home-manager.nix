@@ -268,16 +268,6 @@ in {
 
     "i3/config".text = builtins.readFile ./i3;
     "rofi/config.rasi".text = builtins.readFile ./rofi;
-
-    # tree-sitter parsers
-    # "nvim/parser/proto.so".source = "${pkgs.tree-sitter-proto}/parser";
-    # "nvim/queries/proto/folds.scm".source =
-    #   "${sources.tree-sitter-proto}/queries/folds.scm";
-    # "nvim/queries/proto/highlights.scm".source =
-    #   "${sources.tree-sitter-proto}/queries/highlights.scm";
-    # "nvim/queries/proto/textobjects.scm".source =
-    #   ./textobjects.scm;
-
   } // (if isDarwin then {
     "ghostty/config".text = builtins.readFile ./ghostty.conf;
     "skhd/skhdrc".text = builtins.readFile ./skhdrc;

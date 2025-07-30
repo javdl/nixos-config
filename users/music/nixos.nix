@@ -23,6 +23,6 @@
     ];
   };
 
-  nixpkgs.overlays = import ../../lib/overlays.nix ++ [
+  nixpkgs.overlays = [
   ];
 }
