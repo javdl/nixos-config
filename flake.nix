@@ -138,6 +138,11 @@
       zenpower = true;
     };
 
+    nixosConfigurations.github-runner = mkSystem "github-runner" {
+      system = "x86_64-linux";
+      user   = "joost";
+    };
+
     darwinConfigurations.macbook-pro-m1 = mkSystem "macbook-pro-m1" {
       system = "aarch64-darwin";
       user   = "joost";
