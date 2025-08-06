@@ -3,8 +3,8 @@
 {
   # Basic home-manager configuration for GitHub runner on Ubuntu
   home = {
-    username = "joost";  # Use the actual user running this
-    homeDirectory = "/home/joost";
+    username = "githubrunner";  # Use the actual user running this
+    homeDirectory = "/home/githubrunner";
     stateVersion = "25.05";
   };
 
