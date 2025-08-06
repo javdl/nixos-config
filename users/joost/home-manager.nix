@@ -378,18 +378,23 @@ in {
 
   programs.direnv= {
       enable = true;
+      nix-direnv.enable = true; # faster
 
       config = {
         whitelist = {
           prefix= [
             "$HOME/code/go/src/github.com/fuww"
             "$HOME/code/go/src/github.com/javdl"
+            "$HOME/git/fuww"
+            "$HOME/git/javdl"
           ];
 
           exact = ["$HOME/.envrc"];
         };
       };
     };
+
+ programs.
 
   programs.zsh = {
     enable = true;
