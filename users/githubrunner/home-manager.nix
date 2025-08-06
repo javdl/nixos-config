@@ -46,12 +46,34 @@
     # Development tools
     nodejs_22
     python3
+    docker
     docker-compose
 
     # GitHub Actions dependencies
     gh
+    git
+    git-lfs
     jq
     yq
+
+    # Languages and runtimes
+    temurin-bin-21  # Eclipse Temurin (Adoptium JDK)
+    erlang
+    mono
+    R
+
+    # Browsers
+    chromium
+    firefox
+    microsoft-edge
+
+    # Databases
+    mongodb-tools
+    postgresql
+
+    # Cloud tools
+    google-cloud-sdk
+    heroku
 
     # Monitoring
     htop
