@@ -65,7 +65,7 @@
     # Browsers
     chromium
     firefox
-    microsoft-edge
+    # microsoft-edge # UNFREE
 
     # Databases
     mongodb-tools
