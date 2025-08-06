@@ -184,5 +184,16 @@
       user   = "joost";
       darwin = true;
     };
+
+    # Home Manager configuration for GitHub runner on Ubuntu
+    homeConfigurations."githubrunner" = home-manager.lib.homeManagerConfiguration {
+      pkgs = import nixpkgs {
+        system = "x86_64-linux";
+        overlays = overlays;
+      };
+      modules = [
+        ./users/githubrunner/home-manager.nix
+      ];
+    };
   };
 }

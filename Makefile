@@ -15,12 +15,19 @@ SSH_OPTIONS=-o PubkeyAuthentication=no -o UserKnownHostsFile=/dev/null -o Strict
 
 # We need to do some OS switching below.
 UNAME := $(shell uname)
+# Check if this is a homeConfiguration (for non-NixOS systems) or nixosConfiguration
+IS_HOME_CONFIG := $(shell nix eval --json '.#homeConfigurations."${NIXNAME}"' 2>/dev/null | grep -q '^{' && echo "yes" || echo "no")
 
 switch:
 ifeq ($(UNAME), Darwin)
 	nix build --extra-experimental-features nix-command --extra-experimental-features flakes ".#darwinConfigurations.${NIXNAME}.system"
 	sudo ./result/sw/bin/darwin-rebuild switch --flake "$$(pwd)#${NIXNAME}"
+else ifeq ($(IS_HOME_CONFIG), yes)
+	# For non-NixOS systems with home-manager configurations
+	@echo "Using home-manager for configuration '${NIXNAME}'..."
+	nix run home-manager/release-25.05 -- switch -b backup --flake ".#${NIXNAME}"
 else
+	# For NixOS systems
 	sudo NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nixos-rebuild switch --flake ".#${NIXNAME}"
 endif
 
@@ -28,7 +35,12 @@ test:
 ifeq ($(UNAME), Darwin)
 	nix build ".#darwinConfigurations.${NIXNAME}.system"
 	sudo ./result/sw/bin/darwin-rebuild test --flake "$$(pwd)#${NIXNAME}"
+else ifeq ($(IS_HOME_CONFIG), yes)
+	# For non-NixOS systems with home-manager configurations
+	@echo "Testing home-manager configuration '${NIXNAME}'..."
+	nix build ".#homeConfigurations.${NIXNAME}.activationPackage"
 else
+	# For NixOS systems
 	sudo NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nixos-rebuild test --flake ".#$(NIXNAME)"
 endif
 
