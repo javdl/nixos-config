@@ -47,6 +47,7 @@
       "obs"
       "obsidian"
       "ollama"
+      "sst/tap/opencode"
       "orbstack"
       "rapidapi"
       "raycast" # for searching nix GUI apps (nix doesnt put bin in Applications folder so macos search doesnt work)
@@ -62,6 +63,7 @@
       "vlc"
       # "vmware-fusion" # Disabled because you need a Broadcom profile. Login & Download here: https://support.broadcom.com/group/ecx/productdownloads?subfamily=VMware%20Fusion&freeDownloads=true What a shitshow!
       "wacom-tablet"
+      "warp"
       "zed"
     ];
     masApps = { # to find ID, App Store > Share > Copy link
