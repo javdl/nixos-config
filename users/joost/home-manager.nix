@@ -77,6 +77,7 @@ in {
     pkgs.bat
     pkgs.bottom
     pkgs.cachix
+    # pkgs.code-cursor-fhs
     pkgs.dasht # Search API docs offline, in terminal or browser
     pkgs.devenv
     pkgs.docker
