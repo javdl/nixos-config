@@ -31,6 +31,7 @@
       # "google-cloud-sdk" # see gdk
       "geekbench"
       "geekbench-ai"
+      "gemini-cli"
       "ghostty" # broken in nixpkgs
       "github" # desktop
       "google-drive"
@@ -56,6 +57,7 @@
       # "screenpipe" outdated on brew
       "sublime-text"
       "superwhisper"
+      "superhuman"
       "tailscale" # GUI apps via Brew
       "thunderbird"
       "veracrypt"
