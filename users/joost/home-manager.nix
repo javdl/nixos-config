@@ -91,6 +91,7 @@ in {
     # pkgs.ffmpeg_5 # libgl, needed for ML
     pkgs.ffmpeg
     pkgs.fzf
+    pkgs.gemini-cli
     pkgs.gh
     # pkgs.ghostty
     pkgs.git-lfs
@@ -105,6 +106,7 @@ in {
     # pkgs.libGLU # ML
     # pkgs.libheif
     pkgs.ollama
+    pkgs.opencode
     pkgs.ripgrep
     pkgs.tree
     pkgs.watch

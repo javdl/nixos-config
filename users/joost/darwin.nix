@@ -31,7 +31,6 @@
       # "google-cloud-sdk" # see gdk
       "geekbench"
       "geekbench-ai"
-      "gemini-cli"
       "ghostty" # broken in nixpkgs
       "github" # desktop
       "google-drive"
@@ -48,7 +47,6 @@
       "obs"
       "obsidian"
       "ollama"
-      "sst/tap/opencode"
       "orbstack"
       "rapidapi"
       "raycast" # for searching nix GUI apps (nix doesnt put bin in Applications folder so macos search doesnt work)
