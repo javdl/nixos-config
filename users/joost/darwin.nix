@@ -49,6 +49,7 @@
       "ollama"
       # "orbstack"
       "podman"
+      "podman-desktop"
       "rapidapi"
       "raycast" # for searching nix GUI apps (nix doesnt put bin in Applications folder so macos search doesnt work)
       "screenflow"
