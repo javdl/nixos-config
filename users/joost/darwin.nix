@@ -47,7 +47,8 @@
       "obs"
       "obsidian"
       "ollama"
-      "orbstack"
+      # "orbstack"
+      "podman"
       "rapidapi"
       "raycast" # for searching nix GUI apps (nix doesnt put bin in Applications folder so macos search doesnt work)
       "screenflow"
