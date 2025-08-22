@@ -14,7 +14,10 @@
       # "bitwarden" Must be installed via Mac App Store for browser integration to work
       "affinity-designer"
       "affinity-photo"
+      "affinity-publisher"
+      "arturia-software-center"
       "balenaetcher"
+      "companion" # Bitfocus companion, Streamdeck extension and emulation software
       "calibre"
       "chatgpt"
       "claude"
@@ -25,6 +28,9 @@
       "dbeaver-community" # dbeaver-bin doesnt work on MacOS?
       # "docker" # liever Colima # when really need Docker, liever alleen CLI. geeft ook compaudit error bij elke shell-open vanwege de docker-completions. Installeren met `brew install docker --cask`, als docker eerder handmatig is geinstalleerd soms nodig om met rm eea te verwijderen.
       "dropbox"
+      "fabfilter-pro-c"
+      "fabfilter-pro-ds"
+      "fabfilter-pro-g"
       "figma"
       "firefox"
       # "github" # only Intel, arm64 must be downloaded from website
@@ -38,12 +44,15 @@
       "hammerspoon"
       "imageoptim"
       "istat-menus"
+      "izotope-product-portal"
       "licecap"
       "librewolf"
       "libreoffice"
+      "loopback" # Rogue Amoeba
       "macfuse"
       "monodraw"
       "mx-power-gadget"
+      "native-access"
       "obs"
       "obsidian"
       "ollama"
@@ -54,6 +63,9 @@
       "raycast" # for searching nix GUI apps (nix doesnt put bin in Applications folder so macos search doesnt work)
       "screenflow"
       "signal"
+      "softube-central" # ua connect NA
+      "soundtoys"
+      "soundsource" # Rogue Amoeba, allows headphone EQ presets
       # "screenpipe" outdated on brew
       "sublime-text"
       "superwhisper"
