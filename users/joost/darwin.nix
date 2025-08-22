@@ -13,10 +13,11 @@
     ];
     casks  = [
       # "bitwarden" Must be installed via Mac App Store for browser integration to work
+      "audio-hijack"
       "affinity-designer"
       "affinity-photo"
       "affinity-publisher"
-      "arturia-software-center"
+      # "arturia-software-center" # broken or breaks existing installation
       "balenaetcher"
       "companion" # Bitfocus companion, Streamdeck extension and emulation software
       "calibre"
@@ -58,8 +59,9 @@
       "obs"
       "obsidian"
       "ollama"
-      # "orbstack"
+      # "orbstack" # Use open source podman instead
       "podman-desktop"
+      "reaper"
       "rapidapi"
       "raycast" # for searching nix GUI apps (nix doesnt put bin in Applications folder so macos search doesnt work)
       "screenflow"
@@ -72,6 +74,11 @@
       "superwhisper"
       "superhuman"
       "tailscale" # GUI apps via Brew
+      "tdr-kotelnikov"
+      "tdr-molotok"
+      "tdr-nova"
+      "tdr-prism"
+      "tdr-vos-slickeq"
       "thunderbird"
       "veracrypt"
       "visual-studio-code"
@@ -79,6 +86,7 @@
       # "vmware-fusion" # Disabled because you need a Broadcom profile. Login & Download here: https://support.broadcom.com/group/ecx/productdownloads?subfamily=VMware%20Fusion&freeDownloads=true What a shitshow!
       "wacom-tablet"
       "warp"
+      "waves-central"
       "zed"
     ];
     masApps = { # to find ID, App Store > Share > Copy link
