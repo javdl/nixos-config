@@ -43,6 +43,7 @@
       "google-drive"
       "gpg-suite"
       "hammerspoon"
+      "ilok-license-manager"
       "imageoptim"
       "istat-menus"
       "izotope-product-portal"
