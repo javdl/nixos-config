@@ -10,15 +10,26 @@
     brews = [
       "bearcove/tap/home"
       "podman"
+      "gifski" # Highest-quality GIF encoder
     ];
     casks  = [
+      # handmatig installeren:
+      # ableton-live 12
+      # davinci-resolve
+      # most plugins fabfilter
+      # shure update utility
+      # dirac live processor
+      #
       # "bitwarden" Must be installed via Mac App Store for browser integration to work
       "audio-hijack"
+      # "advanced-renamer" # download fails
+      "airfoil"
       "affinity-designer"
       "affinity-photo"
       "affinity-publisher"
       # "arturia-software-center" # broken or breaks existing installation
       "balenaetcher"
+      "brave-browser"
       "companion" # Bitfocus companion, Streamdeck extension and emulation software
       "calibre"
       "chatgpt"
@@ -48,11 +59,13 @@
       "imageoptim"
       "istat-menus"
       "izotope-product-portal"
+      "kobo"
       "licecap"
       "librewolf"
       "libreoffice"
       "loopback" # Rogue Amoeba
       "macfuse"
+      "mixxx" # open traktor
       "monodraw"
       "mx-power-gadget"
       "native-access"
@@ -64,12 +77,14 @@
       "reaper"
       "rapidapi"
       "raycast" # for searching nix GUI apps (nix doesnt put bin in Applications folder so macos search doesnt work)
+      "rode-central" #c(firmware update)
       "screenflow"
       "signal"
       "softube-central" # ua connect NA
-      "soundtoys"
+      # "soundtoys" broken / needs check
       "soundsource" # Rogue Amoeba, allows headphone EQ presets
       # "screenpipe" outdated on brew
+      "spitfire-audio"
       "sublime-text"
       "superwhisper"
       "superhuman"
