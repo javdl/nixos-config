@@ -78,6 +78,7 @@
       "rapidapi"
       "raycast" # for searching nix GUI apps (nix doesnt put bin in Applications folder so macos search doesnt work)
       "rode-central" #c(firmware update)
+      "rustrover"
       "screenflow"
       "signal"
       "softube-central" # ua connect NA
