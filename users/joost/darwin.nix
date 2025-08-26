@@ -74,6 +74,7 @@
       "ollama"
       # "orbstack" # Use open source podman instead
       "podman-desktop"
+      "protobuf"
       "reaper"
       "rapidapi"
       "raycast" # for searching nix GUI apps (nix doesnt put bin in Applications folder so macos search doesnt work)
