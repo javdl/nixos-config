@@ -9,8 +9,9 @@
     ];
     brews = [
       "bearcove/tap/home"
-      "podman"
       "gifski" # Highest-quality GIF encoder
+      "podman"
+      "protobuf"
     ];
     casks  = [
       # handmatig installeren:
@@ -74,7 +75,6 @@
       "ollama"
       # "orbstack" # Use open source podman instead
       "podman-desktop"
-      "protobuf"
       "reaper"
       "rapidapi"
       "raycast" # for searching nix GUI apps (nix doesnt put bin in Applications folder so macos search doesnt work)
