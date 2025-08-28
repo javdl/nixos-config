@@ -37,6 +37,7 @@
       "claude"
       "chromedriver"
       "cleanshot"
+      "codex"
       "cursor"
       "digikam"
       "dbeaver-community" # dbeaver-bin doesnt work on MacOS?
