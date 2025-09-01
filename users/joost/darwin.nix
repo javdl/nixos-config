@@ -84,7 +84,6 @@
       "rode-central" #c(firmware update)
       "rustrover"
       "screenflow"
-      "shureplus-motiv"
       "signal"
       "softube-central" # ua connect NA
       # "soundtoys" broken / needs check
