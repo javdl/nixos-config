@@ -491,12 +491,12 @@ To use GitHub authentication with Nix, you need to:
 I've setup Chezmoi for dotfiles management and syncing across machines. The repo [github.com/javdl/dotfiles.git](https://github.com/javdl/dotfiles.git) can be initialized via chezmoi like this:
 
 ```bash
-chezmoi init https://github.com/javdl/dotfiles.git
+chezmoi init git@github.com:javdl/dotfiles.git
 chezmoi diff
 chezmoi apply
 
 # or all in one
-chezmoi init --apply --verbose https://github.com/javdl/dotfiles.git
+chezmoi init --apply --verbose git@github.com:javdl/dotfiles.git
 
 # Add new
 chezmoi add ~/.claude/commands
