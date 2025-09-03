@@ -492,6 +492,11 @@ I've setup Chezmoi for dotfiles management and syncing across machines. The repo
 
 ```bash
 chezmoi init https://github.com/javdl/dotfiles.git
+chezmoi diff
+chezmoi apply
+
+# or all in one
+chezmoi init --apply --verbose https://github.com/javdl/dotfiles.git
 
 # Add new
 chezmoi add ~/.claude/commands

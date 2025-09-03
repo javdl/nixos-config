@@ -21,18 +21,24 @@ in {
     gp = "git push";
     gs = "git status";
     gt = "git tag";
-    
+
+    jd = "jj desc";
+    jf = "jj git fetch";
+    jn = "jj new";
+    jp = "jj git push";
+    js = "jj st";
+
     # Omakub-style shell tool aliases
     ff = "fzf --preview 'bat --style=numbers --color=always --line-range :500 {}'"; # Fuzzy find with preview
     ls = "eza --icons --group-directories-first"; # Better ls with icons
     lsa = "eza --icons --group-directories-first -a"; # ls including hidden files
     lt = "eza --icons --group-directories-first --tree --level=2"; # Tree view 2 levels deep
     lta = "eza --icons --group-directories-first --tree --level=2 -a"; # Tree view with hidden files
-    
+
     # Omakub-style TUI aliases
     lzg = "lazygit"; # Launch lazygit
     lzd = "lazydocker"; # Launch lazydocker
-    
+
     # Zellij shortcuts
     z = "zellij"; # Start zellij
     za = "zellij attach -c"; # Attach or create new session
