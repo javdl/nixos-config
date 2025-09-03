@@ -234,12 +234,6 @@ in {
   home.file = {
     ".gdbinit".source = ./gdbinit;
     ".inputrc".source = ./inputrc;
-    ".claude/settings.json".source = ./claude/settings.json;
-    # "claude/CLAUDE.md".source = ./claude/CLAUDE.md;
-    # "claude/.mcp.json".source = ./claude/.mcp.json;
-    # "claude/commands/fix-github-issue.md".source = ./claude/commands/fix-github-issue.md;
-
-    "zed/settings.json".text = builtins.readFile ./zed.json;
 
   } // (if isDarwin then {
     "Library/Application Support/Sublime Text/Packages/User/Preferences.sublime-settings".text = builtins.readFile ./sublime-preferences.json;
