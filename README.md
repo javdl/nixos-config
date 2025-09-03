@@ -496,6 +496,12 @@ chezmoi init https://github.com/javdl/dotfiles.git
 # Add new
 chezmoi add ~/.claude/commands
 chezmoi add ~/.claude/settings.json
+
+chezmoi cd  # Enter the chezmoi repository
+jj st       # Check status
+jj commit -m "Add Claude Code commands"  # Commit
+jj bookmark set main -r @-  # Set main bookmark to the latest commit
+jj git push
 ```
 
 For more details on adding new dotfiles, making changes, see the [Chezmoi documentation](https://www.chezmoi.io/quick-start/).
