@@ -376,6 +376,7 @@ in {
   programs.direnv= {
       enable = true;
       nix-direnv.enable = true; # faster
+      enableNushellIntegration = false; # broken?
 
       config = {
         whitelist = {
