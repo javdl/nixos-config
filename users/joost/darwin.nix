@@ -45,6 +45,7 @@
       "dbeaver-community" # dbeaver-bin doesnt work on MacOS?
       # "docker" # liever Colima # when really need Docker, liever alleen CLI. geeft ook compaudit error bij elke shell-open vanwege de docker-completions. Installeren met `brew install docker --cask`, als docker eerder handmatig is geinstalleerd soms nodig om met rm eea te verwijderen.
       "dropbox"
+      "ente"
       "fabfilter-pro-c"
       "fabfilter-pro-ds"
       "fabfilter-pro-g"
