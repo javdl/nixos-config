@@ -733,6 +733,7 @@ in {
       vimPlugins.plenary-nvim # required for telescope
       vimPlugins.nvim-lspconfig
       vimPlugins.gitsigns-nvim
+      vimPlugins.lazy-nvim
       vimPlugins.lualine-nvim
       vimPlugins.conform-nvim
       vimPlugins.dressing-nvim
