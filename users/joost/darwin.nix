@@ -79,6 +79,7 @@
       "obsidian"
       "ollama"
       # "orbstack" # Use open source podman instead
+      "pycharm"
       "podman-desktop"
       "reaper"
       "rapidapi"
@@ -109,6 +110,7 @@
       "wacom-tablet"
       "warp"
       "waves-central"
+      "webstorm"
       "zed"
     ];
     masApps = { # to find ID, App Store > Share > Copy link
