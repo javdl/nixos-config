@@ -44,13 +44,19 @@ else
 	nix build ".#homeConfigurations.${NIXNAME}.activationPackage"
 endif
 
-# This builds the given NixOS configuration and pushes the results to the
+# This builds the given configuration and pushes the results to the
 # cache. This does not alter the current running system. This requires
 # cachix authentication to be configured out of band.
 cache:
+ifeq ($(UNAME), Darwin)
+	nix build '.#darwinConfigurations.$(NIXNAME).system' --json \
+		| jq -r '.[].outputs | to_entries[].value' \
+		| cachix push javdl-nixos-config
+else
 	nix build '.#nixosConfigurations.$(NIXNAME).config.system.build.toplevel' --json \
 		| jq -r '.[].outputs | to_entries[].value' \
 		| cachix push javdl-nixos-config
+endif
 
 # Backup secrets so that we can transer them to new machines via
 # sneakernet or other means.
