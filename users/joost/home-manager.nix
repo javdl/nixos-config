@@ -717,6 +717,17 @@ in {
       #kaleido
     ]);
 
+    extraLuaConfig = ''
+      -- Setup Rose Pine theme
+      require("rose-pine").setup({
+        variant = "main",
+        dark_variant = "main",
+      })
+
+      -- Set colorscheme
+      vim.cmd("colorscheme rose-pine")
+    '';
+
     plugins = with pkgs; [
 
       # Themes
@@ -757,8 +768,6 @@ in {
         set guifont=CaskaydiaMono\ Nerd\ Font:h14
       endif
 
-      " Enable Rose Pine theme (default)
-      colorscheme rose-pine
       set background=dark
 
       " Theme switching shortcuts

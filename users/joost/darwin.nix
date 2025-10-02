@@ -9,6 +9,7 @@
     ];
     brews = [
       "bearcove/tap/home"
+      "codex"
       "gifski" # Highest-quality GIF encoder
       "podman"
       "protobuf"
@@ -32,12 +33,12 @@
       "balenaetcher"
       "brave-browser"
       "companion" # Bitfocus companion, Streamdeck extension and emulation software
+      "conductor"
       "calibre"
       "chatgpt"
       "claude"
       "chromedriver"
       "cleanshot"
-      "codex"
       "cursor"
       "datagrip"
       "dataspell"
