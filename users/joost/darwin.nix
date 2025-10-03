@@ -33,7 +33,7 @@
       "balenaetcher"
       "brave-browser"
       "companion" # Bitfocus companion, Streamdeck extension and emulation software
-      "conductor"
+      # "conductor" Manual install, doesnt work via brew. https://conductor.build/
       "calibre"
       "chatgpt"
       "claude"
