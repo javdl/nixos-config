@@ -13,6 +13,7 @@
       "gifski" # Highest-quality GIF encoder
       "podman"
       "protobuf"
+      "vercel-cli"
     ];
     casks  = [
       # handmatig installeren:
