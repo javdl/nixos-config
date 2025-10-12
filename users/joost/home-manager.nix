@@ -69,7 +69,6 @@ in {
     pkgs.asciinema
     pkgs.air # Live reload for Go
     pkgs.alacritty
-    pkgs.amp-cli
     pkgs.btop
     pkgs.chezmoi
     pkgs.kitty
@@ -114,6 +113,10 @@ in {
     pkgs.xh # for sending HTTP requests (like HTTPie)
     pkgs.zellij # Terminal workspace with batteries included
     pkgs.zoxide # Fast cd command that learns your habits
+
+    pkgs.amp-cli
+    pkgs.claude-code
+    pkgs.codex
 
     # Rust should be in flake.nix for each project. However, those configs do need an initial Cargo.lock.Therefore, to create new projects we want Rust globally installed.
     pkgs.rustup # rust-analyzer, cargo # installed by rustup
@@ -304,7 +307,6 @@ in {
       favorite-apps = [
           "firefox.desktop"
           "com.mitchellh.ghostty.desktop"
-          "kitty.desktop"
           "code.desktop"
           # "kitty.desktop"
         # "kgx.desktop" # Should be Gnome console. kgx in terminal to start it does work.
@@ -858,7 +860,7 @@ in {
   programs.zellij = {
     enable = true;
     settings = {
-      default_shell = "nu";
+      default_shell = "fish";
       theme = "rose-pine";
       themes = {
         rose-pine = {

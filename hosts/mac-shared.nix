@@ -70,6 +70,7 @@ in {
 
     environment.shells = with pkgs; [ bashInteractive zsh fish ];
     environment.systemPackages = with pkgs; [
+        cachix
         kitty
         terminal-notifier
     ];

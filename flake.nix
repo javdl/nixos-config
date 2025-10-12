@@ -53,20 +53,21 @@
       # inputs.jujutsu.overlays.default
       # inputs.zig.overlays.default
 
-      (final: prev: {
-        # gh CLI on stable has bugs.
-        gh = inputs.nixpkgs-unstable.legacyPackages.${prev.system}.gh;
+      (final: prev:
+        let
+          # Import nixpkgs-unstable with allowUnfree enabled
+          pkgs-unstable = import inputs.nixpkgs-unstable {
+            system = prev.system;
+            config.allowUnfree = true;
+          };
+        in {
+          # gh CLI on stable has bugs.
+          gh = pkgs-unstable.gh;
 
-        # Want the latest version of these
-        claude-code = inputs.nixpkgs-unstable.legacyPackages.${prev.system}.claude-code;
-        nushell = inputs.nixpkgs-unstable.legacyPackages.${prev.system}.nushell;
-
-
-        # ibus = ibus_stable;
-        # ibus_stable = inputs.nixpkgs.legacyPackages.${prev.system}.ibus;
-        # ibus_1_5_29 = inputs.nixpkgs-old-ibus.legacyPackages.${prev.system}.ibus;
-        # ibus_1_5_31 = inputs.nixpkgs-unstable.legacyPackages.${prev.system}.ibus;
-      })
+          # Want the latest version of these
+          claude-code = pkgs-unstable.claude-code;
+          nushell = pkgs-unstable.nushell;
+        })
     ];
 
     mkSystem = import ./lib/mksystem.nix {
