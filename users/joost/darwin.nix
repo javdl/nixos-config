@@ -54,7 +54,7 @@
       "fabfilter-pro-g"
       "figma"
       "firefox"
-      "gateway" # Jetbrains gateway
+      "jetbrains-gateway" # Jetbrains gateway
       # "github" # only Intel, arm64 must be downloaded from website
       # "google-cloud-sdk" # see gdk
       "geekbench"

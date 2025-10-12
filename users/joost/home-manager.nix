@@ -790,7 +790,7 @@ in {
   programs.atuin = {
     enable = true;
     enableFishIntegration = true;
-    enableNushellIntegration = true;
+    enableNushellIntegration = false;
     settings = {
       show_tabs = false;
       style = "compact";
