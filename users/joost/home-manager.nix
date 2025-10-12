@@ -69,6 +69,7 @@ in {
     pkgs.asciinema
     pkgs.air # Live reload for Go
     pkgs.alacritty
+    pkgs.amp-cli
     pkgs.btop
     pkgs.chezmoi
     pkgs.kitty

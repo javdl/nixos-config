@@ -138,6 +138,12 @@
       zenpower = true;
     };
 
+    darwinConfigurations.j8 = mkSystem "j8" {
+      system = "aarch64-darwin";
+      user   = "joost";
+      darwin = true;
+    };
+
     nixosConfigurations.github-runner = mkSystem "github-runner" {
       system = "x86_64-linux";
       user   = "joost";
