@@ -862,7 +862,7 @@ in {
   programs.zellij = {
     enable = true;
     settings = {
-      default_shell = "fish";
+      default_shell = "zsh";
       theme = "rose-pine";
       themes = {
         rose-pine = {
