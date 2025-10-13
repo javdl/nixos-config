@@ -72,6 +72,8 @@ in {
     pkgs.btop
     pkgs.chezmoi
     pkgs.kitty
+    pkgs.helix
+    pkgs.helix-gpt
     pkgs.lazydocker
     pkgs.lazygit
     pkgs.bat
