@@ -186,6 +186,12 @@
       darwin = true;
     };
 
+    darwinConfigurations.macbook-air-m4 = mkSystem "macbook-air-m4" {
+      system = "aarch64-darwin";
+      user   = "joost";
+      darwin = true;
+    };
+
     darwinConfigurations.crescendo = mkSystem "crescendo" {
       system = "aarch64-darwin";
       user   = "joost";
