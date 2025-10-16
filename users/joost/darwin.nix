@@ -6,6 +6,7 @@
     enable = true;
     taps = [
       "bearcove/tap"
+      "workos/tap"
     ];
     brews = [
       "bearcove/tap/home"
@@ -14,6 +15,7 @@
       "podman"
       "protobuf"
       "vercel-cli"
+      "workos/tap/workos-cli"
     ];
     casks  = [
       # handmatig installeren:
