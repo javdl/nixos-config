@@ -247,6 +247,9 @@ in {
       .LSOverride
       ._*
 
+      # GPG
+      secring.*
+
       # Editor backups and swap files
       *.swp
       *.swo
@@ -254,9 +257,17 @@ in {
       \#*\#
       .*.sw[a-z]
 
-      # IDE directories
-      .vscode/
-      .vs/
+      # VS Code
+      .vscode/*
+      !.vscode/settings.json
+      !.vscode/tasks.json
+      !.vscode/launch.json
+      !.vscode/extensions.json
+      !.vscode/*.code-snippets
+      !*.code-workspace
+
+      # Built Visual Studio Code Extensions
+      *.vsix
 
       # Covers JetBrains IDEs: IntelliJ, GoLand, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio, WebStorm and Rider
       # Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
@@ -372,6 +383,23 @@ in {
       # Direnv
       .direnv/
       .envrc.local
+
+      # https://lefthook.dev/configuration/#config-file-name
+      /.lefthook-local.json
+      /.lefthook-local.toml
+      /.lefthook-local.yaml
+      /.lefthook-local.yml
+      /lefthook-local.json
+      /lefthook-local.toml
+      /lefthook-local.yaml
+      /lefthook-local.yml
+      /.config/lefthook-local.json
+      /.config/lefthook-local.toml
+      /.config/lefthook-local.yaml
+      /.config/lefthook-local.yml
+
+      # https://lefthook.dev/configuration/source_dir_local.html
+      /.lefthook-local/
     '';
 
   } // (if isDarwin then {
@@ -659,6 +687,7 @@ in {
       color.ui = true;
       core.askPass = ""; # needs to be empty to use terminal for ask pass
       core.excludesFile = "~/.gitignore";
+      # https://github.com/github/gitignore/tree/main/Global
       credential.helper = "store"; # want to make this more secure
       github.user = "javdl";
       push.default = "tracking";
