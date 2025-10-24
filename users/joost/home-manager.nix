@@ -240,6 +240,139 @@ in {
   home.file = {
     ".gdbinit".source = ./gdbinit;
     ".inputrc".source = ./inputrc;
+    ".gitignore".text = ''
+      # macOS
+      .DS_Store
+      .AppleDouble
+      .LSOverride
+      ._*
+
+      # Editor backups and swap files
+      *.swp
+      *.swo
+      *~
+      \#*\#
+      .*.sw[a-z]
+
+      # IDE directories
+      .vscode/
+      .vs/
+
+      # Covers JetBrains IDEs: IntelliJ, GoLand, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio, WebStorm and Rider
+      # Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
+
+      # User-specific stuff
+      .idea/**/workspace.xml
+      .idea/**/tasks.xml
+      .idea/**/usage.statistics.xml
+      .idea/**/dictionaries
+      .idea/**/shelf
+
+      # AWS User-specific
+      .idea/**/aws.xml
+
+      # Generated files
+      .idea/**/contentModel.xml
+
+      # Sensitive or high-churn files
+      .idea/**/dataSources/
+      .idea/**/dataSources.ids
+      .idea/**/dataSources.local.xml
+      .idea/**/sqlDataSources.xml
+      .idea/**/dynamic.xml
+      .idea/**/uiDesigner.xml
+      .idea/**/dbnavigator.xml
+
+      # Gradle
+      .idea/**/gradle.xml
+      .idea/**/libraries
+
+      # Gradle and Maven with auto-import
+      # When using Gradle or Maven with auto-import, you should exclude module files,
+      # since they will be recreated, and may cause churn.  Uncomment if using
+      # auto-import.
+      # .idea/artifacts
+      # .idea/compiler.xml
+      # .idea/jarRepositories.xml
+      # .idea/modules.xml
+      # .idea/*.iml
+      # .idea/modules
+      # *.iml
+      # *.ipr
+
+      # CMake
+      cmake-build-*/
+
+      # Mongo Explorer plugin
+      .idea/**/mongoSettings.xml
+
+      # File-based project format
+      *.iws
+
+      # IntelliJ
+      out/
+
+      # mpeltonen/sbt-idea plugin
+      .idea_modules/
+
+      # JIRA plugin
+      atlassian-ide-plugin.xml
+
+      # Cursive Clojure plugin
+      .idea/replstate.xml
+
+      # SonarLint plugin
+      .idea/sonarlint/
+      .idea/sonarlint.xml
+
+      # Crashlytics plugin (for Android Studio and IntelliJ)
+      com_crashlytics_export_strings.xml
+      crashlytics.properties
+      crashlytics-build.properties
+      fabric.properties
+
+      # Editor-based HTTP Client
+      .idea/httpRequests
+      http-client.private.env.json
+
+      # Android studio 3.1+ serialized cache file
+      .idea/caches/build_file_checksums.ser
+
+      # Apifox Helper cache
+      .idea/.cache/.Apifox_Helper
+      .idea/ApifoxUploaderProjectSetting.xml
+
+      # Environment files (often contain secrets)
+      .env
+      .env.local
+      .env.*.local
+
+      # Logs
+      *.log
+      npm-debug.log*
+      yarn-debug.log*
+      yarn-error.log*
+
+      # Dependencies (project-specific should be in project .gitignore)
+      node_modules/
+
+      # Build outputs (project-specific should be in project .gitignore)
+      dist/
+      build/
+      target/
+
+      # Temporary files
+      *.tmp
+      *.temp
+      .cache/
+
+      # OS thumbnails
+      Thumbs.db
+
+      # Direnv
+      .direnv/
+      .envrc.local
+    '';
 
   } // (if isDarwin then {
     "Library/Application Support/Sublime Text/Packages/User/Preferences.sublime-settings".text = builtins.readFile ./sublime-preferences.json;
@@ -525,6 +658,7 @@ in {
       branch.autosetuprebase = "always";
       color.ui = true;
       core.askPass = ""; # needs to be empty to use terminal for ask pass
+      core.excludesFile = "~/.gitignore";
       credential.helper = "store"; # want to make this more secure
       github.user = "javdl";
       push.default = "tracking";
