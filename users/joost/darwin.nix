@@ -42,6 +42,7 @@
       "claude"
       "chromedriver"
       "cleanshot"
+      "conductor"
       "cursor"
       "datagrip"
       "dataspell"
