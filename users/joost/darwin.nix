@@ -56,6 +56,7 @@
       "fabfilter-pro-g"
       "figma"
       "firefox"
+      "gitbutler"
       "jetbrains-gateway"
       "jetbrains-toolbox"
       # "github" # only Intel, arm64 must be downloaded from website
