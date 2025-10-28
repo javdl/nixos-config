@@ -57,6 +57,7 @@
       "figma"
       "firefox"
       "gitbutler"
+      "imazing-profile-editor"
       "jetbrains-gateway"
       "jetbrains-toolbox"
       # "github" # only Intel, arm64 must be downloaded from website
