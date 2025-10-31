@@ -14,6 +14,7 @@
       "gifski" # Highest-quality GIF encoder
       "podman"
       "protobuf"
+      "tailscale"
       "vercel-cli"
       "workos/tap/workos-cli"
     ];
@@ -57,7 +58,6 @@
       "fabfilter-pro-g"
       "figma"
       "firefox"
-      "gitbutler"
       "imazing-profile-editor"
       "jetbrains-gateway"
       "jetbrains-toolbox"
@@ -86,7 +86,7 @@
       "native-access"
       "obs"
       "obsidian"
-      "ollama"
+      "ollama-app"
       # "orbstack" # Use open source podman instead
       "pycharm"
       "podman-desktop"
@@ -105,7 +105,7 @@
       "sublime-text"
       "superwhisper"
       "superhuman"
-      "tailscale" # GUI apps via Brew
+      "tailscale-app" # GUI apps via Brew
       "tdr-kotelnikov"
       "tdr-molotok"
       "tdr-nova"
