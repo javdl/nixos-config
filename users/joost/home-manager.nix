@@ -645,6 +645,13 @@ in {
       ZSH_HIGHLIGHT_STYLES[arg0]="fg=#e0def4"
       ZSH_HIGHLIGHT_STYLES[default]="fg=#e0def4"
       ZSH_HIGHLIGHT_STYLES[unknown-token]="fg=#eb6f92,bold"
+
+      # Zellij Claude Fix
+      alias cc="VSCODE_PID= VSCODE_CWD= TERM_PROGRAM= command claude"
+
+      claude() {
+        VSCODE_PID= VSCODE_CWD= TERM_PROGRAM= command claude "$@"
+      }
     '';
 
     # This ensures proper sourcing of home-manager environment variables

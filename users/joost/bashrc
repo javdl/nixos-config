@@ -43,3 +43,11 @@ prompt_color
 if [ -n "$GHOSTTY_RESOURCES_DIR" ]; then
     builtin source "${GHOSTTY_RESOURCES_DIR}/shell-integration/bash/ghostty.bash"
 fi
+
+# Zellij Claude Fix
+# # You can type cc in the terminal
+alias cc="VSCODE_PID= VSCODE_CWD= TERM_PROGRAM= command claude"
+# You can type claude in the terminal
+claude() {
+  VSCODE_PID= VSCODE_CWD= TERM_PROGRAM= command claude "$@"
+}
