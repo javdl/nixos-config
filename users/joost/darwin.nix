@@ -12,6 +12,7 @@
       "bearcove/tap/home"
       "codex"
       "gifski" # Highest-quality GIF encoder
+      "mcp-toolbox"
       "podman"
       "protobuf"
       "tailscale"
