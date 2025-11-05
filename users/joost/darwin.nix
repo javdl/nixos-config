@@ -59,9 +59,6 @@
       "fabfilter-pro-g"
       "figma"
       "firefox"
-      "imazing-profile-editor"
-      "jetbrains-gateway"
-      "jetbrains-toolbox"
       # "github" # only Intel, arm64 must be downloaded from website
       # "google-cloud-sdk" # see gdk
       "geekbench"
@@ -73,8 +70,11 @@
       "hammerspoon"
       "ilok-license-manager"
       "imageoptim"
+      "imazing-profile-editor"
       "istat-menus"
       "izotope-product-portal"
+      "jetbrains-gateway"
+      "jetbrains-toolbox"
       "kobo"
       "licecap"
       "librewolf"

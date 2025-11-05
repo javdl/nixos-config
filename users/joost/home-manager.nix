@@ -90,6 +90,7 @@ in {
     pkgs.eza # Modern replacement for ls
     pkgs.fastfetch
     pkgs.fd
+    # pkgs.fh # flakehub > use determinate-nixd login instead
     # pkgs.ffmpeg_5 # libgl, needed for ML
     pkgs.ffmpeg
     pkgs.fzf
