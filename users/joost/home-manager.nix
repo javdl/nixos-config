@@ -569,6 +569,11 @@ in {
     initContent = ''
       export GPG_TTY=$(tty)
 
+      # Auto-start tmux if in Ghostty and not already in tmux
+      if [[ "$TERM_PROGRAM" == "ghostty" ]] && [[ -z "$TMUX" ]]; then
+        exec tmux
+      fi
+
       # Fix insecure completion files
       autoload -Uz compinit
       # Only run compinit once a day
