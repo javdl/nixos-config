@@ -8,9 +8,7 @@ name:
   user,
   darwin ? false,
   wsl ? false,
-  raphael ? false,
-  pstate ? false,
-  zenpower ? false
+  extraModules ? []
 }:
 
 let
@@ -19,11 +17,6 @@ let
 
   # True if Linux, which is a heuristic for not being Darwin.
   isLinux = !darwin && !isWSL;
-
-  # True if this is a Raphael iGPU system
-  isRaphael = raphael;
-  isPstate = pstate;
-  isZenpower = zenpower;
 
   # The config files for this system.
   machineConfig = ../hosts/${name}.nix;
@@ -42,17 +35,8 @@ in systemFunc rec {
     # the overlays are available globally.
     { nixpkgs.overlays = overlays; }
 
-    # Allow unfree packages - JL: Allow globally so that CI build works
-    { nixpkgs.config.allowUnfree = true; }
-
     # Bring in WSL if this is a WSL build
     (if isWSL then inputs.nixos-wsl.nixosModules.wsl else {})
-
-    # Bring in AMD Raphael iGPI if this is a Raphael build
-    (if isRaphael then inputs.nixos-hardware.nixosModules.common-cpu-amd-raphael-igpu else {})
-    # pstate for modern AMD CPUs
-    (if isPstate then inputs.nixos-hardware.nixosModules.common-cpu-amd-pstate else {})
-    (if isZenpower then inputs.nixos-hardware.nixosModules.common-cpu-amd-zenpower else {})
 
     # Snapd on Linux
     (if isLinux then inputs.nix-snapd.nixosModules.default else {})
@@ -80,5 +64,5 @@ in systemFunc rec {
         inputs = inputs;
       };
     }
-  ];
+  ] ++ extraModules;
 }

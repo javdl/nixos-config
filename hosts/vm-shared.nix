@@ -5,6 +5,7 @@ let
 in {
 
   imports = [
+    ../modules/base-config.nix
     ../modules/specialization/plasma.nix
     ../modules/specialization/i3.nix
     ../modules/cachix.nix
@@ -32,10 +33,6 @@ in {
     };
   };
 
-  # Allow unfree packages
-  nixpkgs.config.allowUnfree = true;
-  nixpkgs.config.allowUnfreePredicate = _: true;
-
   nixpkgs.config.permittedInsecurePackages = [
     # Needed for k2pdfopt 2.53.
     "mupdf-1.17.0"
@@ -53,9 +50,6 @@ in {
   # Define your hostname.
   networking.hostName = "dev";
 
-  # Set your time zone.
-  time.timeZone = "Europe/Amsterdam";
-
   # The global useDHCP flag is deprecated, therefore explicitly set to false here.
   # Per-interface useDHCP will be mandatory in the future, so this generated config
   # replicates the default behaviour.
@@ -68,16 +62,13 @@ in {
   virtualisation.docker.enable = true;
 
   # Select internationalisation properties.
-  i18n = {
-    defaultLocale = "en_US.UTF-8";
-    inputMethod = {
-      enabled = "fcitx5";
-      fcitx5.addons = with pkgs; [
-        fcitx5-mozc
-        fcitx5-gtk
-        fcitx5-chinese-addons
-      ];
-    };
+  i18n.inputMethod = {
+    enabled = "fcitx5";
+    fcitx5.addons = with pkgs; [
+      fcitx5-mozc
+      fcitx5-gtk
+      fcitx5-chinese-addons
+    ];
   };
 
   services.xserver = lib.mkIf (config.specialisation != {}) {

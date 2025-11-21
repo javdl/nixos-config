@@ -8,9 +8,6 @@
   # Set the primary user for homebrew and other user-specific settings
   system.primaryUser = "joost";
 
-  # We use proprietary software on this machine
-  nixpkgs.config.allowUnfree = true;
-
   # Don't let nix-darwin manage nix configuration since we use Determinate
   nix.settings = {};
 

@@ -1,6 +1,7 @@
 { config, pkgs, lib, ... }: {
   imports = [
     ./hardware/vm-intel.nix
+    ../modules/base-config.nix
     ../modules/github-actions-runner.nix
     ../modules/cachix.nix
   ];
@@ -27,10 +28,6 @@
       options = "--delete-older-than 30d";
     };
   };
-
-  # Allow unfree packages
-  nixpkgs.config.allowUnfree = true;
-  nixpkgs.config.allowUnfreePredicate = _: true;
 
   # Use the systemd-boot EFI boot loader.
   boot.loader.systemd-boot.enable = true;

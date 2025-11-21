@@ -12,6 +12,7 @@ let
 in {
 
   imports = [
+    ../modules/base-config.nix
     ../modules/specialization/plasma.nix
     ../modules/specialization/i3.nix
     ../modules/cachix.nix
@@ -58,10 +59,6 @@ in {
       options = "--delete-older-than 120d";
     };
   };
-
-  # Allow unfree packages
-  nixpkgs.config.allowUnfree = true;
-  nixpkgs.config.allowUnfreePredicate = _: true;
 
   nixpkgs.config.permittedInsecurePackages = [
     # Needed for k2pdfopt 2.53.

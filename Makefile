@@ -169,3 +169,8 @@ vm/switch:
 .PHONY: wsl
 wsl:
 	 nix build ".#nixosConfigurations.wsl.config.system.build.installer"
+
+# Format the codebase
+.PHONY: fmt
+fmt:
+	nix fmt

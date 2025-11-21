@@ -45,9 +45,11 @@
     # jujutsu.url = "github:martinvonz/jj";
     # zig.url = "github:mitchellh/zig-overlay";
 
+    alejandra.url = "github:kamadorueda/alejandra/3.0.0";
+    alejandra.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { self, nixpkgs, nixos-hardware, home-manager, darwin, ... }@inputs: let
+  outputs = { self, nixpkgs, nixos-hardware, home-manager, darwin, alejandra, ... }@inputs: let
     # Overlays is the list of overlays we want to apply from flake inputs.
     overlays = [
       # inputs.jujutsu.overlays.default
@@ -120,9 +122,11 @@
     nixosConfigurations.fu137 = mkSystem "fu137" rec {
       system = "x86_64-linux";
       user   = "joost";
-      raphael = true;
-      pstate = true; # for modern AMD cpu's
-      zenpower = true; # for modern AMD cpu's
+      extraModules = [
+        inputs.nixos-hardware.nixosModules.common-cpu-amd-raphael-igpu
+        inputs.nixos-hardware.nixosModules.common-cpu-amd-pstate
+        inputs.nixos-hardware.nixosModules.common-cpu-amd-zenpower
+      ];
     };
 
     darwinConfigurations.fu146 = mkSystem "fu146" {
@@ -134,9 +138,11 @@
     nixosConfigurations.j7 = mkSystem "j7" rec {
       system = "x86_64-linux";
       user   = "joost";
-      raphael = true;
-      pstate = true;
-      zenpower = true;
+      extraModules = [
+        inputs.nixos-hardware.nixosModules.common-cpu-amd-raphael-igpu
+        inputs.nixos-hardware.nixosModules.common-cpu-amd-pstate
+        inputs.nixos-hardware.nixosModules.common-cpu-amd-zenpower
+      ];
     };
 
     darwinConfigurations.j8 = mkSystem "j8" {
@@ -208,5 +214,8 @@
         ./users/githubrunner/home-manager.nix
       ];
     };
+
+    formatter.x86_64-linux = alejandra.defaultPackage.x86_64-linux;
+    formatter.aarch64-darwin = alejandra.defaultPackage.aarch64-darwin;
   };
 }

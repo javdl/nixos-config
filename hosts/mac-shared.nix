@@ -5,14 +5,11 @@ let
 
 in {
   imports = [
+    ../modules/base-config.nix
     ../modules/cachix.nix
   ];
 
-    # Allow unfree packages
-    nixpkgs.config.allowUnfree = true;
-    nixpkgs.config.allowUnfreePredicate = _: true;
-
-    nix = {
+  nix = {
     # We use the determinate-nix installer which manages Nix for us,
     # so we don't want nix-darwin to do it.
     enable = false;
