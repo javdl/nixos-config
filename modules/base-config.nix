@@ -1,15 +1,17 @@
-{ config, lib, pkgs, ... }:
+{ config, lib, ... }:
 
 {
   # Allow unfree packages globally
   nixpkgs.config.allowUnfree = true;
   nixpkgs.config.allowUnfreePredicate = _: true;
-} // lib.optionalAttrs pkgs.stdenv.isLinux {
+
   # NixOS-specific settings (not applicable to Darwin)
   # Only apply timezone and locale settings on Linux systems
-  time.timeZone = "Europe/Amsterdam";
+  time = lib.mkIf (config.nixpkgs.hostPlatform.isLinux or false) {
+    timeZone = "Europe/Amsterdam";
+  };
 
-  i18n = {
+  i18n = lib.mkIf (config.nixpkgs.hostPlatform.isLinux or false) {
     defaultLocale = "en_US.UTF-8";
 
     extraLocaleSettings = {
