@@ -12,7 +12,7 @@ jobs:
           - ubuntu-20.04
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: cachix/install-nix-action@v31
       # TODO: add a binary cache
       # - uses: cachix/cachix-action@v10
