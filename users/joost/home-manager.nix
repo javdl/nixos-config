@@ -109,6 +109,7 @@ in {
     # pkgs.libheif
     # pkgs.ollama
     pkgs.opencode
+    pkgs.railway
     pkgs.ripgrep
     pkgs.tree
     pkgs.watch
@@ -535,6 +536,11 @@ in {
     initExtra = ''
       ${builtins.readFile ./bashrc}
       export GPG_TTY=$(tty)
+
+      # Claude with bash shell
+      claude() {
+        SHELL=/bin/bash command claude "$@"
+      }
     '';
 
     shellAliases = shared.shellAliases;
@@ -643,10 +649,10 @@ in {
       ZSH_HIGHLIGHT_STYLES[unknown-token]="fg=#eb6f92,bold"
 
       # Zellij Claude Fix
-      alias cc="VSCODE_PID= VSCODE_CWD= TERM_PROGRAM= command claude"
+      alias cc="SHELL=/bin/bash VSCODE_PID= VSCODE_CWD= TERM_PROGRAM= command claude"
 
       claude() {
-        VSCODE_PID= VSCODE_CWD= TERM_PROGRAM= command claude "$@"
+        SHELL=/bin/bash VSCODE_PID= VSCODE_CWD= TERM_PROGRAM= command claude "$@"
       }
     '';
 
