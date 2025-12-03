@@ -135,6 +135,7 @@ in {
 
     pkgs.aichat
     pkgs.aider-chat
+    pkgs.crush
     pkgs.darktable
     pkgs.dbeaver-bin
     pkgs.devcontainer
