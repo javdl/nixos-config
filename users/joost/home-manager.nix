@@ -140,7 +140,7 @@ in {
     pkgs.devcontainer
     pkgs.discord
     # pkgs.element-web  # Temporarily disabled due to nodejs build failures
-    pkgs.gimp
+    # pkgs.gimp
     pkgs.google-chrome
     pkgs.inkscape
     pkgs.postman
@@ -160,7 +160,7 @@ in {
     # pkgs.nerdfonts # Changed: nerdfonts separated into individual packages
     pkgs.noto-fonts
     pkgs.noto-fonts-cjk-sans
-    pkgs.noto-fonts-emoji
+    pkgs.noto-fonts-color-emoji
     pkgs.rubik
     pkgs.proggyfonts
 
@@ -673,18 +673,13 @@ in {
 
   programs.git = {
     enable = true;
-    userName = "Joost van der Laan";
-    userEmail = "joostvanderlaan@gmail.com";
     signing = {
       key = "ACAFA950";
       signByDefault = true;
     };
-    aliases = {
-      cleanup = "!git branch --merged | grep  -v '\\*\\|master\\|develop' | xargs -n 1 -r git branch -d";
-      prettylog = "log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(r) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative";
-      root = "rev-parse --show-toplevel";
-    };
-    extraConfig = {
+    settings = {
+      user.name = "Joost van der Laan";
+      user.email = "j@jlnw.nl";
       branch.autosetuprebase = "always";
       color.ui = true;
       core.askPass = ""; # needs to be empty to use terminal for ask pass
@@ -695,19 +690,27 @@ in {
       push.default = "tracking";
       push.autoSetupRemote = true;
       init.defaultBranch = "main";
+      aliases = {
+        cleanup = "!git branch --merged | grep  -v '\\*\\|master\\|develop' | xargs -n 1 -r git branch -d";
+        prettylog = "log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(r) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative";
+        root = "rev-parse --show-toplevel";
+      };
 
       "filter \"lfs\"" = {
           clean = "${pkgs.git-lfs}/bin/git-lfs clean -- %f";
           smudge = "${pkgs.git-lfs}/bin/git-lfs smudge --skip -- %f";
           required = true;
         };
+
     };
   };
 
   programs.go = {
     enable = true;
-    goPath = "code/go";
-    goPrivate = [ "github.com/javdl" "github.com/fuww" ];
+    env = {
+      GOPATH = "Documents/go";
+      GOPRIVATE = [ "github.com/javdl" "github.com/fuww"  ];
+    };
   };
 
   programs.jujutsu = {
