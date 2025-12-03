@@ -23,6 +23,4 @@
     ];
   };
 
-  nixpkgs.overlays = [
-  ];
 }
