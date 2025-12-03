@@ -57,7 +57,7 @@
         let
           # Import nixpkgs-unstable with allowUnfree enabled
           pkgs-unstable = import inputs.nixpkgs-unstable {
-            system = prev.system;
+            system = prev.stdenv.hostPlatform.system;
             config.allowUnfree = true;
           };
         in {

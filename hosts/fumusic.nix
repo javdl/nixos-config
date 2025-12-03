@@ -116,7 +116,7 @@
     gnumake
     vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
     wget
-    spotify
+    # spotify
   ];
 
   # This value determines the NixOS release from which the default

@@ -113,7 +113,7 @@ in {
       pkgs.font-awesome # waybar icons
       pkgs.noto-fonts
       pkgs.noto-fonts-cjk-sans
-      pkgs.noto-fonts-emoji
+      pkgs.noto-fonts-color-emoji
       pkgs.liberation_ttf
       pkgs.fira-code-symbols
       pkgs.mplus-outline-fonts.githubRelease
@@ -178,7 +178,7 @@ in {
     brave
     gnumake
     ghostty
-    gimp
+    # gimp
     nautilus
     killall
     python311

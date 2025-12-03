@@ -86,7 +86,7 @@
       "native-access"
       "obs"
       "obsidian"
-      "ollama-app"
+      # "ollama-app"
       # "orbstack" # Use open source podman instead
       "pycharm"
       "podman-desktop"

@@ -107,7 +107,7 @@ in {
     # pkgs.libGL # ML
     # pkgs.libGLU # ML
     # pkgs.libheif
-    pkgs.ollama
+    # pkgs.ollama
     pkgs.opencode
     pkgs.ripgrep
     pkgs.tree
@@ -145,7 +145,7 @@ in {
     pkgs.inkscape
     pkgs.postman
     pkgs.slack
-    pkgs.spotify
+    # pkgs.spotify
     # pkgs.telegram-desktop
 
     # Fonts
