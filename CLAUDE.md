@@ -10,7 +10,7 @@ This is a NixOS/nix-darwin configuration repository using Nix flakes. It manages
 ### Primary Commands
 - `make switch` - Apply configuration to current system (detects OS type automatically)
 - `make test` - Test configuration without applying changes
-- `make update` - Update flake.lock and switch to new configuration  
+- `make update` - Update flake.lock and switch to new configuration
 - `make upgrade` - Update packages and switch configuration
 
 ### Platform-Specific
@@ -47,7 +47,7 @@ The repository uses a modular architecture with clear separation of concerns:
 
 **New Host**:
 1. Create `hosts/<hostname>.nix` with system configuration
-2. If bare metal, add `hosts/hardware/<hostname>.nix` 
+2. If bare metal, add `hosts/hardware/<hostname>.nix`
 3. Add entry in flake.nix following existing pattern
 4. Use appropriate mksystem parameters (darwin, wsl, raphael, pstate, zenpower)
 
@@ -81,7 +81,7 @@ The repository uses a modular architecture with clear separation of concerns:
 ### Rust/Cargo Updates
 To use latest Rust toolchain, add to flake.nix overlays:
 ```nix
-rustup = inputs.nixpkgs-unstable.legacyPackages.${prev.system}.rustup;
+rustup = inputs.nixpkgs-unstable.legacyPackages.${prev.stdenv.hostPlatform.system}.rustup;
 ```
 
 ## Common Issues
@@ -101,7 +101,7 @@ If nixbld users missing, run the migration script from NixOS/nix repository
 ## Important Files
 
 - `Makefile`: All build/deploy commands with OS detection
-- `flake.nix`: System definitions and package overlays  
+- `flake.nix`: System definitions and package overlays
 - `lib/mksystem.nix`: System builder function
 - `users/joost/home-manager.nix`: Main user package list
 - `users/shared-home-manager.nix`: Shared user settings
