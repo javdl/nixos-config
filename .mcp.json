@@ -1,19 +1,5 @@
 {
   "mcpServers": {
-    "sequential-thinking": {
-      "command": "/bin/sh",
-      "args": [
-        "-c",
-        "PATH=/run/current-system/sw/bin:/etc/profiles/per-user/$USER/bin:$PATH exec npx -y @modelcontextprotocol/server-sequential-thinking"
-      ]
-    },
-    "playwright": {
-      "command": "/bin/sh",
-      "args": [
-        "-c",
-        "PATH=/run/current-system/sw/bin:/etc/profiles/per-user/$USER/bin:$PATH exec npx -y @playwright/mcp@latest"
-      ]
-    },
     "fetch": {
       "command": "/bin/sh",
       "args": [
@@ -26,13 +12,6 @@
       "args": [
         "-c",
         "PATH=/run/current-system/sw/bin:/etc/profiles/per-user/$USER/bin:$PATH exec npx -y @upstash/context7-mcp"
-      ]
-    },
-    "deepwiki": {
-      "command": "/bin/sh",
-      "args": [
-        "-c",
-        "PATH=/run/current-system/sw/bin:/etc/profiles/per-user/$USER/bin:$PATH exec npx -y mcp-remote https://mcp.deepwiki.com/sse"
       ]
     }
   }
