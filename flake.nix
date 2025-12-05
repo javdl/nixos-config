@@ -145,6 +145,14 @@
       darwin = true;
     };
 
+    nixosConfigurations.j9 = mkSystem "j9" rec {
+      system = "x86_64-linux";
+      user   = "joost";
+#      raphael = true;
+#      pstate = true;
+#      zenpower = true;
+    };
+
     nixosConfigurations.github-runner = mkSystem "github-runner" {
       system = "x86_64-linux";
       user   = "joost";
