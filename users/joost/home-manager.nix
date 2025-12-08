@@ -416,24 +416,24 @@ in {
 
   xdg.configFile = {
     # Linux only
-    "hypr/hyprland.conf".text = builtins.readFile ./hypr/hyprland.conf;
-    "hypr/hyprlock.conf".text = builtins.readFile ./hypr/hyprlock.conf;
-    "hypr/hypridle.conf".text = builtins.readFile ./hypr/hypridle.conf;
-    "hypr/hyprpaper.conf".text = builtins.readFile ./hypr/hyprpaper.conf;
-    "wofi/config".text = builtins.readFile ./wofi/config;
-    "waybar/config".text = builtins.readFile ./waybar/config;
-    "waybar/modules".text = builtins.readFile ./waybar/modules;
-    "waybar/style.css".text = builtins.readFile ./waybar/style.css;
-    "mpd/mpd.conf".text = builtins.readFile ./mpd/mpd.conf;
-    "electron-flags.conf".text = builtins.readFile ./electron-flags.conf;
-    "electron-flags28.conf".source  = ./electron-flags.conf;
-    "code-flags.conf".text = builtins.readFile ./code-flags.conf;
-    "btop/btop.conf".text = builtins.readFile ./btop.conf;
-
-    "wallpapers/04167_unreachable_3840x2160.png".source = ./wallpapers/04167_unreachable_3840x2160.png;
-
-    "i3/config".text = builtins.readFile ./i3;
-    "rofi/config.rasi".text = builtins.readFile ./rofi;
+#    "hypr/hyprland.conf".text = builtins.readFile ./hypr/hyprland.conf;
+#    "hypr/hyprlock.conf".text = builtins.readFile ./hypr/hyprlock.conf;
+#    "hypr/hypridle.conf".text = builtins.readFile ./hypr/hypridle.conf;
+#    "hypr/hyprpaper.conf".text = builtins.readFile ./hypr/hyprpaper.conf;
+#    "wofi/config".text = builtins.readFile ./wofi/config;
+#    "waybar/config".text = builtins.readFile ./waybar/config;
+#    "waybar/modules".text = builtins.readFile ./waybar/modules;
+#    "waybar/style.css".text = builtins.readFile ./waybar/style.css;
+#    "mpd/mpd.conf".text = builtins.readFile ./mpd/mpd.conf;
+#    "electron-flags.conf".text = builtins.readFile ./electron-flags.conf;
+#    "electron-flags28.conf".source  = ./electron-flags.conf;
+#    "code-flags.conf".text = builtins.readFile ./code-flags.conf;
+#    "btop/btop.conf".text = builtins.readFile ./btop.conf;
+#
+#    "wallpapers/04167_unreachable_3840x2160.png".source = ./wallpapers/04167_unreachable_3840x2160.png;
+#
+#    "i3/config".text = builtins.readFile ./i3;
+#    "rofi/config.rasi".text = builtins.readFile ./rofi;
   } // (if isDarwin then {
     "ghostty/config".text = builtins.readFile ./ghostty.conf;
     "skhd/skhdrc".text = builtins.readFile ./skhdrc;

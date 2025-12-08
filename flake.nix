@@ -216,5 +216,29 @@
         ./users/githubrunner/home-manager.nix
       ];
     };
+
+    # Home Manager configuration for Omarchy (standalone, non-NixOS Linux)
+    homeConfigurations."omarchy" = let
+      pkgs = import nixpkgs {
+        system = "x86_64-linux";
+        overlays = overlays;
+        config.allowUnfree = true;
+      };
+    in home-manager.lib.homeManagerConfiguration {
+      inherit pkgs;
+      extraSpecialArgs = {
+        inherit inputs;
+      };
+      modules = [
+        (import ./users/joost/home-manager.nix { isWSL = false; inherit inputs; })
+        ({ lib, ... }: {
+          nixpkgs.config.allowUnfree = true;
+          home.username = "joost";
+          home.homeDirectory = "/home/joost";
+          # Disable nixpkgs module's <nixpkgs> lookup for pure evaluation
+          _module.args.pkgsPath = lib.mkForce nixpkgs;
+        })
+      ];
+    };
   };
 }

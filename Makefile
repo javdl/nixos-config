@@ -29,7 +29,7 @@ else ifeq ($(IS_NIXOS), yes)
 else
 	# For Ubuntu/non-NixOS systems, use home-manager directly
 	@echo "Detected non-NixOS system ($(DISTRO)), using home-manager switch..."
-	nix run home-manager/release-25.05 -- switch -b backup --flake ".#${NIXNAME}"
+	nix run home-manager/release-25.11 -- switch -b backup --flake ".#${NIXNAME}"
 endif
 
 test:

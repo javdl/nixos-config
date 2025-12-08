@@ -510,3 +510,13 @@ jj git push
 ```
 
 For more details on adding new dotfiles, making changes, see the [Chezmoi documentation](https://www.chezmoi.io/quick-start/).
+
+## Omarchy
+
+```bash1
+curl -fsSL https://install.determinate.systems/nix | sh -s -- install
+
+determinate-nixd login
+
+NIXNAME=omarchy make switch
+```
