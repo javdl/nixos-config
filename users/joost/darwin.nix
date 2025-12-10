@@ -112,6 +112,7 @@
       "tdr-prism"
       "tdr-vos-slickeq"
       "thunderbird"
+      "transmission"
       "veracrypt"
       "visual-studio-code"
       "vlc"
