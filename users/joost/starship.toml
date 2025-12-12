@@ -2,130 +2,310 @@
 # Get editor completions based on the config schema
 "$schema" = 'https://starship.rs/config-schema.json'
 
-# Set the default palette to Rose Pine
-palette = "rosepine"
-
-# Define Rose Pine color palette
-[palettes.rosepine]
-base = "#191724"
-surface = "#1f1d2e"
-overlay = "#26233a"
-muted = "#6e6a86"
-subtle = "#908caa"
-text = "#e0def4"
-love = "#eb6f92"
-gold = "#f6c177"
-rose = "#ebbcba"
-pine = "#31748f"
-foam = "#9ccfd8"
-iris = "#c4a7e7"
-highlightlow = "#21202e"
-highlightmed = "#403d52"
-highlighthigh = "#524f67"
-
-# Prompt format
 format = """
-[┌───────────────────>](bold muted)
-[│](bold muted) $username$hostname$directory$git_branch$git_status$cmd_duration
-[└─](bold muted)$character """
+$username\
+$directory\
+$git_branch\
+$git_status\
+$fill\
+$c\
+$elixir\
+$elm\
+$golang\
+$haskell\
+$java\
+$julia\
+$nodejs\
+$nim\
+$rust\
+$scala\
+$conda\
+$python\
+$time\n  \
+[󱞪](fg:iris) \
+"""
 
-# Configure prompt modules
-[username]
-style_user = "bold iris"
-style_root = "bold love"
-format = "[$user]($style) "
-show_always = false
+palette = "rose-pine"
 
-[hostname]
-ssh_only = true
-format = "[@$hostname](bold gold) "
+[palettes.rose-pine]
+overlay = '#26233a'
+love = '#eb6f92'
+gold = '#f6c177'
+rose = '#ebbcba'
+pine = '#31748f'
+foam = '#9ccfd8'
+iris = '#c4a7e7'
 
 [directory]
-style = "bold foam"
+format = "[](fg:overlay)[ $path ]($style)[](fg:overlay) "
+style = "bg:overlay fg:pine"
 truncation_length = 3
-truncate_to_repo = true
-format = "[$path]($style) "
+truncation_symbol = "…/"
+
+[directory.substitutions]
+Documents = "󰈙"
+Downloads = " "
+Music = " "
+Pictures = " "
+
+[fill]
+style = "fg:overlay"
+symbol = " "
 
 [git_branch]
-symbol = " "
-style = "bold rose"
-format = "[$symbol$branch]($style) "
+format = "[](fg:overlay)[ $symbol $branch ]($style)[](fg:overlay) "
+style = "bg:overlay fg:foam"
+symbol = ""
 
 [git_status]
-style = "bold love"
-format = "[$all_status$ahead_behind]($style) "
-
-[character]
-success_symbol = "[❯](bold foam)"
-error_symbol = "[❯](bold love)"
-vicmd_symbol = "[❮](bold pine)"
-
-[cmd_duration]
-min_time = 2_000
-style = "bold gold"
-format = "[$duration]($style) "
-
-# Language-specific modules with Rose Pine colors
-[nodejs]
-style = "bold foam"
-symbol = " "
-
-[rust]
-style = "bold rose"
-symbol = " "
-
-[python]
-style = "bold gold"
-symbol = " "
-
-[golang]
-style = "bold foam"
-symbol = " "
-
-[java]
-style = "bold love"
-symbol = " "
-
-[lua]
-style = "bold pine"
-symbol = " "
-
-[docker_context]
-style = "bold iris"
-symbol = " "
-
-[package]
-style = "bold muted"
-symbol = " "
-
-# System information modules
-[memory_usage]
 disabled = false
-threshold = 80
-style = "bold love"
-format = "[$symbol$ram]($style) "
-
-[battery]
-full_symbol = " "
-charging_symbol = " "
-discharging_symbol = " "
-unknown_symbol = " "
-empty_symbol = " "
-
-[[battery.display]]
-threshold = 20
-style = "bold love"
-
-[[battery.display]]
-threshold = 50
-style = "bold gold"
-
-[[battery.display]]
-threshold = 80
-style = "bold foam"
+style = "bg:overlay fg:love"
+format = '[](fg:overlay)([$all_status$ahead_behind]($style))[](fg:overlay) '
+up_to_date = '[ ✓ ](bg:overlay fg:iris)'
+untracked = '[?\($count\)](bg:overlay fg:gold)'
+stashed = '[\$](bg:overlay fg:iris)'
+modified = '[!\($count\)](bg:overlay fg:gold)'
+renamed = '[»\($count\)](bg:overlay fg:iris)'
+deleted = '[✘\($count\)](style)'
+staged = '[++\($count\)](bg:overlay fg:gold)'
+ahead = '[⇡\(${count}\)](bg:overlay fg:foam)'
+diverged = '⇕[\[](bg:overlay fg:iris)[⇡\(${ahead_count}\)](bg:overlay fg:foam)[⇣\(${behind_count}\)](bg:overlay fg:rose)[\]](bg:overlay fg:iris)'
+behind = '[⇣\(${count}\)](bg:overlay fg:rose)'
 
 [time]
 disabled = false
-style = "bold muted"
-format = "[$time]($style) "
-time_format = "%R"
+format = " [](fg:overlay)[ $time 󰴈 ]($style)[](fg:overlay)"
+style = "bg:overlay fg:rose"
+time_format = "%I:%M%P"
+use_12hr = true
+
+[username]
+disabled = false
+format = "[](fg:overlay)[ 󰧱 $user ]($style)[](fg:overlay) "
+show_always = true
+style_root = "bg:overlay fg:iris"
+style_user = "bg:overlay fg:iris"
+
+# Languages
+
+[c]
+style = "bg:overlay fg:pine"
+format = " [](fg:overlay)[ $symbol$version ]($style)[](fg:overlay)"
+disabled = false
+symbol = " "
+
+[elixir]
+style = "bg:overlay fg:pine"
+format = " [](fg:overlay)[ $symbol$version ]($style)[](fg:overlay)"
+disabled = false
+symbol = " "
+
+[elm]
+style = "bg:overlay fg:pine"
+format = " [](fg:overlay)[ $symbol$version ]($style)[](fg:overlay)"
+disabled = false
+symbol = " "
+
+[golang]
+style = "bg:overlay fg:pine"
+format = " [](fg:overlay)[ $symbol$version ]($style)[](fg:overlay)"
+disabled = false
+symbol = " "
+
+[haskell]
+style = "bg:overlay fg:pine"
+format = " [](fg:overlay)[ $symbol$version ]($style)[](fg:overlay)"
+disabled = false
+symbol = " "
+
+[java]
+style = "bg:overlay fg:pine"
+format = " [](fg:overlay)[ $symbol$version ]($style)[](fg:overlay)"
+disabled = false
+symbol = " "
+
+[julia]
+style = "bg:overlay fg:pine"
+format = " [](fg:overlay)[ $symbol$version ]($style)[](fg:overlay)"
+disabled = false
+symbol = " "
+
+[nodejs]
+style = "bg:overlay fg:pine"
+format = " [](fg:overlay)[ $symbol$version ]($style)[](fg:overlay)"
+disabled = false
+symbol = "󰎙 "
+
+[nim]
+style = "bg:overlay fg:pine"
+format = " [](fg:overlay)[ $symbol$version ]($style)[](fg:overlay)"
+disabled = false
+symbol = "󰆥 "
+
+[rust]
+style = "bg:overlay fg:pine"
+format = " [](fg:overlay)[ $symbol$version ]($style)[](fg:overlay)"
+disabled = false
+symbol = " "
+
+[scala]
+style = "bg:overlay fg:pine"
+format = " [](fg:overlay)[ $symbol$version ]($style)[](fg:overlay)"
+disabled = false
+symbol = " "
+
+[python]
+style = "bg:overlay fg:pine"
+format = " [](fg:overlay)[ $symbol$version ]($style)[](fg:overlay)"
+disabled = false
+symbol = ' '
+
+[conda]
+style = "bg:overlay fg:pine"
+format = " [](fg:overlay)[ $symbol$environment ]($style)[](fg:overlay)"
+disabled = false
+symbol = '🅒 '
+
+
+
+
+
+
+
+
+# ============================
+
+
+
+
+
+
+
+
+# # Set the default palette to Rose Pine
+# palette = "rosepine"
+
+# # Define Rose Pine color palette
+# [palettes.rosepine]
+# base = "#191724"
+# surface = "#1f1d2e"
+# overlay = "#26233a"
+# muted = "#6e6a86"
+# subtle = "#908caa"
+# text = "#e0def4"
+# love = "#eb6f92"
+# gold = "#f6c177"
+# rose = "#ebbcba"
+# pine = "#31748f"
+# foam = "#9ccfd8"
+# iris = "#c4a7e7"
+# highlightlow = "#21202e"
+# highlightmed = "#403d52"
+# highlighthigh = "#524f67"
+
+# # Prompt format
+# format = """
+# [┌───────────────────>](bold muted)
+# [│](bold muted) $username$hostname$directory$git_branch$git_status$cmd_duration
+# [└─](bold muted)$character """
+
+# # Configure prompt modules
+# [username]
+# style_user = "bold iris"
+# style_root = "bold love"
+# format = "[$user]($style) "
+# show_always = false
+
+# [hostname]
+# ssh_only = true
+# format = "[@$hostname](bold gold) "
+
+# [directory]
+# style = "bold foam"
+# truncation_length = 3
+# truncate_to_repo = true
+# format = "[$path]($style) "
+
+# [git_branch]
+# symbol = " "
+# style = "bold rose"
+# format = "[$symbol$branch]($style) "
+
+# [git_status]
+# style = "bold love"
+# format = "[$all_status$ahead_behind]($style) "
+
+# [character]
+# success_symbol = "[❯](bold foam)"
+# error_symbol = "[❯](bold love)"
+# vicmd_symbol = "[❮](bold pine)"
+
+# [cmd_duration]
+# min_time = 2_000
+# style = "bold gold"
+# format = "[$duration]($style) "
+
+# # Language-specific modules with Rose Pine colors
+# [nodejs]
+# style = "bold foam"
+# symbol = " "
+
+# [rust]
+# style = "bold rose"
+# symbol = " "
+
+# [python]
+# style = "bold gold"
+# symbol = " "
+
+# [golang]
+# style = "bold foam"
+# symbol = " "
+
+# [java]
+# style = "bold love"
+# symbol = " "
+
+# [lua]
+# style = "bold pine"
+# symbol = " "
+
+# [docker_context]
+# style = "bold iris"
+# symbol = " "
+
+# [package]
+# style = "bold muted"
+# symbol = " "
+
+# # System information modules
+# [memory_usage]
+# disabled = false
+# threshold = 80
+# style = "bold love"
+# format = "[$symbol$ram]($style) "
+
+# [battery]
+# full_symbol = " "
+# charging_symbol = " "
+# discharging_symbol = " "
+# unknown_symbol = " "
+# empty_symbol = " "
+
+# [[battery.display]]
+# threshold = 20
+# style = "bold love"
+
+# [[battery.display]]
+# threshold = 50
+# style = "bold gold"
+
+# [[battery.display]]
+# threshold = 80
+# style = "bold foam"
+
+# [time]
+# disabled = false
+# style = "bold muted"
+# format = "[$time]($style) "
+# time_format = "%R"

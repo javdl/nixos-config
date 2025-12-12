@@ -513,6 +513,8 @@ For more details on adding new dotfiles, making changes, see the [Chezmoi docume
 
 ## Omarchy
 
+[https://github.com/basecamp/omarchy/discussions/987](https://github.com/basecamp/omarchy/discussions/987)
+
 ```bash1
 curl -fsSL https://install.determinate.systems/nix | sh -s -- install
 

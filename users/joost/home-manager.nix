@@ -65,160 +65,164 @@ in {
   # not a huge list.
   fonts.fontconfig.enable = true;
 
-  home.packages = [
-    pkgs.asciinema
-    pkgs.air # Live reload for Go
-    pkgs.alacritty
-    pkgs.btop
-    pkgs.chezmoi
-    pkgs.kitty
-    pkgs.helix
-    pkgs.helix-gpt
-    pkgs.lazydocker
-    pkgs.lazygit
-    pkgs.bat
-    pkgs.bottom
-    pkgs.cachix
-    # pkgs.code-cursor-fhs
-    pkgs.dasht # Search API docs offline, in terminal or browser
-    pkgs.devenv
-    pkgs.docker
-    pkgs.docker-compose
-    # pkgs.podman
-    # pkgs.podman-tui
-    # pkgs.colima # orbstack moet betere performance hebben
-    pkgs.eza # Modern replacement for ls
-    pkgs.fastfetch
-    pkgs.fd
-    # pkgs.ffmpeg_5 # libgl, needed for ML
-    pkgs.ffmpeg
-    pkgs.fzf
-    pkgs.gemini-cli
-    pkgs.gh
-    # pkgs.ghostty
-    pkgs.git-lfs
+  home.packages =  with pkgs; [
+    asciinema
+    air # Live reload for Go
+    alacritty
+    btop
+    chezmoi
+    kitty
+    lazydocker
+    lazygit
+    bat
+    cachix
+    # code-cursor-fhs
+    dasht # Search API docs offline, in terminal or browser
+    devenv
+    docker
+    docker-compose
+    # podman
+    # podman-tui
+    # colima # orbstack moet betere performance hebben
+    eza # Modern replacement for ls
+    fastfetch
+    fd
+    # ffmpeg_5 # libgl, needed for ML
+    ffmpeg
+    fzf
+    gemini-cli
+    gh
+    # ghostty
+    git-lfs
     gdk
-    # pkgs.google-cloud-sdk # See above, gdk with components list
-    pkgs.htop
-    pkgs.httpie
-    pkgs.imagemagick
-    pkgs.jq
-    # pkgs.kubernetes-helm
-    # pkgs.libGL # ML
-    # pkgs.libGLU # ML
-    # pkgs.libheif
-    # pkgs.ollama
-    pkgs.opencode
-    pkgs.railway
-    pkgs.ripgrep
-    pkgs.tree
-    pkgs.watch
-    pkgs.xh # for sending HTTP requests (like HTTPie)
-    pkgs.zellij # Terminal workspace with batteries included
-    pkgs.zoxide # Fast cd command that learns your habits
+    # google-cloud-sdk # See above, gdk with components list
+    htop
+    httpie
+    imagemagick
+    jq
+    # kubernetes-helm
+    # libGL # ML
+    # libGLU # ML
+    # libheif
+    # ollama
+    opencode
+    railway
+    ripgrep
+    tree
+    watch
+    xh # for sending HTTP requests (like HTTPie)
+    zellij # Terminal workspace with batteries included
+    zoxide # Fast cd command that learns your habits
 
-    pkgs.amp-cli
-    pkgs.claude-code
-    pkgs.codex
+    amp-cli
+    claude-code
+    codex
 
     # Rust should be in flake.nix for each project. However, those configs do need an initial Cargo.lock.Therefore, to create new projects we want Rust globally installed.
-    pkgs.rustup # rust-analyzer, cargo # installed by rustup
-    pkgs.cargo-generate # create project from git template
-    # pkgs.rust-script
-    # pkgs.rustc
-    pkgs.pre-commit
-    pkgs.wasm-pack
+    rustup # rust-analyzer, cargo # installed by rustup
+    cargo-generate # create project from git template
+    # rust-script
+    # rustc
+    pre-commit
+    wasm-pack
     # pkgsUnstable.fermyon-spin  # Use unstable version
 
-    pkgs.python3
-    pkgs.poetry
-    pkgs.uv
+    python3
+    poetry
+    uv
 
-    pkgs.aichat
-    pkgs.aider-chat
-    pkgs.crush
-    pkgs.darktable
-    pkgs.dbeaver-bin
-    pkgs.devcontainer
-    pkgs.discord
-    # pkgs.element-web  # Temporarily disabled due to nodejs build failures
-    # pkgs.gimp
-    pkgs.google-chrome
-    pkgs.inkscape
-    pkgs.postman
-    pkgs.slack
-    # pkgs.spotify
-    # pkgs.telegram-desktop
+    aichat
+    aider-chat
+    crush
+    darktable
+    dbeaver-bin
+    devcontainer
+    discord
+    # element-web  # Temporarily disabled due to nodejs build failures
+    # gimp
+    google-chrome
+    inkscape
+    postman
+    slack
+    # spotify
+    # telegram-desktop
 
     # Fonts
-    pkgs.font-awesome # waybar icons
-    pkgs.fira-code
-    pkgs.fira-code-symbols
-    pkgs.ibm-plex
-    pkgs.jetbrains-mono
-    pkgs.liberation_ttf
-    pkgs.mplus-outline-fonts.githubRelease
-    pkgs.nerd-fonts.caskaydia-mono # Cascadia Code with Nerd Font patches
-    # pkgs.nerdfonts # Changed: nerdfonts separated into individual packages
-    pkgs.noto-fonts
-    pkgs.noto-fonts-cjk-sans
-    pkgs.noto-fonts-color-emoji
-    pkgs.rubik
-    pkgs.proggyfonts
+    font-awesome # waybar icons
+    fira-code
+    fira-code-symbols
+    ibm-plex
+    jetbrains-mono
+    liberation_ttf
+    mplus-outline-fonts.githubRelease
+    nerd-fonts.caskaydia-mono # Cascadia Code with Nerd Font patches
+    # nerdfonts # Changed: nerdfonts separated into individual packages
+    noto-fonts
+    noto-fonts-cjk-sans
+    noto-fonts-color-emoji
+    rubik
+    proggyfonts
 
-    pkgs.bashmount # Easily mount (encrypted/usb) drives
-    pkgs.flyctl
-    pkgs.git-crypt
-    pkgs.glab
-    pkgs.k9s # Kuberenetes CLI
-    pkgs.neofetch
-    pkgs.nixd # Nix language server, used by Zed
-    # pkgs.obs-studio
-    pkgs.python3
-    pkgs.pocketbase
-    # pkgs.surrealdb # Builds from src
-    # pkgs.tailscale # install via Brew to prevent system extension problems on macos
-    pkgs.transmission_4
-    pkgs.yubikey-manager
+    bashmount # Easily mount (encrypted/usb) drives
+    flyctl
+    git-crypt
+    glab
+    k9s # Kuberenetes CLI
+    neofetch
+    nixd # Nix language server, used by Zed
+    # obs-studio
+    python3
+    pocketbase
+    # surrealdb # Builds from src
+    # tailscale # install via Brew to prevent system extension problems on macos
+    transmission_4
+    yubikey-manager
 
-    # pkgs.zed # Broken
+    # Modern CLI tools
+    delta         # Better git diff
+    tokei         # Code statistics
+    dust          # Disk usage analyzer
+    procs         # Better ps
+    lazygit       # Git TUI
+
+    # zed # Broken
 
     # Node is required for Copilot.vim
-    pkgs.nodejs_22
-    pkgs.nodePackages.firebase-tools
+    nodejs_22
+    nodePackages.firebase-tools
   ] ++ (lib.optionals isDarwin [
-    pkgs.aerospace
+    aerospace
     # This is automatically setup on Linux
-    pkgs.cachix
-    pkgs.pinentry_mac
-    pkgs.raycast
-    pkgs.sketchybar
-    pkgs.sketchybar-app-font
-    pkgs.skhd # hotkeys for yabai
-    pkgs.tailscale
-    pkgs.yabai # tiling window manager
+    cachix
+    pinentry_mac
+    raycast
+    sketchybar
+    sketchybar-app-font
+    skhd # hotkeys for yabai
+    tailscale
+    yabai # tiling window manager
   ]) ++ (lib.optionals (isLinux && !isWSL) [
-    pkgs.chromium
-    pkgs.firefox-devedition
-    # pkgs.brave
-    pkgs.rofi
-    pkgs.zathura
-    pkgs.xfce.xfce4-terminal
-    pkgs.libwacom
-    pkgs.libinput
-    # pkgs.bitwarden
-    pkgs.bitwarden-cli
-    pkgs.bitwarden-menu # Dmenu/rofi frontend
-    pkgs.geekbench
-    pkgs.nextcloud-client
-    pkgs.obsidian
-    pkgs.podman-desktop
-    pkgs.rpi-imager
-    # pkgs.sublime4 # do not install, needs old openssl?
-    pkgs.signal-desktop
-    pkgs.tailscale-systray
-    # pkgs.windsurf  # Replaced with VS Code
-    pkgs.baobab # Disk usage, gnome only
+    chromium
+    firefox-devedition
+    # brave
+    rofi
+    zathura
+    xfce.xfce4-terminal
+    libwacom
+    libinput
+    # bitwarden
+    bitwarden-cli
+    bitwarden-menu # Dmenu/rofi frontend
+    geekbench
+    nextcloud-client
+    obsidian
+    podman-desktop
+    rpi-imager
+    # sublime4 # do not install, needs old openssl?
+    signal-desktop
+    tailscale-systray
+    # windsurf  # Replaced with VS Code
+    baobab # Disk usage, gnome only
   ]);
 
   #---------------------------------------------------------------------
@@ -228,6 +232,12 @@ in {
   home.sessionVariables = shared.sessionVariables // {
     NPM_CONFIG_PREFIX = "$HOME/.npm-global";
     PATH = "$HOME/.npm-global/bin:$PATH";
+    EDITOR = "nvim";
+    VISUAL = "nvim";
+    BROWSER = "chromium";
+    PAGER = "less -R";
+    LANG = "en_US.UTF-8";
+
     # Rose Pine theme for fzf
     # FZF_DEFAULT_OPTS = ''
     #   --color=fg:#e0def4,bg:#191724,hl:#c4a7e7
@@ -687,6 +697,13 @@ in {
     settings = {
       user.name = "Joost van der Laan";
       user.email = "j@jlnw.nl";
+      delta = {
+        enable = true;
+        options = {
+          line-numbers = true;
+          side-by-side = true;
+        };
+      };
       branch.autosetuprebase = "always";
       color.ui = true;
       core.askPass = ""; # needs to be empty to use terminal for ask pass
@@ -1041,17 +1058,122 @@ in {
       theme = "rose-pine";
       themes = {
         rose-pine = {
-          fg = "#e0def4";
-          bg = "#191724";
-          black = "#26233a";
-          red = "#eb6f92";
-          green = "#31748f";
-          yellow = "#f6c177";
-          blue = "#9ccfd8";
-          magenta = "#c4a7e7";
-          cyan = "#ebbcba";
-          white = "#e0def4";
-          orange = "#f6c177";
+          text_unselected = {
+            base = [224 222 244];
+            background = [33 32 46];
+            emphasis_0 = [235 188 186];
+            emphasis_1 = [156 207 216];
+            emphasis_2 = [49 116 143];
+            emphasis_3 = [196 167 231];
+          };
+          text_selected = {
+            base = [224 222 244];
+            background = [64 61 82];
+            emphasis_0 = [235 188 186];
+            emphasis_1 = [156 207 216];
+            emphasis_2 = [49 116 143];
+            emphasis_3 = [196 167 231];
+          };
+          ribbon_selected = {
+            base = [33 32 46];
+            background = [49 116 143];
+            emphasis_0 = [246 193 119];
+            emphasis_1 = [235 188 186];
+            emphasis_2 = [196 167 231];
+            emphasis_3 = [156 207 216];
+          };
+          ribbon_unselected = {
+            base = [25 23 36];
+            background = [224 222 244];
+            emphasis_0 = [246 193 119];
+            emphasis_1 = [235 188 186];
+            emphasis_2 = [196 167 231];
+            emphasis_3 = [156 207 216];
+          };
+          table_title = {
+            base = [49 116 143];
+            background = [0 0 0];
+            emphasis_0 = [235 188 186];
+            emphasis_1 = [156 207 216];
+            emphasis_2 = [49 116 143];
+            emphasis_3 = [196 167 231];
+          };
+          table_cell_selected = {
+            base = [224 222 244];
+            background = [64 61 82];
+            emphasis_0 = [235 188 186];
+            emphasis_1 = [156 207 216];
+            emphasis_2 = [49 116 143];
+            emphasis_3 = [196 167 231];
+          };
+          table_cell_unselected = {
+            base = [224 222 244];
+            background = [33 32 46];
+            emphasis_0 = [235 188 186];
+            emphasis_1 = [156 207 216];
+            emphasis_2 = [49 116 143];
+            emphasis_3 = [196 167 231];
+          };
+          list_selected = {
+            base = [224 222 244];
+            background = [64 61 82];
+            emphasis_0 = [235 188 186];
+            emphasis_1 = [156 207 216];
+            emphasis_2 = [49 116 143];
+            emphasis_3 = [196 167 231];
+          };
+          list_unselected = {
+            base = [224 222 244];
+            background = [33 32 46];
+            emphasis_0 = [235 188 186];
+            emphasis_1 = [156 207 216];
+            emphasis_2 = [49 116 143];
+            emphasis_3 = [196 167 231];
+          };
+          frame_selected = {
+            base = [49 116 143];
+            background = [0 0 0];
+            emphasis_0 = [235 188 186];
+            emphasis_1 = [156 207 216];
+            emphasis_2 = [196 167 231];
+            emphasis_3 = [0 0 0];
+          };
+          frame_highlight = {
+            base = [235 188 186];
+            background = [0 0 0];
+            emphasis_0 = [235 188 186];
+            emphasis_1 = [235 188 186];
+            emphasis_2 = [235 188 186];
+            emphasis_3 = [235 188 186];
+          };
+          exit_code_success = {
+            base = [49 116 143];
+            background = [0 0 0];
+            emphasis_0 = [156 207 216];
+            emphasis_1 = [33 32 46];
+            emphasis_2 = [196 167 231];
+            emphasis_3 = [49 116 143];
+          };
+          exit_code_error = {
+            base = [235 111 146];
+            background = [0 0 0];
+            emphasis_0 = [246 193 119];
+            emphasis_1 = [0 0 0];
+            emphasis_2 = [0 0 0];
+            emphasis_3 = [0 0 0];
+          };
+          multiplayer_user_colors = {
+            player_1 = [196 167 231];
+            player_2 = [49 116 143];
+            player_3 = [235 188 186];
+            player_4 = [246 193 119];
+            player_5 = [156 207 216];
+            player_6 = [235 111 146];
+            player_7 = [0 0 0];
+            player_8 = [0 0 0];
+            player_9 = [0 0 0];
+            player_10 = [0 0 0];
+          };
         };
       };
     };

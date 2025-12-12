@@ -235,6 +235,13 @@
           nixpkgs.config.allowUnfree = true;
           home.username = "joost";
           home.homeDirectory = "/home/joost";
+
+          # Protect Omarchy-managed directories
+          home.file.".config/omarchy".enable = false;
+          home.file.".config/hypr".enable = false;
+          home.file.".config/alacritty".enable = false;
+          home.file.".config/btop/themes".enable = false;
+
           # Disable nixpkgs module's <nixpkgs> lookup for pure evaluation
           _module.args.pkgsPath = lib.mkForce nixpkgs;
         })
