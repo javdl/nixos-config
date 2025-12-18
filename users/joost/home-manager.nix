@@ -199,7 +199,7 @@ in {
     sketchybar
     sketchybar-app-font
     skhd # hotkeys for yabai
-    tailscale
+    # tailscale # do not add here, it will recompile each time
     yabai # tiling window manager
   ]) ++ (lib.optionals (isLinux && !isWSL) [
     chromium
