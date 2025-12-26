@@ -26,5 +26,5 @@
     # Enable tailscale. We manually authenticate when we want with
     # "sudo tailscale up". If you don't use tailscale, you should comment
     # out or delete all of this.
-    services.tailscale.enable = true;
+    # services.tailscale.enable = true; # do not add here, it will recompile each time
 }

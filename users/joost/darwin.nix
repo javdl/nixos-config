@@ -27,6 +27,7 @@
       # dirac live processor
       #
       # "bitwarden" Must be installed via Mac App Store for browser integration to work
+      "adobe-dng-converter"
       "audio-hijack"
       # "advanced-renamer" # download fails
       "airfoil"
@@ -35,6 +36,7 @@
       "affinity-publisher"
       # "arturia-software-center" # broken or breaks existing installation
       "balenaetcher"
+      "beeper"
       "brave-browser"
       "companion" # Bitfocus companion, Streamdeck extension and emulation software
       # "conductor" Manual install, doesnt work via brew. https://conductor.build/

@@ -26,7 +26,7 @@
       ./mac-shared.nix
     ];
 
-    services.tailscale.enable = true;
+    # services.tailscale.enable = true; # do not add here, it will recompile each time
 
     # services = {
     #   github-runners = {
