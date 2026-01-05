@@ -231,7 +231,7 @@ in {
 
   home.sessionVariables = shared.sessionVariables // {
     NPM_CONFIG_PREFIX = "$HOME/.npm-global";
-    PATH = "$HOME/Documents/go/bin:$HOME/.npm-global/bin:$PATH";
+    PATH = "$HOME/go/bin:$HOME/.npm-global/bin:$PATH";
     EDITOR = "nvim";
     VISUAL = "nvim";
     BROWSER = "chromium";
@@ -732,7 +732,7 @@ in {
   programs.go = {
     enable = true;
     env = {
-      GOPATH = "${config.home.homeDirectory}/Documents/go";
+      GOPATH = "${config.home.homeDirectory}/go";
       GOPRIVATE = [ "github.com/javdl" "github.com/fuww"  ];
     };
   };
