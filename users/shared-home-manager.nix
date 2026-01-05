@@ -20,7 +20,6 @@ in {
     gl = "git prettylog";
     gp = "git push";
     gs = "git status";
-    gt = "git tag";
 
     jd = "jj desc";
     jf = "jj git fetch";
