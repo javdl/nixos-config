@@ -761,6 +761,9 @@ in {
     secureSocket = false;
 
     extraConfig = ''
+      # Run shell as login shell to source Nix profiles (needed for gt/claude in spawned sessions)
+      set-option -g default-command "$SHELL -l"
+
       set -ga terminal-overrides ",*256col*:Tc"
 
       # Rose Pine theme
