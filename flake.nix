@@ -65,7 +65,6 @@
           gh = pkgs-unstable.gh;
 
           # Want the latest version of these
-          claude-code = pkgs-unstable.claude-code;
           nushell = pkgs-unstable.nushell;
 
           # Fix setproctitle test failures on macOS

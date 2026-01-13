@@ -443,7 +443,11 @@ ln -s /Volumes/4TBMacData/git $HOME/git
 ## Install Claude Code
 
 ```bash
-npm install -g @anthropic-ai/claude-code
+# Native install (recommended)
+curl -fsSL https://claude.ai/install.sh | bash
+
+# Or via Homebrew on macOS
+brew install --cask claude-code
 ```
 
 ## Tutorials

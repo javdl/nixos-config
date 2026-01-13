@@ -115,7 +115,6 @@ in {
     zoxide # Fast cd command that learns your habits
 
     amp-cli
-    claude-code
     codex
 
     # Rust should be in flake.nix for each project. However, those configs do need an initial Cargo.lock.Therefore, to create new projects we want Rust globally installed.
@@ -1221,16 +1220,4 @@ in {
     x11.enable = true;
   };
 
-  # Install Claude Code on activation
-  home.activation.installClaudeCode = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    PATH="${pkgs.nodejs_20}/bin:$PATH"
-    export NPM_CONFIG_PREFIX="$HOME/.npm-global"
-
-    if ! command -v claude >/dev/null 2>&1; then
-      echo "Installing Claude Code..."
-      npm install -g @anthropic-ai/claude-code
-    else
-      echo "Claude Code is already installed at $(which claude)"
-    fi
-  '';
 }

@@ -38,7 +38,7 @@ runs:
   steps:
     - name: Install Claude Code
       shell: bash
-      run: npm install -g @anthropic-ai/claude-code
+      run: curl -fsSL https://claude.ai/install.sh | bash
 
     - name: Install GitHub MCP Server
       if: inputs.install_github_mcp == 'true'

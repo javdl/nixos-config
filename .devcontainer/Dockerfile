@@ -67,8 +67,8 @@ RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/
   -a "export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhistory/.bash_history" \
   -x
 
-# Install Claude
-RUN npm install -g @anthropic-ai/claude-code
+# Install Claude Code (native installer)
+RUN curl -fsSL https://claude.ai/install.sh | bash
 
 # Copy and set up firewall script
 COPY init-firewall.sh /usr/local/bin/
