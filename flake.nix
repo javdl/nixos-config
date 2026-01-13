@@ -67,6 +67,23 @@
           # Want the latest version of these
           claude-code = pkgs-unstable.claude-code;
           nushell = pkgs-unstable.nushell;
+
+          # Fix setproctitle test failures on macOS
+          python3 = prev.python3.override {
+            packageOverrides = pyFinal: pyPrev: {
+              setproctitle = pyPrev.setproctitle.overridePythonAttrs (old: {
+                doCheck = false;
+              });
+            };
+          };
+
+          python313 = prev.python313.override {
+            packageOverrides = pyFinal: pyPrev: {
+              setproctitle = pyPrev.setproctitle.overridePythonAttrs (old: {
+                doCheck = false;
+              });
+            };
+          };
         })
     ];
 

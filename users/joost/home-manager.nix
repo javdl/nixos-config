@@ -132,7 +132,7 @@ in {
     uv
 
     aichat
-    aider-chat
+    # aider-chat  # Temporarily disabled due to python3.12-setproctitle build failure on macOS
     crush
     darktable
     dbeaver-bin
@@ -726,6 +726,26 @@ in {
           required = true;
         };
 
+    };
+  };
+
+  programs.ssh = {
+    enable = true;
+    enableDefaultConfig = false;
+
+    matchBlocks = {
+      "*" = {
+        compression = true;
+        serverAliveInterval = 60;
+        serverAliveCountMax = 3;
+      };
+
+      "hetzner-work" = {
+        hostname = "2a01:4f8:1c1f:ad3c::1";
+        user = "root";
+        identityFile = "~/.ssh/id_ed25519_hetzner_work";
+        identitiesOnly = true;
+      };
     };
   };
 
