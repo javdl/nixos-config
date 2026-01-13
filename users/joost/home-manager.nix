@@ -585,6 +585,14 @@ in {
     initContent = ''
       export GPG_TTY=$(tty)
 
+      # Force block cursor (escape sequence)
+      # \e[2 q = steady block, \e[1 q = blinking block
+      echo -ne '\e[2 q'
+
+      # Reset cursor to block on each new prompt
+      preexec() { echo -ne '\e[2 q' }
+      precmd() { echo -ne '\e[2 q' }
+
       # Fix insecure completion files
       autoload -Uz compinit
       # Only run compinit once a day
@@ -824,6 +832,14 @@ in {
     settings = {
       env.TERM = "xterm-256color";
 
+      cursor = {
+        style = {
+          shape = "Block";
+          blinking = "On";
+        };
+        blink_interval = 500;
+      };
+
       font = {
         normal = {
           family = "CaskaydiaMono Nerd Font";
@@ -861,13 +877,13 @@ in {
         };
 
         cursor = {
-          text = "#e0def4";
-          cursor = "#524f67";
+          text = "#191724";
+          cursor = "#f6c177";
         };
 
         vi_mode_cursor = {
-          text = "#e0def4";
-          cursor = "#524f67";
+          text = "#191724";
+          cursor = "#f6c177";
         };
 
         selection = {
