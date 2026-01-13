@@ -753,6 +753,15 @@ in {
         identityFile = "~/.ssh/id_ed25519_hetzner_work";
         identitiesOnly = true;
       };
+
+      # Hetzner remote dev server - update hostname after bootstrap
+      "hetzner-dev" = {
+        hostname = "YOUR_HETZNER_IP";  # TODO: Update with actual IP/hostname
+        user = "joost";
+        identityFile = "~/.ssh/id_ed25519";
+        identitiesOnly = true;
+        forwardAgent = true;  # Forward SSH agent for git operations
+      };
     };
   };
 

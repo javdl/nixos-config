@@ -174,6 +174,11 @@
       user   = "joost";
     };
 
+    nixosConfigurations.hetzner-dev = mkSystem "hetzner-dev" {
+      system = "x86_64-linux";
+      user   = "joost";
+    };
+
     darwinConfigurations.macbook-pro-m1 = mkSystem "macbook-pro-m1" {
       system = "aarch64-darwin";
       user   = "joost";
