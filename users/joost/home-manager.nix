@@ -115,6 +115,8 @@ in {
     zoxide # Fast cd command that learns your habits
 
     amp-cli
+    # claude-code # use brew for native install / latest version
+    # claude-code-router # use brew for latest version
     codex
 
     # Rust should be in flake.nix for each project. However, those configs do need an initial Cargo.lock.Therefore, to create new projects we want Rust globally installed.
@@ -748,6 +750,13 @@ in {
       };
 
       "hetzner-work" = {
+        hostname = "46.224.219.95";
+        user = "root";
+        identityFile = "~/.ssh/id_ed25519_hetzner_work";
+        identitiesOnly = true;
+      };
+
+      "hetzner-work-ipv6" = {
         hostname = "2a01:4f8:1c1f:ad3c::1";
         user = "root";
         identityFile = "~/.ssh/id_ed25519_hetzner_work";

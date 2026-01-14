@@ -17,6 +17,7 @@
       "tailscale"
       "vercel-cli"
       "workos/tap/workos-cli"
+      "claude-code-router"
     ];
     casks  = [
       # handmatig installeren:
