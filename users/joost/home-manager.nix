@@ -738,33 +738,6 @@ in {
     };
   };
 
-  programs.ssh = {
-    enable = true;
-    enableDefaultConfig = false;
-
-    matchBlocks = {
-      "*" = {
-        compression = true;
-        serverAliveInterval = 60;
-        serverAliveCountMax = 3;
-      };
-
-      "hetzner-work" = {
-        hostname = "46.224.219.95";
-        user = "root";
-        identityFile = "~/.ssh/id_ed25519_hetzner_work";
-        identitiesOnly = true;
-      };
-
-      "hetzner-work-ipv6" = {
-        hostname = "2a01:4f8:1c1f:ad3c::1";
-        user = "root";
-        identityFile = "~/.ssh/id_ed25519_hetzner_work";
-        identitiesOnly = true;
-      };
-    };
-  };
-
   programs.go = {
     enable = true;
     env = {
