@@ -239,6 +239,9 @@ in {
     PAGER = "less -R";
     LANG = "en_US.UTF-8";
 
+    # Bitwarden SSH agent (App Store version)
+    SSH_AUTH_SOCK = "$HOME/Library/Containers/com.bitwarden.desktop/Data/.bitwarden-ssh-agent.sock";
+
     # Rose Pine theme for fzf
     # FZF_DEFAULT_OPTS = ''
     #   --color=fg:#e0def4,bg:#191724,hl:#c4a7e7
