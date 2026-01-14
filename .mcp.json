@@ -1,18 +1,2 @@
 {
-  "mcpServers": {
-    "fetch": {
-      "command": "/bin/sh",
-      "args": [
-        "-c",
-        "PATH=/run/current-system/sw/bin:/etc/profiles/per-user/$USER/bin:$PATH exec uvx mcp-server-fetch"
-      ]
-    },
-    "context7": {
-      "command": "/bin/sh",
-      "args": [
-        "-c",
-        "PATH=/run/current-system/sw/bin:/etc/profiles/per-user/$USER/bin:$PATH exec npx -y @upstash/context7-mcp"
-      ]
-    }
-  }
 }
