@@ -59,7 +59,23 @@
 
           # Want the latest version of these
           nushell = pkgs-unstable.nushell;
-        })
+        } // (if prev.stdenv.isDarwin then {
+          # Fix setproctitle test failures on macOS
+          python3 = prev.python3.override {
+            packageOverrides = pyFinal: pyPrev: {
+              setproctitle = pyPrev.setproctitle.overridePythonAttrs (old: {
+                doCheck = false;
+              });
+            };
+          };
+          python313 = prev.python313.override {
+            packageOverrides = pyFinal: pyPrev: {
+              setproctitle = pyPrev.setproctitle.overridePythonAttrs (old: {
+                doCheck = false;
+              });
+            };
+          };
+        } else {}))
     ];
 
     mkSystem = import ./lib/mksystem.nix {
