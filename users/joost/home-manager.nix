@@ -78,7 +78,7 @@ in {
     cachix
     # code-cursor-fhs
     dasht # Search API docs offline, in terminal or browser
-    devenv
+    # devenv  # Pulls in Python (gunicorn → setproctitle)
     docker
     docker-compose
     # podman
@@ -124,11 +124,11 @@ in {
     cargo-generate # create project from git template
     # rust-script
     # rustc
-    pre-commit
+    # pre-commit  # Python-based, use uv + pre-commit instead
     wasm-pack
     # pkgsUnstable.fermyon-spin  # Use unstable version
 
-    python3
+    # python3  # Using uv/poetry managed Python instead - avoids setproctitle build issues
     poetry
     uv
 
@@ -153,7 +153,7 @@ in {
     fira-code
     fira-code-symbols
     ibm-plex
-    jetbrains-mono
+    # jetbrains-mono  # Uses gftools (Python) to build - use nerd-fonts.caskaydia-mono instead
     liberation_ttf
     mplus-outline-fonts.githubRelease
     nerd-fonts.caskaydia-mono # Cascadia Code with Nerd Font patches
@@ -172,7 +172,7 @@ in {
     neofetch
     nixd # Nix language server, used by Zed
     # obs-studio
-    python3
+    # python3  # Duplicate - see above
     pocketbase
     # surrealdb # Builds from src
     # tailscale # install via Brew to prevent system extension problems on macos
@@ -926,15 +926,7 @@ in {
   programs.neovim = {
     enable = true;
 
-    withPython3 = true;
-    extraPython3Packages = (p: with p; [
-      # For nvim-magma
-      jupyter-client
-      cairosvg
-      plotly
-      #pnglatex
-      #kaleido
-    ]);
+    withPython3 = false;
 
     extraLuaConfig = ''
       -- Setup Rose Pine theme
