@@ -165,6 +165,146 @@ vm/switch:
 		sudo NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nixos-rebuild switch --flake \"/nix-config#${NIXNAME}\" \
 	"
 
+# =============================================================================
+# Hetzner Dedicated Server Bootstrap
+# =============================================================================
+#
+# Prerequisites:
+#   1. Order a Hetzner dedicated server
+#   2. Boot into Rescue System (Linux 64-bit) from Hetzner Robot
+#   3. Note the IP address
+#
+# Bootstrap process:
+#   make hetzner/bootstrap0 NIXADDR=<ip>   # Partition, install NixOS, reboot
+#   make hetzner/bootstrap NIXADDR=<ip>    # Copy config, apply, copy secrets
+#
+# After bootstrap:
+#   make hetzner/switch NIXADDR=<ip>       # Copy config and apply changes
+#   make hetzner/tailscale-auth NIXADDR=<ip> TAILSCALE_AUTHKEY=<key>  # Set up Tailscale
+#   ssh hetzner-dev                        # Connect via SSH
+#
+# Once Tailscale is set up:
+#   ssh joost@hetzner-dev                  # Via Tailscale SSH (no keys needed)
+
+HETZNER_SSH_OPTIONS=-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no
+
+# Initial NixOS installation on Hetzner rescue system
+# This partitions drives, installs NixOS, and reboots
+hetzner/bootstrap0:
+	@echo "==> Bootstrapping NixOS on Hetzner ($(NIXADDR))"
+	@echo "==> This will WIPE ALL DATA on the server!"
+	@echo "==> Press Ctrl+C within 5 seconds to abort..."
+	@sleep 5
+	ssh $(HETZNER_SSH_OPTIONS) root@$(NIXADDR) " \
+		set -e; \
+		echo '==> Detecting primary disk...'; \
+		DISK=$$(lsblk -d -o NAME,SIZE --noheadings | grep -E 'nvme|sd' | head -1 | awk '{print \"/dev/\" \$$1}'); \
+		echo \"==> Using disk: \$$DISK\"; \
+		echo '==> Partitioning disk...'; \
+		parted \$$DISK -- mklabel gpt; \
+		parted \$$DISK -- mkpart primary 512MB -8GB; \
+		parted \$$DISK -- mkpart primary linux-swap -8GB 100%; \
+		parted \$$DISK -- mkpart ESP fat32 1MB 512MB; \
+		parted \$$DISK -- set 3 esp on; \
+		sleep 2; \
+		echo '==> Formatting partitions...'; \
+		mkfs.ext4 -L nixos \$${DISK}p1 || mkfs.ext4 -L nixos \$${DISK}1; \
+		mkswap -L swap \$${DISK}p2 || mkswap -L swap \$${DISK}2; \
+		mkfs.fat -F 32 -n boot \$${DISK}p3 || mkfs.fat -F 32 -n boot \$${DISK}3; \
+		sleep 1; \
+		echo '==> Mounting filesystems...'; \
+		mount /dev/disk/by-label/nixos /mnt; \
+		mkdir -p /mnt/boot; \
+		mount /dev/disk/by-label/boot /mnt/boot; \
+		swapon /dev/disk/by-label/swap; \
+		echo '==> Generating hardware config...'; \
+		nixos-generate-config --root /mnt; \
+		echo '==> Configuring initial NixOS...'; \
+		sed --in-place '/system\.stateVersion = .*/a \
+			nix.package = pkgs.nixVersions.latest;\n \
+			nix.extraOptions = \"experimental-features = nix-command flakes\";\n \
+			nix.settings.substituters = [\"https://javdl-nixos-config.cachix.org\" \"https://cache.nixos.org\"];\n \
+			nix.settings.trusted-public-keys = [\"javdl-nixos-config.cachix.org-1:6xuHXHavvpdfBLQq+RzxDAMxhWkea0NaYvLtDssDJIU=\" \"cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=\"];\n \
+			services.openssh.enable = true;\n \
+			services.openssh.settings.PasswordAuthentication = true;\n \
+			services.openssh.settings.PermitRootLogin = \"yes\";\n \
+			users.users.root.initialPassword = \"nixos\";\n \
+		' /mnt/etc/nixos/configuration.nix; \
+		echo '==> Installing NixOS (this takes a while)...'; \
+		nixos-install --no-root-passwd; \
+		echo '==> Installation complete! Rebooting...'; \
+		reboot; \
+	"
+
+# After bootstrap0, copy our config and apply it
+hetzner/bootstrap:
+	@echo "==> Copying configuration to Hetzner..."
+	NIXUSER=root $(MAKE) hetzner/copy
+	@echo "==> Applying NixOS configuration..."
+	NIXUSER=root $(MAKE) hetzner/switch NIXNAME=hetzner-dev
+	@echo "==> Copying secrets..."
+	$(MAKE) hetzner/secrets
+	@echo "==> Bootstrap complete! Rebooting..."
+	ssh $(HETZNER_SSH_OPTIONS) -p$(NIXPORT) $(NIXUSER)@$(NIXADDR) "sudo reboot" || true
+
+# Copy configuration to Hetzner server
+hetzner/copy:
+	rsync -av -e 'ssh $(HETZNER_SSH_OPTIONS) -p$(NIXPORT)' \
+		--exclude='vendor/' \
+		--exclude='.git/' \
+		--exclude='.git-crypt/' \
+		--exclude='.jj/' \
+		--exclude='iso/' \
+		--rsync-path="sudo rsync" \
+		$(MAKEFILE_DIR)/ $(NIXUSER)@$(NIXADDR):/nix-config
+
+# Apply NixOS configuration on Hetzner
+hetzner/switch:
+	ssh $(HETZNER_SSH_OPTIONS) -p$(NIXPORT) $(NIXUSER)@$(NIXADDR) " \
+		sudo NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nixos-rebuild switch --flake \"/nix-config#$(NIXNAME)\" \
+	"
+
+# Copy secrets (SSH keys, GPG) to Hetzner
+hetzner/secrets:
+	@echo "==> Copying GPG keyring..."
+	rsync -av -e 'ssh $(HETZNER_SSH_OPTIONS) -p$(NIXPORT)' \
+		--exclude='.#*' \
+		--exclude='S.*' \
+		--exclude='*.conf' \
+		$(HOME)/.gnupg/ $(NIXUSER)@$(NIXADDR):~/.gnupg
+	@echo "==> Copying SSH keys..."
+	rsync -av -e 'ssh $(HETZNER_SSH_OPTIONS) -p$(NIXPORT)' \
+		--exclude='environment' \
+		$(HOME)/.ssh/ $(NIXUSER)@$(NIXADDR):~/.ssh
+
+# Set up Tailscale auth key on Hetzner
+# Generate key at: https://login.tailscale.com/admin/settings/keys
+# Use: make hetzner/tailscale-auth NIXADDR=<ip> TAILSCALE_AUTHKEY=tskey-auth-xxx
+hetzner/tailscale-auth:
+ifndef TAILSCALE_AUTHKEY
+	$(error TAILSCALE_AUTHKEY is required. Generate at https://login.tailscale.com/admin/settings/keys)
+endif
+	@echo "==> Setting up Tailscale auth key on Hetzner..."
+	ssh $(HETZNER_SSH_OPTIONS) -p$(NIXPORT) $(NIXUSER)@$(NIXADDR) " \
+		sudo mkdir -p /etc/tailscale && \
+		echo '$(TAILSCALE_AUTHKEY)' | sudo tee /etc/tailscale/authkey > /dev/null && \
+		sudo chmod 600 /etc/tailscale/authkey && \
+		echo 'Auth key saved. Restarting Tailscale...' && \
+		sudo systemctl restart tailscaled \
+	"
+	@echo "==> Tailscale auth key configured!"
+	@echo "==> Check status with: ssh $(NIXUSER)@$(NIXADDR) 'tailscale status'"
+
+# Fetch hardware config from Hetzner (run after bootstrap0, before bootstrap)
+hetzner/fetch-hardware:
+	@echo "==> Fetching hardware configuration from Hetzner..."
+	scp $(HETZNER_SSH_OPTIONS) -P$(NIXPORT) root@$(NIXADDR):/mnt/etc/nixos/hardware-configuration.nix \
+		$(MAKEFILE_DIR)/hosts/hardware/hetzner-dev.nix
+	@echo "==> Hardware config saved to hosts/hardware/hetzner-dev.nix"
+	@echo "==> Review and commit this file to git"
+
+# =============================================================================
+
 # Build a WSL installer
 .PHONY: wsl
 wsl:

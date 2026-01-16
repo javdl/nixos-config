@@ -78,7 +78,7 @@ in {
     cachix
     # code-cursor-fhs
     dasht # Search API docs offline, in terminal or browser
-    # devenv  # Pulls in Python (gunicorn → setproctitle)
+    devenv
     docker
     docker-compose
     # podman
@@ -115,8 +115,6 @@ in {
     zoxide # Fast cd command that learns your habits
 
     amp-cli
-    # claude-code # use brew for native install / latest version
-    # claude-code-router # use brew for latest version
     codex
 
     # Rust should be in flake.nix for each project. However, those configs do need an initial Cargo.lock.Therefore, to create new projects we want Rust globally installed.
@@ -124,11 +122,11 @@ in {
     cargo-generate # create project from git template
     # rust-script
     # rustc
-    # pre-commit  # Python-based, use uv + pre-commit instead
+    pre-commit
     wasm-pack
     # pkgsUnstable.fermyon-spin  # Use unstable version
 
-    # python3  # Using uv/poetry managed Python instead - avoids setproctitle build issues
+    python3
     poetry
     uv
 
@@ -153,7 +151,7 @@ in {
     fira-code
     fira-code-symbols
     ibm-plex
-    # jetbrains-mono  # Uses gftools (Python) to build - use nerd-fonts.caskaydia-mono instead
+    jetbrains-mono
     liberation_ttf
     mplus-outline-fonts.githubRelease
     nerd-fonts.caskaydia-mono # Cascadia Code with Nerd Font patches
@@ -172,7 +170,7 @@ in {
     neofetch
     nixd # Nix language server, used by Zed
     # obs-studio
-    # python3  # Duplicate - see above
+    python3
     pocketbase
     # surrealdb # Builds from src
     # tailscale # install via Brew to prevent system extension problems on macos
@@ -238,9 +236,6 @@ in {
     BROWSER = "chromium";
     PAGER = "less -R";
     LANG = "en_US.UTF-8";
-
-    # Bitwarden SSH agent (App Store version)
-    SSH_AUTH_SOCK = "$HOME/Library/Containers/com.bitwarden.desktop/Data/.bitwarden-ssh-agent.sock";
 
     # Rose Pine theme for fzf
     # FZF_DEFAULT_OPTS = ''
@@ -741,6 +736,48 @@ in {
     };
   };
 
+  programs.ssh = {
+    enable = true;
+    enableDefaultConfig = false;
+
+    matchBlocks = {
+      "*" = {
+        compression = true;
+        serverAliveInterval = 60;
+        serverAliveCountMax = 3;
+      };
+
+      "hetzner-work" = {
+        hostname = "2a01:4f8:1c1f:ad3c::1";
+        user = "root";
+        identityFile = "~/.ssh/id_ed25519_hetzner_work";
+        identitiesOnly = true;
+      };
+
+      # Hetzner remote dev server via Tailscale SSH
+      # Tailscale handles auth - no SSH keys needed
+      "hetzner-dev" = {
+        hostname = "100.120.8.90";  # Tailscale IP
+        user = "joost";
+        forwardAgent = true;  # Forward SSH agent for git operations
+        extraOptions = {
+          RequestTTY = "yes";
+          RemoteCommand = "tmux new-session -A -s main";
+        };
+      };
+      # Direct access via public IPv6 (fallback if Tailscale is down)
+      "hetzner-dev-public" = {
+        hostname = "2a01:4f8:1c1f:ad3c::1";  # IPv6
+        user = "joost";
+        forwardAgent = true;
+        extraOptions = {
+          RequestTTY = "yes";
+          RemoteCommand = "tmux new-session -A -s main";
+        };
+      };
+    };
+  };
+
   programs.go = {
     enable = true;
     env = {
@@ -925,8 +962,17 @@ in {
 
   programs.neovim = {
     enable = true;
+    package = inputs.neovim-nightly-overlay.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
-    withPython3 = false;
+    withPython3 = true;
+    extraPython3Packages = (p: with p; [
+      # For nvim-magma
+      jupyter-client
+      cairosvg
+      plotly
+      #pnglatex
+      #kaleido
+    ]);
 
     extraLuaConfig = ''
       -- Setup Rose Pine theme

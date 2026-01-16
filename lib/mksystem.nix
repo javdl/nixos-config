@@ -10,7 +10,8 @@ name:
   wsl ? false,
   raphael ? false,
   pstate ? false,
-  zenpower ? false
+  zenpower ? false,
+  server ? false
 }:
 
 let
@@ -28,7 +29,7 @@ let
   # The config files for this system.
   machineConfig = ../hosts/${name}.nix;
   userOSConfig = ../users/${user}/${if darwin then "darwin" else "nixos" }.nix;
-  userHMConfig = ../users/${user}/home-manager.nix;
+  userHMConfig = ../users/${user}/${if server then "home-manager-server" else "home-manager"}.nix;
 
   # NixOS vs nix-darwin functionst
   systemFunc = if darwin then inputs.darwin.lib.darwinSystem else nixpkgs.lib.nixosSystem;

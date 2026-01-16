@@ -34,6 +34,13 @@
 
     hyprland.url = "github:hyprwm/Hyprland";
 
+    # I think technically you're not supposed to override the nixpkgs
+    # used by neovim but recently I had failures if I didn't pin to my
+    # own. We can always try to remove that anytime.
+    neovim-nightly-overlay = {
+      url = "github:nix-community/neovim-nightly-overlay";
+    };
+
     # Other packages
     # jujutsu.url = "github:martinvonz/jj";
     # zig.url = "github:mitchellh/zig-overlay";
@@ -59,6 +66,23 @@
 
           # Want the latest version of these
           nushell = pkgs-unstable.nushell;
+
+          # Fix setproctitle test failures on macOS
+          python3 = prev.python3.override {
+            packageOverrides = pyFinal: pyPrev: {
+              setproctitle = pyPrev.setproctitle.overridePythonAttrs (old: {
+                doCheck = false;
+              });
+            };
+          };
+
+          python313 = prev.python313.override {
+            packageOverrides = pyFinal: pyPrev: {
+              setproctitle = pyPrev.setproctitle.overridePythonAttrs (old: {
+                doCheck = false;
+              });
+            };
+          };
         })
     ];
 
@@ -148,6 +172,12 @@
     nixosConfigurations.github-runner = mkSystem "github-runner" {
       system = "x86_64-linux";
       user   = "joost";
+    };
+
+    nixosConfigurations.hetzner-dev = mkSystem "hetzner-dev" {
+      system = "x86_64-linux";
+      user   = "joost";
+      server = true;
     };
 
     darwinConfigurations.macbook-pro-m1 = mkSystem "macbook-pro-m1" {

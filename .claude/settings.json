@@ -5,9 +5,6 @@
       "Bash(git cherry-pick:*)",
       "Bash(nix search:*)",
       "Bash(make test:*)"
-    ],
-    "additionalDirectories": [
-      "$HOME/.local/share/chezmoi"
     ]
   },
   "enableAllProjectMcpServers": false

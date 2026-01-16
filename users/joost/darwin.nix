@@ -17,7 +17,6 @@
       "tailscale"
       "vercel-cli"
       "workos/tap/workos-cli"
-      "claude-code-router"
     ];
     casks  = [
       # handmatig installeren:
@@ -115,6 +114,7 @@
       "tdr-nova"
       "tdr-prism"
       "tdr-vos-slickeq"
+      "termius"
       "thunderbird"
       "transmission"
       "veracrypt"
