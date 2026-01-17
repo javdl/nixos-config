@@ -48,16 +48,20 @@
   nixpkgs.config.allowUnfree = true;
   nixpkgs.config.allowUnfreePredicate = _: true;
 
-  # Networking - Hetzner typically uses static IP or DHCP on main interface
-  networking.useDHCP = false;
-  networking.interfaces.eth0.useDHCP = true;  # Adjust interface name as needed
-
-  # Firewall
-  networking.firewall = {
-    enable = true;
-    allowedTCPPorts = [ 22 ];  # SSH only by default
-    # Add more ports as needed: 80 443 for web, etc.
+  # Networking - dual stack (IPv4 via DHCP + static IPv6)
+  networking.useDHCP = true;
+  networking.interfaces.enp1s0.ipv6.addresses = [{
+    address = "2a01:4f8:1c1f:ad3c::1";
+    prefixLength = 64;
+  }];
+  networking.defaultGateway6 = {
+    address = "fe80::1";
+    interface = "enp1s0";
   };
+
+  # Firewall - base config (Tailscale settings added below)
+  networking.firewall.enable = true;
+  networking.firewall.allowedTCPPorts = [ 22 ];  # SSH on public IP
 
   # SSH daemon - key-only auth for security
   services.openssh = {
@@ -149,8 +153,30 @@
   services.nscd.enable = true;
   services.dbus.enable = true;
 
-  # Tailscale for easy secure access (optional - enable with tailscale up)
-  services.tailscale.enable = true;
+  # Tailscale for secure access with SSH
+  services.tailscale = {
+    enable = true;
+    # Auth key file - create this file with your Tailscale auth key
+    # Generate at: https://login.tailscale.com/admin/settings/keys
+    # Use a reusable key with "Reusable" and optionally "Ephemeral" for servers
+    authKeyFile = "/etc/tailscale/authkey";
+    # Extra flags for tailscale up
+    extraUpFlags = [
+      "--ssh"                    # Enable Tailscale SSH
+      "--accept-routes"          # Accept routes from other nodes
+      "--accept-dns=false"       # Don't override DNS (use system DNS)
+    ];
+    # Use exit node if needed (uncomment and set to exit node hostname)
+    # extraUpFlags = [ "--ssh" "--exit-node=<exit-node>" ];
+  };
+
+  # Allow Tailscale traffic through firewall
+  networking.firewall = {
+    # Trust Tailscale interface
+    trustedInterfaces = [ "tailscale0" ];
+    # Allow Tailscale UDP port
+    allowedUDPPorts = [ config.services.tailscale.port ];
+  };
 
   # This value determines the NixOS release
   system.stateVersion = "25.05";

@@ -16,7 +16,7 @@ in {
   #---------------------------------------------------------------------
 
   home.packages = with pkgs; [
-    # Core tools
+    # Core CLI tools
     bat
     btop
     curl
@@ -37,10 +37,42 @@ in {
     unzip
     wget
     zip
+    watch
+    xh              # Modern HTTP client
+
+    # Modern CLI replacements
+    delta           # Better git diffs
+    tokei           # Code statistics
+    dust            # Disk usage analyzer
+    procs           # Better ps
+
+    # AI coding tools
+    aichat
+    amp-cli
+    claude-code
+    claude-code-router
+    codex
+    gemini-cli
+    opencode
 
     # Development
     gnumake
     gcc
+    nodejs_22
+    python3
+    poetry
+    uv
+    rustup
+    cargo-generate
+    pre-commit
+
+    # DevOps
+    cachix
+    chezmoi
+    devcontainer
+    docker-compose
+    flyctl
+    railway
 
     # Shell
     starship
@@ -91,6 +123,13 @@ in {
       key = "F4B9B085DAC0B0B1";
       signByDefault = true;
     };
+    delta = {
+      enable = true;
+      options = {
+        line-numbers = true;
+        side-by-side = true;
+      };
+    };
     aliases = {
       prettylog = "log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(r) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative";
       root = "rev-parse --show-toplevel";
@@ -102,6 +141,7 @@ in {
       credential.helper = "store";
       github.user = "javdl";
       push.default = "tracking";
+      push.autoSetupRemote = true;
       init.defaultBranch = "main";
     };
   };
@@ -124,23 +164,54 @@ in {
     viAlias = true;
     vimAlias = true;
     defaultEditor = true;
+    plugins = with pkgs.vimPlugins; [
+      claude-code-nvim
+      plenary-nvim  # dependency
+    ];
   };
 
   programs.starship = {
     enable = true;
     enableFishIntegration = true;
     enableBashIntegration = true;
+    enableZshIntegration = true;
   };
 
   programs.zoxide = {
     enable = true;
     enableFishIntegration = true;
     enableBashIntegration = true;
+    enableZshIntegration = true;
   };
 
   programs.direnv = {
     enable = true;
     nix-direnv.enable = true;
+  };
+
+  programs.jujutsu = {
+    enable = true;
+  };
+
+  programs.atuin = {
+    enable = true;
+    enableFishIntegration = true;
+    enableBashIntegration = true;
+    enableZshIntegration = true;
+    settings = {
+      show_tabs = false;
+      style = "compact";
+    };
+  };
+
+  programs.zsh = {
+    enable = true;
+    enableCompletion = true;
+    autosuggestion.enable = true;
+    syntaxHighlighting.enable = true;
+    initContent = ''
+      export GPG_TTY=$(tty)
+    '';
   };
 
   #---------------------------------------------------------------------

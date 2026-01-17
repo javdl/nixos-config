@@ -179,8 +179,12 @@ vm/switch:
 #   make hetzner/bootstrap NIXADDR=<ip>    # Copy config, apply, copy secrets
 #
 # After bootstrap:
-#   make hetzner/switch NIXADDR=<ip>       # Apply config changes
-#   ssh hetzner-dev                        # Connect (uses ~/.ssh/config)
+#   make hetzner/switch NIXADDR=<ip>       # Copy config and apply changes
+#   make hetzner/tailscale-auth NIXADDR=<ip> TAILSCALE_AUTHKEY=<key>  # Set up Tailscale
+#   ssh hetzner-dev                        # Connect via SSH
+#
+# Once Tailscale is set up:
+#   ssh joost@hetzner-dev                  # Via Tailscale SSH (no keys needed)
 
 HETZNER_SSH_OPTIONS=-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no
 
@@ -272,6 +276,24 @@ hetzner/secrets:
 	rsync -av -e 'ssh $(HETZNER_SSH_OPTIONS) -p$(NIXPORT)' \
 		--exclude='environment' \
 		$(HOME)/.ssh/ $(NIXUSER)@$(NIXADDR):~/.ssh
+
+# Set up Tailscale auth key on Hetzner
+# Generate key at: https://login.tailscale.com/admin/settings/keys
+# Use: make hetzner/tailscale-auth NIXADDR=<ip> TAILSCALE_AUTHKEY=tskey-auth-xxx
+hetzner/tailscale-auth:
+ifndef TAILSCALE_AUTHKEY
+	$(error TAILSCALE_AUTHKEY is required. Generate at https://login.tailscale.com/admin/settings/keys)
+endif
+	@echo "==> Setting up Tailscale auth key on Hetzner..."
+	ssh $(HETZNER_SSH_OPTIONS) -p$(NIXPORT) $(NIXUSER)@$(NIXADDR) " \
+		sudo mkdir -p /etc/tailscale && \
+		echo '$(TAILSCALE_AUTHKEY)' | sudo tee /etc/tailscale/authkey > /dev/null && \
+		sudo chmod 600 /etc/tailscale/authkey && \
+		echo 'Auth key saved. Restarting Tailscale...' && \
+		sudo systemctl restart tailscaled \
+	"
+	@echo "==> Tailscale auth key configured!"
+	@echo "==> Check status with: ssh $(NIXUSER)@$(NIXADDR) 'tailscale status'"
 
 # Fetch hardware config from Hetzner (run after bootstrap0, before bootstrap)
 hetzner/fetch-hardware:
