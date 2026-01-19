@@ -25,6 +25,18 @@ Software that cannot (yet) be installed via Nix or Brew or Mac App Store:
 - [Switch Spotlight hotkey to Raycast](https://manual.raycast.com/hotkey) - Raycast is a must to find GUI apps installed via Nix. Regular spotlight does not find them because it doesn't work with symlinks.
 - `skhd --install-service && skhd --start-service`
 
+### Bitwarden SSH Agent (macOS)
+
+To use Bitwarden as your SSH agent on macOS:
+
+1. Enable SSH Agent in Bitwarden Desktop app settings
+2. Set the socket path for the current session (needed for launchd services):
+   ```bash
+   launchctl setenv SSH_AUTH_SOCK "$HOME/.bitwarden-ssh-agent.sock"
+   ```
+
+The `SSH_AUTH_SOCK` environment variable is already configured in the Nix config for all shells (zsh, bash, fish, nushell).
+
 This repository contains my NixOS system configurations. This repository
 isn't meant to be a turnkey solution to copying my setup or learning Nix,
 so I want to apologize to anyone trying to look for something "easy". I've

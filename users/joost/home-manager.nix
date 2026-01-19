@@ -236,6 +236,9 @@ in {
     BROWSER = "chromium";
     PAGER = "less -R";
     LANG = "en_US.UTF-8";
+  } // lib.optionalAttrs isDarwin {
+    # Bitwarden SSH agent socket
+    SSH_AUTH_SOCK = "$HOME/.bitwarden-ssh-agent.sock";
 
     # Rose Pine theme for fzf
     # FZF_DEFAULT_OPTS = ''
