@@ -153,26 +153,26 @@
 
   system.activationScripts.postActivation.text = ''
     # Set RustRover as default editor for dev files
-    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .json all
-    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .md all
-    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .yaml all
-    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .yml all
-    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .toml all
-    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .rs all
-    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .py all
-    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .js all
-    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .ts all
-    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .tsx all
-    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .jsx all
-    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .html all
-    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .css all
-    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .scss all
-    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .nix all
-    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .sh all
-    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .txt all
-    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .xml all
-    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .sql all
-    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .go all
-    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .lua all
+    # Using || true to ignore errors for file types the app doesn't declare support for
+    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .json all || true
+    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .md all || true
+    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .yaml all || true
+    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .yml all || true
+    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .toml all || true
+    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .rs all || true
+    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .py all || true
+    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .js all || true
+    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .ts all || true
+    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .tsx all || true
+    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .jsx all || true
+    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .css all || true
+    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .scss all || true
+    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .nix all || true
+    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .sh all || true
+    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .txt all || true
+    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .xml all || true
+    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .sql all || true
+    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .go all || true
+    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .lua all || true
   '';
 }
