@@ -176,6 +176,7 @@ in {
     # tailscale # install via Brew to prevent system extension problems on macos
     transmission_4
     yubikey-manager
+    bitwarden-cli
 
     # Modern CLI tools
     delta         # Better git diff
@@ -231,8 +232,8 @@ in {
   home.sessionVariables = shared.sessionVariables // {
     NPM_CONFIG_PREFIX = "$HOME/.npm-global";
     PATH = "$HOME/.local/bin:$HOME/go/bin:$HOME/.npm-global/bin:$PATH";
-    EDITOR = "nvim";
-    VISUAL = "nvim";
+    EDITOR = "hx";
+    VISUAL = "hx";
     BROWSER = "chromium";
     PAGER = "less -R";
     LANG = "en_US.UTF-8";
@@ -1070,6 +1071,108 @@ in {
     options = [
       "--cmd cd" # Make 'cd' command use zoxide
     ];
+  };
+
+  programs.helix = {
+    enable = true;
+    defaultEditor = false;  # Keep nvim as EDITOR
+
+    settings = {
+      theme = "rose_pine";
+
+      editor = {
+        line-number = "relative";
+        cursorline = true;
+        color-modes = true;
+        true-color = true;
+        bufferline = "multiple";
+        gutters = ["diagnostics" "spacer" "line-numbers" "spacer" "diff"];
+
+        cursor-shape = {
+          insert = "bar";
+          normal = "block";
+          select = "underline";
+        };
+
+        file-picker = {
+          hidden = false;
+        };
+
+        statusline = {
+          left = ["mode" "spinner" "file-name" "file-modification-indicator"];
+          center = [];
+          right = ["diagnostics" "selections" "register" "position" "file-encoding"];
+          separator = "│";
+        };
+
+        indent-guides = {
+          render = true;
+          character = "│";
+        };
+
+        lsp = {
+          display-messages = true;
+          display-inlay-hints = true;
+        };
+
+        soft-wrap = {
+          enable = true;
+        };
+      };
+
+      keys = {
+        normal = {
+          space = {
+            f = "file_picker";
+            b = "buffer_picker";
+            s = "symbol_picker";
+            "/" = "global_search";
+          };
+          C-s = ":w";
+        };
+        insert = {
+          C-s = ":w";
+        };
+      };
+    };
+
+    languages = {
+      language-server = {
+        rust-analyzer = {
+          config = {
+            checkOnSave.command = "clippy";
+          };
+        };
+      };
+
+      language = [
+        {
+          name = "nix";
+          auto-format = true;
+          formatter.command = "nixfmt";
+        }
+        {
+          name = "rust";
+          auto-format = true;
+        }
+        {
+          name = "python";
+          auto-format = true;
+        }
+        {
+          name = "typescript";
+          auto-format = true;
+        }
+        {
+          name = "javascript";
+          auto-format = true;
+        }
+        {
+          name = "go";
+          auto-format = true;
+        }
+      ];
+    };
   };
 
   programs.nushell = {

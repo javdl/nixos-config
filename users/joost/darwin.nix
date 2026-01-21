@@ -6,11 +6,13 @@
     enable = true;
     taps = [
       "bearcove/tap"
+      "dicklesworthstone/tap"
       "workos/tap"
     ];
     brews = [
       "bearcove/tap/home"
       "codex"
+      "dicklesworthstone/tap/cass"
       "gifski" # Highest-quality GIF encoder
       "podman"
       "protobuf"
@@ -27,6 +29,7 @@
       # dirac live processor
       #
       # "bitwarden" Must be installed via Mac App Store for browser integration to work
+      # However, non-App Store version is required for SSH agent to work
       "adobe-dng-converter"
       "audio-hijack"
       # "advanced-renamer" # download fails
@@ -36,6 +39,7 @@
       "affinity-publisher"
       # "arturia-software-center" # broken or breaks existing installation
       "balenaetcher"
+      "bitwarden"
       "beeper"
       "brave-browser"
       "companion" # Bitfocus companion, Streamdeck extension and emulation software
@@ -143,4 +147,32 @@
 
   # Required for some settings like homebrew to know what user to apply to.
   system.primaryUser = "joost";
+
+  # Set default applications for file types using duti
+  environment.systemPackages = [ pkgs.duti ];
+
+  system.activationScripts.postActivation.text = ''
+    # Set RustRover as default editor for dev files
+    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .json all
+    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .md all
+    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .yaml all
+    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .yml all
+    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .toml all
+    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .rs all
+    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .py all
+    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .js all
+    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .ts all
+    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .tsx all
+    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .jsx all
+    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .html all
+    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .css all
+    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .scss all
+    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .nix all
+    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .sh all
+    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .txt all
+    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .xml all
+    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .sql all
+    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .go all
+    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .lua all
+  '';
 }
