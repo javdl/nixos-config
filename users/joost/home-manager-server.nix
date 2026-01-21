@@ -1,4 +1,4 @@
-{ isWSL, inputs, hostname ? "", ... }:
+{ isWSL, inputs, ... }:
 
 { config, lib, pkgs, ... }:
 
@@ -121,7 +121,7 @@ in {
     userEmail = "j@jlnw.nl";
     signing = {
       key = "F4B9B085DAC0B0B1";
-      signByDefault = hostname != "hetzner-dev";
+      signByDefault = false;
     };
     delta = {
       enable = true;
