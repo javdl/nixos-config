@@ -115,6 +115,10 @@
   # Locale
   i18n.defaultLocale = "en_US.UTF-8";
 
+  # Use zsh as default shell
+  programs.zsh.enable = true;
+  users.users.joost.shell = lib.mkForce pkgs.zsh;
+
   # System limits for development workloads
   boot.kernel.sysctl = {
     # Increase inotify limits for file watching (Claude Code, IDEs)

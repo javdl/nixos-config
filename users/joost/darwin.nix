@@ -43,7 +43,6 @@
       "calibre"
       "chatgpt"
       "claude"
-      "claude-code"
       "chromedriver"
       "cleanshot"
       "conductor"

@@ -230,7 +230,7 @@ in {
 
   home.sessionVariables = shared.sessionVariables // {
     NPM_CONFIG_PREFIX = "$HOME/.npm-global";
-    PATH = "$HOME/go/bin:$HOME/.npm-global/bin:$PATH";
+    PATH = "$HOME/.local/bin:$HOME/go/bin:$HOME/.npm-global/bin:$PATH";
     EDITOR = "nvim";
     VISUAL = "nvim";
     BROWSER = "chromium";
@@ -250,6 +250,13 @@ in {
     #   --border="rounded" --border-label="" --preview-window="border-rounded" --prompt="> "
     # '';
   };
+
+  # Install Claude Code CLI if not present
+  home.activation.installClaudeCode = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    if ! command -v claude &> /dev/null; then
+      $DRY_RUN_CMD bash -c "curl -fsSL https://claude.ai/install.sh | bash"
+    fi
+  '';
 
   home.file = {
     ".gdbinit".source = ./gdbinit;
