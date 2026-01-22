@@ -190,6 +190,7 @@ in {
     # zed # Broken
 
     # Node is required for Copilot.vim
+    bun
     nodejs_22
     nodePackages.firebase-tools
   ] ++ (lib.optionals isDarwin [
