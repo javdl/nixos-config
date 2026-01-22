@@ -32,9 +32,13 @@ To use Bitwarden as your SSH agent on macOS:
 1. Enable SSH Agent in Bitwarden Desktop app settings
 2. Set the socket path for the current session (needed for launchd services):
    ```bash
+   export SSH_AUTH_SOCK=$HOME/.bitwarden-ssh-agent.sock
+
+   # alternative
    launchctl setenv SSH_AUTH_SOCK "$HOME/.bitwarden-ssh-agent.sock"
 
-   export SSH_AUTH_SOCK=$HOME/.bitwarden-ssh-agent.sock
+   # test
+   ssh-add -L
    ```
 
 The `SSH_AUTH_SOCK` environment variable is already configured in the Nix config for all shells (zsh, bash, fish, nushell).
