@@ -456,9 +456,25 @@ Source: [https://discourse.nixos.org/t/macos-15-sequoia-update-clobbers-nixbld1-
 ln -s /Volumes/4TBMacData/git $HOME/git
 ```
 
-## AI coding
+## AI Coding Agent Stack
 
-## Install Claude Code
+| Problem              | Solution                                                  |
+| -------------------- | --------------------------------------------------------- |
+| User Interviews      | Granola                                                   |
+| AI Model             | Claude Opus 4.5 / GPT-5.2                                 |
+| Model Harness        | Claude Code / Cursor / Codex                              |
+| Team Conventions     | Agents.md / .cursorrules                                  |
+| Workflow Process     | Ralph Wiggum Pattern                                      |
+| Task Tracking        | Beads / Linear                                            |
+| File Conflicts       | AgentMail / Git Worktrees                                 |
+| Context Search       | CASS / grepai                                             |
+| Context Compression  | CASS Memory                                               |
+| Operating Procedures | Skills                                                    |
+| Task Optimization    | DSPy                                                      |
+| Progress Saving      | GitHub                                                    |
+| Cloud Sandbox        | TMUX + Docker + Tailscale / Claude on the Web / Codex Web |
+
+### Install Claude Code
 
 ```bash
 # Native install (recommended)
