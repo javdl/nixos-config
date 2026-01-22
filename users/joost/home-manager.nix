@@ -116,6 +116,7 @@ in {
 
     amp-cli
     codex
+    grepai # Semantic code search for AI coding assistants
 
     # Rust should be in flake.nix for each project. However, those configs do need an initial Cargo.lock.Therefore, to create new projects we want Rust globally installed.
     rustup # rust-analyzer, cargo # installed by rustup

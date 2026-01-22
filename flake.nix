@@ -60,7 +60,60 @@
             system = prev.stdenv.hostPlatform.system;
             config.allowUnfree = true;
           };
+
+          # grepai - semantic code search CLI tool
+          grepaiVersion = "0.18.0";
+          grepaiSources = {
+            "x86_64-linux" = {
+              url = "https://github.com/yoanbernabeu/grepai/releases/download/v${grepaiVersion}/grepai_${grepaiVersion}_linux_amd64.tar.gz";
+              sha256 = "388058dfeb16a5ac1fe16c03e84322404096c37e952a0653502acb98a46645a7";
+            };
+            "aarch64-linux" = {
+              url = "https://github.com/yoanbernabeu/grepai/releases/download/v${grepaiVersion}/grepai_${grepaiVersion}_linux_arm64.tar.gz";
+              sha256 = "5669815fccb66b525397deeddc498e3797a802b1155afb1e09cd7e9f412ba44f";
+            };
+            "x86_64-darwin" = {
+              url = "https://github.com/yoanbernabeu/grepai/releases/download/v${grepaiVersion}/grepai_${grepaiVersion}_darwin_amd64.tar.gz";
+              sha256 = "03e06ab3d6f2434ce439bbb32be945274e1e9c138d5d994cbf70fb42cc0c57ab";
+            };
+            "aarch64-darwin" = {
+              url = "https://github.com/yoanbernabeu/grepai/releases/download/v${grepaiVersion}/grepai_${grepaiVersion}_darwin_arm64.tar.gz";
+              sha256 = "190c6e1571917ca6f2e4fef9a53d894f39c3a80219c9a552b31c086bb9b4fc4f";
+            };
+          };
+          grepaiSource = grepaiSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for grepai: ${prev.stdenv.hostPlatform.system}");
         in {
+          # grepai - semantic code search for AI coding assistants
+          grepai = prev.stdenv.mkDerivation {
+            pname = "grepai";
+            version = grepaiVersion;
+
+            src = prev.fetchurl {
+              url = grepaiSource.url;
+              sha256 = grepaiSource.sha256;
+            };
+
+            sourceRoot = ".";
+
+            nativeBuildInputs = [ prev.gnutar ];
+
+            unpackPhase = ''
+              tar xzf $src
+            '';
+
+            installPhase = ''
+              mkdir -p $out/bin
+              cp grepai $out/bin/
+              chmod +x $out/bin/grepai
+            '';
+
+            meta = with prev.lib; {
+              description = "Semantic code search CLI tool for AI coding assistants";
+              homepage = "https://github.com/yoanbernabeu/grepai";
+              license = licenses.mit;
+              platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+            };
+          };
           # gh CLI on stable has bugs.
           gh = pkgs-unstable.gh;
 

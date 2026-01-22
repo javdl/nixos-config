@@ -12,6 +12,7 @@
     brews = [
       "bearcove/tap/home"
       "codex"
+      "dicklesworthstone/tap/bv" # beads_viewer - view BAML beads files
       "dicklesworthstone/tap/cass"
       "gifski" # Highest-quality GIF encoder
       "podman"
