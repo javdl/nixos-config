@@ -260,6 +260,18 @@ in {
     fi
   '';
 
+  # Fetch latest dotfiles from chezmoi repo (apply manually with 'chezmoi apply')
+  home.activation.chezmoiFetch = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    CHEZMOI_SOURCE="$HOME/.local/share/chezmoi"
+    if [ -d "$CHEZMOI_SOURCE" ]; then
+      echo "Fetching latest dotfiles from chezmoi repo..."
+      $DRY_RUN_CMD ${pkgs.chezmoi}/bin/chezmoi update --apply=false || true
+      echo "Run 'chezmoi diff' to see pending changes, 'chezmoi apply' to apply them."
+    else
+      echo "Chezmoi not initialized. Run: chezmoi init git@github.com:javdl/dotfiles.git"
+    fi
+  '';
+
   home.file = {
     ".gdbinit".source = ./gdbinit;
     ".inputrc".source = ./inputrc;
