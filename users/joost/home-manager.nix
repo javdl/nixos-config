@@ -104,7 +104,7 @@ in {
     # libGL # ML
     # libGLU # ML
     # libheif
-    lmstudio # Run local LLMs
+    # lmstudio # Run local LLMs - broken
     # ollama
     opencode
     railway
