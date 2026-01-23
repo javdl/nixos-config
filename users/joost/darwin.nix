@@ -14,6 +14,7 @@
       "codex"
       "dicklesworthstone/tap/bv" # beads_viewer - view BAML beads files
       "dicklesworthstone/tap/cass"
+      "dicklesworthstone/tap/cm" # CASS Memory - procedural memory system for AI agents
       "gifski" # Highest-quality GIF encoder
       "podman"
       "protobuf"
