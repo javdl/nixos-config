@@ -213,6 +213,8 @@ in {
     xfce.xfce4-terminal
     libwacom
     libinput
+    xclip           # X11 clipboard
+    wl-clipboard    # Wayland clipboard
     # bitwarden
     bitwarden-cli
     bitwarden-menu # Dmenu/rofi frontend
@@ -870,7 +872,21 @@ in {
       setw -g window-status-current-format "#[fg=#191724,bg=#403d52,nobold,nounderscore,noitalics]#[fg=#e0def4,bg=#403d52,bold] #I  #W #F #[fg=#403d52,bg=#191724,nobold,nounderscore,noitalics]"
 
       bind -n C-k send-keys "clear"\; send-keys "Enter"
-    '';
+
+      # Vi-style copy mode
+      setw -g mode-keys vi
+      bind -T copy-mode-vi v send-keys -X begin-selection
+      bind -T copy-mode-vi C-v send-keys -X rectangle-toggle
+      bind -T copy-mode-vi Escape send-keys -X cancel
+    '' + (if isDarwin then ''
+      # macOS clipboard integration
+      bind -T copy-mode-vi y send-keys -X copy-pipe-and-cancel "pbcopy"
+      bind -T copy-mode-vi MouseDragEnd1Pane send-keys -X copy-pipe-and-cancel "pbcopy"
+    '' else ''
+      # Linux clipboard integration (auto-detect Wayland vs X11)
+      bind -T copy-mode-vi y send-keys -X copy-pipe-and-cancel "if [ -n \"$WAYLAND_DISPLAY\" ]; then wl-copy; else xclip -selection clipboard; fi"
+      bind -T copy-mode-vi MouseDragEnd1Pane send-keys -X copy-pipe-and-cancel "if [ -n \"$WAYLAND_DISPLAY\" ]; then wl-copy; else xclip -selection clipboard; fi"
+    '');
   };
 
   programs.alacritty = {
