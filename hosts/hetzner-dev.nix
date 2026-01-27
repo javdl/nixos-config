@@ -16,6 +16,7 @@
     ../modules/automatic-nix-gc.nix
     ../modules/nixos-auto-update.nix
     ../modules/security-audit.nix
+    ../modules/podman.nix
   ];
 
   # Latest kernel for best hardware support
@@ -106,6 +107,13 @@
 
   # Docker for containerized development
   virtualisation.docker.enable = true;
+
+  # Podman for rootless containers (Docker alternative with better security)
+  virtualisation.podmanConfig = {
+    enable = true;
+    dockerCompat = false;  # Don't conflict with Docker
+    autoPrune = true;      # Weekly cleanup of unused images
+  };
 
   # System packages for remote development
   environment.systemPackages = with pkgs; [
