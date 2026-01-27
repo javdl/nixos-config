@@ -15,6 +15,7 @@
     ../modules/secrets.nix
     ../modules/automatic-nix-gc.nix
     ../modules/nixos-auto-update.nix
+    ../modules/security-audit.nix
   ];
 
   # Latest kernel for best hardware support
@@ -58,6 +59,14 @@
     allowReboot = false;            # Don't auto-reboot
     # For private repos, configure sshKeySecret after setting up sops
     # sshKeySecret = "github-deploy-key";
+  };
+
+  # Security auditing with auditd
+  services.securityAudit = {
+    enable = true;
+    failureMode = "printk";  # Log audit failures to kernel log
+    maxLogFile = 50;         # Rotate at 50MB
+    numLogs = 10;            # Keep 10 log files
   };
 
   # Allow unfree packages
