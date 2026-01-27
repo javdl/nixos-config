@@ -14,6 +14,7 @@
     ../modules/cachix.nix
     ../modules/secrets.nix
     ../modules/automatic-nix-gc.nix
+    ../modules/nixos-auto-update.nix
   ];
 
   # Latest kernel for best hardware support
@@ -46,6 +47,17 @@
     maxFreeGB = 100;         # Target 100GB after build-time GC
     scheduledThresholdGB = 50; # Daily check: GC if below 50GB
     keepDays = 14;           # Keep generations from last 14 days
+  };
+
+  # Automatic NixOS updates from git repository
+  services.nixosAutoUpdate = {
+    enable = true;
+    flake = "github:javdl/nixos-config#hetzner-dev";
+    dates = "04:00";                # Check at 4 AM
+    randomizedDelaySec = "30m";     # Random delay up to 30 min
+    allowReboot = false;            # Don't auto-reboot
+    # For private repos, configure sshKeySecret after setting up sops
+    # sshKeySecret = "github-deploy-key";
   };
 
   # Allow unfree packages
