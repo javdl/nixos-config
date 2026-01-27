@@ -110,6 +110,9 @@
     tree
     unzip
     zip
+
+    # Safety: require typing hostname to confirm shutdown/reboot via SSH
+    molly-guard
   ];
 
   # Locale
