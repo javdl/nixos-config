@@ -43,6 +43,7 @@ declare -A CONFIG=(
     [webhook_url]=""
     [rate_limit_pause]=60
     [checkpoint_interval]=5
+    [verbose]=false
 )
 
 # Runtime state
@@ -150,8 +151,11 @@ init_logging() {
     METRICS_FILE="$session_dir/metrics.jsonl"
 
     # Rotate old logs if too large (>10MB)
-    [[ -f "$LOG_FILE" ]] && [[ $(stat -f%z "$LOG_FILE" 2>/dev/null || stat -c%s "$LOG_FILE" 2>/dev/null || echo 0) -gt 10485760 ]] && \
-        mv "$LOG_FILE" "$LOG_FILE.$(date +%s).bak"
+    if [[ -f "$LOG_FILE" ]]; then
+        local size
+        size=$(stat -f%z "$LOG_FILE" 2>/dev/null || stat -c%s "$LOG_FILE" 2>/dev/null || echo 0)
+        [[ "$size" -gt 10485760 ]] && mv "$LOG_FILE" "$LOG_FILE.$(date +%s).bak"
+    fi
 }
 
 log() {
@@ -194,12 +198,12 @@ log_metric() {
 # TUI Components
 # ═══════════════════════════════════════════════════════════════════════════════
 
-cursor_save() { [[ "$HAS_TTY" == true ]] && tput sc; }
-cursor_restore() { [[ "$HAS_TTY" == true ]] && tput rc; }
+cursor_save() { [[ "$HAS_TTY" == true ]] && tput sc || true; }
+cursor_restore() { [[ "$HAS_TTY" == true ]] && tput rc || true; }
 cursor_hide() { [[ "$HAS_TTY" == true ]] && tput civis 2>/dev/null || true; }
 cursor_show() { [[ "$HAS_TTY" == true ]] && tput cnorm 2>/dev/null || true; }
-clear_line() { [[ "$HAS_TTY" == true ]] && printf '\r%*s\r' "$TERM_COLS" ''; }
-move_to() { [[ "$HAS_TTY" == true ]] && tput cup "$1" "$2"; }
+clear_line() { [[ "$HAS_TTY" == true ]] && printf '\r%*s\r' "$TERM_COLS" '' || true; }
+move_to() { [[ "$HAS_TTY" == true ]] && tput cup "$1" "$2" || true; }
 
 # Progress bar
 progress_bar() {
@@ -552,6 +556,7 @@ run_claude_streaming() {
     local exit_code=0
 
     # Run Claude with stream-json, process output
+    # Note: We capture PIPESTATUS immediately after pipeline to get claude's exit code
     cat "$prompt_file" | claude -p \
         --dangerously-skip-permissions \
         --model "${CONFIG[model]}" \
@@ -581,7 +586,10 @@ run_claude_streaming() {
             # Non-JSON line (verbose output), save to log
             echo "$line" >> "$output_file.verbose"
         fi
-    done || exit_code=$?
+    done
+    # Capture claude's exit code from PIPESTATUS (index 1: cat=0, claude=1, tee=2, while=3)
+    # Must be done immediately - any command resets PIPESTATUS
+    exit_code=${PIPESTATUS[1]}
 
     # Move temp file to final location
     mv "$temp_json" "$output_file.json"
@@ -782,7 +790,7 @@ run_iteration() {
     echo -e "  ${C_CYAN}${SYM_ARROW} Ready work${C_RESET}"
     local ready_count=$(beads_ready_count)
 
-    if [[ "$ready_count" == "0" ]]; then
+    if [[ -z "$ready_count" ]] || [[ "$ready_count" -eq 0 ]] 2>/dev/null; then
         echo -e "  ${C_DIM}No items ready${C_RESET}"
 
         if [[ "${CONFIG[auto_stop_empty]}" == true ]]; then
