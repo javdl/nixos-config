@@ -6,3 +6,7 @@ iso/nixos.iso
 .qodo
 backup.tar.gz
 settings.local.json
+
+# Beads local/runtime files
+.beads/daemon-error
+.beads/loop/
