@@ -1,6 +1,10 @@
 {
   description = "NixOS systems and tools by joost";
 
+  nixConfig = {
+    download-buffer-size = 536870912;  # 512 MiB, default is 64 MiB
+  };
+
   inputs = {
     # Pin our primary nixpkgs repository. This is the main nixpkgs repository
     # we'll use for our configurations. Be very careful changing this because
