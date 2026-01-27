@@ -122,6 +122,9 @@
   programs.zsh.enable = true;
   users.users.joost.shell = lib.mkForce pkgs.zsh;
 
+  # Run dynamically linked binaries (AppImages, prebuilt tools) without patchelf
+  programs.nix-ld.enable = true;
+
   # System limits for development workloads
   boot.kernel.sysctl = {
     # Increase inotify limits for file watching (Claude Code, IDEs)
