@@ -13,6 +13,7 @@
     ./hardware/hetzner-dev.nix
     ../modules/cachix.nix
     ../modules/secrets.nix
+    ../modules/automatic-nix-gc.nix
   ];
 
   # Latest kernel for best hardware support
@@ -36,13 +37,15 @@
       keep-outputs = true
       keep-derivations = true
     '';
+  };
 
-    # Garbage collection
-    gc = {
-      automatic = true;
-      randomizedDelaySec = "14m";
-      options = "--delete-older-than 30d";
-    };
+  # Disk-based garbage collection (only runs when disk space is low)
+  services.automaticNixGC = {
+    enable = true;
+    minFreeGB = 50;          # Trigger GC during builds below 50GB
+    maxFreeGB = 100;         # Target 100GB after build-time GC
+    scheduledThresholdGB = 50; # Daily check: GC if below 50GB
+    keepDays = 14;           # Keep generations from last 14 days
   };
 
   # Allow unfree packages
