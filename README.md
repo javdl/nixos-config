@@ -564,6 +564,10 @@ NIXNAME=omarchy make switch
 ## Ralph loops with beads
 
 ```bash
-./loop.sh plan        # Usually completes in 1-2 iterations, but don't run it without Human-ON-the-loop
-./loop.sh plan 3      # Max 3 iterations
+./loop.sh                      # Default build mode
+./loop.sh plan -n 5            # Plan mode, 5 iterations
+./loop.sh -i --no-push         # Interactive, no git push
+./loop.sh resume               # Resume last session
+./loop.sh list                 # Show sessions
+./loop.sh report               # Generate markdown report
 ```
