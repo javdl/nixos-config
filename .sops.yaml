@@ -1,0 +1,27 @@
+# SOPS configuration for encrypted secrets
+#
+# To add a new host:
+#   1. Get the host's SSH public key: ssh-keyscan <hostname> 2>/dev/null | grep ed25519
+#   2. Convert to age: ssh-to-age -i /path/to/ssh_host_ed25519_key.pub
+#   3. Add the age key to this file under 'keys'
+#   4. Create secrets/<hostname>.yaml
+#   5. Run: sops secrets/<hostname>.yaml
+#
+# To edit secrets: sops secrets/<hostname>.yaml
+
+keys:
+  # Admin keys (can decrypt all secrets)
+  # Add your personal age key here:
+  # - &admin_joost age1...
+
+  # Host keys (derived from SSH host keys using ssh-to-age)
+  # Run: ssh-to-age -i /etc/ssh/ssh_host_ed25519_key.pub
+  - &hetzner-dev age1PLACEHOLDER_RUN_ssh-to-age_ON_HOST
+
+creation_rules:
+  # hetzner-dev secrets
+  - path_regex: secrets/hetzner-dev\.yaml$
+    key_groups:
+      - age:
+          - *hetzner-dev
+          # - *admin_joost  # Uncomment after adding admin key

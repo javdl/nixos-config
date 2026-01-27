@@ -12,6 +12,7 @@
   imports = [
     ./hardware/hetzner-dev.nix
     ../modules/cachix.nix
+    ../modules/secrets.nix
   ];
 
   # Latest kernel for best hardware support

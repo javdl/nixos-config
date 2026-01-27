@@ -36,6 +36,10 @@
 
     fh.url = "https://flakehub.com/f/DeterminateSystems/fh/*";
 
+    # Secrets management using SOPS
+    sops-nix.url = "github:Mic92/sops-nix";
+    sops-nix.inputs.nixpkgs.follows = "nixpkgs";
+
     hyprland.url = "github:hyprwm/Hyprland";
 
     # I think technically you're not supposed to override the nixpkgs

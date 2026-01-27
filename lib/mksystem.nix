@@ -58,6 +58,9 @@ in systemFunc rec {
     # Snapd on Linux
     (if isLinux then inputs.nix-snapd.nixosModules.default else {})
 
+    # SOPS secrets management on Linux (not Darwin)
+    (if !darwin then inputs.sops-nix.nixosModules.sops else {})
+
     machineConfig
     userOSConfig
     home-manager.home-manager {
