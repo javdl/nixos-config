@@ -177,6 +177,9 @@
     "net.core.wmem_max" = 16777216;
     "net.ipv4.tcp_rmem" = "4096 87380 16777216";
     "net.ipv4.tcp_wmem" = "4096 65536 16777216";
+
+    # IPv6 forwarding for Tailscale exit node capability
+    "net.ipv6.conf.all.forwarding" = true;
   };
 
   # PAM limits
@@ -216,6 +219,7 @@
       "--ssh"                    # Enable Tailscale SSH
       "--accept-routes"          # Accept routes from other nodes
       "--accept-dns=false"       # Don't override DNS (use system DNS)
+      "--advertise-exit-node"    # Allow other devices to use this as exit node
     ];
     # Use exit node if needed (uncomment and set to exit node hostname)
     # extraUpFlags = [ "--ssh" "--exit-node=<exit-node>" ];
