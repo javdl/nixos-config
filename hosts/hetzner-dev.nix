@@ -141,7 +141,10 @@
   # Run dynamically linked binaries (AppImages, prebuilt tools) without patchelf
   programs.nix-ld.enable = true;
 
-  # System limits for development workloads
+  # Load BBR TCP congestion control module
+  boot.kernelModules = [ "tcp_bbr" ];
+
+  # System limits and performance tuning
   boot.kernel.sysctl = {
     # Increase inotify limits for file watching (Claude Code, IDEs)
     "fs.inotify.max_user_watches" = 524288;
@@ -150,8 +153,21 @@
     # Increase file descriptor limits
     "fs.file-max" = 2097152;
 
+    # Process limits (64-bit max)
+    "kernel.pid_max" = 4194303;
+
     # Network optimizations
     "net.core.somaxconn" = 65535;
+
+    # TCP BBR congestion control (better performance, especially on lossy networks)
+    "net.ipv4.tcp_congestion_control" = "bbr";
+    "net.core.default_qdisc" = "fq";
+
+    # Larger socket buffers for high-throughput connections
+    "net.core.rmem_max" = 16777216;
+    "net.core.wmem_max" = 16777216;
+    "net.ipv4.tcp_rmem" = "4096 87380 16777216";
+    "net.ipv4.tcp_wmem" = "4096 65536 16777216";
   };
 
   # PAM limits
