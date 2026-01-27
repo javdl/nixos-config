@@ -560,3 +560,10 @@ determinate-nixd login
 
 NIXNAME=omarchy make switch
 ```
+
+## Ralph loops with beads
+
+```bash
+./loop.sh plan        # Usually completes in 1-2 iterations, but don't run it without Human-ON-the-loop
+./loop.sh plan 3      # Max 3 iterations
+```
