@@ -5,6 +5,17 @@
 [![Flake ❄️ Checker ✅](https://github.com/javdl/nixos-config/actions/workflows/flake-checker.yml/badge.svg)](https://github.com/javdl/nixos-config/actions/workflows/flake-checker.yml)
 [![Flake ❄️ Lock 🔒️ Updater ✨](https://github.com/javdl/nixos-config/actions/workflows/lock-updater.yml/badge.svg)](https://github.com/javdl/nixos-config/actions/workflows/lock-updater.yml)
 
+This repository contains my NixOS system configurations. This repository
+isn't meant to be a turnkey solution to copying my setup or learning Nix,
+so I want to apologize to anyone trying to look for something "easy". I've
+tried to use very simple Nix practices wherever possible, but if you wish
+to copy from this, you'll have to learn the basics of Nix, NixOS, etc.
+
+I don't claim to be an expert at Nix or NixOS, so there are certainly
+improvements that could be made! Feel free to suggest them, but please don't
+be offended if I don't integrate them, I value having my config work over
+having it be optimal.
+
 This is an adaptation of [Mitchell Hashimoto's nixos-config repo](https://github.com/mitchellh/nixos-config)
 
 Some things I have added or changed:
@@ -16,17 +27,6 @@ TODO
 
 - CUDA / CuDNN support on bare metal
 - Window manager i3 from the original repo does not seem to work, it uses Gnome by default. Maybe want to set up i3 or Hyprland.
-
-This repository contains my NixOS system configurations. This repository
-isn't meant to be a turnkey solution to copying my setup or learning Nix,
-so I want to apologize to anyone trying to look for something "easy". I've
-tried to use very simple Nix practices wherever possible, but if you wish
-to copy from this, you'll have to learn the basics of Nix, NixOS, etc.
-
-I don't claim to be an expert at Nix or NixOS, so there are certainly
-improvements that could be made! Feel free to suggest them, but please don't
-be offended if I don't integrate them, I value having my config work over
-having it be optimal.
 
 ### Manual install
 
