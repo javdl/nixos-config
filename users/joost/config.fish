@@ -86,31 +86,31 @@ funcsave fish_greeting
 set -g theme_color_scheme user
 
 # Rose Pine color scheme
-set -U fish_color_normal e0def4
-set -U fish_color_command 9ccfd8
-set -U fish_color_quote f6c177
-set -U fish_color_redirection ebbcba
-set -U fish_color_end eb6f92
-set -U fish_color_error eb6f92
-set -U fish_color_param e0def4
-set -U fish_color_comment 6e6a86
-set -U fish_color_match --background=403d52
-set -U fish_color_selection e0def4 --bold --background=403d52
-set -U fish_color_search_match --background=403d52
-set -U fish_color_history_current --bold
-set -U fish_color_operator c4a7e7
-set -U fish_color_escape ebbcba
-set -U fish_color_cwd 9ccfd8
-set -U fish_color_cwd_root eb6f92
-set -U fish_color_valid_path --underline
-set -U fish_color_autosuggestion 6e6a86
-set -U fish_color_user 31748f
-set -U fish_color_host e0def4
-set -U fish_color_cancel eb6f92
-set -U fish_pager_color_completion e0def4
-set -U fish_pager_color_description 6e6a86
-set -U fish_pager_color_prefix e0def4 --bold --underline
-set -U fish_pager_color_progress e0def4 --background=c4a7e7
+set -g fish_color_normal e0def4
+set -g fish_color_command 9ccfd8
+set -g fish_color_quote f6c177
+set -g fish_color_redirection ebbcba
+set -g fish_color_end eb6f92
+set -g fish_color_error eb6f92
+set -g fish_color_param e0def4
+set -g fish_color_comment 6e6a86
+set -g fish_color_match --background=403d52
+set -g fish_color_selection e0def4 --bold --background=403d52
+set -g fish_color_search_match --background=403d52
+set -g fish_color_history_current --bold
+set -g fish_color_operator c4a7e7
+set -g fish_color_escape ebbcba
+set -g fish_color_cwd 9ccfd8
+set -g fish_color_cwd_root eb6f92
+set -g fish_color_valid_path --underline
+set -g fish_color_autosuggestion 6e6a86
+set -g fish_color_user 31748f
+set -g fish_color_host e0def4
+set -g fish_color_cancel eb6f92
+set -g fish_pager_color_completion e0def4
+set -g fish_pager_color_description 6e6a86
+set -g fish_pager_color_prefix e0def4 --bold --underline
+set -g fish_pager_color_progress e0def4 --background=c4a7e7
 
 # Rose Pine colors for bobthefish theme
 set -g theme_color_dark_black 26233a

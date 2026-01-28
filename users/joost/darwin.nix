@@ -67,6 +67,8 @@
       "figma"
       "firefox"
       "imazing-profile-editor"
+      "insync"
+      "istat-menus"
       "jetbrains-gateway"
       "jetbrains-toolbox"
       # "github" # only Intel, arm64 must be downloaded from website
@@ -80,7 +82,6 @@
       "hammerspoon"
       "ilok-license-manager"
       "imageoptim"
-      "istat-menus"
       "izotope-product-portal"
       "kobo"
       "licecap"
@@ -106,6 +107,7 @@
       "screenflow"
       "signal"
       "softube-central" # ua connect NA
+      "stats" # macOS system monitor in menu bar
       # "soundtoys" broken / needs check
       "soundsource" # Rogue Amoeba, allows headphone EQ presets
       # "screenpipe" outdated on brew
@@ -118,7 +120,6 @@
       "tdr-molotok"
       "tdr-nova"
       "tdr-prism"
-      "tdr-vos-slickeq"
       "termius"
       "thunderbird"
       "transmission"
