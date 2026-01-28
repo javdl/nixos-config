@@ -17,6 +17,17 @@ TODO
 - CUDA / CuDNN support on bare metal
 - Window manager i3 from the original repo does not seem to work, it uses Gnome by default. Maybe want to set up i3 or Hyprland.
 
+This repository contains my NixOS system configurations. This repository
+isn't meant to be a turnkey solution to copying my setup or learning Nix,
+so I want to apologize to anyone trying to look for something "easy". I've
+tried to use very simple Nix practices wherever possible, but if you wish
+to copy from this, you'll have to learn the basics of Nix, NixOS, etc.
+
+I don't claim to be an expert at Nix or NixOS, so there are certainly
+improvements that could be made! Feel free to suggest them, but please don't
+be offended if I don't integrate them, I value having my config work over
+having it be optimal.
+
 ### Manual install
 
 Software that cannot (yet) be installed via Nix or Brew or Mac App Store:
@@ -43,16 +54,8 @@ To use Bitwarden as your SSH agent on macOS:
 
 The `SSH_AUTH_SOCK` environment variable is already configured in the Nix config for all shells (zsh, bash, fish, nushell).
 
-This repository contains my NixOS system configurations. This repository
-isn't meant to be a turnkey solution to copying my setup or learning Nix,
-so I want to apologize to anyone trying to look for something "easy". I've
-tried to use very simple Nix practices wherever possible, but if you wish
-to copy from this, you'll have to learn the basics of Nix, NixOS, etc.
-
-I don't claim to be an expert at Nix or NixOS, so there are certainly
-improvements that could be made! Feel free to suggest them, but please don't
-be offended if I don't integrate them, I value having my config work over
-having it be optimal.
+#### Known Issues
+App Store macOS version has socket bugs—use DMG/brew install instead. 
 
 ## How I Work
 
