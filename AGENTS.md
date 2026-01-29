@@ -125,6 +125,36 @@ If nixbld users missing, run the migration script from NixOS/nix repository
 - `users/joost/home-manager.nix`: Main user package list
 - `users/shared-home-manager.nix`: Shared user settings
 
+## Adding Claude Code Skills to Chezmoi
+
+Skills live in `~/.claude/skills/` and are managed by chezmoi under `dot_claude/skills/` in the [dotfiles repo](https://github.com/javdl/dotfiles).
+
+### Adding a new skill
+
+```bash
+# Copy skill into chezmoi source directory
+cp -R ~/.claude/skills/<skill-name> ~/.local/share/chezmoi/dot_claude/skills/<skill-name>
+
+# If the skill is a symlink (e.g. from ~/.agents/skills/), copy the target instead
+cp -R ~/.agents/skills/<skill-name> ~/.local/share/chezmoi/dot_claude/skills/<skill-name>
+
+# Commit and push
+cd ~/.local/share/chezmoi
+jj file track dot_claude/skills/<skill-name>
+jj describe -m "Add <skill-name> skill"
+jj git push
+```
+
+> **Note:** `chezmoi add` may error due to inconsistent state with plugins. Copying directly into the chezmoi source directory works reliably.
+
+### Syncing skills to a new machine
+
+```bash
+chezmoi init --apply --verbose git@github.com:javdl/dotfiles.git
+```
+
+Skills are applied to `~/.claude/skills/` automatically. Home-manager also runs `chezmoi update` on every `make switch` (see `users/joost/home-manager.nix`).
+
 ## Landing the Plane (Session Completion)
 
 **When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
