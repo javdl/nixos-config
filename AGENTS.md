@@ -9,7 +9,7 @@ Run `bd prime` for workflow context, or install hooks (`bd hooks install`) for a
 - `bd ready` - Find unblocked work
 - `bd create "Title" --type task --priority 2` - Create issue
 - `bd close <id>` - Complete work
-- `bd sync` - Sync with git (run at session end)
+- `bd sync` - Sync with jj/git (run at session end)
 
 For full workflow details: `bd prime`
 
@@ -34,6 +34,14 @@ This is a NixOS/nix-darwin configuration repository using Nix flakes. It manages
 - `make vm/bootstrap` - Complete VM setup with configurations
 - `make vm/copy` - Copy configs to VM
 - `make vm/switch` - Apply changes in VM
+
+### Hetzner Dev Box
+- `make hetzner/copy NIXADDR=<ip>` - Copy config to Hetzner server
+- `make hetzner/switch NIXADDR=<ip> NIXNAME=hetzner-dev` - Apply NixOS config on Hetzner
+- `make hetzner/bootstrap0 NIXADDR=<ip>` - Initial NixOS install (Hetzner box must be in rescue mode)
+- `make hetzner/bootstrap NIXADDR=<ip>` - Complete setup after bootstrap0
+- `make hetzner/secrets NIXADDR=<ip>` - Copy SSH/GPG keys to server
+- `make hetzner/tailscale-auth NIXADDR=<ip> TAILSCALE_AUTHKEY=<key>` - Set up Tailscale
 
 ## Architecture
 
@@ -81,7 +89,7 @@ The repository uses a modular architecture with clear separation of concerns:
 1. Run `make test` before applying changes
 2. Check for evaluation errors
 3. Apply with `make switch` when ready
-4. For new hosts, files must be in git: `git add .`
+4. For new hosts, files must be tracked: `jj file track .`
 
 ## Package Management
 
