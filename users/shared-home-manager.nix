@@ -11,16 +11,7 @@ let
 in {
   # Common shell aliases for both users
   shellAliases = {
-    # Git aliases
-    ga = "git add";
-    gc = "git commit";
-    gco = "git checkout";
-    gcp = "git cherry-pick";
-    gdiff = "git diff";
-    gl = "git prettylog";
-    gp = "git push";
-    gs = "git status";
-
+    # Jujutsu aliases
     jd = "jj desc";
     jf = "jj git fetch";
     jn = "jj new";
