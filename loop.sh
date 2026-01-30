@@ -8,7 +8,7 @@
 #   - Live token streaming & cost tracking
 #   - Webhooks & integrations
 #   - Interactive approval mode
-#   - Rich git diff display
+#   - Rich jj diff display
 #   - Automatic rate limit handling
 #   - Report generation
 #
@@ -22,14 +22,14 @@ readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Constants & Defaults
 # ═══════════════════════════════════════════════════════════════════════════════
 
-readonly STATE_DIR=".beads/loop"
-readonly CONFIG_FILE=".beads/loop.toml"
+readonly STATE_DIR=".ralph"
+readonly CONFIG_FILE=".ralph/config.toml"
 readonly HISTORY_FILE="$STATE_DIR/history.jsonl"
 
 # Default configuration
 declare -A CONFIG=(
     [mode]="build"
-    [max_iterations]=0
+    [max_iterations]=500
     [model]="opus"
     [delay]=3
     [max_retries]=2
@@ -44,6 +44,10 @@ declare -A CONFIG=(
     [rate_limit_pause]=60
     [checkpoint_interval]=5
     [verbose]=false
+    [review_enabled]=true
+    [review_model]="gpt-5.2-codex"
+    [review_max_revisions]=5
+    [epic]=""
 )
 
 # Runtime state
@@ -57,6 +61,9 @@ declare -A STATE=(
     [status]="initializing"
     [paused]=false
     [interrupted]=false
+    [review_passes]=0
+    [review_revisions]=0
+    [review_skipped]=0
 )
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -308,6 +315,12 @@ draw_status_bar() {
     printf "%s %s" "$SYM_CLOCK" "$elapsed_fmt"
     printf " ${C_DIM}│${C_RESET} "
     printf "${C_GREEN}$%s${C_RESET}" "${STATE[total_cost]}"
+    if [[ "${CONFIG[review_enabled]}" == true ]]; then
+        printf " ${C_DIM}│${C_RESET} "
+        printf "${C_GREEN}%d${C_RESET}${C_DIM}S${C_RESET}" "${STATE[review_passes]}"
+        printf "/${C_YELLOW}%d${C_RESET}${C_DIM}R${C_RESET}" "${STATE[review_revisions]}"
+        [[ ${STATE[review_skipped]} -gt 0 ]] && printf "/${C_GRAY}%d${C_RESET}${C_DIM}?${C_RESET}" "${STATE[review_skipped]}"
+    fi
     printf " ${C_DIM}│${C_RESET}"
     echo ""
 }
@@ -422,29 +435,33 @@ EOF
 }
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# Git Operations
+# VCS Operations (jj/Jujutsu)
 # ═══════════════════════════════════════════════════════════════════════════════
 
-git_branch() {
-    git branch --show-current 2>/dev/null || echo "detached"
+vcs_branch() {
+    jj log -r @ --no-graph -T 'bookmarks' 2>/dev/null | head -1 || echo "none"
 }
 
-git_commit_short() {
-    git rev-parse --short HEAD 2>/dev/null || echo "unknown"
+vcs_commit_short() {
+    jj log -r @ --no-graph -T 'change_id.shortest(8)' 2>/dev/null || echo "unknown"
 }
 
-git_is_dirty() {
-    [[ -n "$(git status --porcelain 2>/dev/null)" ]]
+vcs_is_dirty() {
+    # In jj, the working copy is always a commit; check if it has changes
+    local status
+    status=$(jj diff --stat 2>/dev/null)
+    [[ -n "$status" ]]
 }
 
-git_changes_summary() {
-    local from_commit="$1"
-    local to_commit="${2:-HEAD}"
+vcs_changes_summary() {
+    local from_change="$1"
+    local to_change="${2:-@}"
 
-    [[ "$from_commit" == "$to_commit" ]] && return
+    [[ "$from_change" == "$to_change" ]] && return
 
     local output=""
-    local files=$(git diff --name-only "$from_commit".."$to_commit" 2>/dev/null)
+    local files
+    files=$(jj diff --from "$from_change" --to "$to_change" --name-only 2>/dev/null)
     local file_count=$(echo "$files" | grep -c . 2>/dev/null || echo 0)
 
     [[ $file_count -eq 0 ]] && return
@@ -454,9 +471,10 @@ git_changes_summary() {
     while IFS= read -r file; do
         [[ -z "$file" ]] && continue
 
-        local stat=$(git diff --numstat "$from_commit".."$to_commit" -- "$file" 2>/dev/null)
-        local added=$(echo "$stat" | awk '{print $1}')
-        local removed=$(echo "$stat" | awk '{print $2}')
+        local stat
+        stat=$(jj diff --from "$from_change" --to "$to_change" --stat -- "$file" 2>/dev/null | head -1)
+        local added=$(echo "$stat" | grep -oE '[0-9]+ insertion' | grep -oE '[0-9]+' || echo 0)
+        local removed=$(echo "$stat" | grep -oE '[0-9]+ deletion' | grep -oE '[0-9]+' || echo 0)
 
         # File type icon
         local icon="📄"
@@ -484,22 +502,18 @@ git_changes_summary() {
     [[ $file_count -gt 8 ]] && output+="  ${C_DIM}... and $((file_count - 8)) more files${C_RESET}\n"
 
     # Summary stats
-    local total_stats=$(git diff --stat "$from_commit".."$to_commit" 2>/dev/null | tail -1)
+    local total_stats
+    total_stats=$(jj diff --from "$from_change" --to "$to_change" --stat 2>/dev/null | tail -1)
     [[ -n "$total_stats" ]] && output+="${C_DIM}  $total_stats${C_RESET}\n"
 
     echo -e "$output"
 }
 
-git_push() {
+vcs_push() {
     [[ "${CONFIG[push_enabled]}" != true ]] && return 0
 
-    local branch=$(git_branch)
-
-    if git push origin "$branch" 2>/dev/null; then
-        log DEBUG "Pushed to origin/$branch"
-        return 0
-    elif git push -u origin "$branch" 2>/dev/null; then
-        log DEBUG "Pushed (set upstream) to origin/$branch"
+    if jj git push 2>/dev/null; then
+        log DEBUG "Pushed via jj git push"
         return 0
     fi
 
@@ -526,13 +540,17 @@ beads_check() {
 }
 
 beads_ready_count() {
-    bd ready --json 2>/dev/null | jq -r 'length' 2>/dev/null || echo "0"
+    local epic_flag=""
+    [[ -n "${CONFIG[epic]}" ]] && epic_flag="--parent ${CONFIG[epic]}"
+    bd ready --json $epic_flag 2>/dev/null | jq -r 'length' 2>/dev/null || echo "0"
 }
 
 beads_ready_items() {
     local limit=${1:-5}
-    bd ready --json 2>/dev/null | jq -r ".[:$limit][] | \"  ${SYM_BULLET} \" + .title" 2>/dev/null || \
-        bd ready --limit "$limit" 2>/dev/null
+    local epic_flag=""
+    [[ -n "${CONFIG[epic]}" ]] && epic_flag="--parent ${CONFIG[epic]}"
+    bd ready --json $epic_flag 2>/dev/null | jq -r ".[:$limit][] | \"  ${SYM_BULLET} \" + .title" 2>/dev/null || \
+        bd ready --limit "$limit" $epic_flag 2>/dev/null
 }
 
 beads_sync() {
@@ -642,9 +660,12 @@ run_claude_with_retry() {
     local max_attempts=$((CONFIG[max_retries] + 1))
 
     while [[ $attempt -le $max_attempts ]]; do
+        [[ "${STATE[interrupted]}" == true ]] && return 1
+
         if [[ $attempt -gt 1 ]]; then
             log WARN "Retry $((attempt-1))/${CONFIG[max_retries]} in ${CONFIG[retry_delay]}s..."
-            sleep "${CONFIG[retry_delay]}"
+            sleep "${CONFIG[retry_delay]}" || true
+            [[ "${STATE[interrupted]}" == true ]] && return 1
         fi
 
         local exit_code=0
@@ -660,12 +681,15 @@ run_claude_with_retry() {
             exit_code=$?
         fi
 
+        [[ "${STATE[interrupted]}" == true ]] && return 1
+
         echo ""
 
         # Check for rate limit
         if grep -qi "rate.limit\|429\|too.many.requests" "$output_file.verbose" 2>/dev/null; then
             log WARN "Rate limited. Waiting ${CONFIG[rate_limit_pause]}s..."
-            sleep "${CONFIG[rate_limit_pause]}"
+            sleep "${CONFIG[rate_limit_pause]}" || true
+            [[ "${STATE[interrupted]}" == true ]] && return 1
         fi
 
         log ERROR "Claude exited with code $exit_code"
@@ -673,6 +697,102 @@ run_claude_with_retry() {
     done
 
     return 1
+}
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Review Phase
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Run review using codex exec. Returns 0=SHIP, 1=REVISE, 2=parse failure, 3=fatal error
+run_review() {
+    local iter_log="$1"
+    local review_file="${iter_log}.review"
+    local feedback_file="${iter_log}.review_feedback"
+
+    local review_model="${CONFIG[review_model]}"
+    local prompt_file="${SCRIPT_DIR}/PROMPT_review.md"
+
+    [[ ! -f "$prompt_file" ]] && { log WARN "Review prompt not found: $prompt_file"; return 2; }
+
+    # Check that codex command exists
+    if ! command -v codex &>/dev/null; then
+        log ERROR "codex command not found - install it or use --no-review"
+        return 3
+    fi
+
+    # Build review input: jj diff + task context
+    local review_input
+    review_input=$(mktemp)
+    {
+        echo "## Diff (latest changes)"
+        echo '```'
+        jj diff -r @- 2>/dev/null || jj diff 2>/dev/null || echo "(no diff available)"
+        echo '```'
+        echo ""
+        echo "## In-progress tasks"
+        bd list --status in_progress 2>/dev/null || echo "(none)"
+        echo ""
+        cat "$prompt_file"
+    } > "$review_input"
+
+    log INFO "  ${C_MAGENTA}${SYM_GEAR} Running review${C_RESET} ${C_DIM}(${review_model})${C_RESET}"
+
+    # Invoke codex exec in read-only sandbox, full-auto mode
+    local exit_code=0
+    if codex exec \
+        --model "$review_model" \
+        --sandbox read-only \
+        --full-auto \
+        < "$review_input" \
+        > "$review_file" 2>&1; then
+        exit_code=0
+    else
+        exit_code=$?
+        log WARN "codex exec exited with code $exit_code"
+    fi
+
+    rm -f "$review_input"
+
+    # Detect fatal errors (auth failures, connection errors, unsupported model)
+    # These should stop the loop, not silently skip review
+    if [[ $exit_code -ne 0 ]] && [[ -f "$review_file" ]]; then
+        if grep -qiE '401 Unauthorized|403 Forbidden|exceeded retry limit|not supported|authentication|invalid.*api.*key' "$review_file"; then
+            log ERROR "Review failed with auth/connection error (codex exit code $exit_code):"
+            grep -iE 'ERROR:|Unauthorized|Forbidden|exceeded|not supported|authentication|invalid' "$review_file" | head -3 | while IFS= read -r line; do
+                log ERROR "  $line"
+            done
+            return 3
+        fi
+    fi
+
+    # Check if output file has content
+    if [[ ! -s "$review_file" ]]; then
+        if [[ $exit_code -ne 0 ]]; then
+            log ERROR "Review produced no output (codex exit code $exit_code)"
+            return 3
+        fi
+        log WARN "Review produced no output"
+        return 2
+    fi
+
+    # Parse RESULT line
+    local result_line
+    result_line=$(grep -E '^RESULT:\s*(SHIP|REVISE)' "$review_file" | tail -1)
+
+    if [[ -z "$result_line" ]]; then
+        log WARN "Could not parse review result from output"
+        return 2
+    fi
+
+    if echo "$result_line" | grep -q 'SHIP'; then
+        log SUCCESS "Review: ${C_GREEN}SHIP${C_RESET}"
+        return 0
+    else
+        log WARN "Review: ${C_YELLOW}REVISE${C_RESET}"
+        # Save feedback (everything before the RESULT line)
+        sed '/^RESULT:/d' "$review_file" > "$feedback_file"
+        return 1
+    fi
 }
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -705,14 +825,21 @@ session_save() {
     "total_cost": ${STATE[total_cost]},
     "start_time": ${STATE[start_time]},
     "status": "${STATE[status]}",
+    "review": {
+        "enabled": ${CONFIG[review_enabled]},
+        "model": "${CONFIG[review_model]}",
+        "passes": ${STATE[review_passes]},
+        "revisions": ${STATE[review_revisions]},
+        "skipped": ${STATE[review_skipped]}
+    },
     "config": {
         "mode": "${CONFIG[mode]}",
         "model": "${CONFIG[model]}",
         "max_iterations": ${CONFIG[max_iterations]}
     },
-    "git": {
-        "branch": "$(git_branch)",
-        "commit": "$(git_commit_short)"
+    "vcs": {
+        "bookmark": "$(vcs_branch)",
+        "change": "$(vcs_commit_short)"
     },
     "updated_at": "$(date -Iseconds)"
 }
@@ -772,7 +899,8 @@ run_iteration() {
     local iter_start=$(date +%s)
     local session_dir="$STATE_DIR/sessions/${STATE[session_id]}"
     local iter_log="$session_dir/iter_$(printf '%03d' $iter_num)"
-    local before_commit=$(git rev-parse HEAD 2>/dev/null)
+    local before_commit
+    before_commit=$(jj log -r @ --no-graph -T 'commit_id.shortest(12)' 2>/dev/null || echo "unknown")
 
     STATE[status]="running"
     session_save
@@ -780,7 +908,7 @@ run_iteration() {
     # Header
     echo ""
     echo -e "${C_BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${C_RESET}"
-    echo -e "${C_BOLD}  ITERATION $iter_num${C_RESET}  ${C_DIM}$(date '+%H:%M:%S')${C_RESET}  ${C_DIM}commit:${C_RESET} $(git_commit_short)"
+    echo -e "${C_BOLD}  ITERATION $iter_num${C_RESET}  ${C_DIM}$(date '+%H:%M:%S')${C_RESET}  ${C_DIM}commit:${C_RESET} $(vcs_commit_short)"
     echo -e "${C_BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${C_RESET}"
 
     # Sync and show ready work
@@ -822,24 +950,130 @@ run_iteration() {
 
     [[ ! -f "$prompt_file" ]] && { log ERROR "Prompt file not found: $prompt_file"; return 1; }
 
-    # Run Claude
-    echo ""
-    echo -e "  ${C_CYAN}${SYM_ARROW} Running Claude${C_RESET} ${C_DIM}(${CONFIG[model]})${C_RESET}"
-
-    if ! run_claude_with_retry "$prompt_file" "$iter_log"; then
-        STATE[consecutive_failures]=$((STATE[consecutive_failures] + 1))
-        STATE[status]="failed"
-        log_metric "status" "\"failed\""
-
-        if [[ ${STATE[consecutive_failures]} -ge ${CONFIG[auto_stop_failures]} ]]; then
-            log ERROR "${STATE[consecutive_failures]} consecutive failures"
-            return 2
-        fi
-
-        return 1
+    # If --epic is set, prepend epic context to the prompt
+    if [[ -n "${CONFIG[epic]}" ]]; then
+        local epic_prompt_file=$(mktemp)
+        {
+            echo "## Epic Context"
+            echo "You are working within epic \`${CONFIG[epic]}\`. Scope all task selection to this epic."
+            echo "Use \`bd ready --json --limit 1 --type task --parent ${CONFIG[epic]}\` instead of the default bd ready call."
+            echo "If no tasks are found, try \`bd ready --json --limit 1 --type bug --parent ${CONFIG[epic]}\`."
+            echo ""
+            cat "$prompt_file"
+        } > "$epic_prompt_file"
+        prompt_file="$epic_prompt_file"
     fi
 
-    STATE[consecutive_failures]=0
+    # Run Claude (with optional review-revision loop)
+    local revision=0
+    local max_revisions=${CONFIG[review_max_revisions]}
+    local review_shipped=false
+    local active_prompt_file="$prompt_file"
+
+    while true; do
+        revision=$((revision + 1))
+
+        # Capture VCS state before Claude runs so we can detect changes
+        local pre_claude_commit
+        pre_claude_commit=$(jj log -r @ --no-graph -T 'commit_id.shortest(12)' 2>/dev/null || echo "unknown")
+
+        [[ "${STATE[interrupted]}" == true ]] && break
+
+        if [[ $revision -gt 1 ]]; then
+            echo ""
+            echo -e "  ${C_YELLOW}${SYM_ARROW} Revision $((revision - 1))/${max_revisions}${C_RESET} ${C_DIM}(incorporating review feedback)${C_RESET}"
+        else
+            echo ""
+            echo -e "  ${C_CYAN}${SYM_ARROW} Running Claude${C_RESET} ${C_DIM}(${CONFIG[model]})${C_RESET}"
+        fi
+
+        if ! run_claude_with_retry "$active_prompt_file" "$iter_log"; then
+            [[ "${STATE[interrupted]}" == true ]] && return 1
+            STATE[consecutive_failures]=$((STATE[consecutive_failures] + 1))
+            STATE[status]="failed"
+            log_metric "status" "\"failed\""
+
+            if [[ ${STATE[consecutive_failures]} -ge ${CONFIG[auto_stop_failures]} ]]; then
+                log ERROR "${STATE[consecutive_failures]} consecutive failures"
+                return 2
+            fi
+
+            return 1
+        fi
+
+        STATE[consecutive_failures]=0
+
+        # Check if Claude actually changed anything (new commit or dirty worktree)
+        local post_claude_commit
+        post_claude_commit=$(jj log -r @ --no-graph -T 'commit_id.shortest(12)' 2>/dev/null || echo "unknown")
+        local has_changes=false
+        if [[ "$pre_claude_commit" != "$post_claude_commit" ]]; then
+            has_changes=true
+        elif vcs_is_dirty; then
+            has_changes=true
+        fi
+
+        # Review phase
+        if [[ "${CONFIG[review_enabled]}" == true ]]; then
+            # Skip re-review if Claude made no changes (same diff = same verdict)
+            if [[ $revision -gt 1 ]] && [[ "$has_changes" != true ]]; then
+                log WARN "No new changes after revision, proceeding without re-review"
+                break
+            fi
+
+            local review_result=0
+            run_review "$iter_log" || review_result=$?
+
+            case $review_result in
+                0)  # SHIP
+                    review_shipped=true
+                    STATE[review_passes]=$(( ${STATE[review_passes]:-0} + 1 ))
+                    break
+                    ;;
+                1)  # REVISE
+                    STATE[review_revisions]=$(( ${STATE[review_revisions]:-0} + 1 ))
+                    if [[ $((revision)) -ge $max_revisions ]]; then
+                        log WARN "Max revisions ($max_revisions) reached, proceeding anyway"
+                        break
+                    fi
+                    # Build a new prompt that includes the review feedback
+                    local feedback_file="${iter_log}.review_feedback"
+                    if [[ -f "$feedback_file" ]]; then
+                        active_prompt_file=$(mktemp)
+                        {
+                            cat "$prompt_file"
+                            echo ""
+                            echo "## Review Feedback (revision $revision)"
+                            echo "The previous attempt was reviewed and needs revision. Address this feedback:"
+                            echo ""
+                            cat "$feedback_file"
+                        } > "$active_prompt_file"
+                    fi
+                    continue
+                    ;;
+                2)  # Parse failure
+                    log WARN "Review parse failure, proceeding without review"
+                    STATE[review_skipped]=$(( ${STATE[review_skipped]:-0} + 1 ))
+                    break
+                    ;;
+                3)  # Fatal error (auth, connection, missing codex)
+                    log ERROR "Review failed with fatal error - stopping loop"
+                    log ERROR "Fix the issue and retry, or use --no-review to skip reviews"
+                    return 2  # Signal stop to main loop
+                    ;;
+            esac
+        else
+            STATE[review_skipped]=$(( ${STATE[review_skipped]:-0} + 1 ))
+            break
+        fi
+    done
+
+    # Clean up temp prompt files if created
+    [[ "$active_prompt_file" != "$prompt_file" ]] && [[ -f "$active_prompt_file" ]] && rm -f "$active_prompt_file"
+    [[ -n "${CONFIG[epic]}" ]] && [[ -n "${epic_prompt_file:-}" ]] && [[ -f "${epic_prompt_file:-}" ]] && rm -f "$epic_prompt_file"
+
+    local revisions_done=$((revision - 1))
+    log_metric "revisions" "$revisions_done"
 
     # Parse metrics
     local metrics=$(parse_claude_metrics "$iter_log")
@@ -859,13 +1093,22 @@ run_iteration() {
     printf "  ${C_DIM}Duration:${C_RESET} %-12s" "$(format_duration $iter_duration)"
     printf "${C_DIM}Tokens:${C_RESET} %-10s" "$(format_number $tokens)"
     printf "${C_DIM}Cost:${C_RESET} \$%s\n" "$cost"
+    if [[ "${CONFIG[review_enabled]}" == true ]]; then
+        if [[ "$review_shipped" == true ]]; then
+            printf "  ${C_DIM}Review:${C_RESET} ${C_GREEN}SHIP${C_RESET}"
+        else
+            printf "  ${C_DIM}Review:${C_RESET} ${C_YELLOW}max revisions reached${C_RESET}"
+        fi
+        [[ $revisions_done -gt 0 ]] && printf " ${C_DIM}(%d revision(s))${C_RESET}" "$revisions_done"
+        echo ""
+    fi
 
     # Git changes
-    git_changes_summary "$before_commit"
+    vcs_changes_summary "$before_commit"
 
     # Sync and push
     beads_sync
-    git_push
+    vcs_push
 
     # Checkpoint
     if [[ $((iter_num % CONFIG[checkpoint_interval])) -eq 0 ]]; then
@@ -908,7 +1151,12 @@ generate_report() {
 | Total Cost | \$$(jq -r '.total_cost' "$state_file") |
 | Duration | $(format_duration $(($(date +%s) - $(jq -r '.start_time' "$state_file")))) |
 | Model | $(jq -r '.config.model' "$state_file") |
-| Branch | $(jq -r '.git.branch' "$state_file") |
+| Bookmark | $(jq -r '.vcs.bookmark' "$state_file") |
+| Review Enabled | $(jq -r '.review.enabled // "N/A"' "$state_file") |
+| Review Model | $(jq -r '.review.model // "N/A"' "$state_file") |
+| Review Passes | $(jq -r '.review.passes // 0' "$state_file") |
+| Review Revisions | $(jq -r '.review.revisions // 0' "$state_file") |
+| Review Skipped | $(jq -r '.review.skipped // 0' "$state_file") |
 
 ## Metrics Over Time
 
@@ -931,8 +1179,15 @@ EOF
 # ═══════════════════════════════════════════════════════════════════════════════
 
 handle_interrupt() {
+    if [[ "${STATE[interrupted]}" == true ]]; then
+        echo ""
+        echo -e "${C_RED}Force quit${C_RESET}"
+        # Reset trap and re-raise to get proper exit code
+        trap - INT TERM EXIT
+        kill -INT $$
+    fi
     echo ""
-    log WARN "Interrupted - finishing gracefully..."
+    log WARN "Interrupted - finishing gracefully... (Ctrl+C again to force quit)"
     STATE[interrupted]=true
     STATE[status]="interrupted"
 }
@@ -973,6 +1228,9 @@ cleanup() {
         printf "  ${C_DIM}%-14s${C_RESET} %s\n" "Tokens:" "$(format_number ${STATE[total_tokens]})"
         printf "  ${C_DIM}%-14s${C_RESET} \$%s\n" "Cost:" "${STATE[total_cost]}"
         printf "  ${C_DIM}%-14s${C_RESET} %s\n" "Status:" "${STATE[status]}"
+        if [[ "${CONFIG[review_enabled]}" == true ]]; then
+            printf "  ${C_DIM}%-14s${C_RESET} %s (model: %s)\n" "Review:" "${C_GREEN}${STATE[review_passes]} shipped${C_RESET}, ${C_YELLOW}${STATE[review_revisions]} revised${C_RESET}, ${C_GRAY}${STATE[review_skipped]} skipped${C_RESET}" "${CONFIG[review_model]}"
+        fi
         echo ""
         printf "  ${C_DIM}Session:${C_RESET} %s\n" "${STATE[session_id]}"
         printf "  ${C_DIM}Logs:${C_RESET} %s\n" "$STATE_DIR/sessions/${STATE[session_id]}"
@@ -988,7 +1246,7 @@ cleanup() {
     fi
 
     # Record in history
-    echo "{\"ts\":$(date +%s),\"session\":\"${STATE[session_id]}\",\"iterations\":${STATE[iteration]},\"status\":\"${STATE[status]}\"}" >> "$HISTORY_FILE"
+    echo "{\"ts\":$(date +%s),\"session\":\"${STATE[session_id]}\",\"iterations\":${STATE[iteration]},\"status\":\"${STATE[status]}\",\"review\":{\"passes\":${STATE[review_passes]},\"revisions\":${STATE[review_revisions]},\"skipped\":${STATE[review_skipped]}}}" >> "$HISTORY_FILE"
 
     exit $exit_code
 }
@@ -1032,12 +1290,27 @@ ${C_BOLD}OPTIONS${C_RESET}
     -m, --model MODEL   Claude model (default: opus)
     -d, --delay N       Delay between iterations (default: 3s)
     -i, --interactive   Confirm before each iteration
-    --no-push           Don't push to git remote
+    --no-push           Don't push to remote
     --no-notify         Disable notifications
     --sound             Enable sound notifications
     --webhook URL       Send events to webhook URL
+    --epic ID           Scope work to children of a specific epic
+    --no-review         Disable review phase after each iteration
+    --review-model M    Review model for codex exec (default: gpt-5.2-codex)
+    --review-max-revisions N
+                        Max revision attempts on REVISE (default: 3)
     -v, --verbose       Verbose output
     -h, --help          Show this help
+
+${C_BOLD}REVIEW${C_RESET}
+    After each work iteration, a review model evaluates changes via
+    codex exec. The reviewer reads the jj diff and task spec, then
+    outputs SHIP or REVISE. On REVISE, the worker re-runs with
+    feedback (up to --review-max-revisions times). On SHIP, the
+    loop proceeds normally.
+
+    Review prompt: PROMPT_review.md
+    State files:   iter_NNN.review, iter_NNN.review_feedback
 
 ${C_BOLD}SIGNALS${C_RESET}
     Ctrl+C              Stop gracefully
@@ -1048,11 +1321,12 @@ ${C_BOLD}EXAMPLES${C_RESET}
     $SCRIPT_NAME plan                     # Plan mode, 3 iterations
     $SCRIPT_NAME run build -n 10          # Build, max 10 iterations
     $SCRIPT_NAME run -i --no-push         # Interactive, no push
+    $SCRIPT_NAME --epic about-291          # Scope to epic's children
     $SCRIPT_NAME resume                   # Resume latest session
     $SCRIPT_NAME report                   # Generate report
 
 ${C_BOLD}CONFIG${C_RESET}
-    Create .beads/loop.toml:
+    Create .ralph/config.toml:
 
         max_iterations = 10
         model = "sonnet"
@@ -1097,6 +1371,18 @@ parse_args() {
             --sound)
                 CONFIG[sound]=true
                 shift ;;
+            --epic)
+                CONFIG[epic]="$2"
+                shift 2 ;;
+            --no-review)
+                CONFIG[review_enabled]=false
+                shift ;;
+            --review-model)
+                CONFIG[review_model]="$2"
+                shift 2 ;;
+            --review-max-revisions)
+                CONFIG[review_max_revisions]="$2"
+                shift 2 ;;
             --webhook)
                 CONFIG[webhook_url]="$2"
                 shift 2 ;;
@@ -1175,8 +1461,14 @@ main() {
     echo ""
     printf "  ${C_DIM}%-12s${C_RESET} ${C_BOLD}%s${C_RESET}\n" "Mode:" "${CONFIG[mode]}"
     printf "  ${C_DIM}%-12s${C_RESET} %s\n" "Model:" "${CONFIG[model]}"
-    printf "  ${C_DIM}%-12s${C_RESET} %s\n" "Branch:" "$(git_branch)"
+    printf "  ${C_DIM}%-12s${C_RESET} %s\n" "Bookmark:" "$(vcs_branch)"
     printf "  ${C_DIM}%-12s${C_RESET} %s\n" "Max:" "${CONFIG[max_iterations]:-∞}"
+    [[ -n "${CONFIG[epic]}" ]] && printf "  ${C_DIM}%-12s${C_RESET} %s\n" "Epic:" "${CONFIG[epic]}"
+    if [[ "${CONFIG[review_enabled]}" == true ]]; then
+        printf "  ${C_DIM}%-12s${C_RESET} %s ${C_DIM}(max %s revisions)${C_RESET}\n" "Review:" "${CONFIG[review_model]}" "${CONFIG[review_max_revisions]}"
+    else
+        printf "  ${C_DIM}%-12s${C_RESET} disabled\n" "Review:"
+    fi
     printf "  ${C_DIM}%-12s${C_RESET} %s\n" "Session:" "${STATE[session_id]}"
 
     send_webhook "session_start" "{\"mode\":\"${CONFIG[mode]}\"}"
@@ -1186,8 +1478,8 @@ main() {
         [[ "${STATE[interrupted]}" == true ]] && break
 
         # Pause handling
-        while [[ "${STATE[paused]}" == true ]]; do
-            sleep 1
+        while [[ "${STATE[paused]}" == true ]] && [[ "${STATE[interrupted]}" != true ]]; do
+            sleep 1 || true
         done
 
         # Max iterations check
@@ -1214,6 +1506,7 @@ main() {
             echo ""
             echo -e "  ${C_DIM}Next in ${CONFIG[delay]}s... (Ctrl+C to stop)${C_RESET}"
             sleep "${CONFIG[delay]}" || true
+            [[ "${STATE[interrupted]}" == true ]] && break
         fi
     done
 
