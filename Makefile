@@ -241,7 +241,7 @@ hetzner/bootstrap:
 	@echo "==> Copying configuration to Hetzner..."
 	NIXUSER=root $(MAKE) hetzner/copy
 	@echo "==> Applying NixOS configuration..."
-	NIXUSER=root $(MAKE) hetzner/switch NIXNAME=hetzner-dev
+	NIXUSER=root $(MAKE) hetzner/switch
 	@echo "==> Copying secrets..."
 	$(MAKE) hetzner/secrets
 	@echo "==> Bootstrap complete! Rebooting..."
@@ -296,11 +296,12 @@ endif
 	@echo "==> Check status with: ssh $(NIXUSER)@$(NIXADDR) 'tailscale status'"
 
 # Fetch hardware config from Hetzner (run after bootstrap0, before bootstrap)
+# Usage: make hetzner/fetch-hardware NIXADDR=<ip> NIXNAME=<name>
 hetzner/fetch-hardware:
 	@echo "==> Fetching hardware configuration from Hetzner..."
 	scp $(HETZNER_SSH_OPTIONS) -P$(NIXPORT) root@$(NIXADDR):/mnt/etc/nixos/hardware-configuration.nix \
-		$(MAKEFILE_DIR)/hosts/hardware/hetzner-dev.nix
-	@echo "==> Hardware config saved to hosts/hardware/hetzner-dev.nix"
+		$(MAKEFILE_DIR)/hosts/hardware/$(NIXNAME).nix
+	@echo "==> Hardware config saved to hosts/hardware/$(NIXNAME).nix"
 	@echo "==> Review and commit this file to git"
 
 # =============================================================================
