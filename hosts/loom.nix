@@ -18,6 +18,7 @@
     ../modules/nixos-auto-update.nix
     ../modules/security-audit.nix
     ../modules/podman.nix
+    ../modules/repo-updater.nix
   ];
 
   # Latest kernel for best hardware support
@@ -59,6 +60,17 @@
     dates = "04:00";
     randomizedDelaySec = "30m";
     allowReboot = false;
+  };
+
+  # Repo updater - periodic git sync for development repos
+  services.repoUpdater = {
+    enable = true;
+    user = "joost";
+    projectsDir = "/home/joost/code";
+    timerInterval = "6h";
+    repos = [
+      "fuww/developer"
+    ];
   };
 
   # Security auditing with auditd
