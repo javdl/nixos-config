@@ -17,6 +17,7 @@
     ../modules/nixos-auto-update.nix
     ../modules/security-audit.nix
     ../modules/podman.nix
+    ../modules/repo-updater.nix
   ];
 
   # Latest kernel for best hardware support
@@ -60,6 +61,17 @@
     allowReboot = false;            # Don't auto-reboot
     # For private repos, configure sshKeySecret after setting up sops
     # sshKeySecret = "github-deploy-key";
+  };
+
+  # Repo updater - periodic git sync for development repos
+  services.repoUpdater = {
+    enable = true;
+    user = "joost";
+    projectsDir = "/home/joost/code";
+    timerInterval = "6h";
+    repos = [
+      "fuww/developer"
+    ];
   };
 
   # Security auditing with auditd
