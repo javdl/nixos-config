@@ -92,6 +92,7 @@ in {
     initExtra = ''
       # SSH agent: prefer forwarded agent, fall back to systemd agent
       if [[ -n "$SSH_AUTH_SOCK" && -S "$SSH_AUTH_SOCK" ]]; then
+        mkdir -p ~/.ssh
         ln -sf "$SSH_AUTH_SOCK" ~/.ssh/ssh_auth_sock 2>/dev/null
       elif [[ -S "$XDG_RUNTIME_DIR/ssh-agent" ]]; then
         export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/ssh-agent"
@@ -109,6 +110,7 @@ in {
       # SSH agent: prefer forwarded agent, fall back to systemd agent
       if test -n "$SSH_AUTH_SOCK"; and test -S "$SSH_AUTH_SOCK"
         # Forwarded agent is valid, symlink it for tmux persistence
+        mkdir -p ~/.ssh
         ln -sf "$SSH_AUTH_SOCK" ~/.ssh/ssh_auth_sock 2>/dev/null
       else if test -S "$XDG_RUNTIME_DIR/ssh-agent"
         set -gx SSH_AUTH_SOCK "$XDG_RUNTIME_DIR/ssh-agent"
