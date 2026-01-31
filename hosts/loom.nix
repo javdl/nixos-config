@@ -98,7 +98,7 @@
 
   # Firewall - base config (Tailscale settings added below)
   networking.firewall.enable = true;
-  networking.firewall.allowedTCPPorts = [ 22 ];
+  networking.firewall.allowedTCPPorts = [ 22 80 443 ];
 
   # SSH daemon - key-only auth for security
   services.openssh = {

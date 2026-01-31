@@ -242,8 +242,13 @@ in {
   };
 
   # SSH agent - persistent local agent so keys survive disconnects/tmux
+  # Disable built-in shell integrations — our custom fallback logic in
+  # fish/zsh prefers the forwarded agent and falls back to this one.
   services.ssh-agent = lib.mkIf isLinux {
     enable = true;
+    enableFishIntegration = false;
+    enableZshIntegration = false;
+    enableBashIntegration = false;
   };
 
   # Ensure ~/.ssh directory exists for agent socket symlink
