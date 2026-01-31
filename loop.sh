@@ -472,9 +472,9 @@ vcs_changes_summary() {
         [[ -z "$file" ]] && continue
 
         local stat
-        stat=$(jj diff --from "$from_change" --to "$to_change" --stat -- "$file" 2>/dev/null | head -1)
-        local added=$(echo "$stat" | grep -oE '[0-9]+ insertion' | grep -oE '[0-9]+' || echo 0)
-        local removed=$(echo "$stat" | grep -oE '[0-9]+ deletion' | grep -oE '[0-9]+' || echo 0)
+        stat=$(jj diff --from "$from_change" --to "$to_change" --stat -- "$file" 2>/dev/null | tail -1)
+        local added=$(echo "$stat" | grep -oE '[0-9]+ insertions?' | grep -oE '[0-9]+' || echo 0)
+        local removed=$(echo "$stat" | grep -oE '[0-9]+ deletions?' | grep -oE '[0-9]+' || echo 0)
 
         # File type icon
         local icon="📄"
@@ -1298,7 +1298,7 @@ ${C_BOLD}OPTIONS${C_RESET}
     --no-review         Disable review phase after each iteration
     --review-model M    Review model for codex exec (default: gpt-5.2-codex)
     --review-max-revisions N
-                        Max revision attempts on REVISE (default: 3)
+                        Max revision attempts on REVISE (default: 5)
     -v, --verbose       Verbose output
     -h, --help          Show this help
 

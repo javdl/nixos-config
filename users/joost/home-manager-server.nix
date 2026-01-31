@@ -89,6 +89,14 @@ in {
     enable = true;
     shellOptions = [];
     historyControl = [ "ignoredups" "ignorespace" ];
+    initExtra = ''
+      # SSH agent: prefer forwarded agent, fall back to systemd agent
+      if [[ -n "$SSH_AUTH_SOCK" && -S "$SSH_AUTH_SOCK" ]]; then
+        ln -sf "$SSH_AUTH_SOCK" ~/.ssh/ssh_auth_sock 2>/dev/null
+      elif [[ -S "$XDG_RUNTIME_DIR/ssh-agent" ]]; then
+        export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/ssh-agent"
+      fi
+    '';
   };
 
   programs.fish = {
