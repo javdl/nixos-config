@@ -9,4 +9,8 @@ settings.local.json
 
 # Beads local/runtime files
 .beads/daemon-error
-.beads/loop/
+
+# Ralph Wiggum loop runtime state (sessions, logs, metrics)
+.ralph/sessions/
+.ralph/latest
+.ralph/history.jsonl

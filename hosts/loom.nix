@@ -1,16 +1,17 @@
 { config, pkgs, lib, ... }:
 
-# Hetzner dedicated server for remote development with Claude Code + tmux
+# Hetzner dedicated server: loom-32gb-nbg1-1
+# IP: 91.99.204.187 / 2a01:4f8:c0c:d0e8::/64
 #
 # Bootstrap process:
 #   1. Boot Hetzner server into rescue mode (Linux 64-bit)
-#   2. Run: make hetzner/bootstrap0 NIXADDR=<ip>
-#   3. After reboot: make hetzner/bootstrap NIXADDR=<ip>
-#   4. Connect: ssh hetzner-dev (uses ~/.ssh config)
+#   2. Run: make hetzner/bootstrap0 NIXADDR=91.99.204.187 NIXNAME=loom
+#   3. After reboot: make hetzner/bootstrap NIXADDR=91.99.204.187 NIXNAME=loom
+#   4. Connect: ssh loom (uses ~/.ssh config)
 
 {
   imports = [
-    ./hardware/hetzner-dev.nix
+    ./hardware/loom.nix
     ../modules/cachix.nix
     ../modules/secrets.nix
     ../modules/automatic-nix-gc.nix
@@ -28,7 +29,7 @@
   boot.loader.efi.canTouchEfiVariables = true;
 
   # Hostname
-  networking.hostName = "hetzner-dev";
+  networking.hostName = "loom";
 
   # Timezone (UTC for servers)
   time.timeZone = "UTC";
@@ -46,21 +47,19 @@
   # Disk-based garbage collection (only runs when disk space is low)
   services.automaticNixGC = {
     enable = true;
-    minFreeGB = 50;          # Trigger GC during builds below 50GB
-    maxFreeGB = 100;         # Target 100GB after build-time GC
-    scheduledThresholdGB = 50; # Daily check: GC if below 50GB
-    keepDays = 14;           # Keep generations from last 14 days
+    minFreeGB = 50;
+    maxFreeGB = 100;
+    scheduledThresholdGB = 50;
+    keepDays = 14;
   };
 
   # Automatic NixOS updates from git repository
   services.nixosAutoUpdate = {
     enable = true;
-    flake = "github:javdl/nixos-config#hetzner-dev";
-    dates = "04:00";                # Check at 4 AM
-    randomizedDelaySec = "30m";     # Random delay up to 30 min
-    allowReboot = false;            # Don't auto-reboot
-    # For private repos, configure sshKeySecret after setting up sops
-    # sshKeySecret = "github-deploy-key";
+    flake = "github:javdl/nixos-config#loom";
+    dates = "04:00";
+    randomizedDelaySec = "30m";
+    allowReboot = false;
   };
 
   # Repo updater - periodic git sync for development repos
@@ -77,9 +76,9 @@
   # Security auditing with auditd
   services.securityAudit = {
     enable = true;
-    failureMode = "printk";  # Log audit failures to kernel log
-    maxLogFile = 50;         # Rotate at 50MB
-    numLogs = 10;            # Keep 10 log files
+    failureMode = "printk";
+    maxLogFile = 50;
+    numLogs = 10;
   };
 
   # Allow unfree packages
@@ -89,7 +88,7 @@
   # Networking - dual stack (IPv4 via DHCP + static IPv6)
   networking.useDHCP = true;
   networking.interfaces.enp1s0.ipv6.addresses = [{
-    address = "2a01:4f8:1c1f:ad3c::1";
+    address = "2a01:4f8:c0c:d0e8::1";
     prefixLength = 64;
   }];
   networking.defaultGateway6 = {
@@ -99,14 +98,14 @@
 
   # Firewall - base config (Tailscale settings added below)
   networking.firewall.enable = true;
-  networking.firewall.allowedTCPPorts = [ 22 ];  # SSH on public IP
+  networking.firewall.allowedTCPPorts = [ 22 ];
 
   # SSH daemon - key-only auth for security
   services.openssh = {
     enable = true;
     settings = {
       PasswordAuthentication = false;
-      PermitRootLogin = "prohibit-password";  # Allow root with key for initial setup
+      PermitRootLogin = "prohibit-password";
       KbdInteractiveAuthentication = false;
     };
   };
@@ -123,8 +122,8 @@
   # Podman for rootless containers (Docker alternative with better security)
   virtualisation.podmanConfig = {
     enable = true;
-    dockerCompat = false;  # Don't conflict with Docker
-    autoPrune = true;      # Weekly cleanup of unused images
+    dockerCompat = false;
+    autoPrune = true;
   };
 
   # System packages for remote development
@@ -230,26 +229,18 @@
   # Tailscale for secure access with SSH
   services.tailscale = {
     enable = true;
-    # Auth key file - create this file with your Tailscale auth key
-    # Generate at: https://login.tailscale.com/admin/settings/keys
-    # Use a reusable key with "Reusable" and optionally "Ephemeral" for servers
     authKeyFile = "/etc/tailscale/authkey";
-    # Extra flags for tailscale up
     extraUpFlags = [
-      "--ssh"                    # Enable Tailscale SSH
-      "--accept-routes"          # Accept routes from other nodes
-      "--accept-dns=false"       # Don't override DNS (use system DNS)
-      "--advertise-exit-node"    # Allow other devices to use this as exit node
+      "--ssh"
+      "--accept-routes"
+      "--accept-dns=false"
+      "--advertise-exit-node"
     ];
-    # Use exit node if needed (uncomment and set to exit node hostname)
-    # extraUpFlags = [ "--ssh" "--exit-node=<exit-node>" ];
   };
 
   # Allow Tailscale traffic through firewall
   networking.firewall = {
-    # Trust Tailscale interface
     trustedInterfaces = [ "tailscale0" ];
-    # Allow Tailscale UDP port
     allowedUDPPorts = [ config.services.tailscale.port ];
   };
 

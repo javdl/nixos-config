@@ -1,4 +1,6 @@
-0a. Run `bd ready --json --limit 1` to find the highest priority unblocked task.
+0a. Run `bd ready --json --limit 1 --type task` to find the highest priority unblocked task.
+    If no tasks are found, try `bd ready --json --limit 1 --type bug` for bugs.
+    Never pick an epic directly — epics contain child tasks to work on instead.
 0b. Run `bd show <task-id>` to read the full specification.
 0c. For reference, the application source code is in `src/*`.
 
@@ -20,8 +22,8 @@
 
 5. When tests pass:
    - Close the bead: `bd close <id> --reason "Implemented with tests"`
-   - Commit: `git add -A && git commit -m "feat: <description>"`
-   - Push: `git push`
+   - Describe: `jj describe -m "feat: <description>"`
+   - Push: `jj git push`
    - Sync beads: `bd sync`
 
 99999. When you learn something about how to run the application, update @AGENTS.md.

@@ -241,6 +241,12 @@
       server = true;
     };
 
+    nixosConfigurations.loom = mkSystem "loom" {
+      system = "x86_64-linux";
+      user   = "joost";
+      server = true;
+    };
+
     darwinConfigurations.macbook-pro-m1 = mkSystem "macbook-pro-m1" {
       system = "aarch64-darwin";
       user   = "joost";

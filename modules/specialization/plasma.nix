@@ -14,6 +14,6 @@
     };
     
     # Force KDE's ssh-askpass over Seahorse's
-    programs.ssh.askPassword = lib.mkForce "${pkgs.plasma5Packages.ksshaskpass}/bin/ksshaskpass";
+    programs.ssh.askPassword = lib.mkForce "${pkgs.kdePackages.ksshaskpass}/bin/ksshaskpass";
   };
 }

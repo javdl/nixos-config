@@ -89,6 +89,15 @@ in {
     enable = true;
     shellOptions = [];
     historyControl = [ "ignoredups" "ignorespace" ];
+    initExtra = ''
+      # SSH agent: prefer forwarded agent, fall back to systemd agent
+      if [[ -n "$SSH_AUTH_SOCK" && -S "$SSH_AUTH_SOCK" ]]; then
+        mkdir -p ~/.ssh
+        ln -sf "$SSH_AUTH_SOCK" ~/.ssh/ssh_auth_sock 2>/dev/null
+      elif [[ -S "$XDG_RUNTIME_DIR/ssh-agent" ]]; then
+        export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/ssh-agent"
+      fi
+    '';
   };
 
   programs.fish = {
@@ -97,6 +106,15 @@ in {
       set -g fish_greeting ""
       starship init fish | source
       zoxide init fish | source
+
+      # SSH agent: prefer forwarded agent, fall back to systemd agent
+      if test -n "$SSH_AUTH_SOCK"; and test -S "$SSH_AUTH_SOCK"
+        # Forwarded agent is valid, symlink it for tmux persistence
+        mkdir -p ~/.ssh
+        ln -sf "$SSH_AUTH_SOCK" ~/.ssh/ssh_auth_sock 2>/dev/null
+      else if test -S "$XDG_RUNTIME_DIR/ssh-agent"
+        set -gx SSH_AUTH_SOCK "$XDG_RUNTIME_DIR/ssh-agent"
+      end
     '';
     shellAliases = {
       # Jujutsu aliases
@@ -153,6 +171,10 @@ in {
       set -ga terminal-overrides ",*256col*:Tc"
       set -g status-bg black
       set -g status-fg white
+
+      # Propagate SSH agent socket into new tmux sessions
+      set -g update-environment "SSH_AUTH_SOCK SSH_CONNECTION DISPLAY"
+      if-shell "test -S ~/.ssh/ssh_auth_sock" "set-environment -g SSH_AUTH_SOCK ~/.ssh/ssh_auth_sock"
     '';
   };
 
@@ -208,6 +230,13 @@ in {
     syntaxHighlighting.enable = true;
     initContent = ''
       export GPG_TTY=$(tty)
+
+      # SSH agent: prefer forwarded agent, fall back to systemd agent
+      if [[ -n "$SSH_AUTH_SOCK" && -S "$SSH_AUTH_SOCK" ]]; then
+        ln -sf "$SSH_AUTH_SOCK" ~/.ssh/ssh_auth_sock 2>/dev/null
+      elif [[ -S "$XDG_RUNTIME_DIR/ssh-agent" ]]; then
+        export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/ssh-agent"
+      fi
     '';
   };
 
@@ -221,4 +250,17 @@ in {
     defaultCacheTtl = 31536000;
     maxCacheTtl = 31536000;
   };
+
+  # SSH agent - persistent local agent so keys survive disconnects/tmux
+  # Disable built-in shell integrations — our custom fallback logic in
+  # fish/zsh prefers the forwarded agent and falls back to this one.
+  services.ssh-agent = lib.mkIf isLinux {
+    enable = true;
+    enableFishIntegration = false;
+    enableZshIntegration = false;
+    enableBashIntegration = false;
+  };
+
+  # Ensure ~/.ssh directory exists for agent socket symlink
+  home.file.".ssh/.keep".text = "";
 }
