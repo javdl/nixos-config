@@ -37,6 +37,9 @@ let
 in systemFunc rec {
   inherit system;
 
+  # Pass inputs via specialArgs so they're available in imports without recursion
+  specialArgs = { inherit inputs; };
+
   modules = [
     # Apply our overlays. Overlays are keyed by system type so we have
     # to go through and apply our system type. We do this first so

@@ -42,6 +42,12 @@
 
     hyprland.url = "github:hyprwm/Hyprland";
 
+    # MicroVM support for isolated coding agents
+    microvm = {
+      url = "github:astro/microvm.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # I think technically you're not supposed to override the nixpkgs
     # used by neovim but recently I had failures if I didn't pin to my
     # own. We can always try to remove that anytime.
@@ -236,6 +242,12 @@
     };
 
     nixosConfigurations.hetzner-dev = mkSystem "hetzner-dev" {
+      system = "x86_64-linux";
+      user   = "joost";
+      server = true;
+    };
+
+    nixosConfigurations.loom = mkSystem "loom" {
       system = "x86_64-linux";
       user   = "joost";
       server = true;

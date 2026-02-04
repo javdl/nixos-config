@@ -356,6 +356,69 @@ $ wsl -s nixos
 After the `wsl -d` command, you should be dropped into the Nix environment.
 _Voila!_
 
+## Setup (Hetzner Server)
+
+For dedicated Hetzner servers like `hetzner-dev` or `loom`:
+
+1. Boot the server into rescue mode (Linux 64-bit) via Hetzner Robot console
+2. Run initial bootstrap:
+   ```bash
+   make hetzner/bootstrap0 NIXADDR=<ip> NIXNAME=loom
+   ```
+3. After reboot, complete setup:
+   ```bash
+   make hetzner/bootstrap NIXADDR=<ip> NIXNAME=loom
+   ```
+4. Copy SSH/GPG keys:
+   ```bash
+   make hetzner/secrets NIXADDR=<ip>
+   ```
+5. Setup Tailscale (generate key at https://login.tailscale.com/admin/settings/keys):
+   ```bash
+   make hetzner/tailscale-auth NIXADDR=<ip> TAILSCALE_AUTHKEY=<key>
+   ```
+
+### MicroVM Setup (Loom Server)
+
+The `loom` server supports MicroVMs for running isolated Claude Code agents. After the base setup:
+
+1. Create workspace and SSH host keys for the VM:
+   ```bash
+   mkdir -p ~/microvm/dev/ssh-host-keys
+   ssh-keygen -t ed25519 -N "" -f ~/microvm/dev/ssh-host-keys/ssh_host_ed25519_key
+   cp ~/.ssh/authorized_keys ~/microvm/dev/ssh-host-keys/
+   ```
+
+2. Create Claude credentials directory:
+   ```bash
+   mkdir -p ~/claude-microvm
+   # Copy .claude.json and settings.json here if needed
+   ```
+
+3. Start the VM:
+   ```bash
+   sudo systemctl start microvm@devvm
+   ```
+
+4. SSH into the VM:
+   ```bash
+   ssh agent@192.168.83.2
+   ```
+
+5. Run Claude Code:
+   ```bash
+   cd /workspace
+   claude --dangerously-skip-permissions
+   ```
+
+**VM Management:**
+- Start: `sudo systemctl start microvm@devvm`
+- Stop: `sudo systemctl stop microvm@devvm`
+- Status: `sudo systemctl status microvm@devvm`
+- Logs: `journalctl -u microvm@devvm`
+
+**Network:** VMs are on `192.168.83.0/24` with NAT to the internet via the host.
+
 ## Passwords
 
 Create hashed password with `mkpasswd` to put in `users/joost/nixos.nix`
