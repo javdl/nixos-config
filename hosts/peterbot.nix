@@ -70,6 +70,10 @@
     timerInterval = "6h";
     repos = [
       "fuww/developer"
+      "fuww/frontend"
+      "fuww/api"
+      "fuww/prompts"
+      "fuww/about"
     ];
   };
 
