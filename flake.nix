@@ -247,6 +247,37 @@
       server = true;
     };
 
+    # Colleague AI dev servers (robot-themed names)
+    nixosConfigurations.desmondroid = mkSystem "desmondroid" {
+      system = "x86_64-linux";
+      user   = "desmond";
+      server = true;
+    };
+
+    nixosConfigurations.jacksonator = mkSystem "jacksonator" {
+      system = "x86_64-linux";
+      user   = "jackson";
+      server = true;
+    };
+
+    nixosConfigurations.peterbot = mkSystem "peterbot" {
+      system = "x86_64-linux";
+      user   = "peter";
+      server = true;
+    };
+
+    nixosConfigurations.rajbot = mkSystem "rajbot" {
+      system = "x86_64-linux";
+      user   = "rajesh";
+      server = true;
+    };
+
+    nixosConfigurations.jeevanator = mkSystem "jeevanator" {
+      system = "x86_64-linux";
+      user   = "jeevan";
+      server = true;
+    };
+
     darwinConfigurations.macbook-pro-m1 = mkSystem "macbook-pro-m1" {
       system = "aarch64-darwin";
       user   = "joost";
