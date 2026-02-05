@@ -356,6 +356,16 @@ $ wsl -s nixos
 After the `wsl -d` command, you should be dropped into the Nix environment.
 _Voila!_
 
+## Hetzner Dev Servers
+
+Colleague development servers (Hetzner CPX32, Nuremberg):
+
+- desmondroid
+- jacksonator
+- peterbot
+- rajbot
+- jeevanator
+
 ## Passwords
 
 Create hashed password with `mkpasswd` to put in `users/joost/nixos.nix`
