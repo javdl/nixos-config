@@ -88,6 +88,8 @@ in {
     # Symlink Nix-managed repos into ru's repos.d directory
     system.activationScripts.repoUpdaterLink = mkIf (cfg.repos != []) {
       text = ''
+        mkdir -p /home/${cfg.user}/.config/ru/repos.d
+        chown -R ${cfg.user}:users /home/${cfg.user}/.config/ru
         ln -sf /etc/repo-updater/repos.txt /home/${cfg.user}/.config/ru/repos.d/nix-managed.txt
         chown -h ${cfg.user}:users /home/${cfg.user}/.config/ru/repos.d/nix-managed.txt
       '';
@@ -98,7 +100,7 @@ in {
       description = "Sync repositories with repo_updater";
       after = [ "network-online.target" ];
       wants = [ "network-online.target" ];
-      path = [ pkgs.git pkgs.openssh pkgs.coreutils ];
+      path = [ pkgs.git pkgs.gh pkgs.openssh pkgs.coreutils ];
       environment = {
         HOME = "/home/${cfg.user}";
         RU_PROJECTS_DIR = cfg.projectsDir;
