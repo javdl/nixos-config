@@ -154,6 +154,7 @@ vm/copy:
 		--exclude='.git/' \
 		--exclude='.git-crypt/' \
 		--exclude='.jj/' \
+		--exclude='.beads/' \
 		--exclude='iso/' \
 		--rsync-path="sudo rsync" \
 		$(MAKEFILE_DIR)/ $(NIXUSER)@$(NIXADDR):/nix-config
@@ -254,6 +255,7 @@ hetzner/copy:
 		--exclude='.git/' \
 		--exclude='.git-crypt/' \
 		--exclude='.jj/' \
+		--exclude='.beads/' \
 		--exclude='iso/' \
 		--rsync-path="sudo rsync" \
 		$(MAKEFILE_DIR)/ $(NIXUSER)@$(NIXADDR):/nix-config
