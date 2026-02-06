@@ -20,8 +20,7 @@
     # TODO: Generate with: mkpasswd -m sha-512
     hashedPassword = "$6$rounds=100000$PLACEHOLDER$XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
     openssh.authorizedKeys.keys = [
-      # TODO: Add peter's SSH public key(s) here
-      # "ssh-ed25519 AAAA... peter@example.com"
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE3Ygpk7EQsrYKsE4wUAUdvuuRbWeDU5evzX5Cc07JtD peterpal@fu098"
     ];
   };
 }
