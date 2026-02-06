@@ -19,6 +19,7 @@
     ../modules/security-audit.nix
     ../modules/podman.nix
     ../modules/repo-updater.nix
+    ../modules/ghostty-terminfo.nix
   ];
 
   # Latest kernel for best hardware support
