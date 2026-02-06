@@ -200,6 +200,7 @@ in {
     enableFishIntegration = true;
     enableBashIntegration = true;
     enableZshIntegration = true;
+    settings = builtins.fromTOML (builtins.readFile ./starship.toml);
   };
 
   programs.zoxide = {

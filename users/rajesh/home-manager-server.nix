@@ -5,6 +5,11 @@
 let
   isDarwin = pkgs.stdenv.isDarwin;
   isLinux = pkgs.stdenv.isLinux;
+
+  # Import shared configuration
+  shared = import ../shared-home-manager.nix {
+    inherit isWSL inputs pkgs lib isDarwin isLinux;
+  };
 in {
   # Home-manager state version
   home.stateVersion = "25.11";
@@ -195,6 +200,7 @@ in {
     enableFishIntegration = true;
     enableBashIntegration = true;
     enableZshIntegration = true;
+    settings = builtins.fromTOML (builtins.readFile ../joost/starship.toml);
   };
 
   programs.zoxide = {
@@ -229,14 +235,82 @@ in {
     enableCompletion = true;
     autosuggestion.enable = true;
     syntaxHighlighting.enable = true;
+
+    shellAliases = shared.shellAliases;
+
     initContent = ''
       export GPG_TTY=$(tty)
+
+      # Force block cursor
+      echo -ne '\e[2 q'
+      preexec() { echo -ne '\e[2 q' }
+      precmd() { echo -ne '\e[2 q' }
+
+      # Fix insecure completion files
+      autoload -Uz compinit
+      if [[ -n "$(find "$HOME/.zcompdump" -mtime +1 2>/dev/null)" ]]; then
+        compinit
+      else
+        compinit -C
+      fi
+      zstyle ':completion:*' use-cache on
+      zstyle ':completion:*' cache-path "$HOME/.zcompcache"
+      skip_global_compinit=1
 
       # SSH agent: prefer forwarded agent, fall back to systemd agent
       if [[ -n "$SSH_AUTH_SOCK" && -S "$SSH_AUTH_SOCK" ]]; then
         ln -sf "$SSH_AUTH_SOCK" ~/.ssh/ssh_auth_sock 2>/dev/null
       elif [[ -S "$XDG_RUNTIME_DIR/ssh-agent" ]]; then
         export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/ssh-agent"
+      fi
+
+      # Rose Pine colors for zsh syntax highlighting
+      typeset -gA ZSH_HIGHLIGHT_STYLES
+      ZSH_HIGHLIGHT_STYLES[comment]="fg=#6e6a86"
+      ZSH_HIGHLIGHT_STYLES[alias]="fg=#9ccfd8"
+      ZSH_HIGHLIGHT_STYLES[suffix-alias]="fg=#9ccfd8"
+      ZSH_HIGHLIGHT_STYLES[global-alias]="fg=#9ccfd8"
+      ZSH_HIGHLIGHT_STYLES[function]="fg=#ebbcba"
+      ZSH_HIGHLIGHT_STYLES[command]="fg=#9ccfd8"
+      ZSH_HIGHLIGHT_STYLES[precommand]="fg=#9ccfd8,italic"
+      ZSH_HIGHLIGHT_STYLES[autodirectory]="fg=#f6c177,italic"
+      ZSH_HIGHLIGHT_STYLES[single-hyphen-option]="fg=#f6c177"
+      ZSH_HIGHLIGHT_STYLES[double-hyphen-option]="fg=#f6c177"
+      ZSH_HIGHLIGHT_STYLES[back-quoted-argument]="fg=#c4a7e7"
+      ZSH_HIGHLIGHT_STYLES[builtin]="fg=#ebbcba"
+      ZSH_HIGHLIGHT_STYLES[reserved-word]="fg=#ebbcba"
+      ZSH_HIGHLIGHT_STYLES[hashed-command]="fg=#ebbcba"
+      ZSH_HIGHLIGHT_STYLES[commandseparator]="fg=#eb6f92"
+      ZSH_HIGHLIGHT_STYLES[command-substitution-delimiter]="fg=#e0def4"
+      ZSH_HIGHLIGHT_STYLES[command-substitution-delimiter-unquoted]="fg=#e0def4"
+      ZSH_HIGHLIGHT_STYLES[process-substitution-delimiter]="fg=#e0def4"
+      ZSH_HIGHLIGHT_STYLES[back-quoted-argument-delimiter]="fg=#eb6f92"
+      ZSH_HIGHLIGHT_STYLES[back-double-quoted-argument]="fg=#eb6f92"
+      ZSH_HIGHLIGHT_STYLES[back-dollar-quoted-argument]="fg=#eb6f92"
+      ZSH_HIGHLIGHT_STYLES[quoted-argument]="fg=#f6c177"
+      ZSH_HIGHLIGHT_STYLES[single-quoted-argument]="fg=#f6c177"
+      ZSH_HIGHLIGHT_STYLES[double-quoted-argument]="fg=#f6c177"
+      ZSH_HIGHLIGHT_STYLES[dollar-quoted-argument]="fg=#f6c177"
+      ZSH_HIGHLIGHT_STYLES[rc-quote]="fg=#f6c177"
+      ZSH_HIGHLIGHT_STYLES[dollar-double-quoted-argument]="fg=#e0def4"
+      ZSH_HIGHLIGHT_STYLES[assign]="fg=#e0def4"
+      ZSH_HIGHLIGHT_STYLES[redirection]="fg=#e0def4"
+      ZSH_HIGHLIGHT_STYLES[named-fd]="fg=#e0def4"
+      ZSH_HIGHLIGHT_STYLES[numeric-fd]="fg=#e0def4"
+      ZSH_HIGHLIGHT_STYLES[arg0]="fg=#e0def4"
+      ZSH_HIGHLIGHT_STYLES[default]="fg=#e0def4"
+      ZSH_HIGHLIGHT_STYLES[unknown-token]="fg=#eb6f92,bold"
+
+      # Claude alias fix for Zellij
+      alias cc="SHELL=/bin/bash VSCODE_PID= VSCODE_CWD= TERM_PROGRAM= command claude"
+      claude() {
+        SHELL=/bin/bash VSCODE_PID= VSCODE_CWD= TERM_PROGRAM= command claude "$@"
+      }
+    '';
+
+    envExtra = ''
+      if [ -e "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh" ]; then
+        . "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"
       fi
     '';
   };
