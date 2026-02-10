@@ -51,6 +51,7 @@
       "claude"
       "chromedriver"
       "cleanshot"
+      "codex-app"
       "conductor"
       "cursor"
       "datagrip"

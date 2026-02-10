@@ -833,7 +833,7 @@ in {
   programs.tmux = {
     enable = true;
     terminal = "xterm-256color";
-    shortcut = "l";
+    shortcut = "b";
     secureSocket = false;
 
     extraConfig = ''
