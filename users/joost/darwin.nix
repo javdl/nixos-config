@@ -1,5 +1,121 @@
-{ inputs, pkgs, ... }:
+{ inputs, pkgs, currentSystemName, lib, ... }:
 
+let
+  # Machines that only get core casks (no creative/personal apps)
+  isOffice = builtins.elem currentSystemName [ "fu146" ];
+
+  # Core casks installed on all machines
+  coreCasks = [
+    # "bitwarden" Must be installed via Mac App Store for browser integration to work
+    # However, non-App Store version is required for SSH agent to work
+    "bitwarden"
+    "airfoil"
+    "beeper"
+    "brave-browser"
+    "chatgpt"
+    "claude"
+    "chromedriver"
+    "cleanshot"
+    "codex"
+    "codex-app"
+    "companion" # Bitfocus companion, Streamdeck extension and emulation software
+    "datagrip"
+    "dataspell"
+    "dbeaver-community" # dbeaver-bin doesnt work on MacOS?
+    # "docker" # liever Colima # when really need Docker, liever alleen CLI
+    "dropbox"
+    "ente"
+    "ente-auth"
+    "figma"
+    "firefox"
+    "geekbench"
+    "geekbench-ai"
+    "ghostty" # broken in nixpkgs
+    "github" # desktop
+    "google-drive"
+    "gpg-suite"
+    "hammerspoon"
+    "imageoptim"
+    "insync"
+    "istat-menus"
+    "jetbrains-gateway"
+    "jetbrains-toolbox"
+    "librewolf"
+    "libreoffice"
+    "logitech-g-hub"
+    "macwhisper"
+    "obsidian"
+    # "ollama-app"
+    # "orbstack" # Use open source podman instead
+    "pycharm"
+    "podman-desktop"
+    "rapidapi"
+    "raycast" # for searching nix GUI apps (nix doesnt put bin in Applications folder so macos search doesnt work)
+    "rustrover"
+    "signal"
+    "stats" # macOS system monitor in menu bar
+    "sublime-text"
+    "superwhisper"
+    "tailscale-app" # GUI apps via Brew
+    "termius"
+    "thunderbird"
+    "veracrypt"
+    "vlc"
+    "warp"
+    "webstorm"
+    "zed"
+  ];
+
+  # Creative, audio production, and personal casks (skip on office machines)
+  personalCasks = [
+    # handmatig installeren:
+    # ableton-live 12
+    # davinci-resolve
+    # most plugins fabfilter
+    # shure update utility
+    # dirac live processor
+    "adobe-dng-converter"
+    "affinity-designer"
+    "affinity-photo"
+    "affinity-publisher"
+    # "arturia-software-center" # broken or breaks existing installation
+    "audio-hijack"
+    # "advanced-renamer" # download fails
+    "balenaetcher"
+    "calibre"
+    "digikam"
+    "fabfilter-pro-c"
+    "fabfilter-pro-ds"
+    "fabfilter-pro-g"
+    "ilok-license-manager"
+    "imazing-profile-editor"
+    "izotope-product-portal"
+    "kobo"
+    "licecap"
+    "loopback" # Rogue Amoeba
+    "macfuse"
+    "mixxx" # open traktor
+    "monodraw"
+    "native-access"
+    "obs"
+    "reaper"
+    "rode-central" # firmware update
+    "screenflow"
+    "softube-central" # ua connect NA
+    # "soundtoys" broken / needs check
+    "soundsource" # Rogue Amoeba, allows headphone EQ presets
+    # "screenpipe" outdated on brew
+    "spitfire-audio"
+    "tdr-kotelnikov"
+    "tdr-molotok"
+    "tdr-nova"
+    "tdr-prism"
+    "transmission"
+    # "vmware-fusion" # Disabled because you need a Broadcom profile
+    "wacom-tablet"
+    "waves-central"
+  ];
+in
 {
 
   homebrew = {
@@ -11,7 +127,6 @@
     ];
     brews = [
       "bearcove/tap/home"
-      "codex"
       "dicklesworthstone/tap/bv" # beads_viewer - view BAML beads files
       "dicklesworthstone/tap/cass"
       "dicklesworthstone/tap/cm" # CASS Memory - procedural memory system for AI agents
@@ -22,118 +137,7 @@
       "vercel-cli"
       "workos/tap/workos-cli"
     ];
-    casks  = [
-      # handmatig installeren:
-      # ableton-live 12
-      # davinci-resolve
-      # most plugins fabfilter
-      # shure update utility
-      # dirac live processor
-      #
-      # "bitwarden" Must be installed via Mac App Store for browser integration to work
-      # However, non-App Store version is required for SSH agent to work
-      "adobe-dng-converter"
-      "audio-hijack"
-      # "advanced-renamer" # download fails
-      "airfoil"
-      "affinity-designer"
-      "affinity-photo"
-      "affinity-publisher"
-      # "arturia-software-center" # broken or breaks existing installation
-      "balenaetcher"
-      "bitwarden"
-      "beeper"
-      "brave-browser"
-      "companion" # Bitfocus companion, Streamdeck extension and emulation software
-      # "conductor" Manual install, doesnt work via brew. https://conductor.build/
-      "calibre"
-      "chatgpt"
-      "claude"
-      "chromedriver"
-      "cleanshot"
-      "codex-app"
-      "conductor"
-      "cursor"
-      "datagrip"
-      "dataspell"
-      "digikam"
-      "dbeaver-community" # dbeaver-bin doesnt work on MacOS?
-      # "docker" # liever Colima # when really need Docker, liever alleen CLI. geeft ook compaudit error bij elke shell-open vanwege de docker-completions. Installeren met `brew install docker --cask`, als docker eerder handmatig is geinstalleerd soms nodig om met rm eea te verwijderen.
-      "dropbox"
-      "ente"
-      "ente-auth"
-      "fabfilter-pro-c"
-      "fabfilter-pro-ds"
-      "fabfilter-pro-g"
-      "figma"
-      "firefox"
-      "imazing-profile-editor"
-      "insync"
-      "istat-menus"
-      "jetbrains-gateway"
-      "jetbrains-toolbox"
-      # "github" # only Intel, arm64 must be downloaded from website
-      # "google-cloud-sdk" # see gdk
-      "geekbench"
-      "geekbench-ai"
-      "ghostty" # broken in nixpkgs
-      "github" # desktop
-      "google-drive"
-      "gpg-suite"
-      "hammerspoon"
-      "ilok-license-manager"
-      "imageoptim"
-      "izotope-product-portal"
-      "kobo"
-      "licecap"
-      "librewolf"
-      "libreoffice"
-      "loopback" # Rogue Amoeba
-      "macfuse"
-      "mixxx" # open traktor
-      "monodraw"
-      "mx-power-gadget"
-      "native-access"
-      "obs"
-      "obsidian"
-      # "ollama-app"
-      # "orbstack" # Use open source podman instead
-      "pycharm"
-      "podman-desktop"
-      "reaper"
-      "rapidapi"
-      "raycast" # for searching nix GUI apps (nix doesnt put bin in Applications folder so macos search doesnt work)
-      "rode-central" #c(firmware update)
-      "rustrover"
-      "screenflow"
-      "signal"
-      "softube-central" # ua connect NA
-      "stats" # macOS system monitor in menu bar
-      # "soundtoys" broken / needs check
-      "soundsource" # Rogue Amoeba, allows headphone EQ presets
-      # "screenpipe" outdated on brew
-      "spitfire-audio"
-      "sublime-text"
-      "superwhisper"
-      "superhuman"
-      "tailscale-app" # GUI apps via Brew
-      "tdr-kotelnikov"
-      "tdr-molotok"
-      "tdr-nova"
-      "tdr-prism"
-      "termius"
-      "thunderbird"
-      "transmission"
-      "veracrypt"
-      "visual-studio-code"
-      "vlc"
-      # "vmware-fusion" # Disabled because you need a Broadcom profile. Login & Download here: https://support.broadcom.com/group/ecx/productdownloads?subfamily=VMware%20Fusion&freeDownloads=true What a shitshow!
-      "wacom-tablet"
-      "warp"
-      "waves-central"
-      "webstorm"
-      "zed"
-    ];
+    casks = coreCasks ++ lib.optionals (!isOffice) personalCasks;
     masApps = { # to find ID, App Store > Share > Copy link
       # masApps reinstall or do a slow check on each run. Manual install is the best option I guess.
       # "Bitwarden" = 1352778147;

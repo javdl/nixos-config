@@ -609,6 +609,17 @@ in {
 
      shellAliases = shared.shellAliases;
 
+    profileExtra = ''
+      # Homebrew
+      eval "$(/opt/homebrew/bin/brew shellenv)"
+
+      # OrbStack
+      source ~/.orbstack/shell/init.zsh 2>/dev/null || :
+
+      # JetBrains Toolbox
+      export PATH="$PATH:$HOME/Library/Application Support/JetBrains/Toolbox/scripts"
+    '';
+
     initContent = ''
       export GPG_TTY=$(tty)
 
@@ -816,8 +827,32 @@ in {
   programs.jujutsu = {
     enable = true;
 
-    # I don't use "settings" because the path is wrong on macOS at
-    # the time of writing this.
+    settings = {
+      user = {
+        email = "j@jlnw.nl";
+        name = "Joost van der Laan";
+      };
+      signing = {
+        backend = "gpg";
+        behavior = "own";
+      };
+      aliases = {
+        b = ["branch"];
+        n = ["new"];
+        tug = ["bookmark" "move" "--from" "closest_bookmark(@-)" "--to" "@-"];
+        retrunk = ["rebase" "-d" "trunk()"];
+      };
+      revset-aliases = {
+        "closest_bookmark(to)" = "heads(::to & bookmarks())";
+        "fork_history(to, from)" = "fork_point(to | from)..@";
+      };
+      template-aliases = {
+        "format_timestamp(timestamp)" = "timestamp.ago()";
+      };
+      ui = {
+        default-command = "log";
+      };
+    };
   };
 
   # this should be disabled for darwin
