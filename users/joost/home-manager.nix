@@ -141,7 +141,7 @@ in {
     discord
     # element-web  # Temporarily disabled due to nodejs build failures
     # gimp
-    google-chrome
+    # google-chrome  # Marked insecure in nixpkgs (updater broken). Use Homebrew cask on macOS, chromium on Linux.
     inkscape
     postman
     slack

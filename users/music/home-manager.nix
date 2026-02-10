@@ -21,7 +21,7 @@ in {
 
   home.packages = [
     pkgs.cachix
-    pkgs.google-chrome
+    # pkgs.google-chrome  # Marked insecure in nixpkgs (updater broken). Using chromium in Linux section below.
     pkgs.htop
     pkgs.neofetch
     pkgs.tailscale

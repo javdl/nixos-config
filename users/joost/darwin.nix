@@ -32,6 +32,7 @@ let
     "geekbench-ai"
     "ghostty" # broken in nixpkgs
     "github" # desktop
+    "google-chrome"
     "google-drive"
     "gpg-suite"
     "hammerspoon"
