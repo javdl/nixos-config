@@ -143,9 +143,8 @@ in {
 
   programs.git = {
     enable = true;
-    # TODO: Update with desmond's details
     userName = "Desmond";
-    userEmail = "desmond@example.com";
+    userEmail = "d.van.zurk@gmail.com";
     signing = {
       key = null;  # TODO: Add GPG key if using signing
       signByDefault = false;
@@ -166,7 +165,7 @@ in {
       color.ui = true;
       core.askPass = "";
       credential.helper = "store";
-      github.user = "desmond";  # TODO: Update GitHub username
+      github.user = "Desmond225";
       push.default = "tracking";
       push.autoSetupRemote = true;
       init.defaultBranch = "main";
@@ -176,7 +175,7 @@ in {
   programs.tmux = {
     enable = true;
     terminal = "xterm-256color";
-    shortcut = "l";
+    shortcut = "b";
     secureSocket = false;
     mouse = true;
     extraConfig = ''

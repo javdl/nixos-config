@@ -35,13 +35,38 @@ This is a NixOS/nix-darwin configuration repository using Nix flakes. It manages
 - `make vm/copy` - Copy configs to VM
 - `make vm/switch` - Apply changes in VM
 
-### Hetzner Dev Box
+### Hetzner Dev Box (joost)
 - `make hetzner/copy NIXADDR=<ip>` - Copy config to Hetzner server
 - `make hetzner/switch NIXADDR=<ip> NIXNAME=hetzner-dev` - Apply NixOS config on Hetzner
 - `make hetzner/bootstrap0 NIXADDR=<ip>` - Initial NixOS install (Hetzner box must be in rescue mode)
 - `make hetzner/bootstrap NIXADDR=<ip>` - Complete setup after bootstrap0
 - `make hetzner/secrets NIXADDR=<ip>` - Copy SSH/GPG keys to server
 - `make hetzner/tailscale-auth NIXADDR=<ip> TAILSCALE_AUTHKEY=<key>` - Set up Tailscale
+
+### Colleague Dev Servers
+Each colleague has a dedicated NixOS server config with auto-update enabled:
+
+| Colleague | Host Config     | Flake Target     | User Config                           |
+|-----------|-----------------|------------------|---------------------------------------|
+| Desmond   | `desmondroid`   | `#desmondroid`   | `users/desmond/home-manager-server.nix` |
+| Jackson   | `jacksonator`   | `#jacksonator`   | `users/jackson/home-manager-server.nix` |
+| Jeevan    | `jeevanator`    | `#jeevanator`    | `users/jeevan/home-manager-server.nix`  |
+| Peter     | `peterbot`      | `#peterbot`      | `users/peter/home-manager-server.nix`   |
+| Rajesh    | `rajbot`        | `#rajbot`        | `users/rajesh/home-manager-server.nix`  |
+
+**Deployment:** All colleague machines have `nixosAutoUpdate` pulling from `github:javdl/nixos-config#<hostname>` at 4 AM daily. To deploy changes:
+1. Edit the relevant `users/<name>/home-manager-server.nix` or `hosts/<hostname>.nix`
+2. Commit and push to `main` — machines auto-update on next scheduled check
+
+**Immediate deployment** (if you can't wait for auto-update):
+- `make hetzner/copy NIXADDR=<ip> NIXUSER=<user>` then `make hetzner/switch NIXADDR=<ip> NIXNAME=<hostname>`
+- Or SSH in and run: `sudo nixos-rebuild switch --flake "github:javdl/nixos-config#<hostname>"`
+
+**Bootstrap a new colleague server:**
+1. Boot Hetzner server into rescue mode
+2. `make hetzner/bootstrap0 NIXADDR=<ip>`
+3. `make hetzner/bootstrap NIXADDR=<ip> NIXNAME=<hostname> NIXUSER=<user>`
+4. `make hetzner/tailscale-auth NIXADDR=<ip> TAILSCALE_AUTHKEY=<key>`
 
 ## Architecture
 
