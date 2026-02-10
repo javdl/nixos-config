@@ -47,8 +47,7 @@ let
     "macwhisper"
     "obsidian"
     # "ollama-app"
-    # "orbstack" # Use open source podman instead
-    "pycharm"
+"pycharm"
     "podman-desktop"
     "rapidapi"
     "raycast" # for searching nix GUI apps (nix doesnt put bin in Applications folder so macos search doesnt work)

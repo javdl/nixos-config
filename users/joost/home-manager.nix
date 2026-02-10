@@ -83,7 +83,7 @@ in {
     docker-compose
     # podman
     # podman-tui
-    # colima # orbstack moet betere performance hebben
+    # colima
     eza # Modern replacement for ls
     fastfetch
     fd
@@ -612,9 +612,6 @@ in {
     profileExtra = ''
       # Homebrew
       eval "$(/opt/homebrew/bin/brew shellenv)"
-
-      # OrbStack
-      source ~/.orbstack/shell/init.zsh 2>/dev/null || :
 
       # JetBrains Toolbox
       export PATH="$PATH:$HOME/Library/Application Support/JetBrains/Toolbox/scripts"
