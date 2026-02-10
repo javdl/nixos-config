@@ -360,11 +360,76 @@ _Voila!_
 
 Colleague development servers (Hetzner CPX32, Nuremberg):
 
-- desmondroid
-- jacksonator
-- peterbot
-- rajbot
-- jeevanator
+| Colleague | Hostname       | Flake Target     | User Config                             |
+|-----------|----------------|------------------|-----------------------------------------|
+| Desmond   | desmondroid    | `#desmondroid`   | `users/desmond/home-manager-server.nix` |
+| Jackson   | jacksonator    | `#jacksonator`   | `users/jackson/home-manager-server.nix` |
+| Jeevan    | jeevanator     | `#jeevanator`    | `users/jeevan/home-manager-server.nix`  |
+| Peter     | peterbot       | `#peterbot`      | `users/peter/home-manager-server.nix`   |
+| Rajesh    | rajbot         | `#rajbot`        | `users/rajesh/home-manager-server.nix`  |
+
+All servers auto-update from `main` at 4 AM UTC daily via the `nixosAutoUpdate` module.
+
+### Making changes to your own server
+
+You can customise your dev server by editing your config and rebuilding. Here's how (using Jackson / `jacksonator` as an example — substitute your own name and hostname):
+
+**1. Clone the repo on your server:**
+
+```bash
+git clone https://github.com/javdl/nixos-config.git ~/nixos-config
+cd ~/nixos-config
+```
+
+**2. Edit your config:**
+
+Your personal config lives in `users/jackson/home-manager-server.nix`. This controls your shell, git settings, tmux, installed packages, and more.
+
+```bash
+# Open your config in your preferred editor
+nano users/jackson/home-manager-server.nix
+```
+
+Common things you might want to change:
+- **Add packages**: find the `home.packages` list and add entries like `pkgs.htop` or `pkgs.nodejs`
+- **Git config**: update `programs.git.userName`, `userEmail`, or `github.user`
+- **Shell aliases**: add aliases in the zsh or bash configuration section
+- **Tmux settings**: change prefix key, mouse mode, etc. under `programs.tmux`
+
+The host-level config (networking, system services, etc.) is in `hosts/jacksonator.nix` — you probably don't need to touch this.
+
+**3. Apply your changes:**
+
+```bash
+# Test first (builds without activating)
+sudo nixos-rebuild test --flake ".#jacksonator"
+
+# If that works, apply for real
+sudo nixos-rebuild switch --flake ".#jacksonator"
+```
+
+**4. (Optional) Contribute your changes back:**
+
+If you want your changes to persist across auto-updates, push them to the repo:
+
+```bash
+cd ~/nixos-config
+git add users/jackson/home-manager-server.nix
+git commit -m "jackson: add nodejs to packages"
+git push
+```
+
+If you don't push, your local changes will be overwritten on the next auto-update at 4 AM.
+
+### Finding packages
+
+```bash
+# Search for a package
+nix search nixpkgs python
+
+# Check what's already installed
+grep "pkgs\." users/jackson/home-manager-server.nix
+```
 
 ## Passwords
 
