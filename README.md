@@ -55,6 +55,8 @@ We use [Bitfocus Companion](https://bitfocus.io/companion) to send keystrokes fo
 
 > **Note:** The dedicated VICREO - Listener module (`vicreo-hotkey`) has no compatible build for macOS aarch64, so we use the Generic TCP/UDP approach instead — it's what that module does under the hood anyway. Works identically on macOS and Linux. Nix paths are exposed to GUI apps via a LaunchAgent in `mac-shared.nix`.
 
+> **Note:** Bitfocus Companion requires Node.js to be installed or accessible in the environment. Without it, certain modules (e.g. Generic - TCP/UDP) will show "no version available" even though a compatible version exists. On NixOS/nix-darwin systems, ensure Companion can access the Nix-managed Node.js — either by installing Node globally or by exposing the Nix environment to the application.
+
 > **TODO:** Explore loading Companion configs automatically via Nix (e.g. symlink or activation script into Companion's data directory).
 
 ### Bitwarden SSH Agent (macOS)
