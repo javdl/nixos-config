@@ -53,7 +53,7 @@ We use [Bitfocus Companion](https://bitfocus.io/companion) to send keystrokes fo
    Change `"key"` to whatever string you want typed. The password is the MD5 hash of an empty string (default). If you set a password in VICREO Listener, MD5 hash that password instead.
 5. Companion configs are stored in `users/joost/companion/` in this repo
 
-> **Note:** The dedicated VICREO - Listener module (`vicreo-hotkey`) does not work on macOS aarch64 — Companion can't find Nix-installed `node` because macOS GUI apps don't inherit the Nix `PATH`. The Generic TCP/UDP approach above is what that module does under the hood anyway — it just builds the same JSON. Works identically on macOS and Linux.
+> **Note:** The dedicated VICREO - Listener module (`vicreo-hotkey`) has no compatible build for macOS aarch64, so we use the Generic TCP/UDP approach instead — it's what that module does under the hood anyway. Works identically on macOS and Linux. Nix paths are exposed to GUI apps via a LaunchAgent in `mac-shared.nix`.
 
 > **TODO:** Explore loading Companion configs automatically via Nix (e.g. symlink or activation script into Companion's data directory).
 

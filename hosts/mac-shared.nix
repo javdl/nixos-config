@@ -81,6 +81,17 @@ in {
     # };
     programs.nix-index.enable = true;
 
+    # Expose Nix paths to GUI apps (Companion, etc.) via launchd
+    launchd.user.agents.nix-path-env = {
+      serviceConfig = {
+        ProgramArguments = [
+          "/bin/sh" "-c"
+          ''/bin/launchctl setenv PATH "/etc/profiles/per-user/$USER/bin:/run/current-system/sw/bin:/nix/var/nix/profiles/default/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"''
+        ];
+        RunAtLoad = true;
+      };
+    };
+
     # Keyboard
     system.keyboard.enableKeyMapping = true;
     system.keyboard.remapCapsLockToEscape = true;
