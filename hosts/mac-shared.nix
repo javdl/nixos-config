@@ -81,6 +81,16 @@ in {
     # };
     programs.nix-index.enable = true;
 
+    # Start VICREO Listener at login (receives keystroke commands from Bitfocus Companion)
+    launchd.user.agents.vicreo-listener = {
+      serviceConfig = {
+        ProgramArguments = [
+          "/usr/bin/open" "-a" "/Applications/VICREO-Listener.app"
+        ];
+        RunAtLoad = true;
+      };
+    };
+
     # Expose Nix paths to GUI apps (Companion, etc.) via launchd
     launchd.user.agents.nix-path-env = {
       serviceConfig = {

@@ -57,6 +57,8 @@ We use [Bitfocus Companion](https://bitfocus.io/companion) to send keystrokes fo
 
 > **Note:** Bitfocus Companion requires Node.js to be installed or accessible in the environment. Without it, certain modules (e.g. Generic - TCP/UDP) will show "no version available" even though a compatible version exists. On NixOS/nix-darwin systems, ensure Companion can access the Nix-managed Node.js — either by installing Node globally or by exposing the Nix environment to the application.
 
+> **Tip:** For button icons (PNG), [Flaticon](https://www.flaticon.com/search?word=github) has a large library of free icons you can use.
+
 > **TODO:** Explore loading Companion configs automatically via Nix (e.g. symlink or activation script into Companion's data directory).
 
 ### Bitwarden SSH Agent (macOS)
