@@ -90,6 +90,64 @@
             };
           };
           grepaiSource = grepaiSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for grepai: ${prev.stdenv.hostPlatform.system}");
+
+          # beads_viewer (bv) - TUI for beads issue tracking
+          bvVersion = "0.14.4";
+          bvSources = {
+            "x86_64-linux" = {
+              url = "https://github.com/Dicklesworthstone/beads_viewer/releases/download/v${bvVersion}/bv_${bvVersion}_linux_amd64.tar.gz";
+              sha256 = "99151b125691f9cb8c2c7e8771cf96e0734918cbff6971d6578554181b80713c";
+            };
+            "aarch64-linux" = {
+              url = "https://github.com/Dicklesworthstone/beads_viewer/releases/download/v${bvVersion}/bv_${bvVersion}_linux_arm64.tar.gz";
+              sha256 = "aa82889d81b4a730abe571a61d538b51735601c58aebda6231ff91d1a2951b58";
+            };
+            "x86_64-darwin" = {
+              url = "https://github.com/Dicklesworthstone/beads_viewer/releases/download/v${bvVersion}/bv_${bvVersion}_darwin_amd64.tar.gz";
+              sha256 = "0a938c563baad7bd1f50c0b44505c863afd6695eefab503cf554a65233a49c39";
+            };
+            "aarch64-darwin" = {
+              url = "https://github.com/Dicklesworthstone/beads_viewer/releases/download/v${bvVersion}/bv_${bvVersion}_darwin_arm64.tar.gz";
+              sha256 = "0b70990b1a38ffe6a70e9ab2cce3c353637dc137d8bddffa821fa84f77a6fa31";
+            };
+          };
+          bvSource = bvSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for bv: ${prev.stdenv.hostPlatform.system}");
+
+          # cass - coding agent session search
+          cassVersion = "0.1.64";
+          cassSources = {
+            "x86_64-linux" = {
+              url = "https://github.com/Dicklesworthstone/coding_agent_session_search/releases/download/v${cassVersion}/cass-v${cassVersion}-linux_amd64.tar.gz";
+              sha256 = "d7c222ec0a4e953b7e8c12ea6a5250611049140d128cf2807b13e8687fbd82fe";
+            };
+            "aarch64-darwin" = {
+              url = "https://github.com/Dicklesworthstone/coding_agent_session_search/releases/download/v${cassVersion}/cass-v${cassVersion}-darwin_arm64.tar.gz";
+              sha256 = "0bf2a171c85a404bf0ac966d72e18414ff20b53d22890a1bb3b16807b483d40b";
+            };
+          };
+          cassSource = cassSources.${prev.stdenv.hostPlatform.system} or null;
+
+          # dcg - destructive command guard
+          dcgVersion = "0.4.0";
+          dcgSources = {
+            "x86_64-linux" = {
+              url = "https://github.com/Dicklesworthstone/destructive_command_guard/releases/download/v${dcgVersion}/dcg-x86_64-unknown-linux-gnu.tar.xz";
+              sha256 = "1704a533f0e40ed12bac3c13273ac1e095e20c3eebed50cc6711f7073eaa505c";
+            };
+            "aarch64-linux" = {
+              url = "https://github.com/Dicklesworthstone/destructive_command_guard/releases/download/v${dcgVersion}/dcg-aarch64-unknown-linux-gnu.tar.xz";
+              sha256 = "06d9d6358a470a1934265f95d0a1df95745e72cf9984a45fd3e373593b6bd0af";
+            };
+            "x86_64-darwin" = {
+              url = "https://github.com/Dicklesworthstone/destructive_command_guard/releases/download/v${dcgVersion}/dcg-x86_64-apple-darwin.tar.xz";
+              sha256 = "d843a97fa6eba1b69d287afa28fb9bfe4ef22d1539da786166237c4869ee93fa";
+            };
+            "aarch64-darwin" = {
+              url = "https://github.com/Dicklesworthstone/destructive_command_guard/releases/download/v${dcgVersion}/dcg-aarch64-apple-darwin.tar.xz";
+              sha256 = "2a0d594f1ec54b1a9453c376c4a9c6277ef548c869f60bac46cbd22928251e83";
+            };
+          };
+          dcgSource = dcgSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for dcg: ${prev.stdenv.hostPlatform.system}");
         in {
           # grepai - semantic code search for AI coding assistants
           grepai = prev.stdenv.mkDerivation {
@@ -122,6 +180,207 @@
               platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
             };
           };
+          # bv - beads viewer TUI for issue tracking
+          beads-viewer = prev.stdenv.mkDerivation {
+            pname = "beads-viewer";
+            version = bvVersion;
+
+            src = prev.fetchurl {
+              url = bvSource.url;
+              sha256 = bvSource.sha256;
+            };
+
+            sourceRoot = ".";
+
+            nativeBuildInputs = [ prev.gnutar ];
+
+            unpackPhase = ''
+              tar xzf $src
+            '';
+
+            installPhase = ''
+              mkdir -p $out/bin
+              cp bv $out/bin/
+              chmod +x $out/bin/bv
+            '';
+
+            meta = with prev.lib; {
+              description = "Elegant TUI for the Beads issue tracking system";
+              homepage = "https://github.com/Dicklesworthstone/beads_viewer";
+              license = licenses.mit;
+              platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+            };
+          };
+
+          # ubs - ultimate bug scanner for AI-assisted code quality
+          ubs = prev.stdenv.mkDerivation {
+            pname = "ubs";
+            version = "5.0.6";
+
+            src = prev.fetchurl {
+              url = "https://raw.githubusercontent.com/Dicklesworthstone/ultimate_bug_scanner/v5.0.6/ubs";
+              sha256 = "ebb31bf412a409a19a060f2587c2ea02f185c0bf695204db6c73ef7560d377ed";
+            };
+
+            dontUnpack = true;
+
+            nativeBuildInputs = [ prev.makeWrapper ];
+
+            installPhase = ''
+              mkdir -p $out/bin
+              cp $src $out/bin/ubs
+              chmod +x $out/bin/ubs
+              wrapProgram $out/bin/ubs \
+                --prefix PATH : ${prev.lib.makeBinPath [
+                  prev.bash
+                  prev.coreutils
+                  prev.gnugrep
+                  prev.gnused
+                  prev.gawk
+                  prev.findutils
+                  prev.curl
+                  prev.jq
+                  prev.ripgrep
+                  prev.ast-grep
+                  prev.typos
+                  prev.python3
+                ]}
+            '';
+
+            meta = with prev.lib; {
+              description = "AI-native code quality scanner detecting 1000+ bug patterns";
+              homepage = "https://github.com/Dicklesworthstone/ultimate_bug_scanner";
+              license = licenses.mit;
+              platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+            };
+          };
+
+          # cass - coding agent session search TUI
+          cass = if cassSource != null then prev.stdenv.mkDerivation {
+            pname = "cass";
+            version = cassVersion;
+
+            src = prev.fetchurl {
+              url = cassSource.url;
+              sha256 = cassSource.sha256;
+            };
+
+            sourceRoot = ".";
+
+            nativeBuildInputs = [ prev.gnutar ];
+
+            unpackPhase = ''
+              tar xzf $src
+            '';
+
+            installPhase = ''
+              mkdir -p $out/bin
+              cp cass $out/bin/
+              chmod +x $out/bin/cass
+            '';
+
+            meta = with prev.lib; {
+              description = "Unified TUI to index and search coding agent session history";
+              homepage = "https://github.com/Dicklesworthstone/coding_agent_session_search";
+              license = licenses.mit;
+              platforms = [ "x86_64-linux" "aarch64-darwin" ];
+            };
+          } else null;
+
+          # ru - repo updater for syncing GitHub repositories
+          repo-updater = prev.stdenv.mkDerivation {
+            pname = "repo-updater";
+            version = "1.2.1";
+
+            src = prev.fetchurl {
+              url = "https://github.com/Dicklesworthstone/repo_updater/releases/download/v1.2.1/ru";
+              sha256 = "7dc465cc5a47102b68a983202b1026d451d767d76c969fe03c6eac1726bf3709";
+            };
+
+            dontUnpack = true;
+
+            nativeBuildInputs = [ prev.makeWrapper ];
+
+            installPhase = ''
+              mkdir -p $out/bin
+              cp $src $out/bin/ru
+              chmod +x $out/bin/ru
+              wrapProgram $out/bin/ru \
+                --prefix PATH : ${prev.lib.makeBinPath [
+                  prev.bash
+                  prev.coreutils
+                  prev.git
+                  prev.gh
+                  prev.curl
+                ]}
+            '';
+
+            meta = with prev.lib; {
+              description = "Beautiful CLI tool for synchronizing GitHub repositories";
+              homepage = "https://github.com/Dicklesworthstone/repo_updater";
+              license = licenses.mit;
+              platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+            };
+          };
+
+          # dcg - destructive command guard for AI coding agents
+          destructive-command-guard = prev.stdenv.mkDerivation {
+            pname = "destructive-command-guard";
+            version = dcgVersion;
+
+            src = prev.fetchurl {
+              url = dcgSource.url;
+              sha256 = dcgSource.sha256;
+            };
+
+            sourceRoot = ".";
+
+            nativeBuildInputs = [ prev.xz ];
+
+            unpackPhase = ''
+              tar xJf $src
+            '';
+
+            installPhase = ''
+              mkdir -p $out/bin
+              cp dcg $out/bin/
+              chmod +x $out/bin/dcg
+            '';
+
+            meta = with prev.lib; {
+              description = "Safety hook for AI coding agents that blocks destructive commands";
+              homepage = "https://github.com/Dicklesworthstone/destructive_command_guard";
+              license = licenses.mit;
+              platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+            };
+          };
+
+          # cm - cass memory system (Linux only - no macOS binary available)
+          cass-memory = if prev.stdenv.isLinux && prev.stdenv.hostPlatform.system == "x86_64-linux" then prev.stdenv.mkDerivation {
+            pname = "cass-memory";
+            version = "0.2.3";
+
+            src = prev.fetchurl {
+              url = "https://github.com/Dicklesworthstone/cass_memory_system/releases/download/v0.2.3/cass-memory-linux-x64";
+              sha256 = "c1cf33be88ca819f8c457f4519334fa99727da42e29832c71e99fd423f1a29f4";
+            };
+
+            dontUnpack = true;
+
+            installPhase = ''
+              mkdir -p $out/bin
+              cp $src $out/bin/cm
+              chmod +x $out/bin/cm
+            '';
+
+            meta = with prev.lib; {
+              description = "Procedural memory system for AI coding agents";
+              homepage = "https://github.com/Dicklesworthstone/cass_memory_system";
+              license = licenses.mit;
+              platforms = [ "x86_64-linux" ];
+            };
+          } else null;
+
           # gh CLI on stable has bugs.
           gh = pkgs-unstable.gh;
 
