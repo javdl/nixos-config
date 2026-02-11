@@ -47,7 +47,7 @@ We use [Bitfocus Companion](https://bitfocus.io/companion) to send keystrokes fo
 2. Install Bitfocus Companion on the controller machine
 3. In Companion, add a connection: search for **VICREO - Listener** (module `vicreo-hotkey`)
 4. On your button, use the **Send String** action (e.g. with value `ultrathink` to send a prompt)
-5. Companion configs are stored in `companion/` in this repo
+5. Companion configs are stored in `users/joost/companion/` in this repo
 
 > **TODO:** Explore loading Companion configs automatically via Nix (e.g. symlink or activation script into Companion's data directory).
 
