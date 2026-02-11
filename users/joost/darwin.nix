@@ -43,7 +43,7 @@ let
     "jetbrains-toolbox"
     "librewolf"
     "libreoffice"
-    "logitech-g-hub"
+    # "logitech-g-hub" # Disabled - errors on each make switch
     "macwhisper"
     "obsidian"
     # "ollama-app"
