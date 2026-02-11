@@ -35,6 +35,21 @@ Software that cannot (yet) be installed via Nix or Brew or Mac App Store:
 - [DaVinci Resolve Studio](https://www.blackmagicdesign.com/support/family/davinci-resolve-and-fusion)
 - [Switch Spotlight hotkey to Raycast](https://manual.raycast.com/hotkey) - Raycast is a must to find GUI apps installed via Nix. Regular spotlight does not find them because it doesn't work with symlinks.
 - `skhd --install-service && skhd --start-service`
+- [VICREO Listener](https://vicreo-listener.com/downloads) - Receives keystroke commands from Bitfocus Companion (see below)
+
+### Bitfocus Companion
+
+We use [Bitfocus Companion](https://bitfocus.io/companion) to send keystrokes for triggering prompts and other automations. Companion sends keystroke commands over the network to the target machine, where [VICREO Listener](https://vicreo-listener.com/downloads) receives and executes them. It runs as a background service, listens on a local port, and types into whatever app is focused. Works identically on macOS and Linux.
+
+**Setup steps:**
+
+1. Install [VICREO Listener](https://vicreo-listener.com/downloads) manually on each target machine (not available as a Nix package)
+2. Install Bitfocus Companion on the controller machine
+3. In Companion, add a connection: search for **VICREO - Listener** (module `vicreo-hotkey`)
+4. On your button, use the **Send String** action (e.g. with value `ultrathink` to send a prompt)
+5. Companion configs are stored in `companion/` in this repo
+
+> **TODO:** Explore loading Companion configs automatically via Nix (e.g. symlink or activation script into Companion's data directory).
 
 ### Bitwarden SSH Agent (macOS)
 
