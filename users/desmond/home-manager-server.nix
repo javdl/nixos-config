@@ -69,6 +69,7 @@ in {
     rustup
     cargo-generate
     pre-commit
+    zed-editor        # Remote dev server for local Zed connections via SSH
 
     # DevOps
     cachix
