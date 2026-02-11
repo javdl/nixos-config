@@ -45,9 +45,15 @@ We use [Bitfocus Companion](https://bitfocus.io/companion) to send keystrokes fo
 
 1. Install [VICREO Listener](https://vicreo-listener.com/downloads) manually on each target machine (not available as a Nix package)
 2. Install Bitfocus Companion on the controller machine
-3. In Companion, add a connection: search for **VICREO - Listener** (module `vicreo-hotkey`)
-4. On your button, use the **Send String** action (e.g. with value `ultrathink` to send a prompt)
+3. In Companion, add a **Generic - TCP/UDP** connection with host `127.0.0.1`, port `10001`, protocol TCP
+4. On your button, add a **Send Command** action with the following JSON:
+   ```json
+   {"key":"ultrathink","type":"string","password":"d41d8cd98f00b204e9800998ecf8427e"}
+   ```
+   Change `"key"` to whatever string you want typed. The password is the MD5 hash of an empty string (default). If you set a password in VICREO Listener, MD5 hash that password instead.
 5. Companion configs are stored in `users/joost/companion/` in this repo
+
+> **Note:** The dedicated VICREO - Listener module (`vicreo-hotkey`) does not have a compatible build for macOS aarch64. The Generic TCP/UDP approach above is what that module does under the hood anyway — it just builds the same JSON. Works identically on macOS and Linux.
 
 > **TODO:** Explore loading Companion configs automatically via Nix (e.g. symlink or activation script into Companion's data directory).
 
