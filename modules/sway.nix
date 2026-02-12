@@ -12,6 +12,7 @@
     grim # screenshot functionality
     slurp # screenshot functionality
     wl-clipboard # wl-copy and wl-paste for copy/paste from stdin / stdout
+    cliphist # clipboard history manager for Wayland
     mako # notification system developed by swaywm maintainer
     # the rest
     swayidle # idle management
@@ -41,6 +42,19 @@
       export MOZ_ENABLE_WAYLAND=1
     '';
   };
+
+  # Clipboard history manager (cliphist) - sway config drop-in
+  # Default sway config includes /etc/sway/config.d/*
+  environment.etc."sway/config.d/cliphist.conf".text = ''
+    # Start clipboard listener on sway startup
+    exec wl-paste --watch cliphist store
+
+    # Super+V to browse clipboard history via wofi
+    bindsym Mod4+v exec cliphist list | wofi --dmenu | cliphist decode | wl-copy
+
+    # Super+Shift+V to delete an entry from clipboard history
+    bindsym Mod4+Shift+v exec cliphist list | wofi --dmenu | cliphist delete
+  '';
 
 # older config, for ref:
 #     programs.sway = {
