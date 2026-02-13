@@ -331,7 +331,7 @@ in {
 
   services.gpg-agent = lib.mkIf isLinux {
     enable = true;
-    pinentryPackage = pkgs.pinentry-tty;
+    pinentry.package = pkgs.pinentry-tty;
     defaultCacheTtl = 31536000;
     maxCacheTtl = 31536000;
   };

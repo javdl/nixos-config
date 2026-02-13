@@ -161,24 +161,17 @@ in {
 
   programs.git = {
     enable = true;
-    userName = "Joost van der Laan";
-    userEmail = "j@jlnw.nl";
     signing = {
       key = "F4B9B085DAC0B0B1";
       signByDefault = false;
     };
-    delta = {
-      enable = true;
-      options = {
-        line-numbers = true;
-        side-by-side = true;
+    settings = {
+      user.name = "Joost van der Laan";
+      user.email = "j@jlnw.nl";
+      alias = {
+        prettylog = "log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(r) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative";
+        root = "rev-parse --show-toplevel";
       };
-    };
-    aliases = {
-      prettylog = "log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(r) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative";
-      root = "rev-parse --show-toplevel";
-    };
-    extraConfig = {
       branch.autosetuprebase = "always";
       color.ui = true;
       core.askPass = "";
@@ -187,6 +180,15 @@ in {
       push.default = "tracking";
       push.autoSetupRemote = true;
       init.defaultBranch = "main";
+    };
+  };
+
+  programs.delta = {
+    enable = true;
+    enableGitIntegration = true;
+    options = {
+      line-numbers = true;
+      side-by-side = true;
     };
   };
 
@@ -280,7 +282,7 @@ in {
 
   services.gpg-agent = lib.mkIf isLinux {
     enable = true;
-    pinentryPackage = pkgs.pinentry-tty;
+    pinentry.package = pkgs.pinentry-tty;
     defaultCacheTtl = 31536000;
     maxCacheTtl = 31536000;
   };

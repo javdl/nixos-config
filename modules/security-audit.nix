@@ -91,20 +91,17 @@ in {
         "-a always,exit -F arch=b32 -S clock_settime -k time_change"
         "-w /etc/localtime -p wa -k time_change"
 
-        # Monitor kernel module loading/unloading
-        "-w /sbin/insmod -p x -k modules"
-        "-w /sbin/rmmod -p x -k modules"
-        "-w /sbin/modprobe -p x -k modules"
-        "-a always,exit -F arch=b64 -S init_module -S delete_module -k modules"
-        "-a always,exit -F arch=b32 -S init_module -S delete_module -k modules"
+        # Monitor kernel module loading/unloading (syscalls only, NixOS has no /sbin)
+        "-a always,exit -F arch=b64 -S init_module -S delete_module -S finit_module -k modules"
+        "-a always,exit -F arch=b32 -S init_module -S delete_module -S finit_module -k modules"
 
         # Monitor mount operations
         "-a always,exit -F arch=b64 -S mount -S umount2 -k mounts"
         "-a always,exit -F arch=b32 -S mount -S umount -S umount2 -k mounts"
 
-        # Monitor privileged commands
-        "-a always,exit -F path=/usr/bin/sudo -F perm=x -k privileged_sudo"
-        "-a always,exit -F path=/usr/bin/su -F perm=x -k privileged_su"
+        # Monitor privileged commands (NixOS wrapper paths)
+        "-a always,exit -F path=/run/wrappers/bin/sudo -F perm=x -k privileged_sudo"
+        "-a always,exit -F path=/run/wrappers/bin/su -F perm=x -k privileged_su"
 
         # Monitor login/logout events
         "-w /var/log/lastlog -p wa -k logins"
@@ -121,7 +118,6 @@ in {
 
         # Monitor systemd service changes
         "-w /etc/systemd/ -p wa -k systemd"
-        "-w /usr/lib/systemd/ -p wa -k systemd"
       ];
     };
 

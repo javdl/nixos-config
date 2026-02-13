@@ -222,7 +222,7 @@
   # Disable unnecessary services for a headless server
   services.xserver.enable = false;
   services.printing.enable = false;
-  hardware.pulseaudio.enable = false;
+  services.pulseaudio.enable = false;
 
   # Enable useful services
   services.nscd.enable = true;
