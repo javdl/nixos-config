@@ -49,14 +49,22 @@ in {
     # AI coding tools (claude-code installed via native installer in activation)
     aichat
     amp-cli
+    beads-viewer      # TUI for beads issue tracking (bv command)
     claude-code-router
     codex
     gemini-cli
+    destructive-command-guard # Safety hook for AI agents (dcg command)
+    grepai            # Semantic code search for AI coding assistants
     opencode
+    repo-updater      # GitHub repo sync tool (ru command)
+    ubs               # AI-native code quality scanner
+  ] ++ (lib.optional (pkgs.cass != null) pkgs.cass) ++ (lib.optional (pkgs.cass-memory != null) pkgs.cass-memory) ++ [
 
     # Development
+    bun
     gnumake
     gcc
+    nixd              # Nix language server (for Zed remote dev)
     nodejs_22
     python3
     poetry
@@ -66,15 +74,19 @@ in {
     pre-commit
 
     # DevOps
+    bitwarden-cli
     cachix
     chezmoi
     devcontainer
     docker-compose
     flyctl
+    git-crypt
+    lazydocker
     railway
 
     # Shell
     starship
+    zellij
     zoxide
   ];
 
