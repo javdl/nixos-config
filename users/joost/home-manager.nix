@@ -264,7 +264,7 @@ in {
 
   # Install Claude Code CLI if not present
   home.activation.installClaudeCode = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    if ! command -v claude &> /dev/null; then
+    if [ ! -f "$HOME/.local/bin/claude" ]; then
       $DRY_RUN_CMD bash -c "curl -fsSL https://claude.ai/install.sh | bash"
     fi
   '';
