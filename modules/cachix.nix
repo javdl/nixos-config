@@ -26,5 +26,8 @@
 
     # Trust users to manage the Nix store
     trusted-users = [ "joost" "root" ];
+
+    # Larger download buffer for faster fetches (512 MiB)
+    download-buffer-size = 536870912;
   };
 }

@@ -1,9 +1,10 @@
 {
   description = "NixOS systems and tools by joost";
 
-  nixConfig = {
-    download-buffer-size = 536870912;  # 512 MiB, default is 64 MiB
-  };
+  # download-buffer-size is set daemon-side:
+  # - macOS: via nix.custom.conf in mac-shared.nix
+  # - NixOS: via nix.settings in cachix.nix
+  # Setting it here in nixConfig causes "not a trusted user" warnings on macOS.
 
   inputs = {
     # Pin our primary nixpkgs repository. This is the main nixpkgs repository
