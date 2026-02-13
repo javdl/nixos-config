@@ -8,6 +8,12 @@ in {
     ../modules/cachix.nix
   ];
 
+  # Determinate Nix includes nix.custom.conf - set restricted settings here
+  # so the daemon applies them globally (avoids "not a trusted user" warnings)
+  environment.etc."nix/nix.custom.conf".text = ''
+    download-buffer-size = 536870912
+  '';
+
     # Allow unfree packages
     nixpkgs.config.allowUnfree = true;
     nixpkgs.config.allowUnfreePredicate = _: true;
