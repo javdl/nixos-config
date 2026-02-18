@@ -741,16 +741,16 @@ in {
       key = "ACAFA950";
       signByDefault = true;
     };
+    delta = {
+      enable = true;
+      options = {
+        line-numbers = true;
+        side-by-side = true;
+      };
+    };
     settings = {
       user.name = "Joost van der Laan";
       user.email = "j@jlnw.nl";
-      delta = {
-        enable = true;
-        options = {
-          line-numbers = true;
-          side-by-side = true;
-        };
-      };
       branch.autosetuprebase = "always";
       color.ui = true;
       core.askPass = ""; # needs to be empty to use terminal for ask pass
