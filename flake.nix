@@ -545,6 +545,12 @@
       server = true;
     };
 
+    nixosConfigurations.lennardroid = mkSystem "lennardroid" {
+      system = "x86_64-linux";
+      user   = "lennard";
+      server = true;
+    };
+
     darwinConfigurations.macbook-pro-m1 = mkSystem "macbook-pro-m1" {
       system = "aarch64-darwin";
       user   = "joost";
