@@ -143,9 +143,8 @@ in {
 
   programs.git = {
     enable = true;
-    # TODO: Update with Lennard's details
-    userName = "Lennard";
-    userEmail = "lennard@example.com";
+    userName = "Lennard Minderhoud";
+    userEmail = "lennard@minderhoud.nl";
     signing = {
       key = null;
       signByDefault = false;
@@ -166,8 +165,7 @@ in {
       color.ui = true;
       core.askPass = "";
       credential.helper = "store";
-      # TODO: Update with Lennard's GitHub username
-      github.user = "lennard";
+      github.user = "lminderhoud";
       push.default = "tracking";
       push.autoSetupRemote = true;
       init.defaultBranch = "main";

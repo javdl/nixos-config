@@ -63,11 +63,92 @@ Each colleague has a dedicated NixOS server config with auto-update enabled:
 - `make hetzner/copy NIXADDR=<ip> NIXUSER=<user>` then `make hetzner/switch NIXADDR=<ip> NIXNAME=<hostname>`
 - Or SSH in and run: `sudo nixos-rebuild switch --flake "github:javdl/nixos-config#<hostname>"`
 
-**Bootstrap a new colleague server:**
-1. Boot Hetzner server into rescue mode
-2. `make hetzner/bootstrap0 NIXADDR=<ip>`
-3. `make hetzner/bootstrap NIXADDR=<ip> NIXNAME=<hostname> NIXUSER=<user>`
-4. `make hetzner/tailscale-auth NIXADDR=<ip> TAILSCALE_AUTHKEY=<key>`
+**Bootstrap a new colleague server (full guide):**
+
+Prerequisites: Order a Hetzner Cloud CPX32 server. Note the IP, root password, and server ID.
+
+**Step 1: Create the NixOS configuration files**
+
+Pick a robot-themed hostname (pattern: `<name>` + `-roid`/`-ator`/`-bot`). Create 4 files based on an existing colleague (e.g., copy Desmond's):
+
+| File | What to change |
+|------|----------------|
+| `hosts/<hostname>.nix` | `networking.hostName`, `services.nixosAutoUpdate.flake`, `services.repoUpdater.user`/`projectsDir`, `users.users.<name>.shell` line, IP in comment |
+| `hosts/hardware/<hostname>.nix` | Comment header only (hardware is identical for all Hetzner CPX VMs) |
+| `users/<name>/nixos.nix` | `users.users.<name>` block (username, home dir, SSH keys, hashedPassword) |
+| `users/<name>/home-manager-server.nix` | `programs.git` (userName, userEmail, github.user) |
+
+Then add to `flake.nix`:
+```nix
+nixosConfigurations.<hostname> = mkSystem "<hostname>" {
+  system = "x86_64-linux";
+  user   = "<name>";
+  server = true;
+};
+```
+
+Update the colleague table in this file.
+
+TODOs to fill in later: SSH public key, `hashedPassword` (generate with `mkpasswd -m sha-512`), git email/GitHub username.
+
+**Step 2: Bootstrap the server (rescue mode required)**
+
+The `make hetzner/bootstrap0` command requires interactive SSH (for password auth to rescue system). If running from Claude Code (non-interactive), use this script-based approach:
+
+```bash
+# 1. Create /tmp/bootstrap-<hostname>.sh with the full install script:
+#    - Mount partitions (or partition first if fresh disk)
+#    - Install Nix: curl ... | sh -s -- install linux --no-confirm --init none
+#    - Source nix profile, start nix-daemon in background
+#    - nix-env -f '<nixpkgs>' -iA nixos-install-tools  (CRITICAL: nix doesn't include these)
+#    - nixos-generate-config --root /mnt
+#    - Write minimal bootstrap configuration.nix (SSH enabled, root password "nixos")
+#    - nixos-install --root /mnt --no-root-passwd
+#    - reboot
+
+# 2. Copy and run:
+scp /tmp/bootstrap-<hostname>.sh root@<ip>:/tmp/bootstrap.sh
+ssh root@<ip> "bash /tmp/bootstrap.sh"
+```
+
+Key gotchas for non-interactive (Claude Code) SSH:
+- Use `expect` with `-o PreferredAuthentications=password` (agent has too many keys, hangs)
+- Use `parted -s` (not `parted`) to avoid interactive confirmation prompts
+- Use `mkfs.ext4 -F` to force without confirmation
+- The Determinate Nix installer does NOT include `nixos-generate-config` or `nixos-install` — you MUST install `nixos-install-tools` via `nix-env` first
+- After sourcing nix-daemon.sh, start the daemon manually: `/nix/var/nix/profiles/default/bin/nix-daemon &`
+
+**Step 3: Apply full configuration**
+
+After the server reboots into minimal NixOS (root password: "nixos"):
+
+```bash
+# Copy config (as root since joost user may not have SSH key access yet)
+rsync -av -e 'ssh -o StrictHostKeyChecking=no -o PreferredAuthentications=password' \
+  --exclude={vendor/,.git/,.git-crypt/,.jj/,.beads/,iso/} \
+  /path/to/nixos-config/ root@<ip>:/nix-config
+
+# Apply the full config
+ssh root@<ip> "nixos-rebuild switch --flake /nix-config#<hostname>"
+```
+
+Expected warnings after first switch:
+- `repo-updater` fails (gh not authenticated yet) — normal
+- `tailscaled-autoconnect` fails (no auth key yet) — normal
+
+**Step 4: Post-bootstrap**
+
+```bash
+# Set up Tailscale (generate key at https://login.tailscale.com/admin/settings/keys)
+make hetzner/tailscale-auth NIXADDR=<ip> TAILSCALE_AUTHKEY=tskey-auth-xxx
+
+# Commit and push config so auto-update works
+jj describe -m "feat: add <name> colleague server (<hostname>)"
+jj bookmark set main -r @
+jj git push
+```
+
+After push, the server's `nixosAutoUpdate` will pull from `github:javdl/nixos-config#<hostname>` daily at 4 AM.
 
 ## Architecture
 
