@@ -22,6 +22,7 @@ in {
   home.packages = [
     pkgs.cachix
     # pkgs.google-chrome  # Marked insecure in nixpkgs (updater broken). Using chromium in Linux section below.
+    pkgs.delta          # Better git diffs
     pkgs.htop
     pkgs.neofetch
     pkgs.tailscale
@@ -101,6 +102,56 @@ in {
   };
 
   xresources.extraConfig = builtins.readFile ./Xresources;
+
+  programs.git = {
+    enable = true;
+    delta = {
+      enable = true;
+      options = {
+        line-numbers = true;
+        side-by-side = true;
+      };
+    };
+  };
+
+  programs.helix = {
+    enable = true;
+    defaultEditor = false;
+
+    settings = {
+      theme = "rose_pine";
+
+      editor = {
+        line-number = "relative";
+        cursorline = true;
+        color-modes = true;
+        true-color = true;
+
+        cursor-shape = {
+          insert = "bar";
+          normal = "block";
+          select = "underline";
+        };
+
+        soft-wrap = {
+          enable = true;
+        };
+      };
+
+      keys = {
+        normal = {
+          space = {
+            f = "file_picker";
+            b = "buffer_picker";
+          };
+          C-s = ":w";
+        };
+        insert = {
+          C-s = ":w";
+        };
+      };
+    };
+  };
 
   home.pointerCursor = lib.mkIf (isLinux && !isWSL) {
     name = "Vanilla-DMZ";

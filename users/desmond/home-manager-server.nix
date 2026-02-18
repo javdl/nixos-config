@@ -229,6 +229,104 @@ in {
     enable = true;
   };
 
+  programs.helix = {
+    enable = true;
+    defaultEditor = false;  # Keep nvim as EDITOR
+
+    settings = {
+      theme = "rose_pine";
+
+      editor = {
+        line-number = "relative";
+        cursorline = true;
+        color-modes = true;
+        true-color = true;
+        bufferline = "multiple";
+        gutters = ["diagnostics" "spacer" "line-numbers" "spacer" "diff"];
+
+        cursor-shape = {
+          insert = "bar";
+          normal = "block";
+          select = "underline";
+        };
+
+        file-picker = {
+          hidden = false;
+        };
+
+        statusline = {
+          left = ["mode" "spinner" "file-name" "file-modification-indicator"];
+          center = [];
+          right = ["diagnostics" "selections" "register" "position" "file-encoding"];
+          separator = "│";
+        };
+
+        indent-guides = {
+          render = true;
+          character = "│";
+        };
+
+        lsp = {
+          display-messages = true;
+          display-inlay-hints = true;
+        };
+
+        soft-wrap = {
+          enable = true;
+        };
+      };
+
+      keys = {
+        normal = {
+          space = {
+            f = "file_picker";
+            b = "buffer_picker";
+            s = "symbol_picker";
+            "/" = "global_search";
+          };
+          C-s = ":w";
+        };
+        insert = {
+          C-s = ":w";
+        };
+      };
+    };
+
+    languages = {
+      language = [
+        {
+          name = "nix";
+          auto-format = true;
+          formatter.command = "nixfmt";
+        }
+        {
+          name = "rust";
+          auto-format = true;
+        }
+        {
+          name = "elixir";
+          auto-format = true;
+        }
+        {
+          name = "python";
+          auto-format = true;
+        }
+        {
+          name = "typescript";
+          auto-format = true;
+        }
+        {
+          name = "javascript";
+          auto-format = true;
+        }
+        {
+          name = "go";
+          auto-format = true;
+        }
+      ];
+    };
+  };
+
   programs.atuin = {
     enable = true;
     enableFishIntegration = true;

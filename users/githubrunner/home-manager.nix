@@ -22,6 +22,13 @@
     enable = true;
     userName = "GitHub Runner";
     userEmail = "runner@localhost";
+    delta = {
+      enable = true;
+      options = {
+        line-numbers = true;
+        side-by-side = true;
+      };
+    };
     extraConfig = {
       init.defaultBranch = "main";
       pull.rebase = true;
@@ -83,6 +90,7 @@
     ripgrep
     fd
     bat
+    delta           # Better git diffs
   ];
 
   # Environment variables
@@ -108,6 +116,42 @@
     compression = true;
     serverAliveInterval = 60;
     serverAliveCountMax = 3;
+  };
+
+  programs.helix = {
+    enable = true;
+    defaultEditor = false;
+
+    settings = {
+      editor = {
+        line-number = "relative";
+        cursorline = true;
+        true-color = true;
+
+        cursor-shape = {
+          insert = "bar";
+          normal = "block";
+          select = "underline";
+        };
+
+        soft-wrap = {
+          enable = true;
+        };
+      };
+
+      keys = {
+        normal = {
+          space = {
+            f = "file_picker";
+            b = "buffer_picker";
+          };
+          C-s = ":w";
+        };
+        insert = {
+          C-s = ":w";
+        };
+      };
+    };
   };
 
   # Direnv for automatic environment loading

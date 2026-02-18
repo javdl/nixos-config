@@ -1223,6 +1223,10 @@ in {
           auto-format = true;
         }
         {
+          name = "elixir";
+          auto-format = true;
+        }
+        {
           name = "python";
           auto-format = true;
         }
