@@ -442,6 +442,23 @@ in {
     enableBashIntegration = false;
   };
 
+  # Claude Code statusline (Rose Pine themed)
+  home.file.".claude/statusline-command.sh" = {
+    source = ../claude-statusline.sh;
+    executable = true;
+  };
+
+  # Set up Claude Code statusline in settings.json (merges, doesn't overwrite)
+  home.activation.claudeStatusline = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    SETTINGS_FILE="$HOME/.claude/settings.json"
+    $DRY_RUN_CMD mkdir -p "$HOME/.claude"
+    if [ -f "$SETTINGS_FILE" ]; then
+      $DRY_RUN_CMD ${pkgs.jq}/bin/jq '.statusLine = {"type": "command", "command": "bash ~/.claude/statusline-command.sh"}' "$SETTINGS_FILE" > "$SETTINGS_FILE.tmp" && mv "$SETTINGS_FILE.tmp" "$SETTINGS_FILE"
+    else
+      echo '{"statusLine": {"type": "command", "command": "bash ~/.claude/statusline-command.sh"}}' > "$SETTINGS_FILE"
+    fi
+  '';
+
   # Ensure ~/.ssh directory exists for agent socket symlink
   home.file.".ssh/.keep".text = "";
 }

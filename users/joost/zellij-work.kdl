@@ -1,0 +1,14 @@
+layout {
+    tab name="about" cwd="~/code/fuww/about" focus=true {
+        pane
+    }
+    tab name="deploy" cwd="~/code/fuww/deploy" {
+        pane
+    }
+    tab name="frontend" cwd="~/code/fuww/frontend" {
+        pane
+    }
+    tab name="api" cwd="~/code/fuww/api" {
+        pane
+    }
+}
