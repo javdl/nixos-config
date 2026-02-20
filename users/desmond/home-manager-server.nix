@@ -81,6 +81,7 @@ in {
 
     # Shell
     starship
+    zellij
     zoxide
   ];
 
@@ -458,6 +459,9 @@ in {
       echo '{"statusLine": {"type": "command", "command": "bash ~/.claude/statusline-command.sh"}}' > "$SETTINGS_FILE"
     fi
   '';
+
+  # Zellij layout for fuww projects
+  home.file.".config/zellij/layouts/work.kdl".source = ../zellij-work-fuww.kdl;
 
   # Ensure ~/.ssh directory exists for agent socket symlink
   home.file.".ssh/.keep".text = "";

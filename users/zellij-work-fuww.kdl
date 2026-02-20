@@ -1,0 +1,8 @@
+layout {
+    tab name="api" cwd="~/code/fuww/api" focus=true {
+        pane
+    }
+    tab name="frontend" cwd="~/code/fuww/frontend" {
+        pane
+    }
+}
