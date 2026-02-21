@@ -615,7 +615,9 @@ in {
     autosuggestion.enable = true;
     syntaxHighlighting.enable = true;
 
-     shellAliases = shared.shellAliases;
+     shellAliases = shared.shellAliases // {
+       am = ''cd "$HOME/nixos-config/mcp_agent_mail" && scripts/run_server_with_token.sh'';
+     };
 
     profileExtra = ''
       # Homebrew
