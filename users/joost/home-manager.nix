@@ -115,6 +115,7 @@ in {
     zellij # Terminal workspace with batteries included
     zoxide # Fast cd command that learns your habits
 
+    agent-browser # Browser automation CLI for AI agents
     amp-cli
     beads # git-backed issue tracker for AI agents (bd command)
     beads-rust # fast Rust port of beads (br command)

@@ -206,6 +206,28 @@
             };
           };
           dcgSource = dcgSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for dcg: ${prev.stdenv.hostPlatform.system}");
+
+          # agent-browser - browser automation CLI for AI agents
+          agentBrowserVersion = "0.13.0";
+          agentBrowserSources = {
+            "x86_64-linux" = {
+              url = "https://github.com/vercel-labs/agent-browser/releases/download/v${agentBrowserVersion}/agent-browser-linux-x64";
+              sha256 = "a34421a9f7c3e498ce30f6dec4780e53488de5e01f330f2f2abcf8e79a6955f4";
+            };
+            "aarch64-linux" = {
+              url = "https://github.com/vercel-labs/agent-browser/releases/download/v${agentBrowserVersion}/agent-browser-linux-arm64";
+              sha256 = "ddc1475a999d1025a7460e7acc71b707d7dd8980345426484c2f5dfc4fb9e79b";
+            };
+            "x86_64-darwin" = {
+              url = "https://github.com/vercel-labs/agent-browser/releases/download/v${agentBrowserVersion}/agent-browser-darwin-x64";
+              sha256 = "38058f359f3062394141efacdca6ce81828710032703b4abce5216794d338af5";
+            };
+            "aarch64-darwin" = {
+              url = "https://github.com/vercel-labs/agent-browser/releases/download/v${agentBrowserVersion}/agent-browser-darwin-arm64";
+              sha256 = "644ed3755af53e687736854854a5dd10bfb14328643684d019024098c44d684d";
+            };
+          };
+          agentBrowserSource = agentBrowserSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for agent-browser: ${prev.stdenv.hostPlatform.system}");
         in {
           # grepai - semantic code search for AI coding assistants
           grepai = prev.stdenv.mkDerivation {
@@ -506,6 +528,32 @@
               platforms = [ "x86_64-linux" ];
             };
           } else null;
+
+          # agent-browser - browser automation CLI for AI agents (Rust CLI + Node.js Playwright daemon)
+          agent-browser = prev.stdenv.mkDerivation {
+            pname = "agent-browser";
+            version = agentBrowserVersion;
+
+            src = prev.fetchurl {
+              url = agentBrowserSource.url;
+              sha256 = agentBrowserSource.sha256;
+            };
+
+            dontUnpack = true;
+
+            installPhase = ''
+              mkdir -p $out/bin
+              cp $src $out/bin/agent-browser
+              chmod +x $out/bin/agent-browser
+            '';
+
+            meta = with prev.lib; {
+              description = "Browser automation CLI for AI agents with compact text output";
+              homepage = "https://agent-browser.dev";
+              license = licenses.mit;
+              platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+            };
+          };
 
           # gh CLI on stable has bugs.
           gh = pkgs-unstable.gh;
