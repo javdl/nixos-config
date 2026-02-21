@@ -10,6 +10,9 @@ settings.local.json
 # Beads local/runtime files
 .beads/daemon-error
 
+# MCP Agent Mail (installed via its own script, not managed by Nix)
+mcp_agent_mail/
+
 # Ralph Wiggum loop runtime state (sessions, logs, metrics)
 .ralph/sessions/
 .ralph/latest
