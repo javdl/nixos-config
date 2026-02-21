@@ -115,17 +115,10 @@
           bvSource = bvSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for bv: ${prev.stdenv.hostPlatform.system}");
 
           # cass - coding agent session search
+          # NOTE: All releases removed from GitHub as of 2026-02-21.
+          # Kept as null so `lib.optional (pkgs.cass != null)` in home-manager configs still works.
           cassVersion = "0.1.64";
-          cassSources = {
-            "x86_64-linux" = {
-              url = "https://github.com/Dicklesworthstone/coding_agent_session_search/releases/download/v${cassVersion}/cass-v${cassVersion}-linux_amd64.tar.gz";
-              sha256 = "d7c222ec0a4e953b7e8c12ea6a5250611049140d128cf2807b13e8687fbd82fe";
-            };
-            "aarch64-darwin" = {
-              url = "https://github.com/Dicklesworthstone/coding_agent_session_search/releases/download/v${cassVersion}/cass-v${cassVersion}-darwin_arm64.tar.gz";
-              sha256 = "0bf2a171c85a404bf0ac966d72e18414ff20b53d22890a1bb3b16807b483d40b";
-            };
-          };
+          cassSources = {};
           cassSource = cassSources.${prev.stdenv.hostPlatform.system} or null;
 
           # beads (bd) - git-backed issue tracker for AI agents
