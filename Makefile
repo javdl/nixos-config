@@ -21,6 +21,14 @@ IS_NIXOS := $(shell if [ -f /etc/NIXOS ]; then echo "yes"; else echo "no"; fi)
 DISTRO := $(shell if [ -f /etc/os-release ]; then . /etc/os-release && echo $$ID; else echo "unknown"; fi)
 
 switch:
+	@if command -v determinate-nixd >/dev/null 2>&1; then \
+		DNX_STATUS=$$(determinate-nixd status 2>&1) || true; \
+		if echo "$$DNX_STATUS" | grep -q "out of date"; then \
+			printf '\033[33mWarning: Determinate Nix is out of date. Run: sudo determinate-nixd upgrade\033[0m\n'; \
+		fi; \
+		echo "$$DNX_STATUS" | grep -q "Logged in: true" || \
+			printf '\033[33mWarning: Not logged in to FlakeHub (no binary cache). Run: determinate-nixd login\033[0m\n'; \
+	fi
 ifeq ($(UNAME), Darwin)
 	nix build --extra-experimental-features nix-command --extra-experimental-features flakes ".#darwinConfigurations.${NIXNAME}.system"
 	sudo ./result/sw/bin/darwin-rebuild switch --flake "$$(pwd)#${NIXNAME}"
