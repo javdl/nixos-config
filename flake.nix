@@ -115,11 +115,9 @@
           bvSource = bvSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for bv: ${prev.stdenv.hostPlatform.system}");
 
           # cass - coding agent session search
-          # NOTE: All releases removed from GitHub as of 2026-02-21.
-          # Kept as null so `lib.optional (pkgs.cass != null)` in home-manager configs still works.
+          # Releases removed from GitHub; source needs sibling repos to build.
+          # Install via Homebrew instead: brew install dicklesworthstone/tap/cass
           cassVersion = "0.1.64";
-          cassSources = {};
-          cassSource = cassSources.${prev.stdenv.hostPlatform.system} or null;
 
           # beads (bd) - git-backed issue tracker for AI agents
           beadsVersion = "0.55.4";
@@ -272,36 +270,8 @@
           };
 
           # cass - coding agent session search TUI
-          cass = if cassSource != null then prev.stdenv.mkDerivation {
-            pname = "cass";
-            version = cassVersion;
-
-            src = prev.fetchurl {
-              url = cassSource.url;
-              sha256 = cassSource.sha256;
-            };
-
-            sourceRoot = ".";
-
-            nativeBuildInputs = [ prev.gnutar ];
-
-            unpackPhase = ''
-              tar xzf $src
-            '';
-
-            installPhase = ''
-              mkdir -p $out/bin
-              cp cass $out/bin/
-              chmod +x $out/bin/cass
-            '';
-
-            meta = with prev.lib; {
-              description = "Unified TUI to index and search coding agent session history";
-              homepage = "https://github.com/Dicklesworthstone/coding_agent_session_search";
-              license = licenses.mit;
-              platforms = [ "x86_64-linux" "aarch64-darwin" ];
-            };
-          } else null;
+          # Set to null; managed via Homebrew (brew install dicklesworthstone/tap/cass)
+          cass = null;
 
           # ru - repo updater for syncing GitHub repositories
           repo-updater = prev.stdenv.mkDerivation {
