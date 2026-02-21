@@ -120,12 +120,14 @@ in {
     beads # git-backed issue tracker for AI agents (bd command)
     beads-rust # fast Rust port of beads (br command)
     beads-viewer # TUI for beads issue tracking (bv command)
+    caam # Instant auth switching for AI coding subscriptions
     codex
     destructive-command-guard # Safety hook for AI agents (dcg command)
     grepai # Semantic code search for AI coding assistants
     ntm # Named Tmux Manager for AI agent coordination
     repo-updater # GitHub repo sync tool (ru command)
     ubs # AI-native code quality scanner
+    # caut: install via `cargo install --git https://github.com/Dicklesworthstone/coding_agent_usage_tracker`
   ] ++ (lib.optional (pkgs.cass != null) pkgs.cass) ++ (lib.optional (pkgs.cass-memory != null) pkgs.cass-memory) ++ [
 
     # Rust should be in flake.nix for each project. However, those configs do need an initial Cargo.lock.Therefore, to create new projects we want Rust globally installed.

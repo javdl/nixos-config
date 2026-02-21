@@ -52,6 +52,7 @@ in {
     beads             # git-backed issue tracker for AI agents (bd command)
     beads-rust        # fast Rust port of beads (br command)
     beads-viewer      # TUI for beads issue tracking (bv command)
+    caam              # Instant auth switching for AI coding subscriptions
     claude-code-router
     codex
     gemini-cli

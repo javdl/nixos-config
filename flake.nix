@@ -207,6 +207,28 @@
           };
           dcgSource = dcgSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for dcg: ${prev.stdenv.hostPlatform.system}");
 
+          # caam - coding agent account manager (instant auth switching)
+          caamVersion = "0.1.10";
+          caamSources = {
+            "x86_64-linux" = {
+              url = "https://github.com/Dicklesworthstone/coding_agent_account_manager/releases/download/v${caamVersion}/caam_${caamVersion}_linux_amd64.tar.gz";
+              sha256 = "e84fa14fbed25fce02aa7a52c981a795ca424b06c3d73b616e30e6e712fa70c2";
+            };
+            "aarch64-linux" = {
+              url = "https://github.com/Dicklesworthstone/coding_agent_account_manager/releases/download/v${caamVersion}/caam_${caamVersion}_linux_arm64.tar.gz";
+              sha256 = "093fe1e648eb09f9350d422496a575868c5d8b0d065fe4df8185a248df10883a";
+            };
+            "x86_64-darwin" = {
+              url = "https://github.com/Dicklesworthstone/coding_agent_account_manager/releases/download/v${caamVersion}/caam_${caamVersion}_darwin_amd64.tar.gz";
+              sha256 = "06b1541607955c1cb4e8c83b006538f8055afdd7d6186fe5548ec5cf10641305";
+            };
+            "aarch64-darwin" = {
+              url = "https://github.com/Dicklesworthstone/coding_agent_account_manager/releases/download/v${caamVersion}/caam_${caamVersion}_darwin_arm64.tar.gz";
+              sha256 = "386cf861872740611d42eba14b41cfe526a261552b6ae86e0d9095c635f2f519";
+            };
+          };
+          caamSource = caamSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for caam: ${prev.stdenv.hostPlatform.system}");
+
           # agent-browser - browser automation CLI for AI agents
           agentBrowserVersion = "0.13.0";
           agentBrowserSources = {
@@ -528,6 +550,42 @@
               platforms = [ "x86_64-linux" ];
             };
           } else null;
+
+          # caam - coding agent account manager (instant auth switching for AI coding subscriptions)
+          caam = prev.stdenv.mkDerivation {
+            pname = "caam";
+            version = caamVersion;
+
+            src = prev.fetchurl {
+              url = caamSource.url;
+              sha256 = caamSource.sha256;
+            };
+
+            sourceRoot = ".";
+
+            nativeBuildInputs = [ prev.gnutar ];
+
+            unpackPhase = ''
+              tar xzf $src
+            '';
+
+            installPhase = ''
+              mkdir -p $out/bin
+              cp caam $out/bin/
+              chmod +x $out/bin/caam
+            '';
+
+            meta = with prev.lib; {
+              description = "Instant auth switching for AI coding tool subscriptions";
+              homepage = "https://github.com/Dicklesworthstone/coding_agent_account_manager";
+              license = licenses.mit;
+              platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+            };
+          };
+
+          # caut - coding agent usage tracker
+          # No binary releases; requires Rust nightly. Install via: cargo install --git https://github.com/Dicklesworthstone/coding_agent_usage_tracker
+          caut = null;
 
           # agent-browser - browser automation CLI for AI agents (Rust CLI + Node.js Playwright daemon)
           agent-browser = prev.stdenv.mkDerivation {

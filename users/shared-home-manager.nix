@@ -32,6 +32,11 @@ in {
     # Zellij shortcuts
     z = "zellij"; # Start zellij
     za = "zellij attach -c"; # Attach or create new session
+
+    # AI coding agent aliases
+    cc = "claude";
+    cod = "codex";
+    gmi = "gemini";
   } // (if isLinux then {
     # Two decades of using a Mac has made this such a strong memory
     # that I'm just going to keep it consistent.
