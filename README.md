@@ -675,6 +675,7 @@ Tools from [Jeffrey Emanuel](https://github.com/Dicklesworthstone) included in t
 | beads_viewer | `bv` | [beads_viewer](https://github.com/Dicklesworthstone/beads_viewer) | Graph-aware TUI for beads: kanban, DAG visualization, PageRank |
 | cass | `cass` | [coding_agent_session_search](https://github.com/Dicklesworthstone/coding_agent_session_search) | Unified TUI to index and search AI coding agent session history (Homebrew) |
 | cass_memory | `cm` | [cass_memory_system](https://github.com/Dicklesworthstone/cass_memory_system) | Procedural memory for AI agents: cross-agent persistent memory (Linux only) |
+| mcp_agent_mail | `am` | [mcp_agent_mail](https://github.com/Dicklesworthstone/mcp_agent_mail) | MCP server for multi-agent coordination: inboxes, threads, file leases (install script) |
 | dcg | `dcg` | [destructive_command_guard](https://github.com/Dicklesworthstone/destructive_command_guard) | Safety hook that blocks dangerous git/shell commands from AI agents |
 | grepai | `grepai` | [grepai](https://github.com/yoanbernabeu/grepai) | Semantic code search CLI for AI coding assistants |
 | ntm | `ntm` | [ntm](https://github.com/Dicklesworthstone/ntm) | Named Tmux Manager: spawn and coordinate AI agents across tmux panes |
