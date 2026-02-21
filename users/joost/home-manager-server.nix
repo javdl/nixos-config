@@ -50,12 +50,14 @@ in {
     aichat
     amp-cli
     beads             # git-backed issue tracker for AI agents (bd command)
+    beads-rust        # fast Rust port of beads (br command)
     beads-viewer      # TUI for beads issue tracking (bv command)
     claude-code-router
     codex
     gemini-cli
     destructive-command-guard # Safety hook for AI agents (dcg command)
     grepai            # Semantic code search for AI coding assistants
+    ntm               # Named Tmux Manager for AI agent coordination
     opencode
     repo-updater      # GitHub repo sync tool (ru command)
     ubs               # AI-native code quality scanner

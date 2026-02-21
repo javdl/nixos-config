@@ -117,10 +117,12 @@ in {
 
     amp-cli
     beads # git-backed issue tracker for AI agents (bd command)
+    beads-rust # fast Rust port of beads (br command)
     beads-viewer # TUI for beads issue tracking (bv command)
     codex
     destructive-command-guard # Safety hook for AI agents (dcg command)
     grepai # Semantic code search for AI coding assistants
+    ntm # Named Tmux Manager for AI agent coordination
     repo-updater # GitHub repo sync tool (ru command)
     ubs # AI-native code quality scanner
   ] ++ (lib.optional (pkgs.cass != null) pkgs.cass) ++ (lib.optional (pkgs.cass-memory != null) pkgs.cass-memory) ++ [

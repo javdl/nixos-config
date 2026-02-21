@@ -119,6 +119,50 @@
           # Install via Homebrew instead: brew install dicklesworthstone/tap/cass
           cassVersion = "0.1.64";
 
+          # beads_rust (br) - fast Rust port of beads issue tracker
+          brVersion = "0.1.14";
+          brSources = {
+            "x86_64-linux" = {
+              url = "https://github.com/Dicklesworthstone/beads_rust/releases/download/v${brVersion}/br-v${brVersion}-linux_amd64.tar.gz";
+              sha256 = "c4f4772032868d0ae2e04e4a13629951c05f14f09ba791ff70e1615cd8ebab1b";
+            };
+            "aarch64-linux" = {
+              url = "https://github.com/Dicklesworthstone/beads_rust/releases/download/v${brVersion}/br-v${brVersion}-linux_arm64.tar.gz";
+              sha256 = "be83abc260f19614b49095e57fd639b0d821115ae22b2b0ba244db0ce193c200";
+            };
+            "x86_64-darwin" = {
+              url = "https://github.com/Dicklesworthstone/beads_rust/releases/download/v${brVersion}/br-v${brVersion}-darwin_amd64.tar.gz";
+              sha256 = "cbc3e8baaec46ac1530acaa617e353e944278428e63767e3bff6da7ca04bd757";
+            };
+            "aarch64-darwin" = {
+              url = "https://github.com/Dicklesworthstone/beads_rust/releases/download/v${brVersion}/br-v${brVersion}-darwin_arm64.tar.gz";
+              sha256 = "d4826b0f752fa9693607c8d3f09579a0416b95313d0878b49caab243b37b2db2";
+            };
+          };
+          brSource = brSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for br: ${prev.stdenv.hostPlatform.system}");
+
+          # ntm - Named Tmux Manager for AI coding agent coordination
+          ntmVersion = "1.7.0";
+          ntmSources = {
+            "x86_64-linux" = {
+              url = "https://github.com/Dicklesworthstone/ntm/releases/download/v${ntmVersion}/ntm_${ntmVersion}_linux_amd64.tar.gz";
+              sha256 = "045883d4a60b9dd4e1e682f70df732544cf272fa6913918b2f734e088bb776f7";
+            };
+            "aarch64-linux" = {
+              url = "https://github.com/Dicklesworthstone/ntm/releases/download/v${ntmVersion}/ntm_${ntmVersion}_linux_arm64.tar.gz";
+              sha256 = "874a72742ddc5aef876745dfb6ad322ab70c6427d5f94a265c15f6c5f3e24806";
+            };
+            "x86_64-darwin" = {
+              url = "https://github.com/Dicklesworthstone/ntm/releases/download/v${ntmVersion}/ntm_${ntmVersion}_darwin_all.tar.gz";
+              sha256 = "89bcebbd47b41b9fcae03ed3d1884bedd5c7911518682b6153ff928bf2f61263";
+            };
+            "aarch64-darwin" = {
+              url = "https://github.com/Dicklesworthstone/ntm/releases/download/v${ntmVersion}/ntm_${ntmVersion}_darwin_all.tar.gz";
+              sha256 = "89bcebbd47b41b9fcae03ed3d1884bedd5c7911518682b6153ff928bf2f61263";
+            };
+          };
+          ntmSource = ntmSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for ntm: ${prev.stdenv.hostPlatform.system}");
+
           # beads (bd) - git-backed issue tracker for AI agents
           beadsVersion = "0.55.4";
           beadsSources = {
@@ -272,6 +316,70 @@
           # cass - coding agent session search TUI
           # Set to null; managed via Homebrew (brew install dicklesworthstone/tap/cass)
           cass = null;
+
+          # br - beads_rust, fast Rust port of beads issue tracker
+          beads-rust = prev.stdenv.mkDerivation {
+            pname = "beads-rust";
+            version = brVersion;
+
+            src = prev.fetchurl {
+              url = brSource.url;
+              sha256 = brSource.sha256;
+            };
+
+            sourceRoot = ".";
+
+            nativeBuildInputs = [ prev.gnutar ];
+
+            unpackPhase = ''
+              tar xzf $src
+            '';
+
+            installPhase = ''
+              mkdir -p $out/bin
+              cp br $out/bin/
+              chmod +x $out/bin/br
+            '';
+
+            meta = with prev.lib; {
+              description = "Fast Rust port of beads issue tracker with SQLite backend";
+              homepage = "https://github.com/Dicklesworthstone/beads_rust";
+              license = licenses.mit;
+              platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+            };
+          };
+
+          # ntm - Named Tmux Manager for AI coding agent coordination
+          ntm = prev.stdenv.mkDerivation {
+            pname = "ntm";
+            version = ntmVersion;
+
+            src = prev.fetchurl {
+              url = ntmSource.url;
+              sha256 = ntmSource.sha256;
+            };
+
+            sourceRoot = ".";
+
+            nativeBuildInputs = [ prev.gnutar ];
+
+            unpackPhase = ''
+              tar xzf $src
+            '';
+
+            installPhase = ''
+              mkdir -p $out/bin
+              cp ntm $out/bin/
+              chmod +x $out/bin/ntm
+            '';
+
+            meta = with prev.lib; {
+              description = "Named Tmux Manager for spawning and coordinating AI coding agents";
+              homepage = "https://github.com/Dicklesworthstone/ntm";
+              license = licenses.mit;
+              platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+            };
+          };
 
           # ru - repo updater for syncing GitHub repositories
           repo-updater = prev.stdenv.mkDerivation {

@@ -664,6 +664,23 @@ determinate-nixd login
 NIXNAME=omarchy make switch
 ```
 
+## Dicklesworthstone AI Agent Tooling
+
+Tools from [Jeffrey Emanuel](https://github.com/Dicklesworthstone) included in this config:
+
+| Tool | Command | Source | Description |
+|------|---------|--------|-------------|
+| beads | `bd` | [steveyegge/beads](https://github.com/steveyegge/beads) | Git-backed issue tracker for AI coding agents |
+| beads_rust | `br` | [beads_rust](https://github.com/Dicklesworthstone/beads_rust) | Fast Rust port of beads with SQLite backend |
+| beads_viewer | `bv` | [beads_viewer](https://github.com/Dicklesworthstone/beads_viewer) | Graph-aware TUI for beads: kanban, DAG visualization, PageRank |
+| cass | `cass` | [coding_agent_session_search](https://github.com/Dicklesworthstone/coding_agent_session_search) | Unified TUI to index and search AI coding agent session history (Homebrew) |
+| cass_memory | `cm` | [cass_memory_system](https://github.com/Dicklesworthstone/cass_memory_system) | Procedural memory for AI agents: cross-agent persistent memory (Linux only) |
+| dcg | `dcg` | [destructive_command_guard](https://github.com/Dicklesworthstone/destructive_command_guard) | Safety hook that blocks dangerous git/shell commands from AI agents |
+| grepai | `grepai` | [grepai](https://github.com/yoanbernabeu/grepai) | Semantic code search CLI for AI coding assistants |
+| ntm | `ntm` | [ntm](https://github.com/Dicklesworthstone/ntm) | Named Tmux Manager: spawn and coordinate AI agents across tmux panes |
+| repo_updater | `ru` | [repo_updater](https://github.com/Dicklesworthstone/repo_updater) | CLI for keeping GitHub repos in sync with parallel clone/pull |
+| ubs | `ubs` | [ultimate_bug_scanner](https://github.com/Dicklesworthstone/ultimate_bug_scanner) | Static analysis catching 1000+ bug patterns across languages |
+
 ## Ralph loops with beads
 
 ```bash
