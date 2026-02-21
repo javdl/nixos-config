@@ -71,6 +71,11 @@ in systemFunc rec {
         isWSL = isWSL;
         inputs = inputs;
       };
+      # Suppress "options.json references store path without proper context" warning
+      # Upstream bug: https://github.com/nix-community/home-manager/issues/7935
+      home-manager.sharedModules = [{
+        manual.manpages.enable = false;
+      }];
     }
 
     # We expose some extra arguments so that our modules can parameterize

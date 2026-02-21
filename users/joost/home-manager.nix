@@ -116,6 +116,7 @@ in {
     zoxide # Fast cd command that learns your habits
 
     amp-cli
+    beads # git-backed issue tracker for AI agents (bd command)
     beads-viewer # TUI for beads issue tracking (bv command)
     codex
     destructive-command-guard # Safety hook for AI agents (dcg command)
@@ -741,13 +742,6 @@ in {
       key = "ACAFA950";
       signByDefault = true;
     };
-    delta = {
-      enable = true;
-      options = {
-        line-numbers = true;
-        side-by-side = true;
-      };
-    };
     settings = {
       user.name = "Joost van der Laan";
       user.email = "j@jlnw.nl";
@@ -773,6 +767,15 @@ in {
           required = true;
         };
 
+    };
+  };
+
+  programs.delta = {
+    enable = true;
+    enableGitIntegration = true;
+    options = {
+      line-numbers = true;
+      side-by-side = true;
     };
   };
 

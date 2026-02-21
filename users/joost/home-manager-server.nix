@@ -49,6 +49,7 @@ in {
     # AI coding tools (claude-code installed via native installer in activation)
     aichat
     amp-cli
+    beads             # git-backed issue tracker for AI agents (bd command)
     beads-viewer      # TUI for beads issue tracking (bv command)
     claude-code-router
     codex

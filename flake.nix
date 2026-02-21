@@ -128,6 +128,28 @@
           };
           cassSource = cassSources.${prev.stdenv.hostPlatform.system} or null;
 
+          # beads (bd) - git-backed issue tracker for AI agents
+          beadsVersion = "0.55.4";
+          beadsSources = {
+            "x86_64-linux" = {
+              url = "https://github.com/steveyegge/beads/releases/download/v${beadsVersion}/beads_${beadsVersion}_linux_amd64.tar.gz";
+              sha256 = "e0fa25456dd82890230eef17653448a0bf995104c78864be91c5ed84426a5f49";
+            };
+            "aarch64-linux" = {
+              url = "https://github.com/steveyegge/beads/releases/download/v${beadsVersion}/beads_${beadsVersion}_linux_arm64.tar.gz";
+              sha256 = "273c2a463e10778f3764e7119cf8d4ae014a208a9c1859e0e228633ce66cbeaf";
+            };
+            "x86_64-darwin" = {
+              url = "https://github.com/steveyegge/beads/releases/download/v${beadsVersion}/beads_${beadsVersion}_darwin_amd64.tar.gz";
+              sha256 = "39a371688b4e622e14eb5bc84f54f90ed7a9a2faac57861156811af4693f8284";
+            };
+            "aarch64-darwin" = {
+              url = "https://github.com/steveyegge/beads/releases/download/v${beadsVersion}/beads_${beadsVersion}_darwin_arm64.tar.gz";
+              sha256 = "18afdf4f562323a71687b2f7ed95c27750aee8d361b176a4a79caf176f00c0b9";
+            };
+          };
+          beadsSource = beadsSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for beads: ${prev.stdenv.hostPlatform.system}");
+
           # dcg - destructive command guard
           dcgVersion = "0.4.0";
           dcgSources = {
@@ -351,6 +373,38 @@
             meta = with prev.lib; {
               description = "Safety hook for AI coding agents that blocks destructive commands";
               homepage = "https://github.com/Dicklesworthstone/destructive_command_guard";
+              license = licenses.mit;
+              platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+            };
+          };
+
+          # beads (bd) - git-backed issue tracker for AI agents
+          beads = prev.stdenv.mkDerivation {
+            pname = "beads";
+            version = beadsVersion;
+
+            src = prev.fetchurl {
+              url = beadsSource.url;
+              sha256 = beadsSource.sha256;
+            };
+
+            sourceRoot = ".";
+
+            nativeBuildInputs = [ prev.gnutar ];
+
+            unpackPhase = ''
+              tar xzf $src
+            '';
+
+            installPhase = ''
+              mkdir -p $out/bin
+              cp bd $out/bin/
+              chmod +x $out/bin/bd
+            '';
+
+            meta = with prev.lib; {
+              description = "Git-backed issue tracker for AI coding agents";
+              homepage = "https://github.com/steveyegge/beads";
               license = licenses.mit;
               platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
             };
