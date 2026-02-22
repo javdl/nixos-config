@@ -382,6 +382,7 @@
             nativeBuildInputs = with prev; [
               pkg-config
               cmake
+              lld
             ];
 
             buildInputs = with prev; [
@@ -684,6 +685,7 @@
           in prev.codex.overrideAttrs (old: {
             version = codexVersion;
             src = codexSrc;
+            buildInputs = (old.buildInputs or []) ++ [ prev.libcap ];
             cargoDeps = prev.rustPlatform.importCargoLock {
               lockFile = "${codexSrc}/codex-rs/Cargo.lock";
               outputHashes = {
