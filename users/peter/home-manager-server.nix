@@ -62,6 +62,7 @@ in {
     # Development
     gnumake
     gcc
+    go
     nodejs_22
     python3
     poetry
@@ -74,6 +75,7 @@ in {
     # DevOps
     cachix
     chezmoi
+    cosign
     devcontainer
     docker-compose
     flyctl
@@ -90,6 +92,13 @@ in {
   home.activation.installClaudeCode = lib.hm.dag.entryAfter ["writeBoundary"] ''
     if [ ! -f "$HOME/.local/bin/claude" ]; then
       $DRY_RUN_CMD bash -c "curl -fsSL https://claude.ai/install.sh | bash"
+    fi
+  '';
+
+  # Initialize Rust stable toolchain so cargo/rustc are immediately available
+  home.activation.rustupInit = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    if ! $HOME/.rustup/toolchains/stable-*/bin/cargo --version &>/dev/null 2>&1; then
+      $DRY_RUN_CMD rustup default stable
     fi
   '';
 
@@ -236,7 +245,7 @@ in {
     defaultEditor = false;  # Keep nvim as EDITOR
 
     settings = {
-      theme = "rose_pine";
+      theme = "rose_pine_dawn";
 
       editor = {
         line-number = "relative";
@@ -374,42 +383,42 @@ in {
         export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/ssh-agent"
       fi
 
-      # Rose Pine colors for zsh syntax highlighting
+      # Rose Pine Dawn colors for zsh syntax highlighting
       typeset -gA ZSH_HIGHLIGHT_STYLES
-      ZSH_HIGHLIGHT_STYLES[comment]="fg=#6e6a86"
-      ZSH_HIGHLIGHT_STYLES[alias]="fg=#9ccfd8"
-      ZSH_HIGHLIGHT_STYLES[suffix-alias]="fg=#9ccfd8"
-      ZSH_HIGHLIGHT_STYLES[global-alias]="fg=#9ccfd8"
-      ZSH_HIGHLIGHT_STYLES[function]="fg=#ebbcba"
-      ZSH_HIGHLIGHT_STYLES[command]="fg=#9ccfd8"
-      ZSH_HIGHLIGHT_STYLES[precommand]="fg=#9ccfd8,italic"
-      ZSH_HIGHLIGHT_STYLES[autodirectory]="fg=#f6c177,italic"
-      ZSH_HIGHLIGHT_STYLES[single-hyphen-option]="fg=#f6c177"
-      ZSH_HIGHLIGHT_STYLES[double-hyphen-option]="fg=#f6c177"
-      ZSH_HIGHLIGHT_STYLES[back-quoted-argument]="fg=#c4a7e7"
-      ZSH_HIGHLIGHT_STYLES[builtin]="fg=#ebbcba"
-      ZSH_HIGHLIGHT_STYLES[reserved-word]="fg=#ebbcba"
-      ZSH_HIGHLIGHT_STYLES[hashed-command]="fg=#ebbcba"
-      ZSH_HIGHLIGHT_STYLES[commandseparator]="fg=#eb6f92"
-      ZSH_HIGHLIGHT_STYLES[command-substitution-delimiter]="fg=#e0def4"
-      ZSH_HIGHLIGHT_STYLES[command-substitution-delimiter-unquoted]="fg=#e0def4"
-      ZSH_HIGHLIGHT_STYLES[process-substitution-delimiter]="fg=#e0def4"
-      ZSH_HIGHLIGHT_STYLES[back-quoted-argument-delimiter]="fg=#eb6f92"
-      ZSH_HIGHLIGHT_STYLES[back-double-quoted-argument]="fg=#eb6f92"
-      ZSH_HIGHLIGHT_STYLES[back-dollar-quoted-argument]="fg=#eb6f92"
-      ZSH_HIGHLIGHT_STYLES[quoted-argument]="fg=#f6c177"
-      ZSH_HIGHLIGHT_STYLES[single-quoted-argument]="fg=#f6c177"
-      ZSH_HIGHLIGHT_STYLES[double-quoted-argument]="fg=#f6c177"
-      ZSH_HIGHLIGHT_STYLES[dollar-quoted-argument]="fg=#f6c177"
-      ZSH_HIGHLIGHT_STYLES[rc-quote]="fg=#f6c177"
-      ZSH_HIGHLIGHT_STYLES[dollar-double-quoted-argument]="fg=#e0def4"
-      ZSH_HIGHLIGHT_STYLES[assign]="fg=#e0def4"
-      ZSH_HIGHLIGHT_STYLES[redirection]="fg=#e0def4"
-      ZSH_HIGHLIGHT_STYLES[named-fd]="fg=#e0def4"
-      ZSH_HIGHLIGHT_STYLES[numeric-fd]="fg=#e0def4"
-      ZSH_HIGHLIGHT_STYLES[arg0]="fg=#e0def4"
-      ZSH_HIGHLIGHT_STYLES[default]="fg=#e0def4"
-      ZSH_HIGHLIGHT_STYLES[unknown-token]="fg=#eb6f92,bold"
+      ZSH_HIGHLIGHT_STYLES[comment]="fg=#9893a5"
+      ZSH_HIGHLIGHT_STYLES[alias]="fg=#56949f"
+      ZSH_HIGHLIGHT_STYLES[suffix-alias]="fg=#56949f"
+      ZSH_HIGHLIGHT_STYLES[global-alias]="fg=#56949f"
+      ZSH_HIGHLIGHT_STYLES[function]="fg=#d7827e"
+      ZSH_HIGHLIGHT_STYLES[command]="fg=#56949f"
+      ZSH_HIGHLIGHT_STYLES[precommand]="fg=#56949f,italic"
+      ZSH_HIGHLIGHT_STYLES[autodirectory]="fg=#ea9d34,italic"
+      ZSH_HIGHLIGHT_STYLES[single-hyphen-option]="fg=#ea9d34"
+      ZSH_HIGHLIGHT_STYLES[double-hyphen-option]="fg=#ea9d34"
+      ZSH_HIGHLIGHT_STYLES[back-quoted-argument]="fg=#907aa9"
+      ZSH_HIGHLIGHT_STYLES[builtin]="fg=#d7827e"
+      ZSH_HIGHLIGHT_STYLES[reserved-word]="fg=#d7827e"
+      ZSH_HIGHLIGHT_STYLES[hashed-command]="fg=#d7827e"
+      ZSH_HIGHLIGHT_STYLES[commandseparator]="fg=#b4637a"
+      ZSH_HIGHLIGHT_STYLES[command-substitution-delimiter]="fg=#575279"
+      ZSH_HIGHLIGHT_STYLES[command-substitution-delimiter-unquoted]="fg=#575279"
+      ZSH_HIGHLIGHT_STYLES[process-substitution-delimiter]="fg=#575279"
+      ZSH_HIGHLIGHT_STYLES[back-quoted-argument-delimiter]="fg=#b4637a"
+      ZSH_HIGHLIGHT_STYLES[back-double-quoted-argument]="fg=#b4637a"
+      ZSH_HIGHLIGHT_STYLES[back-dollar-quoted-argument]="fg=#b4637a"
+      ZSH_HIGHLIGHT_STYLES[quoted-argument]="fg=#ea9d34"
+      ZSH_HIGHLIGHT_STYLES[single-quoted-argument]="fg=#ea9d34"
+      ZSH_HIGHLIGHT_STYLES[double-quoted-argument]="fg=#ea9d34"
+      ZSH_HIGHLIGHT_STYLES[dollar-quoted-argument]="fg=#ea9d34"
+      ZSH_HIGHLIGHT_STYLES[rc-quote]="fg=#ea9d34"
+      ZSH_HIGHLIGHT_STYLES[dollar-double-quoted-argument]="fg=#575279"
+      ZSH_HIGHLIGHT_STYLES[assign]="fg=#575279"
+      ZSH_HIGHLIGHT_STYLES[redirection]="fg=#575279"
+      ZSH_HIGHLIGHT_STYLES[named-fd]="fg=#575279"
+      ZSH_HIGHLIGHT_STYLES[numeric-fd]="fg=#575279"
+      ZSH_HIGHLIGHT_STYLES[arg0]="fg=#575279"
+      ZSH_HIGHLIGHT_STYLES[default]="fg=#575279"
+      ZSH_HIGHLIGHT_STYLES[unknown-token]="fg=#b4637a,bold"
 
       # Claude alias fix for Zellij
       alias cc="SHELL=/bin/bash VSCODE_PID= VSCODE_CWD= TERM_PROGRAM= command claude"

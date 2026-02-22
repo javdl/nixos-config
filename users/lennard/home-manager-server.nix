@@ -62,6 +62,7 @@ in {
     # Development
     gnumake
     gcc
+    go
     nodejs_22
     python3
     poetry
@@ -73,6 +74,7 @@ in {
     # DevOps
     cachix
     chezmoi
+    cosign
     devcontainer
     docker-compose
     flyctl
@@ -89,6 +91,13 @@ in {
   home.activation.installClaudeCode = lib.hm.dag.entryAfter ["writeBoundary"] ''
     if ! command -v claude &> /dev/null; then
       $DRY_RUN_CMD bash -c "curl -fsSL https://claude.ai/install.sh | bash"
+    fi
+  '';
+
+  # Initialize Rust stable toolchain so cargo/rustc are immediately available
+  home.activation.rustupInit = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    if ! $HOME/.rustup/toolchains/stable-*/bin/cargo --version &>/dev/null 2>&1; then
+      $DRY_RUN_CMD rustup default stable
     fi
   '';
 

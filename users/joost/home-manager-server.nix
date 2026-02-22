@@ -71,6 +71,7 @@ in {
     bun
     gnumake
     gcc
+    go
     nixd              # Nix language server (for Zed remote dev)
     nodejs_22
     python3
@@ -84,6 +85,7 @@ in {
     bitwarden-cli
     cachix
     chezmoi
+    cosign
     devcontainer
     docker-compose
     flyctl
@@ -102,6 +104,13 @@ in {
   home.activation.installClaudeCode = lib.hm.dag.entryAfter ["writeBoundary"] ''
     if [ ! -f "$HOME/.local/bin/claude" ]; then
       $DRY_RUN_CMD bash -c "curl -fsSL https://claude.ai/install.sh | bash"
+    fi
+  '';
+
+  # Initialize Rust stable toolchain so cargo/rustc are immediately available
+  home.activation.rustupInit = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    if ! $HOME/.rustup/toolchains/stable-*/bin/cargo --version &>/dev/null 2>&1; then
+      $DRY_RUN_CMD rustup default stable
     fi
   '';
 

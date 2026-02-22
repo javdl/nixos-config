@@ -672,6 +672,70 @@
             };
           };
 
+          # codex - OpenAI coding agent CLI (pinned to latest)
+          codex = let
+            codexVersion = "0.104.0";
+            codexSrc = prev.fetchFromGitHub {
+              owner = "openai";
+              repo = "codex";
+              tag = "rust-v${codexVersion}";
+              hash = "sha256-spWb/msjl9am7E4UkZfEoH0diFbvAfydJKJQM1N1aoI=";
+            };
+          in prev.codex.overrideAttrs (old: {
+            version = codexVersion;
+            src = codexSrc;
+            cargoDeps = prev.rustPlatform.importCargoLock {
+              lockFile = "${codexSrc}/codex-rs/Cargo.lock";
+              outputHashes = {
+                "crossterm-0.28.1" = "sha256-6qCtfSMuXACKFb9ATID39XyFDIEMFDmbx6SSmNe+728=";
+                "nucleo-0.5.0" = "sha256-Hm4SxtTSBrcWpXrtSqeO0TACbUxq3gizg1zD/6Yw/sI=";
+                "ratatui-0.29.0" = "sha256-HBvT5c8GsiCxMffNjJGLmHnvG77A6cqEL+1ARurBXho=";
+                "runfiles-0.1.0" = "sha256-uJpVLcQh8wWZA3GPv9D8Nt43EOirajfDJ7eq/FB+tek=";
+                "tokio-tungstenite-0.28.0" = "sha256-hJAkvWxDjB9A9GqansahWhTmj/ekcelslLUTtwqI7lw=";
+                "tungstenite-0.27.0" = "sha256-AN5wql2X2yJnQ7lnDxpljNw0Jua40GtmT+w3wjER010=";
+              };
+            };
+          });
+
+          # gemini-cli - Google Gemini coding agent CLI (pinned to latest)
+          gemini-cli = prev.gemini-cli.overrideAttrs (old: rec {
+            version = "0.29.5";
+            src = prev.fetchFromGitHub {
+              owner = "google-gemini";
+              repo = "gemini-cli";
+              tag = "v${version}";
+              hash = "sha256-+gFSTq0CXMZa2OhP2gOuWa5WtteKW7Ys78lgnz7J72g=";
+            };
+            npmDeps = prev.fetchNpmDeps {
+              inherit src;
+              hash = "sha256-RGiWtJkLFV1UfFahHPzxtzJIsPCseEwfSsPdLfBkavI=";
+            };
+            postPatch = ''
+              # Remove node-pty dependency from package.json
+              ${prev.jq}/bin/jq 'del(.optionalDependencies."node-pty")' package.json > package.json.tmp && mv package.json.tmp package.json
+              ${prev.jq}/bin/jq 'del(.optionalDependencies."node-pty")' packages/core/package.json > packages/core/package.json.tmp && mv packages/core/package.json.tmp packages/core/package.json
+
+              # Fix ripgrep path
+              substituteInPlace packages/core/src/tools/ripGrep.ts \
+                --replace-fail "await ensureRgPath();" "'${prev.ripgrep}/bin/rg';"
+
+              # Disable auto-update (default is true, set to false for Nix)
+              sed -i '/enableAutoUpdate: {/,/}/ s/default: true/default: false/' packages/cli/src/config/settingsSchema.ts
+
+              # Disable auto-update notification
+              substituteInPlace packages/cli/src/ui/utils/updateCheck.ts \
+                --replace-fail "settings.merged.general.enableAutoUpdateNotification" "(false)"
+              substituteInPlace packages/cli/src/utils/handleAutoUpdate.ts \
+                --replace-fail "settings.merged.general.enableAutoUpdateNotification" "(false)" \
+                --replace-fail "settings.merged.general.enableAutoUpdate," "false," \
+                --replace-fail "settings.merged.general.enableAutoUpdate" "(false)"
+            '';
+            preConfigure = ''
+              mkdir -p packages/generated
+              echo "export const GIT_COMMIT_INFO = { commitHash: 'refs/tags/v${version}' };" > packages/generated/git-commit.ts
+            '';
+          });
+
           # gh CLI on stable has bugs.
           gh = pkgs-unstable.gh;
 
