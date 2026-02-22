@@ -1,14 +1,47 @@
 layout {
-    tab name="about" cwd="~/code/fuww/about" focus=true {
-        pane
+    tab name="fuww" cwd="~/code/fuww/fuww" focus=true {
+        pane split_direction="horizontal" {
+            pane
+            pane
+            pane
+        }
+    }
+    tab name="about" cwd="~/code/fuww/about" {
+        pane split_direction="horizontal" {
+            pane
+            pane
+            pane
+        }
     }
     tab name="deploy" cwd="~/code/fuww/deploy" {
-        pane
+        pane split_direction="horizontal" {
+            pane
+            pane
+            pane
+        }
     }
-    tab name="frontend" cwd="~/code/fuww/frontend" {
-        pane
+    tab name="developer" cwd="~/code/fuww/developer" {
+        pane split_direction="horizontal" {
+            pane
+            pane
+            pane
+        }
     }
-    tab name="api" cwd="~/code/fuww/api" {
-        pane
+    tab name="jlnl" cwd="~/code/javdl/joostvanderlaan.nl" {
+        pane split_direction="horizontal" {
+            pane
+            pane
+            pane
+        }
+    }
+    tab name="whisky" cwd="~/code/javdl/whisky" {
+        pane split_direction="horizontal" {
+            pane
+            pane
+            pane
+        }
+    }
+    tab name="monitor" {
+        pane command="btop"
     }
 }
