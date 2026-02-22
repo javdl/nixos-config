@@ -358,8 +358,52 @@
           };
 
           # cass - coding agent session search TUI
-          # Set to null; managed via Homebrew (brew install dicklesworthstone/tap/cass)
-          cass = null;
+          cass = prev.rustPlatform.buildRustPackage {
+            pname = "cass";
+            version = cassVersion;
+
+            src = prev.fetchFromGitHub {
+              owner = "Dicklesworthstone";
+              repo = "coding_agent_session_search";
+              rev = "v${cassVersion}";
+              hash = "sha256-G7u+61DGssgQEhh8OFlRerR30VwmTqWpskH5HLafPks=";
+            };
+
+            cargoLock = {
+              lockFile = prev.fetchurl {
+                url = "https://github.com/Dicklesworthstone/coding_agent_session_search/raw/v${cassVersion}/Cargo.lock";
+                hash = "sha256-OSmZq7uW9bNGOwJWHsBv9yweDs7He7HfIQuRGqxyNBE=";
+              };
+              outputHashes = {
+                "toon_rust-0.1.1" = "sha256-RRYl5AqH0cL01wdwIsc+1E5sevjaK5CukXyUVP3zHV0=";
+              };
+            };
+
+            nativeBuildInputs = with prev; [
+              pkg-config
+              cmake
+            ];
+
+            buildInputs = with prev; [
+              openssl
+              onnxruntime
+              libssh2
+            ];
+
+            # Point ort-sys to system ONNX Runtime instead of downloading
+            ORT_LIB_LOCATION = "${prev.onnxruntime}/lib";
+            ORT_PREFER_DYNAMIC_LINK = "1";
+
+            # Skip benchmarks and integration tests
+            doCheck = false;
+
+            meta = with prev.lib; {
+              description = "Cross-agent session search - index and search AI coding agent conversations";
+              homepage = "https://github.com/Dicklesworthstone/coding_agent_session_search";
+              license = licenses.mit;
+              platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+            };
+          };
 
           # br - beads_rust, fast Rust port of beads issue tracker
           beads-rust = prev.stdenv.mkDerivation {

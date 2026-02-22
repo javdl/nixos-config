@@ -129,7 +129,7 @@ in
       "bearcove/tap/home"
       "dicklesworthstone/tap/bv" # beads_viewer - view BAML beads files
       "dicklesworthstone/tap/caam" # coding agent account manager - auth switching
-      "dicklesworthstone/tap/cass"
+      # "dicklesworthstone/tap/cass"  # Now built from source via Nix overlay
       "dicklesworthstone/tap/cm" # CASS Memory - procedural memory system for AI agents
       "gifski" # Highest-quality GIF encoder
       "podman"
