@@ -456,6 +456,33 @@ nix search nixpkgs python
 grep "pkgs\." users/jackson/home-manager-server.nix
 ```
 
+## Zellij Work Layout
+
+The dev servers have a zellij work layout pre-configured at `~/.config/zellij/layouts/work.kdl`. You can use it in two ways:
+
+**On the server (SSH first, then launch zellij):**
+
+```bash
+ssh <hostname>
+zellij --layout work
+```
+
+**From your local machine (one command):**
+
+```bash
+ssh -t <hostname> "zellij --layout work"
+```
+
+The `-t` flag allocates a pseudo-terminal, which zellij requires. To attach to an existing session instead of creating a new one:
+
+```bash
+ssh -t <hostname> "zellij attach --layout work --create"
+```
+
+This attaches to the default session if it exists, or creates a new one with the work layout if it doesn't.
+
+**Joost's layout** (`users/joost/zellij-work.kdl`) opens tabs for each project (fuww, about, deploy, developer, jlnl, whisky) plus a btop monitor tab. Colleague layouts use `users/zellij-work-fuww.kdl`.
+
 ## Passwords
 
 Create hashed password with `mkpasswd` to put in `users/joost/nixos.nix`
