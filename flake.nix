@@ -673,31 +673,61 @@
             };
           };
 
-          # codex - OpenAI coding agent CLI (pinned to latest)
+          # codex - OpenAI coding agent CLI (pre-built binary from npm)
           codex = let
             codexVersion = "0.104.0";
-            codexSrc = prev.fetchFromGitHub {
-              owner = "openai";
-              repo = "codex";
-              tag = "rust-v${codexVersion}";
-              hash = "sha256-spWb/msjl9am7E4UkZfEoH0diFbvAfydJKJQM1N1aoI=";
-            };
-          in prev.codex.overrideAttrs (old: {
-            version = codexVersion;
-            src = codexSrc;
-            buildInputs = (old.buildInputs or []) ++ [ prev.libcap ];
-            cargoDeps = prev.rustPlatform.importCargoLock {
-              lockFile = "${codexSrc}/codex-rs/Cargo.lock";
-              outputHashes = {
-                "crossterm-0.28.1" = "sha256-6qCtfSMuXACKFb9ATID39XyFDIEMFDmbx6SSmNe+728=";
-                "nucleo-0.5.0" = "sha256-Hm4SxtTSBrcWpXrtSqeO0TACbUxq3gizg1zD/6Yw/sI=";
-                "ratatui-0.29.0" = "sha256-HBvT5c8GsiCxMffNjJGLmHnvG77A6cqEL+1ARurBXho=";
-                "runfiles-0.1.0" = "sha256-uJpVLcQh8wWZA3GPv9D8Nt43EOirajfDJ7eq/FB+tek=";
-                "tokio-tungstenite-0.28.0" = "sha256-hJAkvWxDjB9A9GqansahWhTmj/ekcelslLUTtwqI7lw=";
-                "tungstenite-0.27.0" = "sha256-AN5wql2X2yJnQ7lnDxpljNw0Jua40GtmT+w3wjER010=";
+            codexSources = {
+              "x86_64-linux" = {
+                url = "https://registry.npmjs.org/@openai/codex/-/codex-${codexVersion}-linux-x64.tgz";
+                hash = "sha256-eQjShAeqYq6tmY15Kek1In55pEJdymaAKZ3im6+B3gs=";
+                vendorDir = "x86_64-unknown-linux-musl";
+              };
+              "aarch64-linux" = {
+                url = "https://registry.npmjs.org/@openai/codex/-/codex-${codexVersion}-linux-arm64.tgz";
+                hash = "sha256-Fv+XpFkB+UIhKCKZRpsZbIwyMPBZbmgE/nqW9R5Nn2U=";
+                vendorDir = "aarch64-unknown-linux-musl";
+              };
+              "x86_64-darwin" = {
+                url = "https://registry.npmjs.org/@openai/codex/-/codex-${codexVersion}-darwin-x64.tgz";
+                hash = "sha256-nBkMqrQt8DohSpHLQsVMNab8u+L5SKzF9OO0rRGelfo=";
+                vendorDir = "x86_64-apple-darwin";
+              };
+              "aarch64-darwin" = {
+                url = "https://registry.npmjs.org/@openai/codex/-/codex-${codexVersion}-darwin-arm64.tgz";
+                hash = "sha256-To6PtJom3t1K5E8sG1duBRuau8YCjaoqTYItZIZMbUE=";
+                vendorDir = "aarch64-apple-darwin";
               };
             };
-          });
+            system = prev.stdenv.hostPlatform.system;
+            source = codexSources.${system};
+          in prev.stdenv.mkDerivation {
+            pname = "codex";
+            version = codexVersion;
+
+            src = prev.fetchurl {
+              url = source.url;
+              hash = source.hash;
+            };
+
+            sourceRoot = ".";
+
+            unpackPhase = ''
+              tar xzf $src
+            '';
+
+            installPhase = ''
+              mkdir -p $out/bin
+              cp package/vendor/${source.vendorDir}/codex/codex $out/bin/codex
+              chmod +x $out/bin/codex
+            '';
+
+            meta = with prev.lib; {
+              description = "OpenAI Codex CLI coding agent";
+              homepage = "https://github.com/openai/codex";
+              license = licenses.asl20;
+              platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+            };
+          };
 
           # gemini-cli - Google Gemini coding agent CLI (pinned to latest)
           gemini-cli = prev.gemini-cli.overrideAttrs (old: rec {
