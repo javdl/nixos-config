@@ -80,6 +80,7 @@ in {
 
     # Shell
     starship
+    wezterm
     zellij
     zoxide
   ];

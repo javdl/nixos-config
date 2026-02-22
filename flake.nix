@@ -587,6 +587,21 @@
           # No binary releases; requires Rust nightly. Install via: cargo install --git https://github.com/Dicklesworthstone/coding_agent_usage_tracker
           caut = null;
 
+          # frankenterm (ft) - swarm-native terminal for AI agent orchestration
+          # Cannot build from source: Cargo.lock has local git path deps (file:///dp/frankensearch)
+          # Install via: cargo install --git https://github.com/Dicklesworthstone/frankenterm ft
+          frankenterm = null;
+
+          # frankensqlite - Rust reimplementation of SQLite with concurrent writers
+          # Cannot build: requires Rust nightly (#![feature(unix_socket_ancillary_data)])
+          # Install via: cargo +nightly install --git https://github.com/Dicklesworthstone/frankensqlite
+          frankensqlite = null;
+
+          # frankentui (ftui) - minimal TUI kernel for flicker-free terminal UIs
+          # Cannot build from source: no Cargo.lock in repo
+          # Install via: git clone https://github.com/Dicklesworthstone/frankentui && cd frankentui && cargo run -p ftui-demo-showcase
+          frankentui = null;
+
           # agent-browser - browser automation CLI for AI agents (Rust CLI + Node.js Playwright daemon)
           agent-browser = prev.stdenv.mkDerivation {
             pname = "agent-browser";

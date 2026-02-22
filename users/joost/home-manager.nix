@@ -72,6 +72,7 @@ in {
     btop
     chezmoi
     kitty
+    wezterm
     lazydocker
     lazygit
     bat
@@ -128,6 +129,9 @@ in {
     repo-updater # GitHub repo sync tool (ru command)
     ubs # AI-native code quality scanner
     # caut: install via `cargo install --git https://github.com/Dicklesworthstone/coding_agent_usage_tracker`
+    # frankenterm: install via `cargo install --git https://github.com/Dicklesworthstone/frankenterm ft` (local path deps in Cargo.lock)
+    # frankensqlite: install via `cargo +nightly install --git https://github.com/Dicklesworthstone/frankensqlite` (requires nightly)
+    # frankentui: install via `git clone ... && cargo run -p ftui-demo-showcase` (no Cargo.lock)
   ] ++ (lib.optional (pkgs.cass != null) pkgs.cass) ++ (lib.optional (pkgs.cass-memory != null) pkgs.cass-memory) ++ [
 
     # Rust should be in flake.nix for each project. However, those configs do need an initial Cargo.lock.Therefore, to create new projects we want Rust globally installed.
