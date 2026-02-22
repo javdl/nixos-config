@@ -210,7 +210,25 @@ To use latest Rust toolchain, add to flake.nix overlays:
 rustup = inputs.nixpkgs-unstable.legacyPackages.${prev.stdenv.hostPlatform.system}.rustup;
 ```
 
+## Overlay Packaging Patterns
+
+The flake.nix overlay uses three patterns for third-party tools:
+1. **Pre-built binary from GitHub releases** (preferred) — `fetchurl` + copy binary (beads, ntm, dcg, caam, etc.)
+2. **Pre-built binary from npm registry** — `fetchurl` of platform-specific npm tarball (codex)
+3. **Build from source** (last resort) — `buildRustPackage` or `overrideAttrs` (cass, gemini-cli)
+
+Prefer pre-built binaries. Building from source is slow and fragile with hash pinning.
+
+### Testing Overlay Changes
+Overlays are internal to the flake (not exposed as outputs). You cannot test individual overlays with `nix build .#<pkg>`. Use `make test NIXNAME=loom` to validate overlay changes.
+
+### Nix Hash Gotcha
+`nix-prefetch-url --unpack` gives a DIFFERENT hash than `fetchurl`. If using `fetchurl` + manual `tar xzf` in unpackPhase, use `nix-prefetch-url` WITHOUT `--unpack` to get the correct hash.
+
 ## Common Issues
+
+### bd broken on loom
+`bd` has a broken libicu dependency (`libicui18n.so.74`). Use `br` (beads_rust) instead for all beads operations.
 
 ### Nix Command Not Found
 Ensure Nix is installed and experimental features enabled:

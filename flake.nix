@@ -729,44 +729,34 @@
             };
           };
 
-          # gemini-cli - Google Gemini coding agent CLI (pinned to latest)
-          gemini-cli = prev.gemini-cli.overrideAttrs (old: rec {
+          # gemini-cli - Google Gemini coding agent CLI (pre-built JS bundle)
+          gemini-cli = prev.stdenv.mkDerivation {
+            pname = "gemini-cli";
             version = "0.29.5";
-            src = prev.fetchFromGitHub {
-              owner = "google-gemini";
-              repo = "gemini-cli";
-              tag = "v${version}";
-              hash = "sha256-+gFSTq0CXMZa2OhP2gOuWa5WtteKW7Ys78lgnz7J72g=";
+
+            src = prev.fetchurl {
+              url = "https://github.com/google-gemini/gemini-cli/releases/download/v0.29.5/gemini.js";
+              hash = "sha256-Yzqi2l41XLNMGNqeVGru0SALc1ZVa2LS4Qk2QiiSasY=";
             };
-            npmDeps = prev.fetchNpmDeps {
-              inherit src;
-              hash = "sha256-RGiWtJkLFV1UfFahHPzxtzJIsPCseEwfSsPdLfBkavI=";
+
+            dontUnpack = true;
+
+            nativeBuildInputs = [ prev.makeWrapper ];
+
+            installPhase = ''
+              mkdir -p $out/lib $out/bin
+              cp $src $out/lib/gemini.js
+              makeWrapper ${prev.nodejs}/bin/node $out/bin/gemini \
+                --add-flags "$out/lib/gemini.js"
+            '';
+
+            meta = with prev.lib; {
+              description = "Google Gemini CLI coding agent";
+              homepage = "https://github.com/google-gemini/gemini-cli";
+              license = licenses.asl20;
+              platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
             };
-            postPatch = ''
-              # Remove node-pty dependency from package.json
-              ${prev.jq}/bin/jq 'del(.optionalDependencies."node-pty")' package.json > package.json.tmp && mv package.json.tmp package.json
-              ${prev.jq}/bin/jq 'del(.optionalDependencies."node-pty")' packages/core/package.json > packages/core/package.json.tmp && mv packages/core/package.json.tmp packages/core/package.json
-
-              # Fix ripgrep path
-              substituteInPlace packages/core/src/tools/ripGrep.ts \
-                --replace-fail "await ensureRgPath();" "'${prev.ripgrep}/bin/rg';"
-
-              # Disable auto-update (default is true, set to false for Nix)
-              sed -i '/enableAutoUpdate: {/,/}/ s/default: true/default: false/' packages/cli/src/config/settingsSchema.ts
-
-              # Disable auto-update notification
-              substituteInPlace packages/cli/src/ui/utils/updateCheck.ts \
-                --replace-fail "settings.merged.general.enableAutoUpdateNotification" "(false)"
-              substituteInPlace packages/cli/src/utils/handleAutoUpdate.ts \
-                --replace-fail "settings.merged.general.enableAutoUpdateNotification" "(false)" \
-                --replace-fail "settings.merged.general.enableAutoUpdate," "false," \
-                --replace-fail "settings.merged.general.enableAutoUpdate" "(false)"
-            '';
-            preConfigure = ''
-              mkdir -p packages/generated
-              echo "export const GIT_COMMIT_INFO = { commitHash: 'refs/tags/v${version}' };" > packages/generated/git-commit.ts
-            '';
-          });
+          };
 
           # gh CLI on stable has bugs.
           gh = pkgs-unstable.gh;
