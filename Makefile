@@ -305,6 +305,21 @@ endif
 	@echo "==> Tailscale auth key configured!"
 	@echo "==> Check status with: ssh $(NIXUSER)@$(NIXADDR) 'tailscale status'"
 
+# Provision a new Hetzner Cloud server with nixos-anywhere (no rescue mode needed)
+# Prerequisites: Server must be reachable via SSH (any Linux OS, including Hetzner's default Ubuntu)
+# Usage: make hetzner/provision NIXADDR=<ip> NIXNAME=<hostname>
+hetzner/provision:
+	@echo "==> Provisioning NixOS on Hetzner ($(NIXADDR)) using nixos-anywhere"
+	@echo "==> Target config: $(NIXNAME)"
+	@echo "==> This will WIPE ALL DATA on the server!"
+	@echo "==> Press Ctrl+C within 5 seconds to abort..."
+	@sleep 5
+	nix run github:nix-community/nixos-anywhere -- \
+		--flake ".#$(NIXNAME)" \
+		root@$(NIXADDR)
+	@echo "==> Provisioning complete! Server is rebooting into NixOS."
+	@echo "==> Next: make hetzner/tailscale-auth NIXADDR=$(NIXADDR) TAILSCALE_AUTHKEY=<key>"
+
 # Fetch hardware config from Hetzner (run after bootstrap0, before bootstrap)
 # Usage: make hetzner/fetch-hardware NIXADDR=<ip> NIXNAME=<name>
 hetzner/fetch-hardware:

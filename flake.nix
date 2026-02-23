@@ -37,6 +37,12 @@
 
     fh.url = "https://flakehub.com/f/DeterminateSystems/fh/*";
 
+    # Declarative disk partitioning (used by nixos-anywhere)
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Secrets management using SOPS
     sops-nix.url = "github:Mic92/sops-nix";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
@@ -56,7 +62,7 @@
 
   };
 
-  outputs = { self, nixpkgs, nixos-hardware, home-manager, darwin, ... }@inputs: let
+  outputs = { self, nixpkgs, nixos-hardware, home-manager, darwin, disko, ... }@inputs: let
     # Overlays is the list of overlays we want to apply from flake inputs.
     overlays = [
       # inputs.jujutsu.overlays.default

@@ -61,6 +61,9 @@ in systemFunc rec {
     # SOPS secrets management on Linux (not Darwin)
     (if !darwin then inputs.sops-nix.nixosModules.sops else {})
 
+    # Disko declarative disk partitioning (no-op without disko.devices config)
+    (if !darwin then inputs.disko.nixosModules.disko else {})
+
     machineConfig
     userOSConfig
     home-manager.home-manager {

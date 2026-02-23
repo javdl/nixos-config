@@ -36,10 +36,11 @@ This is a NixOS/nix-darwin configuration repository using Nix flakes. It manages
 - `make vm/switch` - Apply changes in VM
 
 ### Hetzner Dev Box (joost)
+- `make hetzner/provision NIXADDR=<ip> NIXNAME=<hostname>` - **Single-command provisioning** (no rescue mode needed, uses nixos-anywhere + disko)
 - `make hetzner/copy NIXADDR=<ip>` - Copy config to Hetzner server
 - `make hetzner/switch NIXADDR=<ip> NIXNAME=hetzner-dev` - Apply NixOS config on Hetzner
-- `make hetzner/bootstrap0 NIXADDR=<ip>` - Initial NixOS install (Hetzner box must be in rescue mode)
-- `make hetzner/bootstrap NIXADDR=<ip>` - Complete setup after bootstrap0
+- `make hetzner/bootstrap0 NIXADDR=<ip>` - Initial NixOS install (legacy, requires rescue mode)
+- `make hetzner/bootstrap NIXADDR=<ip>` - Complete setup after bootstrap0 (legacy)
 - `make hetzner/secrets NIXADDR=<ip>` - Copy SSH/GPG keys to server
 - `make hetzner/tailscale-auth NIXADDR=<ip> TAILSCALE_AUTHKEY=<key>` - Set up Tailscale
 
@@ -69,14 +70,15 @@ Prerequisites: Order a Hetzner Cloud CPX32 server. Note the IP, root password, a
 
 **Step 1: Create the NixOS configuration files**
 
-Pick a robot-themed hostname (pattern: `<name>` + `-roid`/`-ator`/`-bot`). Create 4 files based on an existing colleague (e.g., copy Desmond's):
+Pick a robot-themed hostname (pattern: `<name>` + `-roid`/`-ator`/`-bot`). Create 3 files based on an existing colleague (e.g., copy Desmond's):
 
 | File | What to change |
 |------|----------------|
-| `hosts/<hostname>.nix` | `networking.hostName`, `services.nixosAutoUpdate.flake`, `services.repoUpdater.user`/`projectsDir`, `users.users.<name>.shell` line, IP in comment |
-| `hosts/hardware/<hostname>.nix` | Comment header only (hardware is identical for all Hetzner CPX VMs) |
+| `hosts/<hostname>.nix` | `networking.hostName`, `services.nixosAutoUpdate.flake`, `services.repoUpdater.user`/`projectsDir`, `users.users.<name>.shell` line, IP in comment. Import `../modules/hetzner-cloud-hardware.nix` and `../modules/disko-hetzner-cloud.nix` in the hardware config. |
 | `users/<name>/nixos.nix` | `users.users.<name>` block (username, home dir, SSH keys, hashedPassword) |
 | `users/<name>/home-manager-server.nix` | `programs.git` (userName, userEmail, github.user) |
+
+New hosts no longer need a separate `hosts/hardware/<hostname>.nix` — they import the shared `modules/hetzner-cloud-hardware.nix` and `modules/disko-hetzner-cloud.nix` modules directly.
 
 Then add to `flake.nix`:
 ```nix
@@ -91,7 +93,36 @@ Update the colleague table in this file.
 
 TODOs to fill in later: SSH public key, `hashedPassword` (generate with `mkpasswd -m sha-512`), git email/GitHub username.
 
-**Step 2: Bootstrap the server (rescue mode required)**
+**Step 2: Provision the server (single command, no rescue mode)**
+
+```bash
+# Provision directly from any running Linux (e.g., Hetzner's default Ubuntu)
+# Uses nixos-anywhere + disko for declarative partitioning
+make hetzner/provision NIXADDR=<ip> NIXNAME=<hostname>
+```
+
+This will SSH into the server, kexec into a NixOS installer, partition the disk with disko, install NixOS with the full flake config, and reboot — all in one command.
+
+Expected warnings after first boot:
+- `repo-updater` fails (gh not authenticated yet) — normal
+- `tailscaled-autoconnect` fails (no auth key yet) — normal
+
+**Step 3: Post-provisioning**
+
+```bash
+# Set up Tailscale (generate key at https://login.tailscale.com/admin/settings/keys)
+make hetzner/tailscale-auth NIXADDR=<ip> TAILSCALE_AUTHKEY=tskey-auth-xxx
+
+# Commit and push config so auto-update works
+jj describe -m "feat: add <name> colleague server (<hostname>)"
+jj bookmark set main -r @
+jj git push
+```
+
+After push, the server's `nixosAutoUpdate` will pull from `github:javdl/nixos-config#<hostname>` daily at 4 AM.
+
+<details>
+<summary>Legacy bootstrap (rescue mode required, for non-disko hosts)</summary>
 
 The `make hetzner/bootstrap0` command requires interactive SSH (for password auth to rescue system). If running from Claude Code (non-interactive), use this script-based approach:
 
@@ -118,37 +149,17 @@ Key gotchas for non-interactive (Claude Code) SSH:
 - The Determinate Nix installer does NOT include `nixos-generate-config` or `nixos-install` — you MUST install `nixos-install-tools` via `nix-env` first
 - After sourcing nix-daemon.sh, start the daemon manually: `/nix/var/nix/profiles/default/bin/nix-daemon &`
 
-**Step 3: Apply full configuration**
-
-After the server reboots into minimal NixOS (root password: "nixos"):
+After bootstrap0, apply full config:
 
 ```bash
-# Copy config (as root since joost user may not have SSH key access yet)
 rsync -av -e 'ssh -o StrictHostKeyChecking=no -o PreferredAuthentications=password' \
   --exclude={vendor/,.git/,.git-crypt/,.jj/,.beads/,iso/} \
   /path/to/nixos-config/ root@<ip>:/nix-config
 
-# Apply the full config
 ssh root@<ip> "nixos-rebuild switch --flake /nix-config#<hostname>"
 ```
 
-Expected warnings after first switch:
-- `repo-updater` fails (gh not authenticated yet) — normal
-- `tailscaled-autoconnect` fails (no auth key yet) — normal
-
-**Step 4: Post-bootstrap**
-
-```bash
-# Set up Tailscale (generate key at https://login.tailscale.com/admin/settings/keys)
-make hetzner/tailscale-auth NIXADDR=<ip> TAILSCALE_AUTHKEY=tskey-auth-xxx
-
-# Commit and push config so auto-update works
-jj describe -m "feat: add <name> colleague server (<hostname>)"
-jj bookmark set main -r @
-jj git push
-```
-
-After push, the server's `nixosAutoUpdate` will pull from `github:javdl/nixos-config#<hostname>` daily at 4 AM.
+</details>
 
 ## Architecture
 
