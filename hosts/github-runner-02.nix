@@ -1,27 +1,29 @@
 { config, pkgs, lib, ... }:
 
-# Hetzner dedicated server for jackson (jacksonator)
-# IP: 49.13.202.212 (Nuremberg, CPX32)
+# Hetzner dedicated GitHub Actions runner for fuww org (github-runner-02)
+# CPX62 instance (16 shared vCPUs, 32GB RAM, 640GB disk)
 #
-# Bootstrap process:
-#   1. Boot Hetzner server into rescue mode (Linux 64-bit)
-#   2. Run: make hetzner/bootstrap0 NIXADDR=<ip> NIXNAME=jacksonator
-#   3. After reboot: make hetzner/bootstrap NIXADDR=<ip> NIXNAME=jacksonator
-#   4. Connect: ssh jacksonator (uses ~/.ssh config)
+# Provisioning (single command, no rescue mode):
+#   1. Order Hetzner CPX62 server, note the IP
+#   2. Run: make hetzner/provision NIXADDR=<ip> NIXNAME=github-runner-02
+#   3. Set up Tailscale: make hetzner/tailscale-auth NIXADDR=<ip> TAILSCALE_AUTHKEY=tskey-auth-xxx
 
 {
   imports = [
-    ./hardware/jacksonator.nix
+    ../modules/hetzner-cloud-hardware.nix
+    ../modules/disko-hetzner-cloud.nix
+    ../modules/github-actions-runner.nix
     ../modules/cachix.nix
     ../modules/secrets.nix
     ../modules/automatic-nix-gc.nix
     ../modules/nixos-auto-update.nix
     ../modules/security-audit.nix
-    ../modules/podman.nix
-    ../modules/repo-updater.nix
     ../modules/ghostty-terminfo.nix
     ../modules/mosh.nix
   ];
+
+  # Enable the GitHub Actions runner packages module
+  services.github-actions-runner.enable = true;
 
   # Latest kernel for best hardware support
   boot.kernelPackages = pkgs.linuxPackages_latest;
@@ -31,7 +33,7 @@
   boot.loader.efi.canTouchEfiVariables = true;
 
   # Hostname
-  networking.hostName = "jacksonator";
+  networking.hostName = "github-runner-02";
 
   # Timezone (UTC for servers)
   time.timeZone = "UTC";
@@ -46,37 +48,22 @@
     '';
   };
 
-  # Disk-based garbage collection (only runs when disk space is low)
+  # Disk-based garbage collection (shorter retention for CI - builds are ephemeral)
   services.automaticNixGC = {
     enable = true;
     minFreeGB = 50;
     maxFreeGB = 100;
     scheduledThresholdGB = 50;
-    keepDays = 14;
+    keepDays = 7;
   };
 
   # Automatic NixOS updates from git repository
   services.nixosAutoUpdate = {
     enable = true;
-    flake = "github:javdl/nixos-config#jacksonator";
+    flake = "github:javdl/nixos-config#github-runner-02";
     dates = "04:00";
     randomizedDelaySec = "30m";
     allowReboot = false;
-  };
-
-  # Repo updater - periodic git sync for development repos
-  services.repoUpdater = {
-    enable = true;
-    user = "jackson";
-    projectsDir = "/home/jackson/code";
-    timerInterval = "6h";
-    repos = [
-      "fuww/developer"
-      "fuww/frontend"
-      "fuww/api"
-      "fuww/prompts"
-      "fuww/about"
-    ];
   };
 
   # Security auditing with auditd
@@ -91,17 +78,8 @@
   nixpkgs.config.allowUnfree = true;
   nixpkgs.config.allowUnfreePredicate = _: true;
 
-  # Networking - dual stack (IPv4 via DHCP + static IPv6)
+  # Networking - DHCP
   networking.useDHCP = true;
-  # IPv6 address will be configured after provisioning
-  # networking.interfaces.enp1s0.ipv6.addresses = [{
-  #   address = "2a01:...::1";
-  #   prefixLength = 64;
-  # }];
-  # networking.defaultGateway6 = {
-  #   address = "fe80::1";
-  #   interface = "enp1s0";
-  # };
 
   # Firewall - base config (Tailscale settings added below)
   networking.firewall.enable = true;
@@ -117,13 +95,13 @@
     };
   };
 
-  # Don't require password for sudo (convenient for remote dev)
+  # Don't require password for sudo
   security.sudo.wheelNeedsPassword = false;
 
   # Immutable users (passwords managed via config)
   users.mutableUsers = false;
 
-  # Admin user (joost) for management
+  # Admin user (joost) for SSH management
   users.users.joost = {
     isNormalUser = true;
     home = "/home/joost";
@@ -135,49 +113,32 @@
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFB87It3cS6o8kgD/6r3R59KP2o1eOJz1bgLJl4syLX1 joost"
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEx6MK8mQ22KWCA0uDV6uBNvMw/NeBl70Mu4hxrX9SJ9 j8 mac studio"
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKiS5X4s5jEKzgpaRMX7gIxKCGcRGSF9qUAlUkOUdFbW j@jlnw.nl"
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIy0FO1ta1djvSamjM1Ph/YZpMhMtXSeuFE1Zl9GHhkQ joost+agent@fashionunited.com"
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEfx6qICt/nunP+X3Wv8Y6hhZtGo0AZreAp3QOThy0SD loom-agent-nopass"
     ];
   };
 
-  # Docker for containerized development
-  virtualisation.docker.enable = true;
+  # Docker already enabled by github-actions-runner module;
+  # ensure ip_forward for Docker networking
+  boot.kernel.sysctl."net.ipv4.ip_forward" = true;
 
-  # Podman for rootless containers (Docker alternative with better security)
-  virtualisation.podmanConfig = {
-    enable = true;
-    dockerCompat = false;
-    autoPrune = true;
-  };
-
-  # System packages for remote development
+  # System packages for server management
   environment.systemPackages = with pkgs; [
-    # Essentials
     git
     gnumake
     htop
     btop
     tmux
-
-    # Network tools
     curl
     wget
     rsync
-
-    # Development
-    gcc
-    gnumake
-
-    # Editors
     neovim
-
-    # Utils
     jq
     ripgrep
     fd
     tree
     unzip
     zip
-
-    # Safety: require typing hostname to confirm shutdown/reboot via SSH
     molly-guard
   ];
 
@@ -186,7 +147,6 @@
 
   # Use zsh as default shell
   programs.zsh.enable = true;
-  users.users.jackson.shell = lib.mkForce pkgs.zsh;
 
   # Run dynamically linked binaries (AppImages, prebuilt tools) without patchelf
   programs.nix-ld.enable = true;
@@ -196,7 +156,7 @@
 
   # System limits and performance tuning
   boot.kernel.sysctl = {
-    # Increase inotify limits for file watching (Claude Code, IDEs)
+    # Increase inotify limits for file watching
     "fs.inotify.max_user_watches" = 524288;
     "fs.inotify.max_user_instances" = 512;
 
@@ -208,8 +168,9 @@
 
     # Network optimizations
     "net.core.somaxconn" = 65535;
+    "net.ipv4.tcp_max_syn_backlog" = 65535;
 
-    # TCP BBR congestion control (better performance, especially on lossy networks)
+    # TCP BBR congestion control
     "net.ipv4.tcp_congestion_control" = "bbr";
     "net.core.default_qdisc" = "fq";
 
@@ -264,6 +225,28 @@
   networking.firewall = {
     trustedInterfaces = [ "tailscale0" ];
     allowedUDPPorts = [ config.services.tailscale.port ];
+  };
+
+  # SOPS secrets for GitHub runner token
+  sops.defaultSopsFile = ../secrets/github-runner-02.yaml;
+  sops.secrets.github-runner-token = {
+    mode = "0400";
+    owner = "root";
+  };
+
+  # GitHub Actions runner service for fuww organization
+  services.github-runners.fuww-runner = {
+    enable = true;
+    replace = true;
+    name = "github-runner-02";
+    tokenFile = config.sops.secrets.github-runner-token.path;
+    url = "https://github.com/fuww";
+    extraLabels = [ "hetzner" "nixos" "cpx62" "self-hosted-16-cores" ];
+    user = "github-runner";
+    extraPackages = with pkgs; [ docker ];
+    extraEnvironment = {
+      DOCKER_HOST = "unix:///var/run/docker.sock";
+    };
   };
 
   # This value determines the NixOS release

@@ -19,6 +19,7 @@
     ../modules/nixos-auto-update.nix
     ../modules/security-audit.nix
     ../modules/ghostty-terminfo.nix
+    ../modules/mosh.nix
   ];
 
   # Enable the GitHub Actions runner packages module
@@ -236,10 +237,11 @@
   # GitHub Actions runner service for fuww organization
   services.github-runners.fuww-runner = {
     enable = true;
+    replace = true;
     name = "github-runner-01";
     tokenFile = config.sops.secrets.github-runner-token.path;
     url = "https://github.com/fuww";
-    extraLabels = [ "hetzner" "nixos" "ccx33" ];
+    extraLabels = [ "hetzner" "nixos" "ccx33" "self-hosted-16-cores" ];
     user = "github-runner";
     extraPackages = with pkgs; [ docker ];
     extraEnvironment = {

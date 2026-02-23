@@ -21,6 +21,7 @@
     ../modules/podman.nix
     ../modules/repo-updater.nix
     ../modules/ghostty-terminfo.nix
+    ../modules/mosh.nix
   ];
 
   # Latest kernel for best hardware support
