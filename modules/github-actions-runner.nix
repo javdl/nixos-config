@@ -62,7 +62,7 @@ in
           pipx
           poetry
           bundler
-          composer
+          phpPackages.composer
 
           # Database clients
           postgresql
@@ -83,7 +83,7 @@ in
           unzip
           zip
           gzip
-          tar
+          gnutar
           rsync
           openssh
           openssl
@@ -112,7 +112,7 @@ in
           strace
           tcpdump
           nmap
-          netcat
+          netcat-openbsd
 
           # Version control helpers
           pre-commit
@@ -121,9 +121,9 @@ in
           # Text processing
           vim
           nano
-          sed
-          awk
-          grep
+          gnused
+          gawk
+          gnugrep
 
           # Archive tools
           p7zip

@@ -56,6 +56,17 @@ Each colleague has a dedicated NixOS server config with auto-update enabled:
 | Peter     | `peterbot`      | `#peterbot`      | `users/peter/home-manager-server.nix`   |
 | Rajesh    | `rajbot`        | `#rajbot`        | `users/rajesh/home-manager-server.nix`  |
 
+### GitHub Actions Runner
+Dedicated self-hosted runner for the `fuww` GitHub organization:
+
+| Server           | Host Config          | Flake Target          | Instance | User Config                              |
+|------------------|----------------------|-----------------------|----------|------------------------------------------|
+| github-runner-01 | `github-runner-01`   | `#github-runner-01`   | CCX33    | `users/github-runner/home-manager-server.nix` |
+
+The runner uses `modules/github-actions-runner.nix` for CI packages (Docker, languages, build tools, browsers, cloud CLIs) and `services.github-runners` for runner registration. Token is SOPS-encrypted in `secrets/github-runner-01.yaml`. See `docs/github-runner-hetzner-setup.md` for full setup/scaling guide.
+
+To scale: copy `hosts/github-runner-01.nix`, change hostname/runner name/sops path, reuse `users/github-runner/`, add flake.nix + `.sops.yaml` entries.
+
 **Deployment:** All colleague machines have `nixosAutoUpdate` pulling from `github:javdl/nixos-config#<hostname>` at 4 AM daily. To deploy changes:
 1. Edit the relevant `users/<name>/home-manager-server.nix` or `hosts/<hostname>.nix`
 2. Commit and push to `main` — machines auto-update on next scheduled check

@@ -4,8 +4,8 @@
 # Uses SSH host key for decryption - no separate age key needed
 #
 # Setup for a new host:
-#   1. Install sops and ssh-to-age: nix-shell -p sops ssh-to-age
-#   2. Get host's age public key: ssh-to-age -i /etc/ssh/ssh_host_ed25519_key.pub
+#   1. Get host's age public key: ssh-to-age -i /etc/ssh/ssh_host_ed25519_key.pub
+#      (sops and ssh-to-age are installed system-wide by this module)
 #   3. Add the key to .sops.yaml under keys section
 #   4. Create/encrypt secrets: sops secrets/<hostname>.yaml
 #   5. Reference secrets in your config: sops.secrets.example = {};
@@ -23,5 +23,5 @@
   sops.age.generateKey = false;
 
   # Add sops CLI tool for managing secrets
-  environment.systemPackages = [ pkgs.sops ];
+  environment.systemPackages = [ pkgs.sops pkgs.ssh-to-age ];
 }

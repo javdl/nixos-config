@@ -395,6 +395,16 @@ Colleague development servers (Hetzner CPX32, Nuremberg):
 
 All servers auto-update from `main` at 4 AM UTC daily via the `nixosAutoUpdate` module.
 
+## GitHub Actions Runner (Hetzner)
+
+Dedicated self-hosted GitHub Actions runner for the `fuww` organization:
+
+| Server             | Hostname           | Flake Target           | Instance | Purpose |
+|--------------------|--------------------|------------------------|----------|---------|
+| github-runner-01   | github-runner-01   | `#github-runner-01`    | CCX33    | GitHub Actions runner for fuww org |
+
+The runner includes the full CI package set (Docker, languages, build tools, browsers, cloud CLIs) via the `github-actions-runner` module. Token is managed via SOPS-encrypted secrets. See [docs/github-runner-hetzner-setup.md](docs/github-runner-hetzner-setup.md) for the full setup guide.
+
 ### Making changes to your own server
 
 You can customise your dev server by editing your config and rebuilding. Here's how (using Jackson / `jacksonator` as an example — substitute your own name and hostname):
