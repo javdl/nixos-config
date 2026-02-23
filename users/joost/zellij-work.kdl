@@ -1,41 +1,41 @@
 layout {
     tab name="fuww" cwd="~/code/fuww/fuww" focus=true {
-        pane split_direction="horizontal" {
+        pane split_direction="vertical" {
             pane
             pane
             pane
         }
     }
     tab name="about" cwd="~/code/fuww/about" {
-        pane split_direction="horizontal" {
+        pane split_direction="vertical" {
             pane
             pane
             pane
         }
     }
     tab name="deploy" cwd="~/code/fuww/deploy" {
-        pane split_direction="horizontal" {
+        pane split_direction="vertical" {
             pane
             pane
             pane
         }
     }
     tab name="developer" cwd="~/code/fuww/developer" {
-        pane split_direction="horizontal" {
+        pane split_direction="vertical" {
             pane
             pane
             pane
         }
     }
     tab name="jlnl" cwd="~/code/javdl/joostvanderlaan.nl" {
-        pane split_direction="horizontal" {
+        pane split_direction="vertical" {
             pane
             pane
             pane
         }
     }
     tab name="whisky" cwd="~/code/javdl/whisky" {
-        pane split_direction="horizontal" {
+        pane split_direction="vertical" {
             pane
             pane
             pane
