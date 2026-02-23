@@ -228,6 +228,9 @@
   };
 
   # SOPS secrets for GitHub runner token
+  # Token must be an org-level runner registration token (NOT a PAT).
+  # Get from: https://github.com/organizations/fuww/settings/actions/runners/new
+  # Format: AAU5P4... (29 chars). Expires in 1 hour, single-use per registration.
   sops.defaultSopsFile = ../secrets/github-runner-01.yaml;
   sops.secrets.github-runner-token = {
     mode = "0400";
@@ -235,6 +238,9 @@
   };
 
   # GitHub Actions runner service for fuww organization
+  # The systemd service runs configure as the 'github-runner' user (not root).
+  # On each start, the unconfigure script (root) copies the token to .new-token,
+  # then the configure script (github-runner) consumes it to register with GitHub.
   services.github-runners.fuww-runner = {
     enable = true;
     replace = true;

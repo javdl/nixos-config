@@ -66,6 +66,12 @@ Dedicated self-hosted runner for the `fuww` GitHub organization:
 
 The runners use `modules/github-actions-runner.nix` for CI packages (Docker, languages, build tools, browsers, cloud CLIs) and `services.github-runners` for runner registration. Tokens are SOPS-encrypted in `secrets/github-runner-{01,02}.yaml`. See `docs/github-runner-hetzner-setup.md` for full setup/scaling guide.
 
+**Runner token type:** The `tokenFile` must contain an **org-level runner registration token** (format: `AAU5P4...`, 29 chars), NOT a GitHub PAT. Get it from https://github.com/organizations/fuww/settings/actions/runners/new → copy the `--token` value. Tokens expire in 1 hour and are single-use.
+
+**SOPS chicken-and-egg for new runners:** New servers don't have SSH host keys until provisioned, but the NixOS build needs an encrypted secrets file. Solution: temporarily use a known age key (e.g., loom's) in `.sops.yaml`, encrypt secrets, provision, then re-key with the server's real age key after provisioning.
+
+**SSH after provisioning:** Root SSH has no authorized keys — always SSH as `joost@<ip>` and use `sudo`. Run `ssh-keygen -R <ip>` first since the host key changes.
+
 To scale: copy `hosts/github-runner-02.nix`, change hostname/runner name/sops path/instance label, reuse `users/github-runner/`, add flake.nix + `.sops.yaml` entries. New runners use disko + nixos-anywhere (no rescue mode).
 
 **Deployment:** All colleague machines have `nixosAutoUpdate` pulling from `github:javdl/nixos-config#<hostname>` at 4 AM daily. To deploy changes:
