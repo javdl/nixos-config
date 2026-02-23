@@ -57,6 +57,8 @@ in
           openjdk17
           ruby
           php
+          elixir
+          erlang
 
           # Package managers
           pipx

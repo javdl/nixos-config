@@ -76,6 +76,8 @@ in {
     uv
     rustup
     cargo-generate
+    elixir
+    erlang
     pre-commit
     zed-editor        # Remote dev server for local Zed connections via SSH
 

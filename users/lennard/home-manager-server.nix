@@ -76,6 +76,8 @@ in {
     uv
     rustup
     cargo-generate
+    elixir
+    erlang
     pre-commit
 
     # DevOps
