@@ -1,19 +1,26 @@
 # GitHub Runner on Hetzner Setup Guide
 
-Setup guide for provisioning a GitHub Actions runner on Hetzner Cloud for the `fuww` organization.
+Setup guide for provisioning GitHub Actions runners on Hetzner Cloud for the `fuww` organization.
 
 ## Overview
 
-This creates a dedicated NixOS server (`github-runner-01`) on Hetzner CCX33 that:
+Dedicated NixOS servers running as org-level self-hosted runners for `fuww`:
+
+| Runner           | Instance | Provisioning | Status |
+|------------------|----------|--------------|--------|
+| github-runner-01 | CCX33 (dedicated cores) | Legacy rescue mode | Active |
+| github-runner-02 | CPX62 (16 shared vCPUs, 32GB RAM) | disko + nixos-anywhere | Active |
+
+Each runner:
 - Registers as an org-level self-hosted runner for `fuww`
 - Includes the full CI package set (Docker, languages, build tools, browsers, cloud CLIs)
-- Auto-updates from `github:javdl/nixos-config#github-runner-01` daily at 4 AM
+- Auto-updates from `github:javdl/nixos-config#<hostname>` daily at 4 AM
 - Uses SOPS-encrypted secrets for the runner token
 - Connects via Tailscale for secure SSH management
 
 ## Prerequisites
 
-- Hetzner Cloud account with a CCX33 (or similar) server ordered
+- Hetzner Cloud account with a server ordered (CCX33/CPX62 or similar)
 - This nixos-config repository cloned locally
 - SSH key pair on your local machine
 - Tailscale auth key (generate at https://login.tailscale.com/admin/settings/keys)
@@ -23,13 +30,16 @@ This creates a dedicated NixOS server (`github-runner-01`) on Hetzner CCX33 that
 
 | File | Purpose |
 |------|---------|
-| `hosts/github-runner-01.nix` | Main host config (Hetzner base + runner service + SOPS) |
-| `hosts/hardware/github-runner-01.nix` | Hetzner QEMU hardware config |
-| `users/github-runner/nixos.nix` | Dedicated system user |
-| `users/github-runner/home-manager-server.nix` | Minimal home-manager for CI |
-| `flake.nix` | Entry: `nixosConfigurations.github-runner-01` |
-| `.sops.yaml` | Age key + creation rule for secrets |
-| `secrets/github-runner-01.yaml` | SOPS-encrypted runner token |
+| `hosts/github-runner-01.nix` | Runner 01 host config (legacy hardware import) |
+| `hosts/github-runner-02.nix` | Runner 02 host config (disko + shared hardware modules) |
+| `hosts/hardware/github-runner-01.nix` | Runner 01 Hetzner QEMU hardware config |
+| `modules/hetzner-cloud-hardware.nix` | Shared Hetzner Cloud hardware config (used by runner-02+) |
+| `modules/disko-hetzner-cloud.nix` | Shared disko partitioning for Hetzner Cloud (used by runner-02+) |
+| `users/github-runner/nixos.nix` | Dedicated system user (shared across all runners) |
+| `users/github-runner/home-manager-server.nix` | Minimal home-manager for CI (shared across all runners) |
+| `flake.nix` | Entries: `nixosConfigurations.github-runner-{01,02}` |
+| `.sops.yaml` | Age keys + creation rules for secrets |
+| `secrets/github-runner-{01,02}.yaml` | SOPS-encrypted runner tokens |
 
 ## Architecture
 
@@ -44,16 +54,28 @@ Key design choices:
 - **No repo-updater** (no dev repos to sync)
 - **Shorter GC retention** (7 days vs 14) since CI builds are ephemeral
 - **SOPS token** instead of plaintext file (improvement over fu137/j7 pattern)
+- **New runners use disko + nixos-anywhere** for single-command provisioning (no rescue mode)
 
 ## Deployment Steps
 
-### Phase 1: Prepare Config (done in this repo)
+### Option A: disko + nixos-anywhere (recommended for new runners)
 
-The NixOS configuration files should already exist. If creating a new runner, see "Scaling to More Runners" below.
+Used by: `github-runner-02` and all future runners.
 
-### Phase 2: Bootstrap (Hetzner Rescue Mode)
+1. Order a Hetzner server. Note the IP address.
+2. Run single-command provisioning:
 
-1. Order Hetzner CCX33 server. Note the IP address.
+```bash
+make hetzner/provision NIXADDR=<ip> NIXNAME=github-runner-02
+```
+
+This SSHs into the server, kexec into a NixOS installer, partitions with disko, installs NixOS with the full flake config, and reboots — all in one command.
+
+### Option B: Legacy rescue mode bootstrap
+
+Used by: `github-runner-01` (predates disko support).
+
+1. Order Hetzner server. Note the IP address.
 2. Boot into rescue mode (Linux 64-bit) from Hetzner Cloud Console.
 3. Run bootstrap:
 
@@ -116,27 +138,43 @@ After push, the server's `nixosAutoUpdate` will pull from `github:javdl/nixos-co
 ## Verification
 
 1. **Runner service**: `systemctl status github-runner-fuww-runner`
-2. **GitHub UI**: https://github.com/organizations/fuww/settings/actions/runners - runner should appear online with labels `self-hosted`, `linux`, `x86_64`, `hetzner`, `nixos`, `ccx33`
+2. **GitHub UI**: https://github.com/organizations/fuww/settings/actions/runners
+   - runner-01 labels: `self-hosted`, `linux`, `x86_64`, `hetzner`, `nixos`, `ccx33`, `self-hosted-16-cores`
+   - runner-02 labels: `self-hosted`, `linux`, `x86_64`, `hetzner`, `nixos`, `cpx62`, `self-hosted-16-cores`
 3. **Auto-update timer**: `systemctl status nixos-upgrade.timer`
 4. **Tailscale**: `tailscale status`
 
 ## Scaling to More Runners
 
-To add `github-runner-02`:
+To add `github-runner-03` (or beyond):
 
-1. Copy `hosts/github-runner-01.nix` → change hostname, runner name, sops file path
-2. Copy `hosts/hardware/github-runner-01.nix` → change comment only
+1. Copy `hosts/github-runner-02.nix` → change hostname, runner name, sops file path, instance label
+2. No hardware file needed — use shared `modules/hetzner-cloud-hardware.nix` + `modules/disko-hetzner-cloud.nix`
 3. Reuse `users/github-runner/` (shared across all runners via `user = "github-runner"`)
 4. Add to `flake.nix`:
    ```nix
-   nixosConfigurations.github-runner-02 = mkSystem "github-runner-02" {
+   nixosConfigurations.github-runner-03 = mkSystem "github-runner-03" {
      system = "x86_64-linux";
      user   = "github-runner";
      server = true;
    };
    ```
-5. Add `.sops.yaml` entry + `secrets/github-runner-02.yaml`
-6. Run the same bootstrap + secrets + Tailscale steps
+5. Add `.sops.yaml` entry + `secrets/github-runner-03.yaml`
+6. Provision: `make hetzner/provision NIXADDR=<ip> NIXNAME=github-runner-03`
+7. Run the same secrets + Tailscale steps
+
+## GitHub Actions Workflow Integration
+
+Workflows in `fuww/frontend` use [mikehardy/runner-fallback-action](https://github.com/mikehardy/runner-fallback-action) to prefer the self-hosted runner and fall back to `ubuntu-latest-16-cores` when it's offline or busy.
+
+This requires a `GH_RUNNER_TOKEN` org secret:
+
+1. Generate a classic PAT at https://github.com/settings/tokens with `admin:org` scope
+2. Add it as an org secret at https://github.com/organizations/fuww/settings/secrets/actions
+   - Name: `GH_RUNNER_TOKEN`
+   - Repository access: repos that use the runner (at least `frontend`)
+
+The fallback action uses this token to query runner availability via the GitHub API. Without it, the action falls back silently with a warning.
 
 ## Known Caveats
 

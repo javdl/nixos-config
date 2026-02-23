@@ -18,6 +18,7 @@ keys:
   # Run: ssh-to-age -i /etc/ssh/ssh_host_ed25519_key.pub
   - &hetzner-dev age1PLACEHOLDER_RUN_ssh-to-age_ON_HOST
   - &github-runner-01 age1k77q70qv8h6kp7n8pw92mcyww62xkmwps50mknmzdjwn6s29wu2s3gav4w
+  - &github-runner-02 age1p26cwwyu2v4jexue6z7krrua9skqv0p3aj4ad3su4m7varky3dwqk0zphj
 
 creation_rules:
   # hetzner-dev secrets
@@ -32,4 +33,11 @@ creation_rules:
     key_groups:
       - age:
           - *github-runner-01
+          # - *admin_joost  # Uncomment after adding admin key
+
+  # github-runner-02 secrets (GitHub runner token)
+  - path_regex: secrets/github-runner-02\.yaml$
+    key_groups:
+      - age:
+          - *github-runner-02
           # - *admin_joost  # Uncomment after adding admin key

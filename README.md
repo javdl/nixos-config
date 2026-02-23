@@ -402,8 +402,9 @@ Dedicated self-hosted GitHub Actions runner for the `fuww` organization:
 | Server             | Hostname           | Flake Target           | Instance | Purpose |
 |--------------------|--------------------|------------------------|----------|---------|
 | github-runner-01   | github-runner-01   | `#github-runner-01`    | CCX33    | GitHub Actions runner for fuww org |
+| github-runner-02   | github-runner-02   | `#github-runner-02`    | CPX62    | GitHub Actions runner for fuww org |
 
-The runner includes the full CI package set (Docker, languages, build tools, browsers, cloud CLIs) via the `github-actions-runner` module. Token is managed via SOPS-encrypted secrets. See [docs/github-runner-hetzner-setup.md](docs/github-runner-hetzner-setup.md) for the full setup guide.
+Each runner includes the full CI package set (Docker, languages, build tools, browsers, cloud CLIs) via the `github-actions-runner` module. Tokens are managed via SOPS-encrypted secrets. See [docs/github-runner-hetzner-setup.md](docs/github-runner-hetzner-setup.md) for the full setup guide.
 
 ### Making changes to your own server
 

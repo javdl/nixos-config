@@ -890,6 +890,12 @@
       server = true;
     };
 
+    nixosConfigurations.github-runner-02 = mkSystem "github-runner-02" {
+      system = "x86_64-linux";
+      user   = "github-runner";
+      server = true;
+    };
+
     nixosConfigurations.hetzner-dev = mkSystem "hetzner-dev" {
       system = "x86_64-linux";
       user   = "joost";

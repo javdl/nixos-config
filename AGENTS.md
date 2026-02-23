@@ -62,10 +62,11 @@ Dedicated self-hosted runner for the `fuww` GitHub organization:
 | Server           | Host Config          | Flake Target          | Instance | User Config                              |
 |------------------|----------------------|-----------------------|----------|------------------------------------------|
 | github-runner-01 | `github-runner-01`   | `#github-runner-01`   | CCX33    | `users/github-runner/home-manager-server.nix` |
+| github-runner-02 | `github-runner-02`   | `#github-runner-02`   | CPX62    | `users/github-runner/home-manager-server.nix` |
 
-The runner uses `modules/github-actions-runner.nix` for CI packages (Docker, languages, build tools, browsers, cloud CLIs) and `services.github-runners` for runner registration. Token is SOPS-encrypted in `secrets/github-runner-01.yaml`. See `docs/github-runner-hetzner-setup.md` for full setup/scaling guide.
+The runners use `modules/github-actions-runner.nix` for CI packages (Docker, languages, build tools, browsers, cloud CLIs) and `services.github-runners` for runner registration. Tokens are SOPS-encrypted in `secrets/github-runner-{01,02}.yaml`. See `docs/github-runner-hetzner-setup.md` for full setup/scaling guide.
 
-To scale: copy `hosts/github-runner-01.nix`, change hostname/runner name/sops path, reuse `users/github-runner/`, add flake.nix + `.sops.yaml` entries.
+To scale: copy `hosts/github-runner-02.nix`, change hostname/runner name/sops path/instance label, reuse `users/github-runner/`, add flake.nix + `.sops.yaml` entries. New runners use disko + nixos-anywhere (no rescue mode).
 
 **Deployment:** All colleague machines have `nixosAutoUpdate` pulling from `github:javdl/nixos-config#<hostname>` at 4 AM daily. To deploy changes:
 1. Edit the relevant `users/<name>/home-manager-server.nix` or `hosts/<hostname>.nix`

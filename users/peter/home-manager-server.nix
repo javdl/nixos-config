@@ -16,6 +16,13 @@ in {
 
   xdg.enable = true;
 
+  # Fixed SSH_AUTH_SOCK path — symlink updated by shell init on each new shell.
+  # Because SSH resolves symlinks on every operation, updating the target
+  # fixes all shells (including already-running zellij panes).
+  home.sessionVariables = {
+    SSH_AUTH_SOCK = "$HOME/.ssh/ssh_auth_sock";
+  };
+
   #---------------------------------------------------------------------
   # Packages - Minimal set for remote development server
   #---------------------------------------------------------------------
@@ -113,14 +120,25 @@ in {
     shellOptions = [];
     historyControl = [ "ignoredups" "ignorespace" ];
     initExtra = ''
-      # SSH agent: prefer forwarded agent, fall back to systemd agent
-      if [[ -n "$SSH_AUTH_SOCK" && -S "$SSH_AUTH_SOCK" ]]; then
-        mkdir -p ~/.ssh
-        ln -sf "$SSH_AUTH_SOCK" ~/.ssh/ssh_auth_sock 2>/dev/null
-      elif [[ -S "$XDG_RUNTIME_DIR/ssh-agent" ]]; then
-        export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/ssh-agent"
-      fi
+      _update_ssh_agent() {
+        local sock best=""
+        if [[ -d ~/.ssh/agent ]]; then
+          for sock in $(ls -t ~/.ssh/agent/s.* 2>/dev/null); do
+            if [[ -S "$sock" ]]; then
+              SSH_AUTH_SOCK="$sock" ssh-add -l >/dev/null 2>&1; [[ $? -ne 2 ]] && best="$sock" && break
+            fi
+          done
+        fi
+        if [[ -z "$best" && -S "''${XDG_RUNTIME_DIR}/ssh-agent" ]]; then
+          SSH_AUTH_SOCK="''${XDG_RUNTIME_DIR}/ssh-agent" ssh-add -l >/dev/null 2>&1; [[ $? -ne 2 ]] && best="''${XDG_RUNTIME_DIR}/ssh-agent"
+        fi
+        [[ -n "$best" ]] && ln -sf "$best" ~/.ssh/ssh_auth_sock 2>/dev/null
+      }
+      _update_ssh_agent
     '';
+    shellAliases = {
+      fix-ssh = "_update_ssh_agent && ssh-add -l";
+    };
   };
 
   programs.fish = {
@@ -130,14 +148,28 @@ in {
       starship init fish | source
       zoxide init fish | source
 
-      # SSH agent: prefer forwarded agent, fall back to systemd agent
-      if test -n "$SSH_AUTH_SOCK"; and test -S "$SSH_AUTH_SOCK"
-        # Forwarded agent is valid, symlink it for tmux persistence
-        mkdir -p ~/.ssh
-        ln -sf "$SSH_AUTH_SOCK" ~/.ssh/ssh_auth_sock 2>/dev/null
-      else if test -S "$XDG_RUNTIME_DIR/ssh-agent"
-        set -gx SSH_AUTH_SOCK "$XDG_RUNTIME_DIR/ssh-agent"
+      function _update_ssh_agent
+        set -l best ""
+        if test -d ~/.ssh/agent
+          for sock in (ls -t ~/.ssh/agent/s.* 2>/dev/null)
+            if test -S "$sock"
+              if SSH_AUTH_SOCK="$sock" command ssh-add -l >/dev/null 2>&1; or test $status -eq 1
+                set best "$sock"
+                break
+              end
+            end
+          end
+        end
+        if test -z "$best"; and test -S "$XDG_RUNTIME_DIR/ssh-agent"
+          if SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/ssh-agent" command ssh-add -l >/dev/null 2>&1; or test $status -eq 1
+            set best "$XDG_RUNTIME_DIR/ssh-agent"
+          end
+        end
+        if test -n "$best"
+          ln -sf "$best" ~/.ssh/ssh_auth_sock 2>/dev/null
+        end
       end
+      _update_ssh_agent
     '';
     shellAliases = {
       # Jujutsu aliases
@@ -150,6 +182,7 @@ in {
       ll = "eza -la";
       ls = "eza";
       cat = "bat";
+      fix-ssh = "_update_ssh_agent && ssh-add -l";
     };
   };
 
@@ -355,7 +388,9 @@ in {
     autosuggestion.enable = true;
     syntaxHighlighting.enable = true;
 
-    shellAliases = shared.shellAliases;
+    shellAliases = shared.shellAliases // {
+      fix-ssh = "_update_ssh_agent && ssh-add -l";
+    };
 
     initContent = ''
       export GPG_TTY=$(tty)
@@ -376,12 +411,24 @@ in {
       zstyle ':completion:*' cache-path "$HOME/.zcompcache"
       skip_global_compinit=1
 
-      # SSH agent: prefer forwarded agent, fall back to systemd agent
-      if [[ -n "$SSH_AUTH_SOCK" && -S "$SSH_AUTH_SOCK" ]]; then
-        ln -sf "$SSH_AUTH_SOCK" ~/.ssh/ssh_auth_sock 2>/dev/null
-      elif [[ -S "$XDG_RUNTIME_DIR/ssh-agent" ]]; then
-        export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/ssh-agent"
-      fi
+      # SSH agent: find best working agent and update symlink
+      _update_ssh_agent() {
+        local sock best=""
+        # Tailscale forwarded agents (newest first)
+        if [[ -d ~/.ssh/agent ]]; then
+          for sock in ~/.ssh/agent/s.*(NOm); do
+            if [[ -S "$sock" ]]; then
+              SSH_AUTH_SOCK="$sock" ssh-add -l >/dev/null 2>&1; [[ $? -ne 2 ]] && best="$sock" && break
+            fi
+          done
+        fi
+        # Systemd agent fallback
+        if [[ -z "$best" && -S "''${XDG_RUNTIME_DIR}/ssh-agent" ]]; then
+          SSH_AUTH_SOCK="''${XDG_RUNTIME_DIR}/ssh-agent" ssh-add -l >/dev/null 2>&1; [[ $? -ne 2 ]] && best="''${XDG_RUNTIME_DIR}/ssh-agent"
+        fi
+        [[ -n "$best" ]] && ln -sf "$best" ~/.ssh/ssh_auth_sock 2>/dev/null
+      }
+      _update_ssh_agent
 
       # Rose Pine Dawn colors for zsh syntax highlighting
       typeset -gA ZSH_HIGHLIGHT_STYLES
