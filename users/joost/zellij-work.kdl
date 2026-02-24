@@ -1,5 +1,8 @@
 layout {
-    tab name="fuww" cwd="~/code/fuww/fuww" focus=true {
+    tab name="notities" cwd="~/notities" {
+        pane
+    }
+    tab name="fuww" cwd="~/code/fuww" focus=true {
         pane split_direction="vertical" {
             pane
             pane
@@ -21,6 +24,27 @@ layout {
         }
     }
     tab name="developer" cwd="~/code/fuww/developer" {
+        pane split_direction="vertical" {
+            pane
+            pane
+            pane
+        }
+    }
+    tab name="frontend" cwd="~/code/fuww/frontend" {
+        pane split_direction="vertical" {
+            pane
+            pane
+            pane
+        }
+    }
+    tab name="api" cwd="~/code/fuww/api" {
+        pane split_direction="vertical" {
+            pane
+            pane
+            pane
+        }
+    }
+    tab name="prompts" cwd="~/code/fuww/prompts" {
         pane split_direction="vertical" {
             pane
             pane
