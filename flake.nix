@@ -312,12 +312,36 @@
           };
 
           # ubs - ultimate bug scanner for AI-assisted code quality
-          ubs = prev.stdenv.mkDerivation {
+          ubs = let
+            ubsVersion = "5.0.6";
+            ubsBaseUrl = "https://raw.githubusercontent.com/Dicklesworthstone/ultimate_bug_scanner/v${ubsVersion}";
+            # Language modules (from v5.0.6 tag)
+            ubsModules = {
+              "ubs-js.sh" = prev.fetchurl { url = "${ubsBaseUrl}/modules/ubs-js.sh"; sha256 = "1h1q58rx907kxbbjksbfg0ic2irrvblxxmjmgwkrckbriqqqja7r"; };
+              "ubs-python.sh" = prev.fetchurl { url = "${ubsBaseUrl}/modules/ubs-python.sh"; sha256 = "0hwsdkfpkxvpzb0lggkzk8i95vjnhs3vy5yb7r0hwavs7bwplsg7"; };
+              "ubs-cpp.sh" = prev.fetchurl { url = "${ubsBaseUrl}/modules/ubs-cpp.sh"; sha256 = "0a3gira5g344dl8r1xp5968wi569hcg4qx8q9nr2xz5q7hz22smc"; };
+              "ubs-rust.sh" = prev.fetchurl { url = "${ubsBaseUrl}/modules/ubs-rust.sh"; sha256 = "1w42wxqs18dvgvaa8w0630xsmk3psrix5fmr1358mhcccgsga3aw"; };
+              "ubs-golang.sh" = prev.fetchurl { url = "${ubsBaseUrl}/modules/ubs-golang.sh"; sha256 = "1ipl3zi3cqypgqv7qvnfmbrsi6567l5wv9njmp44chk8ybldcmxi"; };
+              "ubs-java.sh" = prev.fetchurl { url = "${ubsBaseUrl}/modules/ubs-java.sh"; sha256 = "0mkjndc64xvy0jblf1myk91w245bms45ha8dz3jlb78rppb0n4kb"; };
+              "ubs-ruby.sh" = prev.fetchurl { url = "${ubsBaseUrl}/modules/ubs-ruby.sh"; sha256 = "01alh2fqrwks4ljzz6jc09b6syyvifncxm433b876j2g2xmab41l"; };
+              "ubs-swift.sh" = prev.fetchurl { url = "${ubsBaseUrl}/modules/ubs-swift.sh"; sha256 = "0alaih98hngf7yd7vz70afpfqr28zxq7rbsfr6i9cpvj8apc4l5k"; };
+            };
+            # Helper assets (from v5.0.6 tag)
+            ubsHelpers = {
+              "helpers/resource_lifecycle_py.py" = prev.fetchurl { url = "${ubsBaseUrl}/modules/helpers/resource_lifecycle_py.py"; sha256 = "0gj8034w6z8by725nwv1vsy4wcz2pmsq73wvkyhsd3wq5ks4z20y"; };
+              "helpers/resource_lifecycle_go.go" = prev.fetchurl { url = "${ubsBaseUrl}/modules/helpers/resource_lifecycle_go.go"; sha256 = "1g9q1qchpfaf1p9vzqahr7qh5mx9k5laaq4wgrd91mrdfwn5s88h"; };
+              "helpers/resource_lifecycle_java.py" = prev.fetchurl { url = "${ubsBaseUrl}/modules/helpers/resource_lifecycle_java.py"; sha256 = "1w9rvy1bgygp4ysw3dwi5x4k1ajai2gzjigsyv6539za34axl1f0"; };
+              "helpers/type_narrowing_ts.js" = prev.fetchurl { url = "${ubsBaseUrl}/modules/helpers/type_narrowing_ts.js"; sha256 = "0cgn5chgmar758dg4rkqq7nc8g1a89zsd8l0hy3dv689zgsfqag1"; };
+              "helpers/type_narrowing_rust.py" = prev.fetchurl { url = "${ubsBaseUrl}/modules/helpers/type_narrowing_rust.py"; sha256 = "0zv422w0q6x8cshw7s72674i4il50lvvi70ncdy9myyzwq6dcnim"; };
+              "helpers/type_narrowing_kotlin.py" = prev.fetchurl { url = "${ubsBaseUrl}/modules/helpers/type_narrowing_kotlin.py"; sha256 = "0yddg1nai3f7cxi87vyic4jdvvlky6x5c2c3q9dd2jf3x21483vg"; };
+              "helpers/type_narrowing_swift.py" = prev.fetchurl { url = "${ubsBaseUrl}/modules/helpers/type_narrowing_swift.py"; sha256 = "06ml047rqw5l77j1nddwp7mgzc0iriyx6xwwfzj6869rjbxbll7r"; };
+            };
+          in prev.stdenv.mkDerivation {
             pname = "ubs";
-            version = "5.0.6";
+            version = ubsVersion;
 
             src = prev.fetchurl {
-              url = "https://raw.githubusercontent.com/Dicklesworthstone/ultimate_bug_scanner/v5.0.6/ubs";
+              url = "${ubsBaseUrl}/ubs";
               sha256 = "ebb31bf412a409a19a060f2587c2ea02f185c0bf695204db6c73ef7560d377ed";
             };
 
@@ -327,9 +351,22 @@
 
             installPhase = ''
               mkdir -p $out/bin
-              cp $src $out/bin/ubs
-              chmod +x $out/bin/ubs
-              wrapProgram $out/bin/ubs \
+              mkdir -p $out/share/ubs/modules/helpers
+
+              # Install language modules (non-executable to prevent patchShebangs
+              # from rewriting shebangs, which would break UBS checksum verification)
+              ${prev.lib.concatStringsSep "\n" (prev.lib.mapAttrsToList (name: src: ''
+                cp ${src} $out/share/ubs/modules/${name}
+              '') ubsModules)}
+
+              # Install helper assets
+              ${prev.lib.concatStringsSep "\n" (prev.lib.mapAttrsToList (name: src: ''
+                cp ${src} $out/share/ubs/modules/${name}
+              '') ubsHelpers)}
+
+              cp $src $out/bin/.ubs-unwrapped
+              chmod +x $out/bin/.ubs-unwrapped
+              wrapProgram $out/bin/.ubs-unwrapped \
                 --prefix PATH : ${prev.lib.makeBinPath [
                   prev.bash
                   prev.coreutils
@@ -344,6 +381,28 @@
                   prev.typos
                   prev.python3
                 ]}
+
+              # UBS checks $1 for subcommands (doctor, sessions) before parsing
+              # flags, so --module-dir must come AFTER any subcommand, not before.
+              # Skip injecting for 'sessions' mode which doesn't use modules.
+              cat > $out/bin/ubs <<'WRAPPER'
+              #!/usr/bin/env bash
+              if [[ "''${1:-}" == "sessions" || "''${1:-}" == "session-log" ]]; then
+                exec "PLACEHOLDER_BIN" "$@"
+              else
+                exec "PLACEHOLDER_BIN" "$@" --module-dir="PLACEHOLDER_DIR"
+              fi
+              WRAPPER
+              substituteInPlace $out/bin/ubs \
+                --replace-quiet "PLACEHOLDER_BIN" "$out/bin/.ubs-unwrapped" \
+                --replace-quiet "PLACEHOLDER_DIR" "$out/share/ubs/modules"
+              chmod +x $out/bin/ubs
+            '';
+
+            # Make modules executable after fixupPhase (patchShebangs) has run,
+            # preserving original shebangs so UBS checksum verification passes.
+            postFixup = ''
+              chmod +x $out/share/ubs/modules/ubs-*.sh
             '';
 
             meta = with prev.lib; {

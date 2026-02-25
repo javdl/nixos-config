@@ -71,7 +71,7 @@ in {
     opencode
     repo-updater      # GitHub repo sync tool (ru command)
     ubs               # AI-native code quality scanner
-    # frankenterm: install via `cargo install --git https://github.com/Dicklesworthstone/frankenterm ft` (local path deps in Cargo.lock)
+    # frankenterm (ft): installed via cargo nightly in activation script below
     # frankensqlite: install via `cargo +nightly install --git https://github.com/Dicklesworthstone/frankensqlite` (requires nightly)
     # frankentui: install via `git clone ... && cargo run -p ftui-demo-showcase` (no Cargo.lock)
   ] ++ (lib.optional (pkgs.cass != null) pkgs.cass) ++ (lib.optional (pkgs.cass-memory != null) pkgs.cass-memory) ++ [
@@ -128,6 +128,25 @@ in {
     if ! $HOME/.cargo/bin/caut --version &>/dev/null; then
       echo "Installing caut (coding agent usage tracker)..."
       $DRY_RUN_CMD bash -c "PKG_CONFIG_PATH='${pkgs.sqlite.dev}/lib/pkgconfig' LIBRARY_PATH='${pkgs.sqlite.out}/lib' rustup run nightly cargo install --git https://github.com/Dicklesworthstone/coding_agent_usage_tracker" || echo "caut install failed (requires rustup nightly + sqlite)"
+    fi
+  '';
+
+  # Install frankenterm (ft) - swarm-native terminal platform for AI agents
+  # Requires frankenredis + frankentui as sibling dirs (workspace path dep resolution)
+  home.activation.installFrankenterm = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    if ! $HOME/.cargo/bin/ft --version &>/dev/null; then
+      echo "Installing frankenterm (ft)..."
+      $DRY_RUN_CMD bash -c '
+        WORK=$(mktemp -d)
+        trap "rm -rf $WORK" EXIT
+        ${pkgs.git}/bin/git clone --depth 1 https://github.com/Dicklesworthstone/frankenterm "$WORK/frankenterm"
+        ${pkgs.git}/bin/git clone --depth 1 https://github.com/Dicklesworthstone/frankenredis "$WORK/frankenredis"
+        ${pkgs.git}/bin/git clone --depth 1 https://github.com/Dicklesworthstone/frankentui "$WORK/frankentui"
+        PKG_CONFIG_PATH='"'"'${pkgs.openssl.dev}/lib/pkgconfig'"'"' \
+        OPENSSL_DIR='"'"'${pkgs.openssl.dev}'"'"' \
+        OPENSSL_LIB_DIR='"'"'${pkgs.openssl.out}/lib'"'"' \
+        rustup run nightly cargo install --path "$WORK/frankenterm/crates/frankenterm"
+      ' || echo "frankenterm install failed (requires rustup nightly + openssl)"
     fi
   '';
 
