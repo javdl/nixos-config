@@ -131,21 +131,21 @@ in {
     fi
   '';
 
-  # Install frankenterm (ft) - swarm-native terminal platform for AI agents
-  # Requires frankenredis + frankentui as sibling dirs (workspace path dep resolution)
+  # Clone Dicklesworthstone repos and install frankenterm (ft)
+  # frankenterm workspace has path deps on frankenredis + frankentui as siblings
   home.activation.installFrankenterm = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    DW="$HOME/code/Dicklesworthstone"
+    $DRY_RUN_CMD mkdir -p "$DW"
+    for repo in frankenterm frankenredis frankentui; do
+      [ -d "$DW/$repo" ] || $DRY_RUN_CMD ${pkgs.git}/bin/git clone --depth 1 "https://github.com/Dicklesworthstone/$repo" "$DW/$repo"
+    done
     if ! $HOME/.cargo/bin/ft --version &>/dev/null; then
       echo "Installing frankenterm (ft)..."
       $DRY_RUN_CMD bash -c '
-        WORK=$(mktemp -d)
-        trap "rm -rf $WORK" EXIT
-        ${pkgs.git}/bin/git clone --depth 1 https://github.com/Dicklesworthstone/frankenterm "$WORK/frankenterm"
-        ${pkgs.git}/bin/git clone --depth 1 https://github.com/Dicklesworthstone/frankenredis "$WORK/frankenredis"
-        ${pkgs.git}/bin/git clone --depth 1 https://github.com/Dicklesworthstone/frankentui "$WORK/frankentui"
         PKG_CONFIG_PATH='"'"'${pkgs.openssl.dev}/lib/pkgconfig'"'"' \
         OPENSSL_DIR='"'"'${pkgs.openssl.dev}'"'"' \
         OPENSSL_LIB_DIR='"'"'${pkgs.openssl.out}/lib'"'"' \
-        rustup run nightly cargo install --path "$WORK/frankenterm/crates/frankenterm"
+        rustup run nightly cargo install --path "'"$DW"'/frankenterm/crates/frankenterm"
       ' || echo "frankenterm install failed (requires rustup nightly + openssl)"
     fi
   '';
