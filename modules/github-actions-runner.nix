@@ -78,6 +78,7 @@ in
           # Development tools
           jq
           yq
+          yamllint
           ripgrep
           fd
           bat
