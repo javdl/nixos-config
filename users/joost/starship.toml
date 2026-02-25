@@ -4,6 +4,7 @@
 
 format = """
 $username\
+$hostname\
 $directory\
 $git_branch\
 $git_status\
@@ -216,9 +217,10 @@ symbol = '🅒 '
 # format = "[$user]($style) "
 # show_always = false
 
-# [hostname]
-# ssh_only = true
-# format = "[@$hostname](bold gold) "
+[hostname]
+ssh_only = true
+format = "[](fg:overlay)[ 󰖟 $hostname ]($style)[](fg:overlay) "
+style = "bg:overlay fg:gold"
 
 # [directory]
 # style = "bold foam"
