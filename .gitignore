@@ -4,6 +4,7 @@ iso/nixos.iso
 .aider*
 .env
 .qodo
+.claude/worktrees/
 backup.tar.gz
 settings.local.json
 CLAUDE.local.md
