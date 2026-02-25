@@ -248,6 +248,9 @@ in {
   # Env vars and dotfiles
   #---------------------------------------------------------------------
 
+  # Cargo-installed binaries (caut, ft, etc.)
+  home.sessionPath = [ "$HOME/.cargo/bin" ];
+
   home.sessionVariables = shared.sessionVariables // {
     NPM_CONFIG_PREFIX = "$HOME/.npm-global";
     PATH = "$HOME/.local/bin:$HOME/go/bin:$HOME/.npm-global/bin:$PATH";
