@@ -183,6 +183,7 @@ in {
     shellAliases = {
       fix-ssh = "_update_ssh_agent && ssh-add -l";
       bd = "br";
+      am = "systemctl --user status agent-mail";
     };
   };
 
@@ -230,6 +231,7 @@ in {
       ls = "eza";
       cat = "bat";
       bd = "br";
+      am = "systemctl --user status agent-mail";
     };
   };
 
@@ -439,6 +441,7 @@ in {
     shellAliases = {
       fix-ssh = "_update_ssh_agent && ssh-add -l";
       bd = "br";
+      am = "systemctl --user status agent-mail";
     };
     initContent = ''
       export GPG_TTY=$(tty)
