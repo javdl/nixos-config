@@ -20,6 +20,9 @@ in
           mercurial
           subversion
           diffutils
+          coreutils
+          findutils
+          bash
 
           # Build essentials
           gcc
@@ -75,10 +78,15 @@ in
           redis
           sqlite
 
+          # Linting tools
+          rumdl
+          yamllint
+          lefthook
+          libxml2  # provides xmllint
+
           # Development tools
           jq
           yq
-          yamllint
           ripgrep
           fd
           bat
@@ -133,6 +141,7 @@ in
           # Archive tools
           p7zip
           unrar
+          xz
 
           # Network tools
           dnsutils
