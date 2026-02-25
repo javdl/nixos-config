@@ -305,6 +305,34 @@ If nixbld users missing, run the migration script from NixOS/nix repository
 - NEVER say "ready to push when you are" - YOU must push
 - If push fails, resolve and retry until it succeeds
 
+## NTM Flywheel Tools
+
+All dev servers include the following AI agent tooling. Run `ntm deps -v` to check health status.
+
+| Tool | Command | What it does |
+|------|---------|-------------|
+| ntm | `ntm` | Named Tmux Manager — spawn, coordinate, and monitor AI agents across tmux panes |
+| bd/br | `bd` / `br` | Beads issue tracker (bd = alias for br, the fast Rust port) |
+| bv | `bv` | Beads Viewer TUI — kanban board, DAG visualization, PageRank prioritization |
+| caam | `caam` | Instant auth switching for AI coding subscriptions (Claude Max, GPT Pro, Gemini Ultra) |
+| cass | `cass` | Index and search AI coding agent session history across all tools |
+| cm | `cm` | CASS Memory — procedural cross-agent persistent memory system |
+| caut | `caut` | Track and monitor LLM provider usage across AI coding agents (cargo nightly install) |
+| dcg | `dcg` | Destructive Command Guard — blocks dangerous git/shell commands from AI agents |
+| ubs | `ubs` | Ultimate Bug Scanner — static analysis catching 1000+ bug patterns |
+| grepai | `grepai` | Semantic code search for AI coding assistants |
+| am | `am` | Agent Mail — MCP HTTP server for async multi-agent coordination (systemd service) |
+| ru | `ru` | Repo Updater — parallel GitHub repo clone/pull sync |
+
+### Installation notes
+
+- Most tools are pre-built binaries installed via Nix overlay (`flake.nix`)
+- **caut** is installed via `cargo nightly` activation script (needs sqlite for linking)
+- **caam** wrapper translates `--version` flag to `version` subcommand (ntm compatibility)
+- **cass** index is rebuilt on each `make switch` via activation script
+- **agent-mail** runs as a systemd user service (`systemctl --user status agent-mail`)
+- `~/.cargo/bin` is in PATH via `home.sessionPath` for cargo-installed tools
+
 ## Related Tools
 
 - **Beads**: [github.com/steveyegge/beads](https://github.com/steveyegge/beads) - AI-native issue tracking
