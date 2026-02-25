@@ -253,7 +253,7 @@
     url = "https://github.com/fuww";
     extraLabels = [ "hetzner" "nixos" "ccx33" "self-hosted-16-cores" ];
     user = "github-runner";
-    extraPackages = with pkgs; [ docker ];
+    extraPackages = config.services.github-actions-runner.packages.forRunner;
     extraEnvironment = {
       DOCKER_HOST = "unix:///var/run/docker.sock";
     };
@@ -267,7 +267,7 @@
     url = "https://github.com/fuww";
     extraLabels = [ "hetzner" "nixos" "ccx33" "self-hosted-16-cores" ];
     user = "github-runner";
-    extraPackages = with pkgs; [ docker ];
+    extraPackages = config.services.github-actions-runner.packages.forRunner;
     extraEnvironment = {
       DOCKER_HOST = "unix:///var/run/docker.sock";
     };

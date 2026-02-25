@@ -19,6 +19,7 @@ in
           git-lfs
           mercurial
           subversion
+          diffutils
 
           # Build essentials
           gcc
@@ -63,6 +64,7 @@ in
           # Package managers
           pipx
           poetry
+          uv
           bundler
           phpPackages.composer
 
@@ -145,11 +147,26 @@ in
         default = [];
         description = "Additional packages to install";
       };
+
+      forRunner = mkOption {
+        type = types.listOf types.package;
+        default = cfg.packages.core ++ cfg.packages.extra;
+        readOnly = true;
+        description = "Combined package list for use in runner extraPackages";
+      };
     };
   };
 
   config = mkIf cfg.enable {
     environment.systemPackages = cfg.packages.core ++ cfg.packages.extra;
+
+    # Enable git-lfs globally so `git lfs` subcommand works in runner jobs
+    programs.git.lfs.enable = true;
+
+    # Clean stale /tmp directories (self-hosted runners persist across jobs)
+    systemd.tmpfiles.rules = [
+      "d /tmp 1777 root root 2d"
+    ];
 
     # Enable Docker daemon
     virtualisation.docker = {
