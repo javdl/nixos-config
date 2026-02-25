@@ -81,7 +81,6 @@ in
           # Linting tools
           rumdl
           yamllint
-          lefthook
           libxml2  # provides xmllint
 
           # Development tools
@@ -169,6 +168,13 @@ in
 
   config = mkIf cfg.enable {
     environment.systemPackages = cfg.packages.core ++ cfg.packages.extra;
+
+    # Create /bin/bash symlink for GitHub Actions scripts that use #!/bin/bash
+    # NixOS doesn't have /bin/bash by default, which breaks third-party actions
+    system.activationScripts.binbash = lib.stringAfter [ "stdio" ] ''
+      mkdir -p /bin
+      ln -sfn ${pkgs.bash}/bin/bash /bin/bash
+    '';
 
     # Enable git-lfs globally so `git lfs` subcommand works in runner jobs
     programs.git.lfs.enable = true;
