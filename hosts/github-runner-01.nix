@@ -20,6 +20,7 @@
     ../modules/security-audit.nix
     ../modules/ghostty-terminfo.nix
     ../modules/mosh.nix
+    ../modules/netdata.nix
   ];
 
   # Enable the GitHub Actions runner packages module

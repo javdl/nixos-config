@@ -463,6 +463,7 @@ in {
 
   # Zellij layout for fuww projects
   home.file.".config/zellij/layouts/work.kdl".source = ./zellij-work.kdl;
+  home.file.".config/zellij/layouts/devops.kdl".source = ../zellij-monitor-runners.kdl;
 
   # Claude Code statusline (Rose Pine themed)
   home.file.".claude/statusline-command.sh" = {

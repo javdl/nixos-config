@@ -291,6 +291,7 @@ in {
   '';
 
   home.file = {
+    ".config/zellij/layouts/devops.kdl".source = ../zellij-monitor-runners.kdl;
     ".gdbinit".source = ./gdbinit;
     ".inputrc".source = ./inputrc;
     ".gitignore".text = ''

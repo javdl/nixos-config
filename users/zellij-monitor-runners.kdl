@@ -1,0 +1,44 @@
+layout {
+    default_tab_template {
+        pane size=1 borderless=true {
+            plugin location="tab-bar"
+        }
+        children
+        pane size=2 borderless=true {
+            plugin location="status-bar"
+        }
+    }
+    tab name="btop" focus=true {
+        pane split_direction="vertical" {
+            pane name="runner-01" command="ssh" {
+                args "-t" "github-runner-01" "btop"
+            }
+            pane name="runner-02" command="ssh" {
+                args "-t" "github-runner-02" "btop"
+            }
+        }
+    }
+    tab name="netdata tunnels" {
+        // SSH tunnels for Netdata dashboards:
+        //   http://localhost:19901 → runner-01
+        //   http://localhost:19902 → runner-02
+        pane split_direction="vertical" {
+            pane name="runner-01 :19901" command="ssh" {
+                args "-N" "-L" "19901:localhost:19999" "github-runner-01"
+            }
+            pane name="runner-02 :19902" command="ssh" {
+                args "-N" "-L" "19902:localhost:19999" "github-runner-02"
+            }
+        }
+    }
+    tab name="shell" {
+        pane split_direction="vertical" {
+            pane name="runner-01" command="ssh" {
+                args "github-runner-01"
+            }
+            pane name="runner-02" command="ssh" {
+                args "github-runner-02"
+            }
+        }
+    }
+}
