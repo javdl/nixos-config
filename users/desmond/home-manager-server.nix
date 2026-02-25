@@ -28,6 +28,10 @@ in {
   #---------------------------------------------------------------------
 
   home.packages = with pkgs; [
+    # Issue tracking
+    beads-rust        # fast Rust port of beads (br command, aliased as bd)
+    beads-viewer      # TUI for beads issue tracking (bv command)
+
     # Core CLI tools
     bat
     btop
@@ -61,10 +65,16 @@ in {
     # AI coding tools (claude-code installed via native installer in activation)
     aichat
     amp-cli
+    caam              # Instant auth switching for AI coding subscriptions
     claude-code-router
     codex
+    destructive-command-guard # Safety hook for AI agents (dcg command)
     gemini-cli
+    grepai            # Semantic code search for AI coding assistants
+    ntm               # Named Tmux Manager for AI agent coordination
     opencode
+    repo-updater      # GitHub repo sync tool (ru command)
+    ubs               # AI-native code quality scanner
 
     # Development
     gnumake
