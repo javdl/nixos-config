@@ -572,7 +572,16 @@
 
             installPhase = ''
               mkdir -p $out/bin
-              cp caam $out/bin/
+              cp caam $out/bin/.caam-unwrapped
+              chmod +x $out/bin/.caam-unwrapped
+              # Wrapper: translate --version to subcommand (ntm health check expects --version)
+              cat > $out/bin/caam <<'WRAPPER'
+              #!/usr/bin/env bash
+              if [[ "$1" == "--version" ]]; then
+                exec "$(dirname "$0")/.caam-unwrapped" version
+              fi
+              exec "$(dirname "$0")/.caam-unwrapped" "$@"
+              WRAPPER
               chmod +x $out/bin/caam
             '';
 

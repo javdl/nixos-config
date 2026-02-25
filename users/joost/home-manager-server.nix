@@ -18,6 +18,9 @@ in {
     SSH_AUTH_SOCK = "$HOME/.ssh/ssh_auth_sock";
   };
 
+  # Cargo-installed binaries (caut, etc.)
+  home.sessionPath = [ "$HOME/.cargo/bin" ];
+
   #---------------------------------------------------------------------
   # Packages - Minimal set for remote development server
   #---------------------------------------------------------------------
@@ -122,9 +125,9 @@ in {
 
   # Install caut (coding agent usage tracker) via cargo nightly
   home.activation.installCaut = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    if ! command -v caut &>/dev/null; then
+    if ! $HOME/.cargo/bin/caut --version &>/dev/null; then
       echo "Installing caut (coding agent usage tracker)..."
-      $DRY_RUN_CMD bash -c "rustup run nightly cargo install --git https://github.com/Dicklesworthstone/coding_agent_usage_tracker" || echo "caut install failed (requires rustup nightly)"
+      $DRY_RUN_CMD bash -c "PKG_CONFIG_PATH='${pkgs.sqlite.dev}/lib/pkgconfig' LIBRARY_PATH='${pkgs.sqlite.out}/lib' rustup run nightly cargo install --git https://github.com/Dicklesworthstone/coding_agent_usage_tracker" || echo "caut install failed (requires rustup nightly + sqlite)"
     fi
   '';
 
@@ -150,6 +153,14 @@ in {
       $DRY_RUN_CMD ${pkgs.chezmoi}/bin/chezmoi update || true
     else
       echo "Chezmoi not initialized. Run: chezmoi init --apply https://github.com/javdl/dotfiles.git"
+    fi
+  '';
+
+  # Rebuild cass search index so ntm health checks pass
+  home.activation.cassIndex = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    if command -v cass &>/dev/null; then
+      echo "Rebuilding cass search index..."
+      $DRY_RUN_CMD cass index --full || echo "cass index failed (non-fatal)"
     fi
   '';
 

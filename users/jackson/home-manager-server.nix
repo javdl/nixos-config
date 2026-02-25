@@ -23,6 +23,9 @@ in {
     SSH_AUTH_SOCK = "$HOME/.ssh/ssh_auth_sock";
   };
 
+  # Cargo-installed binaries (caut, etc.)
+  home.sessionPath = [ "$HOME/.cargo/bin" ];
+
   #---------------------------------------------------------------------
   # Packages - Minimal set for remote development server
   #---------------------------------------------------------------------
@@ -118,6 +121,14 @@ in {
   home.activation.rustupInit = lib.hm.dag.entryAfter ["writeBoundary"] ''
     if ! $HOME/.rustup/toolchains/stable-*/bin/cargo --version &>/dev/null 2>&1; then
       $DRY_RUN_CMD rustup default stable
+    fi
+  '';
+
+  # Install caut (coding agent usage tracker) via cargo nightly
+  home.activation.installCaut = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    if ! $HOME/.cargo/bin/caut --version &>/dev/null; then
+      echo "Installing caut (coding agent usage tracker)..."
+      $DRY_RUN_CMD bash -c "PKG_CONFIG_PATH='${pkgs.sqlite.dev}/lib/pkgconfig' LIBRARY_PATH='${pkgs.sqlite.out}/lib' rustup run nightly cargo install --git https://github.com/Dicklesworthstone/coding_agent_usage_tracker" || echo "caut install failed (requires rustup nightly + sqlite)"
     fi
   '';
 
