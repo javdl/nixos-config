@@ -37,6 +37,9 @@ in {
     cc = "claude";
     cod = "codex";
     gmi = "gemini";
+
+    # Beads (issue tracker) - use Rust version (br) as default
+    bd = "br";
   } // (if isLinux then {
     # Two decades of using a Mac has made this such a strong memory
     # that I'm just going to keep it consistent.

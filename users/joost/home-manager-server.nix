@@ -161,6 +161,7 @@ in {
     '';
     shellAliases = {
       fix-ssh = "_update_ssh_agent && ssh-add -l";
+      bd = "br";
     };
   };
 
@@ -207,6 +208,7 @@ in {
       ll = "eza -la";
       ls = "eza";
       cat = "bat";
+      bd = "br";
     };
   };
 
@@ -415,6 +417,7 @@ in {
     syntaxHighlighting.enable = true;
     shellAliases = {
       fix-ssh = "_update_ssh_agent && ssh-add -l";
+      bd = "br";
     };
     initContent = ''
       export GPG_TTY=$(tty)

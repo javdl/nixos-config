@@ -140,6 +140,7 @@ in {
     '';
     shellAliases = {
       fix-ssh = "_update_ssh_agent && ssh-add -l";
+      bd = "br";
     };
   };
 
@@ -185,6 +186,7 @@ in {
       ls = "eza";
       cat = "bat";
       fix-ssh = "_update_ssh_agent && ssh-add -l";
+      bd = "br";
     };
   };
 
