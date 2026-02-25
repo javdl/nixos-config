@@ -121,9 +121,22 @@
           bvSource = bvSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for bv: ${prev.stdenv.hostPlatform.system}");
 
           # cass - coding agent session search
-          # Releases removed from GitHub; source needs sibling repos to build.
-          # Install via Homebrew instead: brew install dicklesworthstone/tap/cass
           cassVersion = "0.1.64";
+          cassSources = {
+            "x86_64-linux" = {
+              url = "https://github.com/Dicklesworthstone/coding_agent_session_search/releases/download/v${cassVersion}/cass-linux-amd64.tar.gz";
+              sha256 = "6ea31940ef70286b598ed35e665ab20d3b7424a3ae36fa92b3ea010bca509165";
+            };
+            "aarch64-linux" = {
+              url = "https://github.com/Dicklesworthstone/coding_agent_session_search/releases/download/v${cassVersion}/cass-linux-arm64.tar.gz";
+              sha256 = "9d41d63bbfdaa2506284830f73e1723dcdceacc337b03e49cabfd430c74f25ee";
+            };
+            "aarch64-darwin" = {
+              url = "https://github.com/Dicklesworthstone/coding_agent_session_search/releases/download/v${cassVersion}/cass-darwin-arm64.tar.gz";
+              sha256 = "797cd64b7e88171985480963fbcc07045b678bffc9a069904fd34c0ac938bfd7";
+            };
+          };
+          cassSource = cassSources.${prev.stdenv.hostPlatform.system} or null;
 
           # beads_rust (br) - fast Rust port of beads issue tracker
           brVersion = "0.1.14";
@@ -341,54 +354,44 @@
             };
           };
 
-          # cass - coding agent session search TUI
-          cass = prev.rustPlatform.buildRustPackage {
+          # cass - coding agent session search TUI (pre-built binary)
+          cass = if cassSource != null then prev.stdenv.mkDerivation {
             pname = "cass";
             version = cassVersion;
 
-            src = prev.fetchFromGitHub {
-              owner = "Dicklesworthstone";
-              repo = "coding_agent_session_search";
-              rev = "v${cassVersion}";
-              hash = "sha256-G7u+61DGssgQEhh8OFlRerR30VwmTqWpskH5HLafPks=";
+            src = prev.fetchurl {
+              url = cassSource.url;
+              sha256 = cassSource.sha256;
             };
 
-            cargoLock = {
-              lockFile = prev.fetchurl {
-                url = "https://github.com/Dicklesworthstone/coding_agent_session_search/raw/v${cassVersion}/Cargo.lock";
-                hash = "sha256-OSmZq7uW9bNGOwJWHsBv9yweDs7He7HfIQuRGqxyNBE=";
-              };
-              outputHashes = {
-                "toon_rust-0.1.1" = "sha256-RRYl5AqH0cL01wdwIsc+1E5sevjaK5CukXyUVP3zHV0=";
-              };
-            };
+            sourceRoot = ".";
 
-            nativeBuildInputs = with prev; [
-              pkg-config
-              cmake
-              lld
-            ];
+            nativeBuildInputs = [ prev.gnutar ]
+              ++ prev.lib.optionals prev.stdenv.isLinux [ prev.autoPatchelfHook ];
 
-            buildInputs = with prev; [
+            buildInputs = prev.lib.optionals prev.stdenv.isLinux (with prev; [
               openssl
               onnxruntime
-              libssh2
-            ];
+              stdenv.cc.cc.lib  # libstdc++
+            ]);
 
-            # Point ort-sys to system ONNX Runtime instead of downloading
-            ORT_LIB_LOCATION = "${prev.onnxruntime}/lib";
-            ORT_PREFER_DYNAMIC_LINK = "1";
+            unpackPhase = ''
+              tar xzf $src
+            '';
 
-            # Skip benchmarks and integration tests
-            doCheck = false;
+            installPhase = ''
+              mkdir -p $out/bin
+              cp cass $out/bin/
+              chmod +x $out/bin/cass
+            '';
 
             meta = with prev.lib; {
               description = "Cross-agent session search - index and search AI coding agent conversations";
               homepage = "https://github.com/Dicklesworthstone/coding_agent_session_search";
               license = licenses.mit;
-              platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+              platforms = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" ];
             };
-          };
+          } else null;
 
           # br - beads_rust, fast Rust port of beads issue tracker
           beads-rust = prev.stdenv.mkDerivation {
@@ -412,6 +415,7 @@
               mkdir -p $out/bin
               cp br $out/bin/
               chmod +x $out/bin/br
+              ln -s $out/bin/br $out/bin/bd
             '';
 
             meta = with prev.lib; {

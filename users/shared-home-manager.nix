@@ -40,6 +40,9 @@ in {
 
     # Beads (issue tracker) - use Rust version (br) as default
     bd = "br";
+
+    # Agent Mail
+    am = "systemctl --user status agent-mail";
   } // (if isLinux then {
     # Two decades of using a Mac has made this such a strong memory
     # that I'm just going to keep it consistent.

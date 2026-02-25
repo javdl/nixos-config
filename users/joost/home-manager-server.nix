@@ -120,6 +120,14 @@ in {
     fi
   '';
 
+  # Install caut (coding agent usage tracker) via cargo nightly
+  home.activation.installCaut = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    if ! command -v caut &>/dev/null; then
+      echo "Installing caut (coding agent usage tracker)..."
+      $DRY_RUN_CMD bash -c "rustup run nightly cargo install --git https://github.com/Dicklesworthstone/coding_agent_usage_tracker" || echo "caut install failed (requires rustup nightly)"
+    fi
+  '';
+
   # Sync dotfiles from chezmoi repo (auto-applies on each rebuild)
   home.activation.chezmoiSync = lib.hm.dag.entryAfter ["writeBoundary"] ''
     CHEZMOI_SOURCE="$HOME/.local/share/chezmoi"
