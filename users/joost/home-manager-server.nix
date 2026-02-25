@@ -128,6 +128,20 @@ in {
     fi
   '';
 
+  # Set up Agent Mail (MCP agent coordination layer)
+  home.activation.setupAgentMail = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    AGENT_MAIL_DIR="$HOME/mcp_agent_mail"
+    if [ ! -d "$AGENT_MAIL_DIR" ]; then
+      echo "Cloning mcp_agent_mail..."
+      $DRY_RUN_CMD ${pkgs.git}/bin/git clone --depth 1 \
+        https://github.com/Dicklesworthstone/mcp_agent_mail "$AGENT_MAIL_DIR" || echo "agent-mail clone failed"
+    fi
+    if [ -d "$AGENT_MAIL_DIR" ] && [ ! -d "$AGENT_MAIL_DIR/.venv" ]; then
+      echo "Setting up agent-mail venv..."
+      $DRY_RUN_CMD bash -c "cd $AGENT_MAIL_DIR && ${pkgs.uv}/bin/uv venv -p 3.13 && ${pkgs.uv}/bin/uv sync" || echo "agent-mail venv setup failed"
+    fi
+  '';
+
   # Sync dotfiles from chezmoi repo (auto-applies on each rebuild)
   home.activation.chezmoiSync = lib.hm.dag.entryAfter ["writeBoundary"] ''
     CHEZMOI_SOURCE="$HOME/.local/share/chezmoi"
@@ -469,6 +483,23 @@ in {
     enableFishIntegration = false;
     enableZshIntegration = false;
     enableBashIntegration = false;
+  };
+
+  # Agent Mail - MCP HTTP server for async agent coordination
+  systemd.user.services.agent-mail = lib.mkIf isLinux {
+    Unit = {
+      Description = "MCP Agent Mail HTTP Server";
+      After = [ "network.target" ];
+    };
+    Service = {
+      Type = "simple";
+      WorkingDirectory = "%h/mcp_agent_mail";
+      ExecStart = "%h/mcp_agent_mail/.venv/bin/python -m mcp_agent_mail.cli serve-http";
+      Restart = "on-failure";
+      RestartSec = 5;
+      Environment = "PATH=%h/mcp_agent_mail/.venv/bin:/run/current-system/sw/bin";
+    };
+    Install.WantedBy = [ "default.target" ];
   };
 
   # Zellij layout for fuww projects

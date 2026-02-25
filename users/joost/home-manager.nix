@@ -1469,7 +1469,7 @@ in {
   };
 
   # Agent Mail - MCP HTTP server for async agent coordination
-  systemd.user.services.agent-mail = lib.mkIf isLinux {
+  systemd.user.services.agent-mail = lib.mkIf (isLinux && !isWSL) {
     Unit = {
       Description = "MCP Agent Mail HTTP Server";
       After = [ "network.target" ];
@@ -1480,6 +1480,7 @@ in {
       ExecStart = "%h/mcp_agent_mail/.venv/bin/python -m mcp_agent_mail.cli serve-http";
       Restart = "on-failure";
       RestartSec = 5;
+      Environment = "PATH=%h/mcp_agent_mail/.venv/bin:/run/current-system/sw/bin";
     };
     Install.WantedBy = [ "default.target" ];
   };
