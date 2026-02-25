@@ -510,6 +510,12 @@ in {
   } else {});
 
   xdg.configFile = {
+    "wezterm/wezterm.lua".text = ''
+      local wezterm = require 'wezterm'
+      local config = wezterm.config_builder()
+      config.scrollback_lines = 50000
+      return config
+    '';
     # Linux only
 #    "hypr/hyprland.conf".text = builtins.readFile ./hypr/hyprland.conf;
 #    "hypr/hyprlock.conf".text = builtins.readFile ./hypr/hyprlock.conf;

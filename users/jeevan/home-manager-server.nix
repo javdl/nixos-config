@@ -15,6 +15,12 @@ in {
   home.stateVersion = "25.11";
 
   xdg.enable = true;
+  xdg.configFile."wezterm/wezterm.lua".text = ''
+    local wezterm = require 'wezterm'
+    local config = wezterm.config_builder()
+    config.scrollback_lines = 50000
+    return config
+  '';
 
   # Fixed SSH_AUTH_SOCK path — symlink updated by shell init on each new shell.
   # Because SSH resolves symlinks on every operation, updating the target
