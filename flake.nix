@@ -1022,6 +1022,51 @@
       ];
     };
 
+    # Home Manager configuration for j9 (standalone, non-NixOS Linux - Arch/Omarchy)
+    # Omarchy package lists: ~/.local/share/omarchy/install/omarchy-{base,other}.packages
+    # Wayland/Hyprland tools are managed by Omarchy via pacman, not Nix
+    homeConfigurations."j9" = let
+      pkgs = import nixpkgs {
+        system = "x86_64-linux";
+        overlays = overlays;
+        config.allowUnfree = true;
+      };
+    in home-manager.lib.homeManagerConfiguration {
+      inherit pkgs;
+      extraSpecialArgs = {
+        inherit inputs;
+      };
+      modules = [
+        (import ./users/joost/home-manager.nix { isWSL = false; inherit inputs; })
+        ({ lib, pkgs, ... }: {
+          nixpkgs.config.allowUnfree = true;
+          home.username = "joost";
+          home.homeDirectory = "/home/joost";
+
+          # Additional packages from Omarchy that complement the Nix setup
+          # These are CLI tools that work alongside Omarchy without conflicting
+          home.packages = with pkgs; [
+            gum           # Terminal UI toolkit for shell scripts
+            tldr          # Simplified man pages
+            mpv           # Media player
+            playerctl     # Media player control (MPRIS)
+            localsend     # Local file sharing (LAN)
+            inxi          # System information tool
+            # Wayland tools managed by Omarchy: hyprland, waybar, mako, etc.
+          ];
+
+          # Protect Omarchy-managed directories
+          home.file.".config/omarchy".enable = false;
+          home.file.".config/hypr".enable = false;
+          home.file.".config/alacritty".enable = false;
+          home.file.".config/btop/themes".enable = false;
+
+          # Disable nixpkgs module's <nixpkgs> lookup for pure evaluation
+          _module.args.pkgsPath = lib.mkForce nixpkgs;
+        })
+      ];
+    };
+
     # Home Manager configuration for Omarchy (standalone, non-NixOS Linux)
     homeConfigurations."omarchy" = let
       pkgs = import nixpkgs {

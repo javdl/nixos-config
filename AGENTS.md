@@ -211,6 +211,28 @@ The repository uses a modular architecture with clear separation of concerns:
 - Global overlay: Add to flake.nix overlay section for unstable packages
 - Custom overlay: Create in `overlays/` directory
 
+### Omarchy/j9 Machine (Arch Linux)
+
+The `j9` host is an Arch Linux machine running **Omarchy** (Arch + Hyprland). It uses standalone home-manager via `homeConfigurations."j9"` in flake.nix.
+
+**DO NOT add these packages to the j9 Nix config** — they are managed by Omarchy via pacman:
+- Wayland/Hyprland stack: `hyprland`, `hypridle`, `hyprlock`, `waybar`, `mako`, `swaybg`, `swayosd`
+- Screenshot tools: `grim`, `slurp`, `satty`
+- Desktop apps: `ghostty`, `alacritty`, `obsidian`, `1password`, `spotify`
+- System: PipeWire, SDDM, NVIDIA drivers, fonts (ttf-cascadia-mono-nerd, etc.)
+
+**Omarchy package lists** (authoritative source):
+- `~/.local/share/omarchy/install/omarchy-base.packages` — 147 core packages
+- `~/.local/share/omarchy/install/omarchy-other.packages` — 56 additional packages
+
+**Protected directories** (home-manager won't touch these):
+- `~/.config/omarchy` — Omarchy branding/themes
+- `~/.config/hypr` — Hyprland configuration
+- `~/.config/alacritty` — Alacritty terminal config
+- `~/.config/btop/themes` — btop themes
+
+Only add CLI tools that complement Omarchy without conflicting (e.g., `gum`, `tldr`, `mpv`, `playerctl`).
+
 ## Code Style
 
 - Two-space indentation for all Nix files
