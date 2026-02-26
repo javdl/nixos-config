@@ -550,6 +550,8 @@ in {
 
   # Zellij layout for fuww projects
   home.file.".config/zellij/layouts/work.kdl".source = ../zellij-work-fuww.kdl;
+  home.file.".config/zellij/layouts/frontend.kdl".source = ../zellij-frontend-fuww.kdl;
+  home.file.".config/zellij/layouts/backend.kdl".source = ../zellij-backend-fuww.kdl;
 
   # Ensure ~/.ssh directory exists for agent socket symlink
   home.file.".ssh/.keep".text = "";

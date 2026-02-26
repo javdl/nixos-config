@@ -1,0 +1,56 @@
+layout {
+    default_tab_template {
+        pane size=1 borderless=true {
+            plugin location="tab-bar"
+        }
+        children
+        pane size=2 borderless=true {
+            plugin location="status-bar"
+        }
+    }
+    tab name="jlnl" cwd="~/code/javdl/joostvanderlaan.nl" focus=true {
+        pane split_direction="vertical" {
+            pane
+            pane
+        }
+    }
+    tab name="whisky" cwd="~/code/javdl/whisky" {
+        pane split_direction="vertical" {
+            pane
+            pane
+        }
+    }
+    tab name="infrastructure" cwd="~/code/javdl/infrastructure" {
+        pane split_direction="vertical" {
+            pane
+            pane
+        }
+    }
+    tab name="zwrt" cwd="~/code/javdl/zwartendijkstalling.nl" {
+        pane split_direction="vertical" {
+            pane
+            pane
+        }
+    }
+    tab name="tools" cwd="~/code/javdl/tools" {
+        pane split_direction="vertical" {
+            pane
+            pane
+        }
+    }
+    tab name="skills" cwd="~/code/javdl/skills" {
+        pane split_direction="vertical" {
+            pane
+            pane
+        }
+    }
+    tab name="prompts" cwd="~/code/javdl/prompts" {
+        pane split_direction="vertical" {
+            pane
+            pane
+        }
+    }
+    tab name="monitor" {
+        pane command="btop"
+    }
+}

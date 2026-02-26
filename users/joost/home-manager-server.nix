@@ -543,6 +543,9 @@ in {
 
   # Zellij layout for fuww projects
   home.file.".config/zellij/layouts/work.kdl".source = ./zellij-work.kdl;
+  home.file.".config/zellij/layouts/fun.kdl".source = ./zellij-fun.kdl;
+  home.file.".config/zellij/layouts/frontend.kdl".source = ../zellij-frontend-fuww.kdl;
+  home.file.".config/zellij/layouts/backend.kdl".source = ../zellij-backend-fuww.kdl;
   home.file.".config/zellij/layouts/devops.kdl".source = ../zellij-monitor-runners.kdl;
 
   # Claude Code statusline (Rose Pine themed)

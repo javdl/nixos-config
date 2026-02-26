@@ -335,6 +335,9 @@ in {
 
   home.file = {
     ".config/zellij/layouts/devops.kdl".source = ../zellij-monitor-runners.kdl;
+    ".config/zellij/layouts/fun.kdl".source = ./zellij-fun.kdl;
+    ".config/zellij/layouts/frontend.kdl".source = ../zellij-frontend-fuww.kdl;
+    ".config/zellij/layouts/backend.kdl".source = ../zellij-backend-fuww.kdl;
     ".gdbinit".source = ./gdbinit;
     ".inputrc".source = ./inputrc;
     ".gitignore".text = ''
