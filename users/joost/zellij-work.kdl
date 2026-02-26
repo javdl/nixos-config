@@ -60,20 +60,6 @@ layout {
             pane
         }
     }
-    tab name="jlnl" cwd="~/code/javdl/joostvanderlaan.nl" {
-        pane split_direction="vertical" {
-            pane
-            pane
-            pane
-        }
-    }
-    tab name="whisky" cwd="~/code/javdl/whisky" {
-        pane split_direction="vertical" {
-            pane
-            pane
-            pane
-        }
-    }
     tab name="monitor" {
         pane command="btop"
     }
