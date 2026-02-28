@@ -274,8 +274,8 @@ in {
   programs.git = {
     enable = true;
     signing = {
-      key = "F4B9B085DAC0B0B1";
-      signByDefault = false;
+      key = "4E5C82C103A1D32E";
+      signByDefault = true;
     };
     settings = {
       user.name = "Joost van der Laan";
