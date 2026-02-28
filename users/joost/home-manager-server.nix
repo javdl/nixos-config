@@ -358,6 +358,13 @@ in {
 
   programs.jujutsu = {
     enable = true;
+
+    settings = {
+      user = {
+        email = "joost+agent@fashionunited.com";
+        name = "Joost van der Laan";
+      };
+    };
   };
 
   programs.helix = {
