@@ -488,6 +488,11 @@ in {
       am = "systemctl --user status agent-mail";
     };
     initContent = ''
+      # Launch fish for interactive sessions (login shell stays zsh for Zed SSH compatibility)
+      if [[ -o interactive ]]; then
+        exec fish
+      fi
+
       export GPG_TTY=$(tty)
 
       # SSH agent: find best working agent and update symlink
