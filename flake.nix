@@ -782,6 +782,42 @@
             };
           };
 
+          # cco - Claude Code sandbox (bubblewrap on Linux, sandbox-exec on macOS)
+          cco = prev.stdenv.mkDerivation {
+            pname = "cco";
+            version = "0-unstable-2025-06-14";
+
+            src = prev.fetchFromGitHub {
+              owner = "nikvdp";
+              repo = "cco";
+              rev = "0b7265e4d629328a558364d86bb6a7f9a16b050b";
+              sha256 = "1jjldvid6zyky5kb6nfa5128kml8sgpkkd047s98lkqajxmy5xvf";
+            };
+
+            nativeBuildInputs = [ prev.makeWrapper ];
+
+            installPhase = ''
+              mkdir -p $out/share/cco $out/bin
+              cp -r . $out/share/cco/
+              chmod +x $out/share/cco/cco
+              makeWrapper $out/share/cco/cco $out/bin/cco \
+                --prefix PATH : ${prev.lib.makeBinPath ([
+                  prev.bash
+                  prev.coreutils
+                  prev.git
+                  prev.curl
+                  prev.docker-client
+                ] ++ prev.lib.optionals prev.stdenv.isLinux [ prev.bubblewrap ])}
+            '';
+
+            meta = with prev.lib; {
+              description = "Sandbox wrapper for Claude Code and other AI coding agents";
+              homepage = "https://github.com/nikvdp/cco";
+              license = licenses.mit;
+              platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+            };
+          };
+
           # gh CLI on stable has bugs.
           gh = pkgs-unstable.gh;
 

@@ -72,6 +72,7 @@ in {
     codex
     gemini-cli
     destructive-command-guard # Safety hook for AI agents (dcg command)
+    cco               # Sandbox wrapper for Claude Code (bubblewrap)
     grepai            # Semantic code search for AI coding assistants
     ntm               # Named Tmux Manager for AI agent coordination
     opencode
