@@ -426,6 +426,11 @@ in {
     };
 
     initContent = ''
+      # Launch fish for interactive sessions (login shell stays zsh for Zed SSH compatibility)
+      if [[ -o interactive ]]; then
+        exec fish
+      fi
+
       export GPG_TTY=$(tty)
 
       # Force block cursor
