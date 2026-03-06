@@ -21,6 +21,7 @@
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINAQwjDkpe7I8Y6xdD5SbICFy0v5ArILxyTBXhtSOOmw joostvanderlaan@gmail.com"
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFB87It3cS6o8kgD/6r3R59KP2o1eOJz1bgLJl4syLX1 joost"
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEx6MK8mQ22KWCA0uDV6uBNvMw/NeBl70Mu4hxrX9SJ9 j8 mac studio"
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIy0FO1ta1djvSamjM1Ph/YZpMhMtXSeuFE1Zl9GHhkQ loom"
     ];
   };
 }

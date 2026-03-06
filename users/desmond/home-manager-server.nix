@@ -85,6 +85,13 @@ in {
     opencode
     repo-updater      # GitHub repo sync tool (ru command)
     ubs               # AI-native code quality scanner
+  ] ++ (lib.optional (pkgs.giil != null) pkgs.giil)
+    ++ (lib.optional (pkgs.pi-agent != null) pkgs.pi-agent)
+    ++ (lib.optional (pkgs.xf != null) pkgs.xf)
+    ++ (lib.optional (pkgs.mcp-agent-mail != null) pkgs.mcp-agent-mail)
+    ++ (lib.optional (pkgs.frankensearch != null) pkgs.frankensearch)
+    ++ (lib.optional (pkgs.cross-agent-session-resumer != null) pkgs.cross-agent-session-resumer)
+    ++ [
 
     # Development
     gnumake

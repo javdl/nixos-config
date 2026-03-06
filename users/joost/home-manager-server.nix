@@ -1,6 +1,6 @@
 { isWSL, inputs, ... }:
 
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, osConfig, ... }:
 
 let
   isDarwin = pkgs.stdenv.isDarwin;
@@ -79,9 +79,16 @@ in {
     repo-updater      # GitHub repo sync tool (ru command)
     ubs               # AI-native code quality scanner
     # frankenterm (ft): installed via cargo nightly in activation script below
+    # franken_whisper: clone and run from folder (needs whisper backends) - https://github.com/Dicklesworthstone/franken_whisper
     # frankensqlite: install via `cargo +nightly install --git https://github.com/Dicklesworthstone/frankensqlite` (requires nightly)
     # frankentui: install via `git clone ... && cargo run -p ftui-demo-showcase` (no Cargo.lock)
-  ] ++ (lib.optional (pkgs.cass != null) pkgs.cass) ++ (lib.optional (pkgs.cass-memory != null) pkgs.cass-memory) ++ [
+  ] ++ (lib.optional (pkgs.giil != null) pkgs.giil)
+    ++ (lib.optional (pkgs.pi-agent != null) pkgs.pi-agent)
+    ++ (lib.optional (pkgs.xf != null) pkgs.xf)
+    ++ (lib.optional (pkgs.mcp-agent-mail != null) pkgs.mcp-agent-mail)
+    ++ (lib.optional (pkgs.frankensearch != null) pkgs.frankensearch)
+    ++ (lib.optional (pkgs.cross-agent-session-resumer != null) pkgs.cross-agent-session-resumer)
+    ++ (lib.optional (pkgs.cass != null) pkgs.cass) ++ (lib.optional (pkgs.cass-memory != null) pkgs.cass-memory) ++ [
 
     # Development
     bun
@@ -157,19 +164,8 @@ in {
     fi
   '';
 
-  # Set up Agent Mail (MCP agent coordination layer)
-  home.activation.setupAgentMail = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    AGENT_MAIL_DIR="$HOME/mcp_agent_mail"
-    if [ ! -d "$AGENT_MAIL_DIR" ]; then
-      echo "Cloning mcp_agent_mail..."
-      $DRY_RUN_CMD ${pkgs.git}/bin/git clone --depth 1 \
-        https://github.com/Dicklesworthstone/mcp_agent_mail "$AGENT_MAIL_DIR" || echo "agent-mail clone failed"
-    fi
-    if [ -d "$AGENT_MAIL_DIR" ] && [ ! -d "$AGENT_MAIL_DIR/.venv" ]; then
-      echo "Setting up agent-mail venv..."
-      $DRY_RUN_CMD bash -c "cd $AGENT_MAIL_DIR && ${pkgs.uv}/bin/uv venv -p 3.13 && ${pkgs.uv}/bin/uv sync" || echo "agent-mail venv setup failed"
-    fi
-  '';
+  # Agent Mail is now a pre-built Rust binary (mcp-agent-mail package)
+  # No activation script needed - installed via home.packages
 
   # Sync dotfiles from chezmoi repo (auto-applies on each rebuild)
   home.activation.chezmoiSync = lib.hm.dag.entryAfter ["writeBoundary"] ''
@@ -189,6 +185,15 @@ in {
       $DRY_RUN_CMD cass index --full || echo "cass index failed (non-fatal)"
     fi
   '';
+
+  #---------------------------------------------------------------------
+  # OpenClaw (AI assistant gateway) - only on joostclaw
+  #---------------------------------------------------------------------
+
+  programs.openclaw = lib.mkIf (osConfig.networking.hostName == "joostclaw") {
+    enable = true;
+    systemd.enable = true;
+  };
 
   #---------------------------------------------------------------------
   # Programs
@@ -532,7 +537,7 @@ in {
     enableBashIntegration = false;
   };
 
-  # Agent Mail - MCP HTTP server for async agent coordination
+  # Agent Mail - MCP HTTP server for async agent coordination (Rust binary)
   systemd.user.services.agent-mail = lib.mkIf isLinux {
     Unit = {
       Description = "MCP Agent Mail HTTP Server";
@@ -540,11 +545,9 @@ in {
     };
     Service = {
       Type = "simple";
-      WorkingDirectory = "%h/mcp_agent_mail";
-      ExecStart = "%h/mcp_agent_mail/.venv/bin/python -m mcp_agent_mail.cli serve-http";
+      ExecStart = "${pkgs.mcp-agent-mail}/bin/mcp-agent-mail serve-http";
       Restart = "on-failure";
       RestartSec = 5;
-      Environment = "PATH=%h/mcp_agent_mail/.venv/bin:/run/current-system/sw/bin";
     };
     Install.WantedBy = [ "default.target" ];
   };

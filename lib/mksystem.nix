@@ -76,9 +76,10 @@ in systemFunc rec {
       };
       # Suppress "options.json references store path without proper context" warning
       # Upstream bug: https://github.com/nix-community/home-manager/issues/7935
-      home-manager.sharedModules = [{
-        manual.manpages.enable = false;
-      }];
+      home-manager.sharedModules = [
+        { manual.manpages.enable = false; }
+        inputs.nix-openclaw.homeManagerModules.openclaw
+      ];
     }
 
     # We expose some extra arguments so that our modules can parameterize
