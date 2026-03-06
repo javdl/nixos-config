@@ -18,23 +18,23 @@
           };
 
           # grepai - semantic code search CLI tool
-          grepaiVersion = "0.18.0";
+          grepaiVersion = "0.34.0";
           grepaiSources = {
             "x86_64-linux" = {
               url = "https://github.com/yoanbernabeu/grepai/releases/download/v${grepaiVersion}/grepai_${grepaiVersion}_linux_amd64.tar.gz";
-              sha256 = "388058dfeb16a5ac1fe16c03e84322404096c37e952a0653502acb98a46645a7";
+              sha256 = "5933f5671de1fe8fd18b5d27b4775bf461144f1239172d85ce46895ebd6d92ca";
             };
             "aarch64-linux" = {
               url = "https://github.com/yoanbernabeu/grepai/releases/download/v${grepaiVersion}/grepai_${grepaiVersion}_linux_arm64.tar.gz";
-              sha256 = "5669815fccb66b525397deeddc498e3797a802b1155afb1e09cd7e9f412ba44f";
+              sha256 = "c0496ea9748db43e84164daf3979401c03d83eeb797050adb8543cc7460af68f";
             };
             "x86_64-darwin" = {
               url = "https://github.com/yoanbernabeu/grepai/releases/download/v${grepaiVersion}/grepai_${grepaiVersion}_darwin_amd64.tar.gz";
-              sha256 = "03e06ab3d6f2434ce439bbb32be945274e1e9c138d5d994cbf70fb42cc0c57ab";
+              sha256 = "94ee0ad792a1139268435a1eea9fa82fba2afa4b7fd7cdd0b9266e8d559087e7";
             };
             "aarch64-darwin" = {
               url = "https://github.com/yoanbernabeu/grepai/releases/download/v${grepaiVersion}/grepai_${grepaiVersion}_darwin_arm64.tar.gz";
-              sha256 = "190c6e1571917ca6f2e4fef9a53d894f39c3a80219c9a552b31c086bb9b4fc4f";
+              sha256 = "f926c9f0d8f6c903372006b2a3f1725a6838b2dcc82811b1d0303b910f2c71bd";
             };
           };
           grepaiSource = grepaiSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for grepai: ${prev.stdenv.hostPlatform.system}");
@@ -80,23 +80,23 @@
           cassSource = cassSources.${prev.stdenv.hostPlatform.system} or null;
 
           # beads_rust (br) - fast Rust port of beads issue tracker
-          brVersion = "0.1.14";
+          brVersion = "0.1.21";
           brSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/beads_rust/releases/download/v${brVersion}/br-v${brVersion}-linux_amd64.tar.gz";
-              sha256 = "c4f4772032868d0ae2e04e4a13629951c05f14f09ba791ff70e1615cd8ebab1b";
+              sha256 = "10d1ac74ce8eab761fb72ff632fc019edad75dd4d49c867c4655f53684d18832";
             };
             "aarch64-linux" = {
               url = "https://github.com/Dicklesworthstone/beads_rust/releases/download/v${brVersion}/br-v${brVersion}-linux_arm64.tar.gz";
-              sha256 = "be83abc260f19614b49095e57fd639b0d821115ae22b2b0ba244db0ce193c200";
+              sha256 = "50ac4fdd829e63d2b36158fad038855b19e5f17394a5fd1a09f970842e23b761";
             };
             "x86_64-darwin" = {
               url = "https://github.com/Dicklesworthstone/beads_rust/releases/download/v${brVersion}/br-v${brVersion}-darwin_amd64.tar.gz";
-              sha256 = "cbc3e8baaec46ac1530acaa617e353e944278428e63767e3bff6da7ca04bd757";
+              sha256 = "d49d426147d6d7269fa3562178021c13dc2c006fdc417be0b08ac260be0453e6";
             };
             "aarch64-darwin" = {
               url = "https://github.com/Dicklesworthstone/beads_rust/releases/download/v${brVersion}/br-v${brVersion}-darwin_arm64.tar.gz";
-              sha256 = "d4826b0f752fa9693607c8d3f09579a0416b95313d0878b49caab243b37b2db2";
+              sha256 = "0e2b96b6d89fdf7d5a1b8ae2d3b0fa5c5d739ea598f49b46c93629a0cbb0bdc1";
             };
           };
           brSource = brSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for br: ${prev.stdenv.hostPlatform.system}");
@@ -168,23 +168,23 @@
           caamSource = caamSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for caam: ${prev.stdenv.hostPlatform.system}");
 
           # agent-browser - browser automation CLI for AI agents
-          agentBrowserVersion = "0.13.0";
+          agentBrowserVersion = "0.16.3";
           agentBrowserSources = {
             "x86_64-linux" = {
               url = "https://github.com/vercel-labs/agent-browser/releases/download/v${agentBrowserVersion}/agent-browser-linux-x64";
-              sha256 = "a34421a9f7c3e498ce30f6dec4780e53488de5e01f330f2f2abcf8e79a6955f4";
+              sha256 = "18107eed31ebe6ca6cb3a23dc5b3aa3bd4b7441289bc8af36f12b9ee89f17759";
             };
             "aarch64-linux" = {
               url = "https://github.com/vercel-labs/agent-browser/releases/download/v${agentBrowserVersion}/agent-browser-linux-arm64";
-              sha256 = "ddc1475a999d1025a7460e7acc71b707d7dd8980345426484c2f5dfc4fb9e79b";
+              sha256 = "4d49355ae9520f5c07c2a853f32ebe77f006c2eb7b1298f301100ded71ea5869";
             };
             "x86_64-darwin" = {
               url = "https://github.com/vercel-labs/agent-browser/releases/download/v${agentBrowserVersion}/agent-browser-darwin-x64";
-              sha256 = "38058f359f3062394141efacdca6ce81828710032703b4abce5216794d338af5";
+              sha256 = "ed55be5f9cf16340631a5b239568fe6cc5a7160cbf971eb4a01ab6ebaeb1ef05";
             };
             "aarch64-darwin" = {
               url = "https://github.com/vercel-labs/agent-browser/releases/download/v${agentBrowserVersion}/agent-browser-darwin-arm64";
-              sha256 = "644ed3755af53e687736854854a5dd10bfb14328643684d019024098c44d684d";
+              sha256 = "e72c0d3d83e439cdf9cc48991964ab8c24a7fac60b5e31fe18b23212c74e66d2";
             };
           };
           agentBrowserSource = agentBrowserSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for agent-browser: ${prev.stdenv.hostPlatform.system}");
@@ -896,26 +896,26 @@
 
           # codex - OpenAI coding agent CLI (pre-built binary from npm)
           codex = let
-            codexVersion = "0.104.0";
+            codexVersion = "0.111.0";
             codexSources = {
               "x86_64-linux" = {
                 url = "https://registry.npmjs.org/@openai/codex/-/codex-${codexVersion}-linux-x64.tgz";
-                hash = "sha256-eQjShAeqYq6tmY15Kek1In55pEJdymaAKZ3im6+B3gs=";
+                hash = "sha256-isT7jOJJ/aUBPYCiSBsj4c4VLqZGok05eqFlVgWQnHo=";
                 vendorDir = "x86_64-unknown-linux-musl";
               };
               "aarch64-linux" = {
                 url = "https://registry.npmjs.org/@openai/codex/-/codex-${codexVersion}-linux-arm64.tgz";
-                hash = "sha256-Fv+XpFkB+UIhKCKZRpsZbIwyMPBZbmgE/nqW9R5Nn2U=";
+                hash = "sha256-E3491nZyXrVFRTAGtbasbrs4rVntHXWNhJqo8at4zUc=";
                 vendorDir = "aarch64-unknown-linux-musl";
               };
               "x86_64-darwin" = {
                 url = "https://registry.npmjs.org/@openai/codex/-/codex-${codexVersion}-darwin-x64.tgz";
-                hash = "sha256-nBkMqrQt8DohSpHLQsVMNab8u+L5SKzF9OO0rRGelfo=";
+                hash = "sha256-0hJ3gWkfzCvduQCbLGCetdLKgb4KQKGX22JdjjQ4wB0=";
                 vendorDir = "x86_64-apple-darwin";
               };
               "aarch64-darwin" = {
                 url = "https://registry.npmjs.org/@openai/codex/-/codex-${codexVersion}-darwin-arm64.tgz";
-                hash = "sha256-To6PtJom3t1K5E8sG1duBRuau8YCjaoqTYItZIZMbUE=";
+                hash = "sha256-a2U2Y/n0TiWBMOX4pXTo0LV/GX+u3g79DD3iLMdQ3b0=";
                 vendorDir = "aarch64-apple-darwin";
               };
             };
@@ -953,11 +953,11 @@
           # gemini-cli - Google Gemini coding agent CLI (pre-built JS bundle)
           gemini-cli = prev.stdenv.mkDerivation {
             pname = "gemini-cli";
-            version = "0.29.5";
+            version = "0.32.1";
 
             src = prev.fetchurl {
-              url = "https://github.com/google-gemini/gemini-cli/releases/download/v0.29.5/gemini.js";
-              hash = "sha256-Yzqi2l41XLNMGNqeVGru0SALc1ZVa2LS4Qk2QiiSasY=";
+              url = "https://github.com/google-gemini/gemini-cli/releases/download/v0.32.1/gemini.js";
+              hash = "sha256-9GpzzqY+5vvDhSsKnK1jOvx5QXWeG3y7QB2UYK/rZ28=";
             };
 
             dontUnpack = true;
