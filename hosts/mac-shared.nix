@@ -85,7 +85,9 @@ in {
     # environment.variables = {
     #     TERMINFO_DIRS = "${pkgs.kitty.terminfo.outPath}/share/terminfo";
     # };
-    programs.nix-index.enable = true;
+    # nix-index with pre-built database (avoids broken nix-env enumeration)
+    # programs.nix-index.enable is set by nix-index-database module
+    programs.nix-index-database.comma.enable = true;
 
     # Start VICREO Listener at login (receives keystroke commands from Bitfocus Companion)
     launchd.user.agents.vicreo-listener = {

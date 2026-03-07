@@ -64,6 +64,10 @@ in systemFunc rec {
     # Disko declarative disk partitioning (no-op without disko.devices config)
     (if !darwin then inputs.disko.nixosModules.disko else {})
 
+    # Pre-built nix-index database (avoids slow/broken nix-env enumeration)
+    (if darwin then inputs.nix-index-database.darwinModules.nix-index
+               else inputs.nix-index-database.nixosModules.nix-index)
+
     machineConfig
     userOSConfig
     home-manager.home-manager {
