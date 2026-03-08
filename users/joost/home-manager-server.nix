@@ -77,6 +77,8 @@ in {
     ntm               # Named Tmux Manager for AI agent coordination
     opencode
     repo-updater      # GitHub repo sync tool (ru command)
+    csctf             # Convert AI chat share links to Markdown/HTML transcripts
+    slb               # Shannon Language Benchmark for LLM evaluation
     ubs               # AI-native code quality scanner
     # frankenterm (ft): installed via cargo nightly in activation script below
     # franken_whisper: clone and run from folder (needs whisper backends) - https://github.com/Dicklesworthstone/franken_whisper

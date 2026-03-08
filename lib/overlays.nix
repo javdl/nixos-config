@@ -79,6 +79,50 @@
           };
           cassSource = cassSources.${prev.stdenv.hostPlatform.system} or null;
 
+          # slb - Shannon Language Benchmark for LLM evaluation
+          slbVersion = "0.2.0";
+          slbSources = {
+            "x86_64-linux" = {
+              url = "https://github.com/Dicklesworthstone/slb/releases/download/v${slbVersion}/slb_${slbVersion}_linux_amd64.tar.gz";
+              sha256 = "9ceed8af0ec18b425bafda9bb6b289e1e42faec8584d84c4fea529fc1ca25597";
+            };
+            "aarch64-linux" = {
+              url = "https://github.com/Dicklesworthstone/slb/releases/download/v${slbVersion}/slb_${slbVersion}_linux_arm64.tar.gz";
+              sha256 = "ba8d8ad2fdf6ffaf7556c55e5d5283893a8dfe1e30f41fc981fc3e28882e01fa";
+            };
+            "x86_64-darwin" = {
+              url = "https://github.com/Dicklesworthstone/slb/releases/download/v${slbVersion}/slb_${slbVersion}_darwin_amd64.tar.gz";
+              sha256 = "39ecce943d9924c555a97184ea0745751048ca0a9acc8413ee4310afe2e1bed1";
+            };
+            "aarch64-darwin" = {
+              url = "https://github.com/Dicklesworthstone/slb/releases/download/v${slbVersion}/slb_${slbVersion}_darwin_arm64.tar.gz";
+              sha256 = "0898545c20c9fe867cfb713e8fe94772dfc5da60dd9eee4a1dcaaffccf86386a";
+            };
+          };
+          slbSource = slbSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for slb: ${prev.stdenv.hostPlatform.system}");
+
+          # csctf - Chat Shared Conversation To File
+          csctfVersion = "0.4.5";
+          csctfSources = {
+            "x86_64-linux" = {
+              url = "https://github.com/Dicklesworthstone/chat_shared_conversation_to_file/releases/download/v${csctfVersion}/csctf-linux-x64";
+              sha256 = "bb58bbd35de1d408b5fede47c61a7ff89038983043d8f735888d72a095b7fef3";
+            };
+            "aarch64-linux" = {
+              url = "https://github.com/Dicklesworthstone/chat_shared_conversation_to_file/releases/download/v${csctfVersion}/csctf-linux-arm64";
+              sha256 = "3dc185dd7eb466fc6c6f77d388fd6e76628a1e1ddd3248869ae9b6792df76875";
+            };
+            "x86_64-darwin" = {
+              url = "https://github.com/Dicklesworthstone/chat_shared_conversation_to_file/releases/download/v${csctfVersion}/csctf-macos-x64";
+              sha256 = "42075d7ef82c3b17a6419a4033b7a219478ce162fb605668f0048843b06a5265";
+            };
+            "aarch64-darwin" = {
+              url = "https://github.com/Dicklesworthstone/chat_shared_conversation_to_file/releases/download/v${csctfVersion}/csctf-macos-arm64";
+              sha256 = "d5d88aeb20c13bded9e186b89a3c0d7f00705fbc658ee5a41766a84f7da90e7c";
+            };
+          };
+          csctfSource = csctfSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for csctf: ${prev.stdenv.hostPlatform.system}");
+
           # beads_rust (br) - fast Rust port of beads issue tracker
           brVersion = "0.1.21";
           brSources = {
@@ -466,6 +510,64 @@
               platforms = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" ];
             };
           } else null;
+
+          # slb - Shannon Language Benchmark for LLM evaluation
+          slb = prev.stdenv.mkDerivation {
+            pname = "slb";
+            version = slbVersion;
+
+            src = prev.fetchurl {
+              url = slbSource.url;
+              sha256 = slbSource.sha256;
+            };
+
+            sourceRoot = ".";
+
+            nativeBuildInputs = [ prev.gnutar ];
+
+            unpackPhase = ''
+              tar xzf $src
+            '';
+
+            installPhase = ''
+              mkdir -p $out/bin
+              cp slb $out/bin/
+              chmod +x $out/bin/slb
+            '';
+
+            meta = with prev.lib; {
+              description = "Shannon Language Benchmark - evaluate LLM performance with information-theoretic metrics";
+              homepage = "https://github.com/Dicklesworthstone/slb";
+              license = licenses.mit;
+              platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+            };
+          };
+
+          # csctf - Chat Shared Conversation To File (bare binary, no tarball)
+          csctf = prev.stdenv.mkDerivation {
+            pname = "csctf";
+            version = csctfVersion;
+
+            src = prev.fetchurl {
+              url = csctfSource.url;
+              sha256 = csctfSource.sha256;
+            };
+
+            dontUnpack = true;
+
+            installPhase = ''
+              mkdir -p $out/bin
+              cp $src $out/bin/csctf
+              chmod +x $out/bin/csctf
+            '';
+
+            meta = with prev.lib; {
+              description = "Convert AI chat share links to clean Markdown and HTML transcripts";
+              homepage = "https://github.com/Dicklesworthstone/chat_shared_conversation_to_file";
+              license = licenses.mit;
+              platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+            };
+          };
 
           # br - beads_rust, fast Rust port of beads issue tracker
           beads-rust = prev.stdenv.mkDerivation {

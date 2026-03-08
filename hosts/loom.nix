@@ -71,6 +71,7 @@
     timerInterval = "6h";
     repos = [
       "fuww/developer"
+      "Dicklesworthstone/agent_flywheel_clawdbot_skills_and_integrations"
     ];
   };
 

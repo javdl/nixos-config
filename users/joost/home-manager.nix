@@ -110,7 +110,12 @@ in {
     opencode
     railway
     ripgrep
+    ast-grep
+    nodePackages.vercel
+    nodePackages.wrangler
+    supabase-cli
     tree
+    vault
     watch
     xh # for sending HTTP requests (like HTTPie)
     zellij # Terminal workspace with batteries included
@@ -126,6 +131,8 @@ in {
     grepai # Semantic code search for AI coding assistants
     ntm # Named Tmux Manager for AI agent coordination
     repo-updater # GitHub repo sync tool (ru command)
+    csctf # Convert AI chat share links to Markdown/HTML transcripts
+    slb # Shannon Language Benchmark for LLM evaluation
     ubs # AI-native code quality scanner
     # caut: install via `cargo install --git https://github.com/Dicklesworthstone/coding_agent_usage_tracker`
     # frankenterm (ft): installed via cargo nightly in activation script below
