@@ -44,6 +44,9 @@ in {
     enable = true;
     shellOptions = [];
     historyControl = [ "ignoredups" "ignorespace" ];
+    initExtra = ''
+      ${shared.ntmShellInit.bash}
+    '';
   };
 
   programs.zsh = {
@@ -53,6 +56,17 @@ in {
     syntaxHighlighting.enable = true;
 
     shellAliases = shared.shellAliases;
+
+    initContent = ''
+      ${shared.ntmShellInit.zsh}
+    '';
+  };
+
+  programs.fish = {
+    enable = true;
+    interactiveShellInit = ''
+      ${shared.ntmShellInit.fish}
+    '';
   };
 
   programs.git = {

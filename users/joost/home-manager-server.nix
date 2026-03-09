@@ -5,6 +5,11 @@
 let
   isDarwin = pkgs.stdenv.isDarwin;
   isLinux = pkgs.stdenv.isLinux;
+
+  # Import shared configuration
+  shared = import ../shared-home-manager.nix {
+    inherit isWSL inputs pkgs lib isDarwin isLinux;
+  };
 in {
   # Home-manager state version
   home.stateVersion = "25.11";
@@ -122,7 +127,6 @@ in {
     # Shell
     starship
     wezterm
-    zellij
     zoxide
   ];
 
@@ -224,6 +228,8 @@ in {
         [[ -n "$best" ]] && ln -sf "$best" ~/.ssh/ssh_auth_sock 2>/dev/null
       }
       _update_ssh_agent
+
+      ${shared.ntmShellInit.bash}
     '';
     shellAliases = {
       fix-ssh = "_update_ssh_agent && ssh-add -l";
@@ -261,6 +267,8 @@ in {
         end
       end
       _update_ssh_agent
+
+      ${shared.ntmShellInit.fish}
     '';
     shellAliases = {
       fix-ssh = "_update_ssh_agent && ssh-add -l";
@@ -516,6 +524,8 @@ in {
         [[ -n "$best" ]] && ln -sf "$best" ~/.ssh/ssh_auth_sock 2>/dev/null
       }
       _update_ssh_agent
+
+      ${shared.ntmShellInit.zsh}
     '';
   };
 
@@ -548,11 +558,19 @@ in {
     };
     Service = {
       Type = "simple";
+      Environment = "AM_INTERFACE_MODE=cli";
       ExecStart = "${pkgs.mcp-agent-mail}/bin/mcp-agent-mail serve-http";
       Restart = "on-failure";
       RestartSec = 5;
     };
     Install.WantedBy = [ "default.target" ];
+  };
+
+  programs.zellij = {
+    enable = true;
+    settings = {
+      default_shell = "nu";
+    };
   };
 
   # Zellij layout for fuww projects

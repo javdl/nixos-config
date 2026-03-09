@@ -650,6 +650,8 @@ in {
       claude() {
         SHELL=/bin/bash command claude "$@"
       }
+
+      ${shared.ntmShellInit.bash}
     '';
 
     shellAliases = shared.shellAliases;
@@ -781,6 +783,8 @@ in {
       claude() {
         SHELL=/bin/bash VSCODE_PID= VSCODE_CWD= TERM_PROGRAM= command claude "$@"
       }
+
+      ${shared.ntmShellInit.zsh}
     '';
 
     # This ensures proper sourcing of home-manager environment variables
@@ -798,6 +802,7 @@ in {
       (builtins.readFile ./config.fish)
       "set -g SHELL ${pkgs.fish}/bin/fish"
       "set -gx GPG_TTY (tty)"
+      shared.ntmShellInit.fish
     ]));
 
     shellAliases = shared.shellAliases;
@@ -1370,7 +1375,7 @@ in {
   programs.zellij = {
     enable = true;
     settings = {
-      default_shell = "zsh";
+      default_shell = "nu";
       theme = "rose-pine";
       themes = {
         rose-pine = {
@@ -1512,6 +1517,7 @@ in {
     };
     Service = {
       Type = "simple";
+      Environment = "AM_INTERFACE_MODE=cli";
       ExecStart = "${pkgs.mcp-agent-mail}/bin/mcp-agent-mail serve-http";
       Restart = "on-failure";
       RestartSec = 5;

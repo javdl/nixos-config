@@ -998,6 +998,9 @@
 
             sourceRoot = ".";
 
+            nativeBuildInputs = [ prev.autoPatchelfHook ];
+            buildInputs = [ prev.sqlite prev.zlib prev.stdenv.cc.cc.lib prev.openssl ];
+
             unpackPhase = ''
               tar xzf $src
             '';

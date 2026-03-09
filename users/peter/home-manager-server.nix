@@ -172,6 +172,8 @@ in {
         [[ -n "$best" ]] && ln -sf "$best" ~/.ssh/ssh_auth_sock 2>/dev/null
       }
       _update_ssh_agent
+
+      ${shared.ntmShellInit.bash}
     '';
     shellAliases = {
       fix-ssh = "_update_ssh_agent && ssh-add -l";
@@ -208,6 +210,8 @@ in {
         end
       end
       _update_ssh_agent
+
+      ${shared.ntmShellInit.fish}
     '';
     shellAliases = {
       # Jujutsu aliases
@@ -511,6 +515,8 @@ in {
       claude() {
         SHELL=/bin/bash VSCODE_PID= VSCODE_CWD= TERM_PROGRAM= command claude "$@"
       }
+
+      ${shared.ntmShellInit.zsh}
     '';
 
     envExtra = ''

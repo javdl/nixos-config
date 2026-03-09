@@ -83,6 +83,13 @@ in {
     };
   };
 
+  # NTM shell integration (completions, aliases, F6 palette binding)
+  ntmShellInit = {
+    zsh = ''eval "$(ntm shell zsh)"'';
+    bash = ''eval "$(ntm shell bash)"'';
+    fish = ''ntm shell fish | source'';
+  };
+
   # Common Gnome settings
   dconfSettings = {
     "org/gnome/desktop/interface" = {
