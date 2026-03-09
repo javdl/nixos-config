@@ -78,6 +78,7 @@ in {
     opencode
     repo-updater      # GitHub repo sync tool (ru command)
     csctf             # Convert AI chat share links to Markdown/HTML transcripts
+  ] ++ (lib.optional (pkgs.meta-skill != null) pkgs.meta-skill) ++ [
     slb               # Shannon Language Benchmark for LLM evaluation
     ubs               # AI-native code quality scanner
     # frankenterm (ft): installed via cargo nightly in activation script below

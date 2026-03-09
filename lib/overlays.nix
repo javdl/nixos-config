@@ -123,6 +123,46 @@
           };
           csctfSource = csctfSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for csctf: ${prev.stdenv.hostPlatform.system}");
 
+          # ms - Meta Skill manager with Thompson sampling optimization
+          msVersion = "0.1.0";
+          msSources = {
+            "x86_64-linux" = {
+              url = "https://github.com/Dicklesworthstone/meta_skill/releases/download/v${msVersion}/ms-${msVersion}-x86_64-unknown-linux-gnu.tar.gz";
+              sha256 = "c793ba2c37575d5799d820853cb411a40dc9ba660741fe36b557efda706c794f";
+            };
+            "aarch64-darwin" = {
+              url = "https://github.com/Dicklesworthstone/meta_skill/releases/download/v${msVersion}/ms-${msVersion}-aarch64-apple-darwin.tar.gz";
+              sha256 = "31df557201b4466a079e218c703d83c4feb11ff9626963f04152be14ce9d95f8";
+            };
+          };
+          msSource = msSources.${prev.stdenv.hostPlatform.system} or null;
+
+          # gws - Google Workspace CLI
+          gwsVersion = "0.8.1";
+          gwsSources = {
+            "x86_64-linux" = {
+              url = "https://github.com/googleworkspace/cli/releases/download/v${gwsVersion}/gws-x86_64-unknown-linux-musl.tar.gz";
+              sha256 = "c01359758a18e3adc5bb5cebb531056b3d42978c264b8a6cc10ec1f56e37f56c";
+              dir = "gws-x86_64-unknown-linux-musl";
+            };
+            "aarch64-linux" = {
+              url = "https://github.com/googleworkspace/cli/releases/download/v${gwsVersion}/gws-aarch64-unknown-linux-musl.tar.gz";
+              sha256 = "bb700c08975d8a27f541d7946db3fe8774c8c153a97fc54b559cade6769bddab";
+              dir = "gws-aarch64-unknown-linux-musl";
+            };
+            "x86_64-darwin" = {
+              url = "https://github.com/googleworkspace/cli/releases/download/v${gwsVersion}/gws-x86_64-apple-darwin.tar.gz";
+              sha256 = "566b5f3bbeb9cd757e4c44c5b0e3d2420451bff04b0222c94a3fce1327343771";
+              dir = "gws-x86_64-apple-darwin";
+            };
+            "aarch64-darwin" = {
+              url = "https://github.com/googleworkspace/cli/releases/download/v${gwsVersion}/gws-aarch64-apple-darwin.tar.gz";
+              sha256 = "ca6276d8ebc9892e342b83cf550b4e4e34587a194bb8b16c84310cecc3aee1d7";
+              dir = "gws-aarch64-apple-darwin";
+            };
+          };
+          gwsSource = gwsSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for gws: ${prev.stdenv.hostPlatform.system}");
+
           # beads_rust (br) - fast Rust port of beads issue tracker
           brVersion = "0.1.21";
           brSources = {
@@ -565,6 +605,73 @@
               description = "Convert AI chat share links to clean Markdown and HTML transcripts";
               homepage = "https://github.com/Dicklesworthstone/chat_shared_conversation_to_file";
               license = licenses.mit;
+              platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+            };
+          };
+
+          # ms - Meta Skill manager with Thompson sampling
+          meta-skill = if msSource != null then prev.stdenv.mkDerivation {
+            pname = "meta-skill";
+            version = msVersion;
+
+            src = prev.fetchurl {
+              url = msSource.url;
+              sha256 = msSource.sha256;
+            };
+
+            sourceRoot = ".";
+
+            nativeBuildInputs = [ prev.gnutar ]
+              ++ prev.lib.optionals prev.stdenv.isLinux [ prev.autoPatchelfHook ];
+
+            buildInputs = prev.lib.optionals prev.stdenv.isLinux (with prev; [
+              openssl
+              zlib
+              stdenv.cc.cc.lib
+            ]);
+
+            unpackPhase = ''
+              tar xzf $src
+            '';
+
+            installPhase = ''
+              mkdir -p $out/bin
+              cp ms $out/bin/
+              chmod +x $out/bin/ms
+            '';
+
+            meta = with prev.lib; {
+              description = "Skill management with Thompson sampling optimization";
+              homepage = "https://github.com/Dicklesworthstone/meta_skill";
+              license = licenses.mit;
+              platforms = [ "x86_64-linux" "aarch64-darwin" ];
+            };
+          } else null;
+
+          # gws - Google Workspace CLI
+          gws = prev.stdenv.mkDerivation {
+            pname = "gws";
+            version = gwsVersion;
+
+            src = prev.fetchurl {
+              url = gwsSource.url;
+              sha256 = gwsSource.sha256;
+            };
+
+            sourceRoot = gwsSource.dir;
+
+            nativeBuildInputs = [ prev.gnutar ];
+
+            installPhase = ''
+              mkdir -p $out/bin
+              cp gws $out/bin/
+              chmod +x $out/bin/gws
+            '';
+
+            meta = with prev.lib; {
+              description = "Google Workspace CLI for Drive, Gmail, Calendar, Sheets, Docs, Chat, Admin";
+              homepage = "https://github.com/googleworkspace/cli";
+              license = licenses.asl20;
               platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
             };
           };
