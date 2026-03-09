@@ -81,10 +81,7 @@
       user   = "joost";
     };
 
-    nixosConfigurations.vm-aarch64-prl = mkSystem "vm-aarch64-prl" rec {
-      system = "aarch64-linux";
-      user   = "joost";
-    };
+    # vm-aarch64-prl removed — hosts/vm-aarch64-prl.nix does not exist
 
     nixosConfigurations.vm-aarch64-utm = mkSystem "vm-aarch64-utm" rec {
       system = "aarch64-linux";

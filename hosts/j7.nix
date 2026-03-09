@@ -187,7 +187,7 @@
     mako
     pipewire
     wireplumber
-    libsForQt5.polkit-kde-agent # not sure if this is correct
+    kdePackages.polkit-kde-agent-1
     # qt5-wayland
     libsForQt5.qt5.qtwayland
     libsForQt5.qt5ct
