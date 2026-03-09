@@ -36,7 +36,8 @@ in {
     # AI coding agent aliases
     cc = "claude";
     cod = "codex";
-    gmi = "gemini";
+    gemini = "TERM=xterm-256color command gemini";
+    gmi = "TERM=xterm-256color command gemini";
 
     # Beads (issue tracker) - use Rust version (br) as default
     bd = "br";
