@@ -19,11 +19,6 @@
   # Prevent nix-darwin from managing nix.conf
   environment.etc."nix/nix.conf".enable = false;
 
-  imports =
-    [
-      ./mac-shared.nix
-    ];
-
     # Enable tailscale. We manually authenticate when we want with
     # "sudo tailscale up". If you don't use tailscale, you should comment
     # out or delete all of this.
