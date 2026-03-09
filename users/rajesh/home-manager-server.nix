@@ -231,24 +231,17 @@ in {
 
   programs.git = {
     enable = true;
-    userName = "Rajesh";
-    userEmail = "rajesh@fashionunited.com";
     signing = {
       key = null;  # TODO: Add GPG key if using signing
       signByDefault = false;
     };
-    delta = {
-      enable = true;
-      options = {
-        line-numbers = true;
-        side-by-side = true;
+    settings = {
+      user.name = "Rajesh";
+      user.email = "rajesh@fashionunited.com";
+      alias = {
+        prettylog = "log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(r) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative";
+        root = "rev-parse --show-toplevel";
       };
-    };
-    aliases = {
-      prettylog = "log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(r) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative";
-      root = "rev-parse --show-toplevel";
-    };
-    extraConfig = {
       branch.autosetuprebase = "always";
       color.ui = true;
       core.askPass = "";
@@ -257,6 +250,15 @@ in {
       push.default = "tracking";
       push.autoSetupRemote = true;
       init.defaultBranch = "main";
+    };
+  };
+
+  programs.delta = {
+    enable = true;
+    enableGitIntegration = true;
+    options = {
+      line-numbers = true;
+      side-by-side = true;
     };
   };
 

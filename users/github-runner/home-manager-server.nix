@@ -71,9 +71,9 @@ in {
 
   programs.git = {
     enable = true;
-    userName = "GitHub Runner";
-    userEmail = "runner@fuww.dev";
-    extraConfig = {
+    settings = {
+      user.name = "GitHub Runner";
+      user.email = "runner@fuww.dev";
       color.ui = true;
       core.askPass = "";
       push.default = "tracking";

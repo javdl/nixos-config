@@ -346,6 +346,56 @@
             };
           };
           casrSource = casrSources.${prev.stdenv.hostPlatform.system} or null;
+
+          # s2p - source to prompt TUI (bare binary, no tarball)
+          s2pVersion = "0.3.2";
+          s2pSources = {
+            "x86_64-linux" = {
+              url = "https://github.com/Dicklesworthstone/source_to_prompt_tui/releases/download/v${s2pVersion}/s2p-linux-x64";
+              sha256 = "0f1q10b1bffs9c0hsp5glljdc7qi959j3wg7jf0mkcflr6lbhydw";
+            };
+            "aarch64-linux" = {
+              url = "https://github.com/Dicklesworthstone/source_to_prompt_tui/releases/download/v${s2pVersion}/s2p-linux-arm64";
+              sha256 = "13bi0rsc7am8mq6ix2qw22m8hbibrj3wrs1g4mxrkayldj456yqb";
+            };
+            "x86_64-darwin" = {
+              url = "https://github.com/Dicklesworthstone/source_to_prompt_tui/releases/download/v${s2pVersion}/s2p-macos-x64";
+              sha256 = "0cgd8c55zcm7d9s4pi55144h322kiwl2bglfvhi687br3xy46s0d";
+            };
+            "aarch64-darwin" = {
+              url = "https://github.com/Dicklesworthstone/source_to_prompt_tui/releases/download/v${s2pVersion}/s2p-macos-arm64";
+              sha256 = "1j70lj8gkkvl8fnxfgqn7i10djhw6zg7z82dx9wf17crqfw20j4w";
+            };
+          };
+          s2pSource = s2pSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for s2p: ${prev.stdenv.hostPlatform.system}");
+
+          # pt - process triage (intelligent process termination)
+          ptVersion = "2.0.4";
+          ptSources = {
+            "x86_64-linux" = {
+              url = "https://github.com/Dicklesworthstone/process_triage/releases/download/v${ptVersion}/pt-core-linux-x86_64-${ptVersion}.tar.gz";
+              sha256 = "0w8sfh5229cj1frd1hfy7cnd2rb2aqfzpjf7pwjddd9anxnin3rq";
+            };
+            "x86_64-darwin" = {
+              url = "https://github.com/Dicklesworthstone/process_triage/releases/download/v${ptVersion}/pt-core-macos-x86_64-${ptVersion}.tar.gz";
+              sha256 = "081yxssx373yfys9n3jb6rc0symzgw4dcxhrbymz5ybw0w7jiyzh";
+            };
+            "aarch64-darwin" = {
+              url = "https://github.com/Dicklesworthstone/process_triage/releases/download/v${ptVersion}/pt-core-macos-aarch64-${ptVersion}.tar.gz";
+              sha256 = "1sb5xycg84vjfpysp3rpplsb1am1yr2zyxd3y46xkxz5yb4kwssa";
+            };
+          };
+          ptSource = ptSources.${prev.stdenv.hostPlatform.system} or null;
+
+          # rch - remote compilation helper
+          rchVersion = "1.0.10";
+          rchSources = {
+            "x86_64-linux" = {
+              url = "https://github.com/Dicklesworthstone/remote_compilation_helper/releases/download/v${rchVersion}/rch-v${rchVersion}-x86_64-unknown-linux-gnu.tar.gz";
+              sha256 = "0kv9wrfx5y9qlx5c6y8zjlc2dp1aw22d6l2xd8rncdm7kw4qlqhd";
+            };
+          };
+          rchSource = rchSources.${prev.stdenv.hostPlatform.system} or null;
         in {
           # grepai - semantic code search for AI coding assistants
           grepai = prev.stdenv.mkDerivation {

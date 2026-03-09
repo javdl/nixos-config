@@ -20,19 +20,21 @@
   # Git configuration for the runner
   programs.git = {
     enable = true;
-    userName = "GitHub Runner";
-    userEmail = "runner@localhost";
-    delta = {
-      enable = true;
-      options = {
-        line-numbers = true;
-        side-by-side = true;
-      };
-    };
-    extraConfig = {
+    settings = {
+      user.name = "GitHub Runner";
+      user.email = "runner@localhost";
       init.defaultBranch = "main";
       pull.rebase = true;
       push.autoSetupRemote = true;
+    };
+  };
+
+  programs.delta = {
+    enable = true;
+    enableGitIntegration = true;
+    options = {
+      line-numbers = true;
+      side-by-side = true;
     };
   };
 
@@ -113,9 +115,12 @@
   # SSH client configuration
   programs.ssh = {
     enable = true;
-    compression = true;
-    serverAliveInterval = 60;
-    serverAliveCountMax = 3;
+    enableDefaultConfig = false;
+    matchBlocks."*" = {
+      compression = true;
+      serverAliveInterval = 60;
+      serverAliveCountMax = 3;
+    };
   };
 
   programs.helix = {
