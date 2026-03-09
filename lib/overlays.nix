@@ -1048,8 +1048,8 @@
 
             sourceRoot = ".";
 
-            nativeBuildInputs = [ prev.autoPatchelfHook ];
-            buildInputs = [ prev.sqlite prev.zlib prev.stdenv.cc.cc.lib prev.openssl ];
+            nativeBuildInputs = prev.lib.optionals prev.stdenv.isLinux [ prev.autoPatchelfHook ];
+            buildInputs = prev.lib.optionals prev.stdenv.isLinux [ prev.sqlite prev.zlib prev.stdenv.cc.cc.lib prev.openssl ];
 
             unpackPhase = ''
               tar xzf $src
@@ -1127,6 +1127,108 @@
               homepage = "https://github.com/Dicklesworthstone/cross_agent_session_resumer";
               license = licenses.mit;
               platforms = [ "x86_64-linux" "aarch64-darwin" ];
+            };
+          } else null;
+
+          # s2p - source to prompt TUI (bare binary)
+          s2p = prev.stdenv.mkDerivation {
+            pname = "s2p";
+            version = s2pVersion;
+
+            src = prev.fetchurl {
+              url = s2pSource.url;
+              sha256 = s2pSource.sha256;
+            };
+
+            dontUnpack = true;
+
+            nativeBuildInputs = prev.lib.optionals prev.stdenv.isLinux [ prev.autoPatchelfHook ];
+            buildInputs = prev.lib.optionals prev.stdenv.isLinux [ prev.stdenv.cc.cc.lib ];
+
+            installPhase = ''
+              mkdir -p $out/bin
+              cp $src $out/bin/s2p
+              chmod +x $out/bin/s2p
+            '';
+
+            meta = with prev.lib; {
+              description = "Turn code projects into LLM prompts with a TUI";
+              homepage = "https://github.com/Dicklesworthstone/source_to_prompt_tui";
+              license = licenses.mit;
+              platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+            };
+          };
+
+          # pt - process triage (intelligent process termination with Bayesian scoring)
+          process-triage = if ptSource != null then prev.stdenv.mkDerivation {
+            pname = "process-triage";
+            version = ptVersion;
+
+            src = prev.fetchurl {
+              url = ptSource.url;
+              sha256 = ptSource.sha256;
+            };
+
+            sourceRoot = ".";
+
+            nativeBuildInputs = [ prev.gnutar ]
+              ++ prev.lib.optionals prev.stdenv.isLinux [ prev.autoPatchelfHook ];
+            buildInputs = prev.lib.optionals prev.stdenv.isLinux [ prev.stdenv.cc.cc.lib ];
+
+            unpackPhase = ''
+              tar xzf $src
+            '';
+
+            installPhase = ''
+              mkdir -p $out/bin
+              cp pt-core $out/bin/pt
+              chmod +x $out/bin/pt
+            '';
+
+            meta = with prev.lib; {
+              description = "Intelligent process termination with Bayesian scoring";
+              homepage = "https://github.com/Dicklesworthstone/process_triage";
+              license = licenses.mit;
+              platforms = [ "x86_64-linux" "x86_64-darwin" "aarch64-darwin" ];
+            };
+          } else null;
+
+          # rch - remote compilation helper
+          remote-compilation-helper = if rchSource != null then prev.stdenv.mkDerivation {
+            pname = "remote-compilation-helper";
+            version = rchVersion;
+
+            src = prev.fetchurl {
+              url = rchSource.url;
+              sha256 = rchSource.sha256;
+            };
+
+            sourceRoot = ".";
+
+            nativeBuildInputs = [ prev.gnutar ]
+              ++ prev.lib.optionals prev.stdenv.isLinux [ prev.autoPatchelfHook ];
+            buildInputs = prev.lib.optionals prev.stdenv.isLinux (with prev; [
+              openssl
+              stdenv.cc.cc.lib
+            ]);
+
+            unpackPhase = ''
+              tar xzf $src
+            '';
+
+            installPhase = ''
+              mkdir -p $out/bin
+              cp rch $out/bin/
+              cp rchd $out/bin/
+              cp rch-wkr $out/bin/
+              chmod +x $out/bin/rch $out/bin/rchd $out/bin/rch-wkr
+            '';
+
+            meta = with prev.lib; {
+              description = "Intercept builds from AI agents and route to remote workers";
+              homepage = "https://github.com/Dicklesworthstone/remote_compilation_helper";
+              license = licenses.mit;
+              platforms = [ "x86_64-linux" ];
             };
           } else null;
 

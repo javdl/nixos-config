@@ -19,3 +19,6 @@ mcp_agent_mail/
 .ralph/sessions/
 .ralph/latest
 .ralph/history.jsonl
+
+# SLB state (don't commit pending requests)
+.slb/

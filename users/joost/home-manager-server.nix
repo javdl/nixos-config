@@ -96,7 +96,10 @@ in {
     ++ (lib.optional (pkgs.mcp-agent-mail != null) pkgs.mcp-agent-mail)
     ++ (lib.optional (pkgs.frankensearch != null) pkgs.frankensearch)
     ++ (lib.optional (pkgs.cross-agent-session-resumer != null) pkgs.cross-agent-session-resumer)
+    ++ (lib.optional (pkgs.process-triage != null) pkgs.process-triage)
+    ++ (lib.optional (pkgs.remote-compilation-helper != null) pkgs.remote-compilation-helper)
     ++ (lib.optional (pkgs.cass != null) pkgs.cass) ++ (lib.optional (pkgs.cass-memory != null) pkgs.cass-memory) ++ [
+    s2p               # Turn code projects into LLM prompts with a TUI
 
     # Development
     bun
@@ -527,6 +530,10 @@ in {
 
       ${shared.ntmShellInit.zsh}
     '';
+  };
+
+  programs.nushell = {
+    enable = true;
   };
 
   #---------------------------------------------------------------------
