@@ -1214,7 +1214,7 @@ in {
     enableBashIntegration = true;
     enableZshIntegration = true;
     enableFishIntegration = true;
-    enableNushellIntegration = true;
+    enableNushellIntegration = false; # Broken in nushell 0.111+: alias doesn't work with def --env --wrapped
     options = [
       "--cmd cd" # Make 'cd' command use zoxide
     ];
@@ -1328,41 +1328,47 @@ in {
 
   programs.nushell = {
     enable = true;
-    # configFile.source = ./config.nu;
-    # # shellAliases = shellAliases;
-    # shellAliases = shared.shellAliases;
-    # extraConfig = ''
-    #   # Rose Pine theme colors for nushell
-    #   let rose_pine_theme = {
-    #     # Special
-    #     background: '#191724'
-    #     foreground: '#e0def4'
+    extraConfig = ''
+      # Zoxide integration (manual, because home-manager generates broken alias code for nushell 0.111+)
+      export-env {
+        $env.config = (
+          $env.config?
+          | default {}
+          | upsert hooks { default {} }
+          | upsert hooks.env_change { default {} }
+          | upsert hooks.env_change.PWD { default [] }
+        )
+        let __zoxide_hooked = (
+          $env.config.hooks.env_change.PWD | any { try { get __zoxide_hook } catch { false } }
+        )
+        if not $__zoxide_hooked {
+          $env.config.hooks.env_change.PWD = ($env.config.hooks.env_change.PWD | append {
+            __zoxide_hook: true,
+            code: {|_, dir| zoxide add -- $dir}
+          })
+        }
+      }
 
-    #     # Colors
-    #     black: '#26233a'
-    #     red: '#eb6f92'
-    #     green: '#31748f'
-    #     yellow: '#f6c177'
-    #     blue: '#9ccfd8'
-    #     magenta: '#c4a7e7'
-    #     cyan: '#ebbcba'
-    #     white: '#e0def4'
+      # zoxide cd override (must be inlined, not sourced from a file, for alias to work in nushell 0.111+)
+      def --env --wrapped __zoxide_z [...rest: string] {
+        let path = match $rest {
+          [] => {'~'},
+          [ '-' ] => {'-'},
+          [ $arg ] if ($arg | path expand | path type) == 'dir' => {$arg}
+          _ => {
+            zoxide query --exclude $env.PWD -- ...$rest | str trim -r -c "\n"
+          }
+        }
+        cd $path
+      }
 
-    #     # Bright colors
-    #     bright_black: '#6e6a86'
-    #     bright_red: '#eb6f92'
-    #     bright_green: '#31748f'
-    #     bright_yellow: '#f6c177'
-    #     bright_blue: '#9ccfd8'
-    #     bright_magenta: '#c4a7e7'
-    #     bright_cyan: '#ebbcba'
-    #     bright_white: '#e0def4'
-    #   }
+      def --env --wrapped __zoxide_zi [...rest:string] {
+        cd $'(zoxide query --interactive -- ...$rest | str trim -r -c "\n")'
+      }
 
-    #   # Set the theme
-    #   $env.config = ($env.config | default {})
-    #   $env.config.color_config = $rose_pine_theme
-    # '';
+      alias cd = __zoxide_z
+      alias cdi = __zoxide_zi
+    '';
   };
 
 
