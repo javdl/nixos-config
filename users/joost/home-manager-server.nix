@@ -238,6 +238,7 @@ in {
       fix-ssh = "_update_ssh_agent && ssh-add -l";
       bd = "br";
       am = "systemctl --user status agent-mail";
+      gemini = "TERM=xterm-256color command gemini";
     };
   };
 
@@ -288,6 +289,7 @@ in {
       cat = "bat";
       bd = "br";
       am = "systemctl --user status agent-mail";
+      gemini = "TERM=xterm-256color command gemini";
     };
   };
 
@@ -505,6 +507,7 @@ in {
       fix-ssh = "_update_ssh_agent && ssh-add -l";
       bd = "br";
       am = "systemctl --user status agent-mail";
+      gemini = "TERM=xterm-256color command gemini";
     };
     initContent = ''
       export GPG_TTY=$(tty)
