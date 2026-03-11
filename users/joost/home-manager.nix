@@ -132,7 +132,9 @@ in {
     gws # Google Workspace CLI
     ntm # Named Tmux Manager for AI agent coordination
     repo-updater # GitHub repo sync tool (ru command)
+    brenner # Sydney Brenner research platform CLI
     csctf # Convert AI chat share links to Markdown/HTML transcripts
+    toon # Token-Optimized Object Notation converter
   ] ++ (lib.optional (pkgs.meta-skill != null) pkgs.meta-skill) ++ [
     slb # Shannon Language Benchmark for LLM evaluation
     ubs # AI-native code quality scanner

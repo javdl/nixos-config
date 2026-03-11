@@ -123,6 +123,50 @@
           };
           csctfSource = csctfSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for csctf: ${prev.stdenv.hostPlatform.system}");
 
+          # brenner - Sydney Brenner research platform CLI
+          brennerVersion = "0.3.0";
+          brennerSources = {
+            "x86_64-linux" = {
+              url = "https://github.com/Dicklesworthstone/brenner_bot/releases/download/v${brennerVersion}/brenner-linux-x64";
+              sha256 = "fac82298dd5daabc798aab45ab0b724d600f39e65ffddbc8a2d2f8cfc5f95cb4";
+            };
+            "aarch64-linux" = {
+              url = "https://github.com/Dicklesworthstone/brenner_bot/releases/download/v${brennerVersion}/brenner-linux-arm64";
+              sha256 = "8e359b523703e350963e4d78098c0d7ff768c7224ead6aaf47a1c4ed52f42324";
+            };
+            "x86_64-darwin" = {
+              url = "https://github.com/Dicklesworthstone/brenner_bot/releases/download/v${brennerVersion}/brenner-darwin-x64";
+              sha256 = "fff8aa65c9ab8b193b37a1a8b7e29a732fbcacf73a2d42e631ed7553fedf7947";
+            };
+            "aarch64-darwin" = {
+              url = "https://github.com/Dicklesworthstone/brenner_bot/releases/download/v${brennerVersion}/brenner-darwin-arm64";
+              sha256 = "e321c7063ea092a75a7a07d292b3e1949b4bbf38409c0a8a12314634384b580b";
+            };
+          };
+          brennerSource = brennerSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for brenner: ${prev.stdenv.hostPlatform.system}");
+
+          # toon - Token-Optimized Object Notation converter (JSON <-> TOON)
+          toonVersion = "0.2.1";
+          toonSources = {
+            "x86_64-linux" = {
+              url = "https://github.com/Dicklesworthstone/toon_rust/releases/download/v${toonVersion}/toon-linux-amd64.tar.xz";
+              sha256 = "f547b4ae9ce241a7317f4a0d2cacfbf335ccb85d7941558f44830ecb47f65fe3";
+            };
+            "aarch64-linux" = {
+              url = "https://github.com/Dicklesworthstone/toon_rust/releases/download/v${toonVersion}/toon-linux-arm64.tar.xz";
+              sha256 = "7d3d94a9b24ff2b7d5ec60c1bc2bc3fbec750449dc619922bfd1377f74adbe2a";
+            };
+            "x86_64-darwin" = {
+              url = "https://github.com/Dicklesworthstone/toon_rust/releases/download/v${toonVersion}/toon-darwin-amd64.tar.xz";
+              sha256 = "704c6b4113147faff8fbe1540157583d2347c34668b4bec9a0e3bba471ef582c";
+            };
+            "aarch64-darwin" = {
+              url = "https://github.com/Dicklesworthstone/toon_rust/releases/download/v${toonVersion}/toon-darwin-arm64.tar.xz";
+              sha256 = "8bd9b439f560243525f35bca2bba117ddb6085d0d45eabc450cb29a715006ab5";
+            };
+          };
+          toonSource = toonSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for toon: ${prev.stdenv.hostPlatform.system}");
+
           # ms - Meta Skill manager with Thompson sampling optimization
           msVersion = "0.1.0";
           msSources = {
@@ -654,6 +698,62 @@
             meta = with prev.lib; {
               description = "Convert AI chat share links to clean Markdown and HTML transcripts";
               homepage = "https://github.com/Dicklesworthstone/chat_shared_conversation_to_file";
+              license = licenses.mit;
+              platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+            };
+          };
+
+          # brenner - Sydney Brenner research platform CLI (bare binary)
+          brenner = prev.stdenv.mkDerivation {
+            pname = "brenner";
+            version = brennerVersion;
+
+            src = prev.fetchurl {
+              url = brennerSource.url;
+              sha256 = brennerSource.sha256;
+            };
+
+            dontUnpack = true;
+
+            installPhase = ''
+              mkdir -p $out/bin
+              cp $src $out/bin/brenner
+              chmod +x $out/bin/brenner
+            '';
+
+            meta = with prev.lib; {
+              description = "Sydney Brenner research platform CLI for AI-assisted scientific inquiry";
+              homepage = "https://github.com/Dicklesworthstone/brenner_bot";
+              license = licenses.mit;
+              platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+            };
+          };
+
+          # toon - Token-Optimized Object Notation converter
+          toon = prev.stdenv.mkDerivation {
+            pname = "toon";
+            version = toonVersion;
+
+            src = prev.fetchurl {
+              url = toonSource.url;
+              sha256 = toonSource.sha256;
+            };
+
+            sourceRoot = ".";
+
+            unpackPhase = ''
+              ${prev.xz}/bin/xz -d < $src | tar xf -
+            '';
+
+            installPhase = ''
+              mkdir -p $out/bin
+              cp toon $out/bin/
+              chmod +x $out/bin/toon
+            '';
+
+            meta = with prev.lib; {
+              description = "Token-Optimized Object Notation - convert between JSON and TOON formats";
+              homepage = "https://github.com/Dicklesworthstone/toon_rust";
               license = licenses.mit;
               platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
             };
