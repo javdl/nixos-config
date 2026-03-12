@@ -40,9 +40,9 @@ if git -C "${cwd:-$PWD}" rev-parse --git-dir > /dev/null 2>&1; then
            || git -C "${cwd:-$PWD}" rev-parse --short HEAD 2>/dev/null)
   if [ -n "$branch" ]; then
     status_output=$(git -C "${cwd:-$PWD}" status --porcelain 2>/dev/null)
-    modified=$(echo "$status_output" | grep -c '^ M\| M' 2>/dev/null || echo 0)
-    staged=$(echo "$status_output" | grep -c '^M\|^A\|^D\|^R\|^C' 2>/dev/null || echo 0)
-    untracked=$(echo "$status_output" | grep -c '^??' 2>/dev/null || echo 0)
+    modified=$(echo "$status_output" | grep -cE '^ M| M' 2>/dev/null); modified=${modified:-0}
+    staged=$(echo "$status_output" | grep -cE '^M|^A|^D|^R|^C' 2>/dev/null); staged=${staged:-0}
+    untracked=$(echo "$status_output" | grep -cE '^\?\?' 2>/dev/null); untracked=${untracked:-0}
 
     git_info=" ${FOAM} ${branch}${RESET}"
     if [ "$staged" -gt 0 ]; then
