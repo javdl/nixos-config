@@ -17,10 +17,17 @@ keys:
   # Host keys (derived from SSH host keys using ssh-to-age)
   # Run: ssh-to-age -i /etc/ssh/ssh_host_ed25519_key.pub
   - &hetzner-dev age1PLACEHOLDER_RUN_ssh-to-age_ON_HOST
+  - &joostclaw age17n047nq8vclhr2gja7fe8z9uv8pug49r6k6c27cxd92jgnmups2qcdte99
   - &github-runner-01 age1k77q70qv8h6kp7n8pw92mcyww62xkmwps50mknmzdjwn6s29wu2s3gav4w
   - &github-runner-02 age1payjujelqgvgpkpapl0cske00waj5vn6xtrz2rr9ag8gt8rphyls9d2dz4
 
 creation_rules:
+  # joostclaw secrets
+  - path_regex: secrets/joostclaw\.yaml$
+    key_groups:
+      - age:
+          - *joostclaw
+
   # hetzner-dev secrets
   - path_regex: secrets/hetzner-dev\.yaml$
     key_groups:

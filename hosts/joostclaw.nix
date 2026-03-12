@@ -7,14 +7,6 @@
 #
 # Provisioned with: make hetzner/provision NIXADDR=91.99.10.155 NIXNAME=joostclaw
 #
-# Post-provisioning OpenClaw setup:
-#   1. SSH in: ssh joost@91.99.10.155
-#   2. Create secrets dir: mkdir -p ~/.secrets
-#   3. Create Telegram bot via @BotFather, save token: echo "BOT_TOKEN" > ~/.secrets/telegram-bot-token
-#   4. Get your Telegram user ID from @userinfobot
-#   5. Generate gateway token: openssl rand -hex 32 > ~/.secrets/openclaw-gateway-token
-#   6. Update this file: set allowFrom, enable openclaw, rebuild
-
 {
   imports = [
     ../modules/hetzner-cloud-hardware.nix
@@ -150,6 +142,7 @@
   # Use zsh as default shell
   programs.zsh.enable = true;
   users.users.joost.shell = lib.mkForce pkgs.zsh;
+  users.users.joost.linger = true;
 
   # Run dynamically linked binaries without patchelf
   programs.nix-ld.enable = true;
@@ -204,6 +197,30 @@
   networking.firewall = {
     trustedInterfaces = [ "tailscale0" ];
     allowedUDPPorts = [ config.services.tailscale.port ];
+  };
+
+  # SOPS secrets for OpenClaw + Tailscale auth.
+  sops.defaultSopsFile = ../secrets/joostclaw.yaml;
+  sops.secrets.openclaw-telegram-bot-token = {
+    owner = "joost";
+    group = "users";
+    mode = "0400";
+  };
+  sops.secrets.openclaw-anthropic-api-key = {
+    owner = "joost";
+    group = "users";
+    mode = "0400";
+  };
+  sops.secrets.openclaw-gateway-token = {
+    owner = "joost";
+    group = "users";
+    mode = "0400";
+  };
+  sops.secrets.tailscale-authkey = {
+    path = "/etc/tailscale/authkey";
+    owner = "root";
+    group = "root";
+    mode = "0400";
   };
 
   # This value determines the NixOS release
