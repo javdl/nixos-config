@@ -112,7 +112,6 @@ in {
     ripgrep
     ast-grep
     nodePackages.vercel
-    nodePackages.wrangler
     supabase-cli
     tree
     vault
