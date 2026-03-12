@@ -17,6 +17,7 @@
     ../modules/nixos-auto-update.nix
     ../modules/security-audit.nix
     ../modules/podman.nix
+    ../modules/openclaw-oci.nix
     ../modules/repo-updater.nix
     ../modules/ghostty-terminfo.nix
     ../modules/mosh.nix
@@ -216,11 +217,40 @@
     group = "users";
     mode = "0400";
   };
+  sops.secrets.openclaw-work01-telegram-bot-token = {
+    owner = "openclaw-work01";
+    group = "openclaw-work01";
+    mode = "0400";
+  };
+  sops.secrets.openclaw-work01-anthropic-api-key = {
+    owner = "openclaw-work01";
+    group = "openclaw-work01";
+    mode = "0400";
+  };
+  sops.secrets.openclaw-work01-gateway-token = {
+    owner = "openclaw-work01";
+    group = "openclaw-work01";
+    mode = "0400";
+  };
   sops.secrets.tailscale-authkey = {
     path = "/etc/tailscale/authkey";
     owner = "root";
     group = "root";
     mode = "0400";
+  };
+
+  services.openclawOci.instances.work01 = {
+    enable = true;
+    uid = 3010;
+    gid = 3010;
+    subUidStart = 130100;
+    subGidStart = 130100;
+    gatewayPort = 18889;
+    browserPort = 18891;
+    telegramTokenFile = config.sops.secrets.openclaw-work01-telegram-bot-token.path;
+    anthropicKeyFile = config.sops.secrets.openclaw-work01-anthropic-api-key.path;
+    gatewayTokenFile = config.sops.secrets.openclaw-work01-gateway-token.path;
+    allowFrom = [ "5654206852" ];
   };
 
   # This value determines the NixOS release
