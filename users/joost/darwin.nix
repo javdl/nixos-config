@@ -17,6 +17,7 @@ let
     "chromedriver"
     "cleanshot"
     "codex"
+    "cmux"
     "codex-app"
     "companion" # Bitfocus companion, Streamdeck extension and emulation software
     "datagrip"
