@@ -548,7 +548,10 @@ in {
 #    "i3/config".text = builtins.readFile ./i3;
 #    "rofi/config.rasi".text = builtins.readFile ./rofi;
   } // (if isDarwin then {
-    "ghostty/config".text = builtins.readFile ./ghostty.conf;
+    "ghostty/config".text = builtins.replaceStrings
+      ["command = nu"]
+      ["command = ${pkgs.nushell}/bin/nu"]
+      (builtins.readFile ./ghostty.conf);
     "skhd/skhdrc".text = builtins.readFile ./skhdrc;
     "aerospace/aerospace.toml".text = builtins.readFile ./aerospace.toml;
     "sketchybar/sketchybarrc" = {
@@ -573,7 +576,10 @@ in {
           executable = true;
         };
   } else {}) // (if isLinux then {
-    "ghostty/config".text = builtins.readFile ./ghostty.linux;
+    "ghostty/config".text = builtins.replaceStrings
+      ["command = nu"]
+      ["command = ${pkgs.nushell}/bin/nu"]
+      (builtins.readFile ./ghostty.linux);
     "sublime-text/Packages/User/Preferences.sublime-settings".text = builtins.readFile ./sublime-preferences.json;
     "sublime-text/Packages/User/Package Control.sublime-settings".text = builtins.readFile ./sublime-package-control.json;
   } else {});
@@ -1385,7 +1391,7 @@ in {
   programs.zellij = {
     enable = true;
     settings = {
-      default_shell = "nu";
+      default_shell = "${pkgs.nushell}/bin/nu";
       theme = "rose-pine";
       themes = {
         rose-pine = {
