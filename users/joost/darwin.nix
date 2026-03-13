@@ -43,6 +43,7 @@ let
     "jetbrains-toolbox"
     "librewolf"
     "linear-linear"
+    "legcord"
     "libreoffice"
     # "logitech-g-hub" # Disabled - errors on each make switch
     "macwhisper"
