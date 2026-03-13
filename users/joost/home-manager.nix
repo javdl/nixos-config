@@ -1384,6 +1384,13 @@ in {
 
       alias cd = __zoxide_z
       alias cdi = __zoxide_zi
+
+      # Claude Code needs SHELL=/bin/bash (same wrapper as bash/zsh configs)
+      def --wrapped claude [...args: string] {
+        with-env { SHELL: "/bin/bash", VSCODE_PID: "", VSCODE_CWD: "", TERM_PROGRAM: "" } {
+          ^claude ...$args
+        }
+      }
     '';
   };
 
