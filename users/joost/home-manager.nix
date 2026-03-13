@@ -1335,6 +1335,15 @@ in {
 
   programs.nushell = {
     enable = true;
+    extraEnv = ''
+      # Add extra directories to PATH that home.sessionVariables doesn't cover for nushell
+      $env.PATH = ($env.PATH | split row (char esep)
+        | prepend "${config.home.homeDirectory}/.local/bin"
+        | prepend "${config.home.homeDirectory}/go/bin"
+        | prepend "${config.home.homeDirectory}/.npm-global/bin"
+        | prepend "${config.home.homeDirectory}/.cargo/bin"
+        | uniq)
+    '';
     extraConfig = ''
       # Zoxide integration (manual, because home-manager generates broken alias code for nushell 0.111+)
       export-env {
