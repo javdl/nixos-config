@@ -342,6 +342,15 @@ in {
     fi
   '';
 
+  # Symlink nushell configs to macOS default location (~/Library/Application Support/nushell/)
+  # so nushell finds the home-manager-managed configs regardless of how it's launched
+  home.activation.syncNushellConfig = lib.mkIf isDarwin (lib.hm.dag.entryAfter ["writeBoundary"] ''
+    NUSHELL_MACOS_DIR="$HOME/Library/Application Support/nushell"
+    $DRY_RUN_CMD mkdir -p "$NUSHELL_MACOS_DIR"
+    $DRY_RUN_CMD ln -sf "$HOME/.config/nushell/config.nu" "$NUSHELL_MACOS_DIR/config.nu"
+    $DRY_RUN_CMD ln -sf "$HOME/.config/nushell/env.nu" "$NUSHELL_MACOS_DIR/env.nu"
+  '');
+
   home.file = {
     ".config/zellij/layouts/devops.kdl".source = ../zellij-monitor-runners.kdl;
     ".config/zellij/layouts/fun.kdl".source = ./zellij-fun.kdl;
@@ -549,8 +558,8 @@ in {
 #    "rofi/config.rasi".text = builtins.readFile ./rofi;
   } // (if isDarwin then {
     "ghostty/config".text = builtins.replaceStrings
-      ["command = nu"]
-      ["command = ${pkgs.nushell}/bin/nu"]
+      ["command = nu --config"]
+      ["command = ${pkgs.nushell}/bin/nu --config"]
       (builtins.readFile ./ghostty.conf);
     "skhd/skhdrc".text = builtins.readFile ./skhdrc;
     "aerospace/aerospace.toml".text = builtins.readFile ./aerospace.toml;
@@ -1336,12 +1345,24 @@ in {
   programs.nushell = {
     enable = true;
     extraEnv = ''
-      # Add extra directories to PATH that home.sessionVariables doesn't cover for nushell
+      # Ensure nushell knows XDG_CONFIG_HOME (macOS defaults to ~/Library/Application Support/)
+      $env.XDG_CONFIG_HOME = ($env.HOME | path join ".config")
+
+      # Add nix, homebrew, and user directories to PATH
+      # Ghostty launches nu directly (not via login shell), so nix-darwin's /etc/zshenv
+      # never runs — we must add nix profile paths explicitly
       $env.PATH = ($env.PATH | split row (char esep)
-        | prepend "${config.home.homeDirectory}/.local/bin"
-        | prepend "${config.home.homeDirectory}/go/bin"
+        | prepend "/usr/local/bin"
+        | prepend "/run/current-system/sw/bin"
+        | prepend "/nix/var/nix/profiles/default/bin"
+        | prepend "/etc/profiles/per-user/${config.home.username}/bin"
+        | prepend "${config.home.homeDirectory}/.nix-profile/bin"
+        | prepend "/opt/homebrew/sbin"
+        | prepend "/opt/homebrew/bin"
         | prepend "${config.home.homeDirectory}/.npm-global/bin"
+        | prepend "${config.home.homeDirectory}/go/bin"
         | prepend "${config.home.homeDirectory}/.cargo/bin"
+        | prepend "${config.home.homeDirectory}/.local/bin"
         | uniq)
     '';
     extraConfig = ''
