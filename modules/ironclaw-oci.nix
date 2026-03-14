@@ -324,7 +324,7 @@ in
         ] ++ inst.extraOptions;
         podman = {
           user = inst.user;
-          sdnotify = "conmon";
+          sdnotify = "ignore";
         };
       })
       enabledInstances;
