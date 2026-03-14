@@ -283,10 +283,6 @@
     '';
   };
 
-  # Override ironclaw systemd service: ironclaw doesn't support sd_notify,
-  # so we must use Type=simple instead of Type=notify.
-  systemd.services.podman-ironclaw-main.serviceConfig.Type = lib.mkForce "simple";
-
   # IronClaw AI assistant instance
   services.ironclawOci.instances.main = {
     enable = true;

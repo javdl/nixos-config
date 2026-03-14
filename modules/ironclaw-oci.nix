@@ -323,7 +323,7 @@ in
         ] ++ inst.extraOptions;
         podman = {
           user = inst.user;
-          sdnotify = "container";
+          sdnotify = "conmon";
         };
       })
       enabledInstances;
