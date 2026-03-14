@@ -270,11 +270,6 @@
     settings = {
       listen_addresses = lib.mkForce "*";
     };
-    # Create pgvector extension after database is ready
-    initialScript = pkgs.writeText "ironclaw-pg-init" ''
-      \c ironclaw
-      CREATE EXTENSION IF NOT EXISTS vector;
-    '';
     authentication = ''
       # Allow ironclaw system user via Unix socket (peer auth)
       local ironclaw ironclaw peer map=ironclaw
