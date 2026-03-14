@@ -324,7 +324,7 @@ in
         ] ++ inst.extraOptions;
         podman = {
           user = inst.user;
-          sdnotify = "ignore";
+          sdnotify = "container";
         };
       })
       enabledInstances;
