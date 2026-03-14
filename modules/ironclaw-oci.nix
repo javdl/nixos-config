@@ -315,7 +315,6 @@ in
           "--read-only"
           "--security-opt=no-new-privileges"
           "--tmpfs=/tmp:rw,noexec,nosuid,nodev,size=256m,mode=1777"
-          "--tmpfs=/run:rw,nosuid,nodev,size=64m"
           "--pids-limit=512"
           "--memory=2g"
           "--cpus=2"
