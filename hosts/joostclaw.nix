@@ -283,13 +283,9 @@
     '';
   };
 
-  # Override ironclaw systemd service to use forking mode
-  # The NixOS oci-containers module uses -d (detach) + sdnotify which doesn't
-  # work reliably with rootless Podman + linger. Use Type=forking with cidfile.
-  systemd.services.podman-ironclaw-main.serviceConfig = {
-    Type = lib.mkForce "forking";
-    PIDFile = lib.mkForce "/run/ironclaw-main/ctr-id";
-  };
+  # Override to Type=exec: sdnotify=conmon doesn't work with rootless+linger.
+  # Type=exec considers the service started once podman run -d exits successfully.
+  systemd.services.podman-ironclaw-main.serviceConfig.Type = lib.mkForce "exec";
 
   # IronClaw AI assistant instance
   services.ironclawOci.instances.main = {
