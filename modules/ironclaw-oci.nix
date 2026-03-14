@@ -169,6 +169,18 @@ let
 
   enabledInstances = filterAttrs (_: inst: inst.enable) cfg.instances;
 
+  # Pre-built Telegram WASM channel from ironclaw releases
+  telegramWasm = pkgs.fetchurl {
+    url = "https://github.com/nearai/ironclaw/releases/download/v0.18.0/telegram-0.2.2-wasm32-wasip2.tar.gz";
+    sha256 = "1v9asy4wzb5wzwfv1k4i6a4my90zd8rm9cqnq47cx18j5md3va5r";
+  };
+
+  telegramWasmDir = pkgs.runCommand "ironclaw-telegram-wasm" { } ''
+    mkdir -p $out/channels
+    cd $out/channels
+    tar xzf ${telegramWasm}
+  '';
+
   mkEntrypoint = name: inst:
     pkgs.writeShellScriptBin "ironclaw-oci-entrypoint-${name}" ''
       set -euo pipefail
@@ -189,6 +201,8 @@ let
       export HTTP_HOST="0.0.0.0"
       export HTTP_PORT="3000"
       export IRONCLAW_IN_DOCKER="true"
+      export WASM_CHANNELS_ENABLED="true"
+      export WASM_CHANNELS_DIR="${telegramWasmDir}/channels"
 
       # Telegram
       if [ -s "${containerTelegramTokenPath}" ]; then
@@ -224,6 +238,7 @@ let
         pkgs.coreutils
         entrypoint
         inst.package
+        telegramWasmDir
       ];
       config = {
         Entrypoint = [ "${entrypoint}/bin/ironclaw-oci-entrypoint-${name}" ];
