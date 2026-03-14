@@ -20,11 +20,11 @@ let
   cfg = config.services.ironclawOci;
 
   containerStateDir = "/var/lib/ironclaw";
-  containerAnthropicKeyPath = "/run/secrets/ironclaw-anthropic-api-key";
-  containerTelegramTokenPath = "/run/secrets/ironclaw-telegram-bot-token";
-  containerSlackBotTokenPath = "/run/secrets/ironclaw-slack-bot-token";
-  containerSlackAppTokenPath = "/run/secrets/ironclaw-slack-app-token";
-  containerSlackSigningSecretPath = "/run/secrets/ironclaw-slack-signing-secret";
+  containerAnthropicKeyPath = "/secrets/ironclaw-anthropic-api-key";
+  containerTelegramTokenPath = "/secrets/ironclaw-telegram-bot-token";
+  containerSlackBotTokenPath = "/secrets/ironclaw-slack-bot-token";
+  containerSlackAppTokenPath = "/secrets/ironclaw-slack-app-token";
+  containerSlackSigningSecretPath = "/secrets/ironclaw-slack-signing-secret";
   defaultSubordinateRangeSize = 65536;
 
   instanceType = types.submodule ({ name, config, ... }: {
