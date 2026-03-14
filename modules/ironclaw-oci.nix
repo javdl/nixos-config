@@ -208,7 +208,7 @@ let
 
       ${pkgs.coreutils}/bin/mkdir -p "${containerStateDir}/data" "${containerStateDir}/logs"
 
-      exec ${inst.package}/bin/ironclaw serve
+      exec ${inst.package}/bin/ironclaw service
     '';
 
   mkImage = name: inst:
