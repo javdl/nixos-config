@@ -186,8 +186,8 @@ let
       export AGENT_NAME="${inst.agentName}"
       export HOME="${containerStateDir}"
       export SSL_CERT_FILE="${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
-      export HTTP_HOST="127.0.0.1"
-      export HTTP_PORT="${toString inst.httpPort}"
+      export HTTP_HOST="0.0.0.0"
+      export HTTP_PORT="3000"
       export IRONCLAW_IN_DOCKER="true"
 
       # Telegram
@@ -299,7 +299,9 @@ in
         log-driver = "journald";
         workdir = containerStateDir;
         hostname = "ironclaw-${name}";
-        # No port mapping needed — host networking gives direct access
+        ports = [
+          "127.0.0.1:${toString inst.httpPort}:3000"
+        ];
         environment = {
           IRONCLAW_IN_DOCKER = "true";
           HOME = containerStateDir;
@@ -317,8 +319,8 @@ in
           "--pids-limit=512"
           "--memory=2g"
           "--cpus=2"
-          # Host networking so container can reach host PostgreSQL on localhost
-          "--network=host"
+          # Allow container to reach host PostgreSQL via localhost loopback
+          "--network=slirp4netns:allow_host_loopback=true"
         ] ++ inst.extraOptions;
         podman = {
           user = inst.user;

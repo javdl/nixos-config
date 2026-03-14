@@ -268,7 +268,7 @@
     }];
     # Listen on localhost only (container uses host networking)
     settings = {
-      listen_addresses = lib.mkForce "127.0.0.1";
+      listen_addresses = lib.mkForce "*";
     };
     # Create pgvector extension after database is ready
     initialScript = pkgs.writeText "ironclaw-pg-init" ''
@@ -278,8 +278,9 @@
     authentication = ''
       # Allow ironclaw system user via Unix socket (peer auth)
       local ironclaw ironclaw peer map=ironclaw
-      # Allow localhost connections with password
-      host ironclaw ironclaw 127.0.0.1/32 md5
+      # Allow localhost and slirp4netns container connections (trust for peer-like access)
+      host ironclaw ironclaw 127.0.0.1/32 trust
+      host ironclaw ironclaw 10.0.2.0/24 trust
     '';
     identMap = ''
       # Map any ironclaw-* system user to the ironclaw PostgreSQL role
@@ -295,7 +296,8 @@
     subUidStart = 130200;
     subGidStart = 130200;
     httpPort = 3100;
-    databaseUrl = "postgres://ironclaw@127.0.0.1/ironclaw";
+    # 10.0.2.2 is the host gateway in slirp4netns networking
+    databaseUrl = "postgres://ironclaw@10.0.2.2/ironclaw";
     llmBackend = "anthropic";
     anthropicKeyFile = config.sops.secrets.ironclaw-anthropic-api-key.path;
     telegramTokenFile = config.sops.secrets.ironclaw-telegram-bot-token.path;
