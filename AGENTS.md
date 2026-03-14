@@ -355,6 +355,37 @@ All dev servers include the following AI agent tooling. Run `ntm deps -v` to che
 - **agent-mail** runs as a systemd user service (`systemctl --user status agent-mail`)
 - `~/.cargo/bin` is in PATH via `home.sessionPath` for cargo-installed tools
 
+## BitFocus Companion Config Sync
+
+Companion button/macro configs are synced between machines via chezmoi using the `companion-sync` script.
+
+**Workflow (any machine):**
+```bash
+# After editing Companion buttons/connections:
+companion-sync export          # Exports config via Companion API → chezmoi source
+cd ~/.local/share/chezmoi
+jj describe -m "chore: update Companion config"
+jj bookmark set main -r @ && jj git push
+
+# On another machine, to pull updated config:
+cd ~/.local/share/chezmoi && jj git fetch && jj rebase -d main
+chezmoi apply
+companion-sync import          # Guides you through importing into Companion
+```
+
+**How it works:**
+- `companion-sync export` calls `GET http://localhost:8000/int/export/full?format=json-gz` to save the full config as a `.companionconfig` file (gzipped JSON) into the chezmoi source dir
+- `companion-sync import` offers web UI import (recommended) or direct DB replacement
+- Import via Companion's web UI handles schema migrations across versions safely
+- The config file lives at `~/.config/companion/companion-backup.companionconfig` (managed by chezmoi)
+- Companion must be running for export; import via web UI also requires Companion running
+
+**Important:**
+- Always export before pushing chezmoi changes if you edited Companion
+- The `.companionconfig` format is version-aware — importing across minor version bumps (e.g., 4.1 → 4.2) works fine
+- `machid` (machine identifier) is NOT synced — each machine keeps its own
+- Connection secrets (passwords, API keys) ARE included in the export by default
+
 ## Related Tools
 
 - **Beads**: [github.com/steveyegge/beads](https://github.com/steveyegge/beads) - AI-native issue tracking
