@@ -18,6 +18,7 @@
     ../modules/security-audit.nix
     ../modules/podman.nix
     ../modules/openclaw-oci.nix
+    ../modules/ironclaw-oci.nix
     ../modules/repo-updater.nix
     ../modules/ghostty-terminfo.nix
     ../modules/mosh.nix
@@ -232,11 +233,72 @@
     group = "openclaw-work01";
     mode = "0400";
   };
+  # IronClaw secrets
+  sops.secrets.ironclaw-anthropic-api-key = {
+    owner = "ironclaw-main";
+    group = "ironclaw-main";
+    mode = "0400";
+  };
+  sops.secrets.ironclaw-telegram-bot-token = {
+    owner = "ironclaw-main";
+    group = "ironclaw-main";
+    mode = "0400";
+  };
+  sops.secrets.ironclaw-db-password = {
+    owner = "ironclaw-main";
+    group = "ironclaw-main";
+    mode = "0400";
+  };
   sops.secrets.tailscale-authkey = {
     path = "/etc/tailscale/authkey";
     owner = "root";
     group = "root";
     mode = "0400";
+  };
+
+  # PostgreSQL with pgvector for IronClaw
+  services.postgresql = {
+    enable = true;
+    package = pkgs.postgresql_16;
+    extensions = ps: [ ps.pgvector ];
+    ensureDatabases = [ "ironclaw" ];
+    ensureUsers = [{
+      name = "ironclaw";
+      ensureDBOwnership = true;
+    }];
+    # Listen on localhost only (container uses host networking)
+    settings = {
+      listen_addresses = lib.mkForce "127.0.0.1";
+    };
+    # Create pgvector extension after database is ready
+    initialScript = pkgs.writeText "ironclaw-pg-init" ''
+      \c ironclaw
+      CREATE EXTENSION IF NOT EXISTS vector;
+    '';
+    authentication = ''
+      # Allow ironclaw system user via Unix socket (peer auth)
+      local ironclaw ironclaw peer map=ironclaw
+      # Allow localhost connections with password
+      host ironclaw ironclaw 127.0.0.1/32 md5
+    '';
+    identMap = ''
+      # Map any ironclaw-* system user to the ironclaw PostgreSQL role
+      ironclaw /^ironclaw-(.*)$ ironclaw
+    '';
+  };
+
+  # IronClaw AI assistant instance
+  services.ironclawOci.instances.main = {
+    enable = true;
+    uid = 3020;
+    gid = 3020;
+    subUidStart = 130200;
+    subGidStart = 130200;
+    httpPort = 3100;
+    databaseUrl = "postgres://ironclaw@127.0.0.1/ironclaw";
+    llmBackend = "anthropic";
+    anthropicKeyFile = config.sops.secrets.ironclaw-anthropic-api-key.path;
+    telegramTokenFile = config.sops.secrets.ironclaw-telegram-bot-token.path;
   };
 
   services.openclawOci.instances.work01 = {

@@ -1479,6 +1479,54 @@
             };
           };
 
+          # ironclaw - security-focused personal AI assistant (built from source)
+          ironclaw = let
+            ironclawVersion = "0.18.0";
+          in pkgs-unstable.rustPlatform.buildRustPackage {
+            pname = "ironclaw";
+            version = ironclawVersion;
+
+            src = prev.fetchFromGitHub {
+              owner = "nearai";
+              repo = "ironclaw";
+              rev = "v${ironclawVersion}";
+              hash = "sha256-XFvrhu8MBQhTpK3lQxVLJ83C10Rh18cWrzkiWeOde1k=";
+            };
+
+            cargoHash = "sha256-0Fdj9+UVKrNi3X77MOxA5Az87Rw8wKnTp2W42eTD4TI=";
+
+            # Only build with postgres feature (skip libsql to avoid cmake complexity)
+            buildFeatures = [ "postgres" "html-to-markdown" ];
+            buildNoDefaultFeatures = true;
+
+            # Remove channels-src so build.rs skips WASM compilation (early return).
+            # Telegram/Slack are built directly into the binary via teloxide/Slack crates.
+            postPatch = ''
+              rm -rf channels-src/
+            '';
+
+            nativeBuildInputs = with prev; [
+              pkg-config
+              cmake
+              perl
+            ];
+
+            buildInputs = with prev; [
+              openssl
+              dbus
+            ];
+
+            # Skip tests (need database)
+            doCheck = false;
+
+            meta = with prev.lib; {
+              description = "Security-focused personal AI assistant";
+              homepage = "https://github.com/nearai/ironclaw";
+              license = with licenses; [ mit asl20 ];
+              platforms = [ "x86_64-linux" "aarch64-linux" ];
+            };
+          };
+
           # gh CLI on stable has bugs.
           gh = pkgs-unstable.gh;
 
