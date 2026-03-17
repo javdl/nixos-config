@@ -877,6 +877,10 @@ in {
     enable = true;
     enableDefaultConfig = false;
 
+    includes = [
+      "~/.ssh/brev-ssh-config"  # Brev CLI manages this file for GPU cloud instances
+    ];
+
     matchBlocks = {
       "*" = {
         compression = true;
