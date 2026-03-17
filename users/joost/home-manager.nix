@@ -69,6 +69,7 @@ in {
     asciinema
     air # Live reload for Go
     alacritty
+    brev-cli
     btop
     chezmoi
     kitty
