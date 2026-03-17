@@ -180,6 +180,7 @@
       system = "x86_64-linux";
       user   = "joost";
       server = true;
+      hmConfig = "home-manager-joostclaw";
     };
 
     # Colleague AI dev servers (robot-themed names)

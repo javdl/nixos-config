@@ -1,28 +1,10 @@
 { isWSL, inputs, ... }:
 
-{ config, lib, pkgs, osConfig, ... }:
+{ config, lib, pkgs, ... }:
 
 let
   isDarwin = pkgs.stdenv.isDarwin;
   isLinux = pkgs.stdenv.isLinux;
-  openclawGatewayExec = pkgs.writeShellScript "openclaw-gateway-joostclaw" ''
-    set -euo pipefail
-
-    tokenFile="${osConfig.sops.secrets.openclaw-gateway-token.path}"
-    anthropicKeyFile="${osConfig.sops.secrets.openclaw-anthropic-api-key.path}"
-    if [ ! -f "$tokenFile" ]; then
-      echo "Missing $tokenFile" >&2
-      exit 1
-    fi
-    if [ ! -f "$anthropicKeyFile" ]; then
-      echo "Missing $anthropicKeyFile" >&2
-      exit 1
-    fi
-
-    export OPENCLAW_GATEWAY_TOKEN="$(${pkgs.coreutils}/bin/tr -d '\n' < "$tokenFile")"
-    export ANTHROPIC_API_KEY="$(${pkgs.coreutils}/bin/tr -d '\n' < "$anthropicKeyFile")"
-    exec ${pkgs.openclaw-gateway}/bin/openclaw gateway --port 18789
-  '';
 
   # Import shared configuration
   shared = import ../shared-home-manager.nix {
@@ -224,42 +206,6 @@ in {
       $DRY_RUN_CMD cass index --full || echo "cass index failed (non-fatal)"
     fi
   '';
-
-  #---------------------------------------------------------------------
-  # OpenClaw (AI assistant gateway) - only on joostclaw
-  #---------------------------------------------------------------------
-
-  programs.openclaw = lib.mkIf (osConfig.networking.hostName == "joostclaw") {
-    enable = true;
-    systemd.enable = true;
-    reloadScript.enable = true;
-
-    instances.default = {
-      enable = true;
-      package = pkgs.openclaw-gateway;
-      systemd.enable = true;
-      # Keep gateway secrets out of the Nix store. Telegram/provider secrets
-      # still need to be created on the host before the bot can be enabled.
-      config = {
-        gateway = {
-          mode = "local";
-          auth = {
-            mode = "token";
-            allowTailscale = true;
-          };
-        };
-        channels.telegram = {
-          tokenFile = osConfig.sops.secrets.openclaw-telegram-bot-token.path;
-          allowFrom = [ "5654206852" ];
-        };
-      };
-    };
-  };
-
-  systemd.user.services.openclaw-gateway = lib.mkIf (osConfig.networking.hostName == "joostclaw") {
-    Install.WantedBy = [ "default.target" ];
-    Service.ExecStart = lib.mkForce "${openclawGatewayExec}";
-  };
 
   #---------------------------------------------------------------------
   # Programs

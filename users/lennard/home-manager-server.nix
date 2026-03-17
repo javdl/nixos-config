@@ -81,6 +81,7 @@ in {
     gemini-cli
     cco               # Sandbox wrapper for Claude Code (bubblewrap)
     grepai            # Semantic code search for AI coding assistants
+    gws               # Google Workspace CLI
     ntm               # Named Tmux Manager for AI agent coordination
     opencode
     repo-updater      # GitHub repo sync tool (ru command)
