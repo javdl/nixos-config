@@ -94,13 +94,17 @@ in {
     ++ (lib.optional (pkgs.cross-agent-session-resumer != null) pkgs.cross-agent-session-resumer)
     ++ (lib.optional (pkgs.process-triage != null) pkgs.process-triage)
     ++ (lib.optional (pkgs.remote-compilation-helper != null) pkgs.remote-compilation-helper)
+    ++ (lib.optional (pkgs.cass != null) pkgs.cass)
+    ++ (lib.optional (pkgs.cass-memory != null) pkgs.cass-memory)
     ++ [
     s2p               # Turn code projects into LLM prompts with a TUI
 
     # Development
+    bun
     gnumake
     gcc
     go
+    nixd              # Nix language server (for Zed remote dev)
     nodejs_22
     python3
     poetry
@@ -113,12 +117,15 @@ in {
     zed-editor        # Remote dev server for local Zed connections via SSH
 
     # DevOps
+    bitwarden-cli
     cachix
     chezmoi
     cosign
     devcontainer
     docker-compose
     flyctl
+    git-crypt
+    lazydocker
     railway
 
     # Shell
@@ -181,6 +188,7 @@ in {
     shellAliases = {
       fix-ssh = "_update_ssh_agent && ssh-add -l";
       bd = "br";
+      am = "systemctl --user status agent-mail";
     };
   };
 
@@ -229,6 +237,7 @@ in {
       cat = "bat";
       fix-ssh = "_update_ssh_agent && ssh-add -l";
       bd = "br";
+      am = "systemctl --user status agent-mail";
     };
   };
 
@@ -439,6 +448,7 @@ in {
 
     shellAliases = shared.shellAliases // {
       fix-ssh = "_update_ssh_agent && ssh-add -l";
+      am = "systemctl --user status agent-mail";
     };
 
     initContent = ''
@@ -538,7 +548,7 @@ in {
 
   services.gpg-agent = lib.mkIf isLinux {
     enable = true;
-    pinentryPackage = pkgs.pinentry-tty;
+    pinentry.package = pkgs.pinentry-tty;
     defaultCacheTtl = 31536000;
     maxCacheTtl = 31536000;
   };
@@ -571,6 +581,11 @@ in {
   programs.zellij = {
     enable = true;
   };
+
+  # Zellij layout for fuww projects
+  home.file.".config/zellij/layouts/work.kdl".source = ../zellij-work-fuww.kdl;
+  home.file.".config/zellij/layouts/frontend.kdl".source = ../zellij-frontend-fuww.kdl;
+  home.file.".config/zellij/layouts/backend.kdl".source = ../zellij-backend-fuww.kdl;
 
   # Ensure ~/.ssh directory exists for agent socket symlink
   home.file.".ssh/.keep".text = "";
