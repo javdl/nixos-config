@@ -305,7 +305,7 @@ in {
   home.activation.installCaut = lib.hm.dag.entryAfter ["writeBoundary"] ''
     if ! command -v caut &>/dev/null; then
       echo "Installing caut (coding agent usage tracker)..."
-      $DRY_RUN_CMD bash -c "rustup run nightly cargo install --git https://github.com/Dicklesworthstone/coding_agent_usage_tracker" || echo "caut install failed (requires rustup nightly)"
+      $DRY_RUN_CMD bash -c "${pkgs.rustup}/bin/rustup run nightly cargo install --git https://github.com/Dicklesworthstone/coding_agent_usage_tracker" || echo "caut install failed (requires rustup nightly)"
     fi
   '';
 
@@ -323,7 +323,7 @@ in {
         OPENSSL_DIR='"'"'${pkgs.openssl.dev}'"'"' \
         OPENSSL_LIB_DIR='"'"'${pkgs.openssl.out}/lib'"'"' \
         PKG_CONFIG_PATH='"'"'${pkgs.openssl.dev}/lib/pkgconfig'"'"' \
-        rustup run nightly cargo install --path "'"$DW"'/frankenterm/crates/frankenterm"
+        ${pkgs.rustup}/bin/rustup run nightly cargo install --path "'"$DW"'/frankenterm/crates/frankenterm"
       ' || echo "frankenterm install failed (requires rustup nightly + openssl)"
     fi
   '';

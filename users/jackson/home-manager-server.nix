@@ -144,7 +144,7 @@ in {
   # Initialize Rust stable toolchain so cargo/rustc are immediately available
   home.activation.rustupInit = lib.hm.dag.entryAfter ["writeBoundary"] ''
     if ! $HOME/.rustup/toolchains/stable-*/bin/cargo --version &>/dev/null 2>&1; then
-      $DRY_RUN_CMD rustup default stable
+      $DRY_RUN_CMD ${pkgs.rustup}/bin/rustup default stable
     fi
   '';
 
@@ -152,7 +152,7 @@ in {
   home.activation.installCaut = lib.hm.dag.entryAfter ["writeBoundary"] ''
     if ! $HOME/.cargo/bin/caut --version &>/dev/null; then
       echo "Installing caut (coding agent usage tracker)..."
-      $DRY_RUN_CMD bash -c "PKG_CONFIG_PATH='${pkgs.sqlite.dev}/lib/pkgconfig' LIBRARY_PATH='${pkgs.sqlite.out}/lib' rustup run nightly cargo install --git https://github.com/Dicklesworthstone/coding_agent_usage_tracker" || echo "caut install failed (requires rustup nightly + sqlite)"
+      $DRY_RUN_CMD bash -c "PKG_CONFIG_PATH='${pkgs.sqlite.dev}/lib/pkgconfig' LIBRARY_PATH='${pkgs.sqlite.out}/lib' ${pkgs.rustup}/bin/rustup run nightly cargo install --git https://github.com/Dicklesworthstone/coding_agent_usage_tracker" || echo "caut install failed (requires rustup nightly + sqlite)"
     fi
   '';
 

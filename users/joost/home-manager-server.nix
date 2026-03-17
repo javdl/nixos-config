@@ -149,12 +149,8 @@ in {
 
   # Initialize Rust stable toolchain so cargo/rustc are immediately available
   home.activation.rustupInit = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    if command -v rustup >/dev/null 2>&1; then
-      if ! $HOME/.rustup/toolchains/stable-*/bin/cargo --version &>/dev/null 2>&1; then
-        $DRY_RUN_CMD rustup default stable
-      fi
-    else
-      echo "Skipping rustup initialization: rustup not found"
+    if ! $HOME/.rustup/toolchains/stable-*/bin/cargo --version &>/dev/null 2>&1; then
+      $DRY_RUN_CMD ${pkgs.rustup}/bin/rustup default stable
     fi
   '';
 
@@ -162,7 +158,7 @@ in {
   home.activation.installCaut = lib.hm.dag.entryAfter ["writeBoundary"] ''
     if ! $HOME/.cargo/bin/caut --version &>/dev/null; then
       echo "Installing caut (coding agent usage tracker)..."
-      $DRY_RUN_CMD bash -c "PKG_CONFIG_PATH='${pkgs.sqlite.dev}/lib/pkgconfig' LIBRARY_PATH='${pkgs.sqlite.out}/lib' rustup run nightly cargo install --git https://github.com/Dicklesworthstone/coding_agent_usage_tracker" || echo "caut install failed (requires rustup nightly + sqlite)"
+      $DRY_RUN_CMD bash -c "PKG_CONFIG_PATH='${pkgs.sqlite.dev}/lib/pkgconfig' LIBRARY_PATH='${pkgs.sqlite.out}/lib' ${pkgs.rustup}/bin/rustup run nightly cargo install --git https://github.com/Dicklesworthstone/coding_agent_usage_tracker" || echo "caut install failed (requires rustup nightly + sqlite)"
     fi
   '';
 
@@ -180,7 +176,7 @@ in {
         PKG_CONFIG_PATH='"'"'${pkgs.openssl.dev}/lib/pkgconfig'"'"' \
         OPENSSL_DIR='"'"'${pkgs.openssl.dev}'"'"' \
         OPENSSL_LIB_DIR='"'"'${pkgs.openssl.out}/lib'"'"' \
-        rustup run nightly cargo install --path "'"$DW"'/frankenterm/crates/frankenterm"
+        ${pkgs.rustup}/bin/rustup run nightly cargo install --path "'"$DW"'/frankenterm/crates/frankenterm"
       ' || echo "frankenterm install failed (requires rustup nightly + openssl)"
     fi
   '';
