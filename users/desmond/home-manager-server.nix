@@ -124,7 +124,6 @@ in {
     # Shell
     starship
     wezterm
-    zellij
     zoxide
   ];
 
@@ -567,6 +566,10 @@ in {
       echo '{"statusLine": {"type": "command", "command": "bash ~/.claude/statusline-command.sh"}}' > "$SETTINGS_FILE"
     fi
   '';
+
+  programs.zellij = {
+    enable = true;
+  };
 
   # Zellij layout for fuww projects
   home.file.".config/zellij/layouts/work.kdl".source = ../zellij-work-fuww.kdl;
