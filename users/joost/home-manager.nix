@@ -1143,15 +1143,7 @@ in {
     enable = true;
     package = inputs.neovim-nightly-overlay.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
-    withPython3 = true;
-    extraPython3Packages = (p: with p; [
-      # For nvim-magma
-      jupyter-client
-      cairosvg
-      plotly
-      #pnglatex
-      #kaleido
-    ]);
+    withPython3 = false;
 
     extraLuaConfig = ''
       -- Setup Rose Pine theme
