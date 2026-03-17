@@ -951,24 +951,53 @@
             };
           };
 
-          # cm - cass memory system (Linux only - no macOS binary available)
-          cass-memory = if prev.stdenv.isLinux && prev.stdenv.hostPlatform.system == "x86_64-linux" then prev.stdenv.mkDerivation {
+          # cm - cass memory system
+          # Pre-built GitHub release binaries are broken (bun cross-compilation doesn't embed scripts).
+          # Build from source using bun in a plain derivation with fixed-output hash for deps.
+          cass-memory = if prev.stdenv.isLinux && prev.stdenv.hostPlatform.system == "x86_64-linux" then
+          let
+            src = prev.fetchFromGitHub {
+              owner = "Dicklesworthstone";
+              repo = "cass_memory_system";
+              rev = "v0.2.3";
+              hash = "sha256-sVLYU68Vw3nSIcYBGAxP/OIaJBOJ7Kmjfzn/gOSPgDs=";
+            };
+            # Fixed-output derivation for bun install (needs network)
+            bunDeps = prev.stdenv.mkDerivation {
+              pname = "cass-memory-bun-deps";
+              version = "0.2.3";
+              inherit src;
+              nativeBuildInputs = [ prev.bun prev.cacert ];
+              buildPhase = ''
+                export HOME=$TMPDIR
+                bun install --frozen-lockfile --ignore-scripts
+              '';
+              installPhase = ''
+                mkdir -p $out
+                cp -r node_modules $out/
+              '';
+              outputHashAlgo = "sha256";
+              outputHashMode = "recursive";
+              outputHash = "sha256-BOkyY/cjghC+caQaSdcwiHwfqRsbnnyiHdPlG3yybNc=";
+            };
+          in prev.stdenv.mkDerivation {
             pname = "cass-memory";
             version = "0.2.3";
-
-            src = prev.fetchurl {
-              url = "https://github.com/Dicklesworthstone/cass_memory_system/releases/download/v0.2.3/cass-memory-linux-x64";
-              sha256 = "c1cf33be88ca819f8c457f4519334fa99727da42e29832c71e99fd423f1a29f4";
-            };
-
-            dontUnpack = true;
-
+            inherit src;
+            nativeBuildInputs = [ prev.bun ];
+            # Bun standalone binaries embed JS after the ELF section;
+            # strip and patchelf destroy the embedded code.
+            dontStrip = true;
+            dontPatchELF = true;
+            buildPhase = ''
+              cp -r ${bunDeps}/node_modules ./node_modules
+              bun build src/cm.ts --compile --outfile cm
+            '';
             installPhase = ''
               mkdir -p $out/bin
-              cp $src $out/bin/cm
+              cp cm $out/bin/cm
               chmod +x $out/bin/cm
             '';
-
             meta = with prev.lib; {
               description = "Procedural memory system for AI coding agents";
               homepage = "https://github.com/Dicklesworthstone/cass_memory_system";
