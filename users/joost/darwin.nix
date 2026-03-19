@@ -153,7 +153,7 @@ in
       ++ lib.optionals (!isOffice && !noAudio) audioCasks;
     masApps = { # to find ID, App Store > Share > Copy link
       # masApps reinstall or do a slow check on each run. Manual install is the best option I guess.
-      # "Bitwarden" = 1352778147;
+      # "Bitwarden" = 1352778147; # Use brew/dmg version for SSH agent to work
       # # "Kiwix" = 997079563;
       # "Tacx Training" = 892366151;
     };
