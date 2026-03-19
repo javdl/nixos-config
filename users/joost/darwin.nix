@@ -19,9 +19,8 @@ let
     "claude"
     "chromedriver"
     "cleanshot"
-    "codex"
     "cmux"
-    "codex-app"
+    "codex-app" # OpenAI Codex desktop app
     "companion" # Bitfocus companion, Streamdeck extension and emulation software
     "datagrip"
     "dataspell"
