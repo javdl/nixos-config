@@ -18,7 +18,7 @@ layout {
             pane
         }
     }
-    tab name="about" cwd="~/code/fuww/about" {
+    tab name="fashionunited" cwd="~/code/fuww/fashionunited" {
         pane split_direction="vertical" {
             pane
             pane
@@ -26,13 +26,6 @@ layout {
         }
     }
     tab name="deploy" cwd="~/code/fuww/deploy" {
-        pane split_direction="vertical" {
-            pane
-            pane
-            pane
-        }
-    }
-    tab name="developer" cwd="~/code/fuww/developer" {
         pane split_direction="vertical" {
             pane
             pane
@@ -47,13 +40,6 @@ layout {
         }
     }
     tab name="api" cwd="~/code/fuww/api" {
-        pane split_direction="vertical" {
-            pane
-            pane
-            pane
-        }
-    }
-    tab name="prompts" cwd="~/code/fuww/prompts" {
         pane split_direction="vertical" {
             pane
             pane
