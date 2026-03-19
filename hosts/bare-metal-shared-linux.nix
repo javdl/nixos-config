@@ -160,7 +160,6 @@ in {
   environment.systemPackages = with pkgs; [
 
     aichat
-    aider-chat
     code-cursor
     fabric-ai
     #local.files-to-prompt

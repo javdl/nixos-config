@@ -163,12 +163,9 @@ in {
     wasm-pack
     # pkgsUnstable.fermyon-spin  # Use unstable version
 
-    python3
-    poetry
     uv
 
     aichat
-    # aider-chat  # Temporarily disabled due to python3.12-setproctitle build failure on macOS
     crush
     darktable
     dbeaver-bin
@@ -207,7 +204,6 @@ in {
     neofetch
     nixd # Nix language server, used by Zed
     # obs-studio
-    python3
     pocketbase
     # surrealdb # Builds from src
     # tailscale # install via Brew to prevent system extension problems on macos

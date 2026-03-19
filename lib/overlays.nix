@@ -1554,28 +1554,5 @@
           # Want the latest version of these
           nushell = pkgs-unstable.nushell;
 
-          # Fix setproctitle test failures on macOS
-          # Fix aiohttp test_base_ctor hostname assertion failure in Nix sandbox
-          python3 = prev.python3.override {
-            packageOverrides = pyFinal: pyPrev: {
-              setproctitle = pyPrev.setproctitle.overridePythonAttrs (old: {
-                doCheck = false;
-              });
-              aiohttp = pyPrev.aiohttp.overridePythonAttrs (old: {
-                disabledTests = (old.disabledTests or []) ++ [ "test_base_ctor" ];
-              });
-            };
-          };
-
-          python313 = prev.python313.override {
-            packageOverrides = pyFinal: pyPrev: {
-              setproctitle = pyPrev.setproctitle.overridePythonAttrs (old: {
-                doCheck = false;
-              });
-              aiohttp = pyPrev.aiohttp.overridePythonAttrs (old: {
-                disabledTests = (old.disabledTests or []) ++ [ "test_base_ctor" ];
-              });
-            };
-          };
         })
 ]
