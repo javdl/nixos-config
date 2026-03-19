@@ -4,6 +4,9 @@ let
   # Machines that only get core casks (no creative/personal apps)
   isOffice = builtins.elem currentSystemName [ "fu146" ];
 
+  # Machines without audio production tools
+  noAudio = builtins.elem currentSystemName [ "macbook-air-m4" ];
+
   # Core casks installed on all machines
   coreCasks = [
     # "bitwarden" Must be installed via Mac App Store for browser integration to work
@@ -69,14 +72,8 @@ let
     "zed"
   ];
 
-  # Creative, audio production, and personal casks (skip on office machines)
+  # Creative and personal casks (skip on office machines)
   personalCasks = [
-    # handmatig installeren:
-    # ableton-live 12
-    # davinci-resolve
-    # most plugins fabfilter
-    # shure update utility
-    # dirac live processor
     "adobe-dng-converter"
     "affinity-designer"
     "affinity-photo"
@@ -87,35 +84,45 @@ let
     "balenaetcher"
     "calibre"
     "digikam"
-    "fabfilter-pro-c"
-    "fabfilter-pro-ds"
-    "fabfilter-pro-g"
-    "ilok-license-manager"
     "imazing-profile-editor"
-    "izotope-product-portal"
     "kobo"
     "licecap"
     "loopback" # Rogue Amoeba
     "macfuse"
-    "mixxx" # open traktor
     "monodraw"
-    "native-access"
     "obs"
     "reaper"
-    "rode-central" # firmware update
     "screenflow"
+    # "screenpipe" outdated on brew
+    "soundsource" # Rogue Amoeba, allows headphone EQ presets
+    "transmission"
+    # "vmware-fusion" # Disabled because you need a Broadcom profile
+    "wacom-tablet"
+  ];
+
+  # Audio production casks (only on studio/production machines)
+  audioCasks = [
+    # handmatig installeren:
+    # ableton-live 12
+    # davinci-resolve
+    # most plugins fabfilter
+    # shure update utility
+    # dirac live processor
+    "fabfilter-pro-c"
+    "fabfilter-pro-ds"
+    "fabfilter-pro-g"
+    "ilok-license-manager"
+    "izotope-product-portal"
+    "mixxx" # open traktor
+    "native-access"
+    "rode-central" # firmware update
     "softube-central" # ua connect NA
     # "soundtoys" broken / needs check
-    "soundsource" # Rogue Amoeba, allows headphone EQ presets
-    # "screenpipe" outdated on brew
     "spitfire-audio"
     "tdr-kotelnikov"
     "tdr-molotok"
     "tdr-nova"
     "tdr-prism"
-    "transmission"
-    # "vmware-fusion" # Disabled because you need a Broadcom profile
-    "wacom-tablet"
     "waves-central"
   ];
 in
@@ -141,7 +148,9 @@ in
       "vercel-cli"
       "workos/tap/workos-cli"
     ];
-    casks = coreCasks ++ lib.optionals (!isOffice) personalCasks;
+    casks = coreCasks
+      ++ lib.optionals (!isOffice) personalCasks
+      ++ lib.optionals (!isOffice && !noAudio) audioCasks;
     masApps = { # to find ID, App Store > Share > Copy link
       # masApps reinstall or do a slow check on each run. Manual install is the best option I guess.
       # "Bitwarden" = 1352778147;
