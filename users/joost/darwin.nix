@@ -133,6 +133,7 @@ in
     taps = [
       "bearcove/tap"
       "dicklesworthstone/tap"
+      "manaflow-ai/cmux"
       "workos/tap"
     ];
     brews = [

@@ -1,4 +1,4 @@
-{ isWSL, inputs, ... }:
+{ isWSL, inputs, currentSystemName, ... }:
 
 { config, lib, pkgs, ... }:
 
@@ -115,7 +115,6 @@ in {
     nodePackages.vercel
     supabase-cli
     tree
-    vault
     watch
     xh # for sending HTTP requests (like HTTPie)
     zellij # Terminal workspace with batteries included
@@ -224,7 +223,9 @@ in {
     bun
     nodejs_22
     nodePackages.firebase-tools
-  ] ++ (lib.optionals isDarwin [
+  ] ++ (lib.optionals (currentSystemName != "macbook-air-m4") [
+    vault
+  ]) ++ (lib.optionals isDarwin [
     aerospace
     # This is automatically setup on Linux
     cachix

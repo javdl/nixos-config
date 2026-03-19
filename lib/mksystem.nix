@@ -78,6 +78,7 @@ in systemFunc rec {
       home-manager.users.${user} = import userHMConfig {
         isWSL = isWSL;
         inputs = inputs;
+        currentSystemName = name;
       };
       # Suppress "options.json references store path without proper context" warning
       # Upstream bug: https://github.com/nix-community/home-manager/issues/7935
