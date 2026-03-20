@@ -25,21 +25,21 @@ layout {
             pane
         }
     }
-    tab name="deploy" cwd="~/code/fuww/deploy" {
+    tab name="deploy" cwd="~/code/fuww/fashionunited/infra/deploy" {
         pane split_direction="vertical" {
             pane
             pane
             pane
         }
     }
-    tab name="frontend" cwd="~/code/fuww/frontend" {
+    tab name="frontend" cwd="~/code/fuww/fashionunited/apps/frontend" {
         pane split_direction="vertical" {
             pane
             pane
             pane
         }
     }
-    tab name="api" cwd="~/code/fuww/api" {
+    tab name="api" cwd="~/code/fuww/fashionunited/apps/api" {
         pane split_direction="vertical" {
             pane
             pane

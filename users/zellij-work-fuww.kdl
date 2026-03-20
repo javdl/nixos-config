@@ -1,8 +1,26 @@
 layout {
-    tab name="api" cwd="~/code/fuww/api" focus=true {
+    tab name="fashionunited" cwd="~/code/fuww/fashionunited" focus=true {
         pane
     }
-    tab name="frontend" cwd="~/code/fuww/frontend" {
+    tab name="api" cwd="~/code/fuww/fashionunited/apps/api" {
+        pane
+    }
+    tab name="frontend" cwd="~/code/fuww/fashionunited/apps/frontend" {
+        pane
+    }
+    tab name="handbook" cwd="~/code/fuww/fashionunited/apps/handbook" {
+        pane
+    }
+    tab name="docs" cwd="~/code/fuww/fashionunited/apps/docs" {
+        pane
+    }
+    tab name="prompts" cwd="~/code/fuww/fashionunited/packages/prompts" {
+        pane
+    }
+    tab name="linear" cwd="~/code/fuww/fashionunited/docs/linear" {
+        pane
+    }
+    tab name="services" cwd="~/code/fuww/fashionunited/services" {
         pane
     }
 }
