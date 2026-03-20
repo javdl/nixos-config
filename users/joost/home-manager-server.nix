@@ -128,6 +128,7 @@ in {
     flyctl
     git-crypt
     lazydocker
+    nodePackages.vercel
     railway
 
     # Shell

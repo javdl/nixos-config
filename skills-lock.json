@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "workos": {
+      "source": "workos/skills",
+      "sourceType": "github",
+      "computedHash": "7b01eb2522abcb4133c18f3a038d3cf33d302f2352463737c6ea186951105d6d"
+    }
+  }
+}
