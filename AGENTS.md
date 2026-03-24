@@ -35,6 +35,11 @@ This is a NixOS/nix-darwin configuration repository using Nix flakes. It manages
 - `make vm/copy` - Copy configs to VM
 - `make vm/switch` - Apply changes in VM
 
+### Scraper Machine (fu146)
+Mac Studio M1 configured as a minimal scraping workstation. Uses `isMinimal` flag in `darwin.nix` and `home-manager.nix` to install only browsers (Chrome, Chrome Canary, Firefox, Firefox Dev Edition, Brave, LibreWolf, Zen) and essential tools (Bitwarden, Google Drive, Companion, Linear, Zed, Podman, etc.). No IDEs, creative apps, audio tools, or social apps. Chrome Canary is used for scraping with Claude Code.
+
+Apply config from GitHub: `darwin-rebuild switch --flake "github:javdl/nixos-config#fu146"`
+
 ### Hetzner Dev Box (joost)
 - `make hetzner/provision NIXADDR=<ip> NIXNAME=<hostname>` - **Single-command provisioning** (no rescue mode needed, uses nixos-anywhere + disko)
 - `make hetzner/copy NIXADDR=<ip>` - Copy config to Hetzner server
