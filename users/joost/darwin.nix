@@ -15,7 +15,6 @@ let
     "firefox"
     "firefox@developer-edition"
     "google-chrome"
-    "google-chrome-canary"
     "librewolf"
     "zen"
     # Essential tools
