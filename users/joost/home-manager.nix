@@ -5,6 +5,7 @@
 let
   isDarwin = pkgs.stdenv.isDarwin;
   isLinux = pkgs.stdenv.isLinux;
+  isMinimal = currentSystemName == "fu146";
 
   # Import shared configuration
   shared = import ../shared-home-manager.nix {
@@ -164,6 +165,8 @@ in {
 
     uv
 
+    slack
+  ] ++ (lib.optionals (!isMinimal) [
     aichat
     crush
     darktable
@@ -175,9 +178,11 @@ in {
     # google-chrome  # Marked insecure in nixpkgs (updater broken). Use Homebrew cask on macOS, chromium on Linux.
     inkscape
     postman
-    slack
+    neofetch
+    transmission_4
     # spotify
     # telegram-desktop
+  ]) ++ [
 
     # Fonts
     font-awesome # waybar icons
@@ -200,13 +205,11 @@ in {
     git-crypt
     glab
     k9s # Kuberenetes CLI
-    neofetch
     nixd # Nix language server, used by Zed
     # obs-studio
     pocketbase
     # surrealdb # Builds from src
     # tailscale # install via Brew to prevent system extension problems on macos
-    transmission_4
     yubikey-manager
     bitwarden-cli
 

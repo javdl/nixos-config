@@ -1,13 +1,39 @@
 { inputs, pkgs, currentSystemName, lib, ... }:
 
 let
-  # Machines that only get core casks (no creative/personal apps)
-  isOffice = builtins.elem currentSystemName [ "fu146" ];
+  # Machines that get a minimal set of casks (scraping/browsing focus)
+  isMinimal = builtins.elem currentSystemName [ "fu146" ];
 
   # Machines without audio production tools
   noAudio = builtins.elem currentSystemName [ "macbook-air-m4" ];
 
-  # Core casks installed on all machines
+  # Minimal casks for scraping-focused machines (fu146)
+  minimalCasks = [
+    "bitwarden"
+    # Browsers
+    "brave-browser"
+    "firefox"
+    "firefox@developer-edition"
+    "google-chrome"
+    "google-chrome-canary"
+    "librewolf"
+    "zen"
+    # Essential tools
+    "chromedriver"
+    "companion" # Bitfocus companion, Streamdeck extension and emulation software
+    "google-drive"
+    "insync"
+    "istat-menus"
+    "libreoffice"
+    "linear-linear"
+    "obsidian"
+    "podman-desktop"
+    "raycast" # for searching nix GUI apps
+    "tailscale-app"
+    "zed"
+  ];
+
+  # Core casks installed on all non-minimal machines
   coreCasks = [
     # "bitwarden" Must be installed via Mac App Store for browser integration to work
     # However, non-App Store version is required for SSH agent to work
@@ -71,7 +97,7 @@ let
     "zed"
   ];
 
-  # Creative and personal casks (skip on office machines)
+  # Creative and personal casks (skip on minimal machines)
   personalCasks = [
     "adobe-dng-converter"
     "affinity-designer"
@@ -148,9 +174,10 @@ in
       "vercel-cli"
       "workos/tap/workos-cli"
     ];
-    casks = coreCasks
-      ++ lib.optionals (!isOffice) personalCasks
-      ++ lib.optionals (!isOffice && !noAudio) audioCasks;
+    casks = if isMinimal then minimalCasks
+      else coreCasks
+        ++ personalCasks
+        ++ lib.optionals (!noAudio) audioCasks;
     masApps = { # to find ID, App Store > Share > Copy link
       # masApps reinstall or do a slow check on each run. Manual install is the best option I guess.
       # "Bitwarden" = 1352778147; # Use brew/dmg version for SSH agent to work
