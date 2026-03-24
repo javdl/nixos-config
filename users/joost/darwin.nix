@@ -200,27 +200,27 @@ in
   environment.systemPackages = [ pkgs.duti ];
 
   system.activationScripts.postActivation.text = ''
-    # Set RustRover as default editor for dev files
+    # Set Zed as default editor for dev files
     # Using || true to ignore errors for file types the app doesn't declare support for
-    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .json all || true
-    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .md all || true
-    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .yaml all || true
-    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .yml all || true
-    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .toml all || true
-    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .rs all || true
-    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .py all || true
-    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .js all || true
-    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .ts all || true
-    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .tsx all || true
-    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .jsx all || true
-    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .css all || true
-    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .scss all || true
-    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .nix all || true
-    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .sh all || true
-    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .txt all || true
-    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .xml all || true
-    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .sql all || true
-    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .go all || true
-    ${pkgs.duti}/bin/duti -s com.jetbrains.rustrover .lua all || true
+    ${pkgs.duti}/bin/duti -s dev.zed.Zed .json all || true
+    ${pkgs.duti}/bin/duti -s dev.zed.Zed .md all || true
+    ${pkgs.duti}/bin/duti -s dev.zed.Zed .yaml all || true
+    ${pkgs.duti}/bin/duti -s dev.zed.Zed .yml all || true
+    ${pkgs.duti}/bin/duti -s dev.zed.Zed .toml all || true
+    ${pkgs.duti}/bin/duti -s dev.zed.Zed .rs all || true
+    ${pkgs.duti}/bin/duti -s dev.zed.Zed .py all || true
+    ${pkgs.duti}/bin/duti -s dev.zed.Zed .js all || true
+    ${pkgs.duti}/bin/duti -s dev.zed.Zed .ts all || true
+    ${pkgs.duti}/bin/duti -s dev.zed.Zed .tsx all || true
+    ${pkgs.duti}/bin/duti -s dev.zed.Zed .jsx all || true
+    ${pkgs.duti}/bin/duti -s dev.zed.Zed .css all || true
+    ${pkgs.duti}/bin/duti -s dev.zed.Zed .scss all || true
+    ${pkgs.duti}/bin/duti -s dev.zed.Zed .nix all || true
+    ${pkgs.duti}/bin/duti -s dev.zed.Zed .sh all || true
+    ${pkgs.duti}/bin/duti -s dev.zed.Zed .txt all || true
+    ${pkgs.duti}/bin/duti -s dev.zed.Zed .xml all || true
+    ${pkgs.duti}/bin/duti -s dev.zed.Zed .sql all || true
+    ${pkgs.duti}/bin/duti -s dev.zed.Zed .go all || true
+    ${pkgs.duti}/bin/duti -s dev.zed.Zed .lua all || true
   '';
 }
