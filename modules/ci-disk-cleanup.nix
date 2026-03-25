@@ -24,20 +24,21 @@ in {
   };
 
   config = mkIf cfg.enable {
-    # Use NixOS built-in Docker prune (removes unused images, containers, networks)
+    # Use NixOS built-in Docker prune — only remove images/containers older than 24h
+    # Keeps recently-pulled base images (node, etc.) so CI builds stay fast
     virtualisation.docker.autoPrune = {
       enable = true;
       dates = "daily";
-      flags = [ "--all" "--volumes" ];
+      flags = [ "--all" "--filter" "until=24h" ];
     };
 
-    # Also prune build cache daily (not covered by docker system prune)
+    # Prune build cache older than 7 days (keeps recent layer cache for faster builds)
     systemd.services.docker-builder-prune = {
-      description = "Docker builder cache prune";
+      description = "Docker builder cache prune (>7d)";
       after = [ "docker.service" ];
       requires = [ "docker.service" ];
       script = ''
-        ${pkgs.docker}/bin/docker builder prune --all --force
+        ${pkgs.docker}/bin/docker builder prune --force --filter "until=168h"
       '';
       serviceConfig = {
         Type = "oneshot";
@@ -50,7 +51,7 @@ in {
       description = "Timer for Docker builder cache prune";
       wantedBy = [ "timers.target" ];
       timerConfig = {
-        OnCalendar = "daily";
+        OnCalendar = "weekly";
         RandomizedDelaySec = 900;
         Persistent = true;
       };
