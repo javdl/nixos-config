@@ -21,6 +21,7 @@
     ../modules/ghostty-terminfo.nix
     ../modules/mosh.nix
     ../modules/netdata.nix
+    ../modules/ci-disk-cleanup.nix
   ];
 
   # Enable the GitHub Actions runner packages module
@@ -48,6 +49,9 @@
       keep-derivations = true
     '';
   };
+
+  # CI disk cleanup: Docker prune, journal vacuum, tmp cleanup
+  services.ciDiskCleanup.enable = true;
 
   # Disk-based garbage collection (shorter retention for CI - builds are ephemeral)
   services.automaticNixGC = {
