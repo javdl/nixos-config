@@ -76,7 +76,7 @@
     enable = true;
     failureMode = "printk";
     maxLogFile = 50;
-    numLogs = 10;
+    numLogs = 5;  # 250MB max total (50MB x 5) — CI doesn't need deep history
   };
 
   # Allow unfree packages

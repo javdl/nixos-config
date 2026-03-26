@@ -45,6 +45,22 @@ in {
     # Enable the audit daemon
     security.auditd.enable = true;
 
+    # Configure auditd log rotation
+    environment.etc."audit/auditd.conf".text = ''
+      log_file = ${cfg.logFile}
+      log_format = ENRICHED
+      freq = 50
+      num_logs = ${toString cfg.numLogs}
+      max_log_file = ${toString cfg.maxLogFile}
+      max_log_file_action = ROTATE
+      space_left = 100
+      space_left_action = SYSLOG
+      admin_space_left = 50
+      admin_space_left_action = SUSPEND
+      disk_full_action = SUSPEND
+      disk_error_action = SUSPEND
+    '';
+
     # Enable audit at boot (kernel parameter)
     security.audit = {
       enable = true;

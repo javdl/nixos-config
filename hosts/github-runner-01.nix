@@ -51,7 +51,10 @@
   };
 
   # CI disk cleanup: Docker prune, journal vacuum, tmp cleanup
-  services.ciDiskCleanup.enable = true;
+  services.ciDiskCleanup = {
+    enable = true;
+    diskThresholdGB = 40;  # Higher threshold for 220G disk
+  };
 
   # Disk-based garbage collection (shorter retention for CI - builds are ephemeral)
   services.automaticNixGC = {
@@ -76,7 +79,7 @@
     enable = true;
     failureMode = "printk";
     maxLogFile = 50;
-    numLogs = 10;
+    numLogs = 5;  # 250MB max total (50MB x 5) — CI doesn't need deep history
   };
 
   # Allow unfree packages

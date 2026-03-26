@@ -106,6 +106,17 @@ in {
           # 4. Clean old logs
           journalctl --vacuum-size=200M 2>/dev/null || true
 
+          # 5. Truncate audit logs if they're large (auditd rotation can lag)
+          if [ -f /var/log/audit/audit.log ]; then
+            AUDIT_MB=$(du -sm /var/log/audit 2>/dev/null | awk '{print $1}')
+            if [ "''${AUDIT_MB:-0}" -gt 500 ]; then
+              echo "Audit logs are ''${AUDIT_MB}MB, truncating..."
+              find /var/log/audit -name 'audit.log.*' -delete 2>/dev/null || true
+              truncate -s 0 /var/log/audit/audit.log
+              echo "Truncated audit logs"
+            fi
+          fi
+
           NEW_AVAIL=$(df -BG / | awk 'NR==2 {gsub("G",""); print $4}')
           echo "Available after cleanup: ''${NEW_AVAIL}GB"
         fi
