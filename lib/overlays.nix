@@ -1553,6 +1553,7 @@
 
           # Want the latest version of these
           nushell = pkgs-unstable.nushell;
+          google-cloud-sdk = pkgs-unstable.google-cloud-sdk;
 
         })
 ]
