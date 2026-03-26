@@ -128,7 +128,7 @@ in {
     flyctl
     git-crypt
     lazydocker
-    nodePackages.vercel
+    # vercel CLI installed via npm in activation script (removed from nixpkgs)
     railway
 
     # Shell
@@ -136,6 +136,14 @@ in {
     wezterm
     zoxide
   ];
+
+  # Install/update Vercel CLI via npm (removed from nixpkgs)
+  home.activation.installVercel = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    if ! command -v vercel &>/dev/null; then
+      echo "Installing Vercel CLI..."
+      $DRY_RUN_CMD ${pkgs.nodejs_20}/bin/npm install -g vercel@latest 2>/dev/null || echo "Vercel CLI install failed"
+    fi
+  '';
 
   # Install Claude Code CLI using native installer (always gets latest version)
   home.activation.installClaudeCode = lib.hm.dag.entryAfter ["writeBoundary"] ''

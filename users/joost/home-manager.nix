@@ -113,7 +113,7 @@ in {
     railway
     ripgrep
     ast-grep
-    nodePackages.vercel
+    # vercel CLI installed via npm in activation script (removed from nixpkgs)
     supabase-cli
     tree
     watch
@@ -294,6 +294,14 @@ in {
     #   --border="rounded" --border-label="" --preview-window="border-rounded" --prompt="> "
     # '';
   };
+
+  # Install/update Vercel CLI via npm (removed from nixpkgs)
+  home.activation.installVercel = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    if ! command -v vercel &>/dev/null || [ "$(vercel --version 2>/dev/null | head -1)" != "$(${pkgs.nodejs_20}/bin/npm view vercel version 2>/dev/null)" ]; then
+      echo "Installing/updating Vercel CLI..."
+      $DRY_RUN_CMD ${pkgs.nodejs_20}/bin/npm install -g vercel@latest 2>/dev/null || echo "Vercel CLI install failed"
+    fi
+  '';
 
   # Install Claude Code CLI if not present
   home.activation.installClaudeCode = lib.hm.dag.entryAfter ["writeBoundary"] ''
