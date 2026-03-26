@@ -188,6 +188,10 @@ in {
     font-awesome # waybar icons
     fira-code
     fira-code-symbols
+    geist-font # Vercel Geist (sans + mono)
+    ia-writer-duospace
+    ia-writer-mono
+    ia-writer-quattro
     ibm-plex
     jetbrains-mono
     liberation_ttf
