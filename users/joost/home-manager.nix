@@ -95,6 +95,7 @@ in {
     fzf
     gemini-cli
     gh
+    graphite-cli
     # ghostty
     git-lfs
     gdk
