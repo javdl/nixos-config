@@ -78,7 +78,7 @@ Before the individual findings, note the most dangerous attack chain spanning mu
 ### Vuln 6: Tailscale `trustedInterfaces` Bypasses Entire Firewall
 
 * **Severity:** MEDIUM | **Confidence:** 9/10 | **Priority:** P2
-* **Files:** `hosts/loom.nix:244`, `hosts/hetzner-dev.nix:253`, all Hetzner colleague hosts, `hosts/github-runner-01.nix`, `hosts/github-runner-02.nix`
+* **Files:** `hosts/loom.nix:244`, all Hetzner colleague hosts, `hosts/github-runner-01.nix`, `hosts/github-runner-02.nix`
 * **Description:** Every Hetzner server sets `networking.firewall.trustedInterfaces = [ "tailscale0" ]`, bypassing the NixOS firewall entirely for all Tailscale traffic. Any service on any port is accessible to any tailnet device.
 * **Exploit Scenario:** A compromised runner (via Finding 1) uses `tailscale status` to discover all hosts, then accesses every listening port on every server — databases, debug ports, development servers — without firewall filtering.
 * **Recommendation:** Replace `trustedInterfaces` with explicit port allowlisting for Tailscale traffic. Use Tailscale ACLs to segment runners from colleague servers.
@@ -142,7 +142,6 @@ Before the individual findings, note the most dangerous attack chain spanning mu
 | Same password hash across all hosts | 2/10 | SSH password auth disabled on affected Hetzner hosts; not exploitable via SSH |
 | Unsigned pre-built binaries with hash pinning | 3/10 | SHA-256 hashes pinned at build time provide integrity; design choice |
 | No admin recovery key in SOPS | — | Operational risk, not exploitable |
-| Placeholder age key for hetzner-dev | — | Deployment failure, not a security exploit |
 | Placeholder passwords for colleagues | — | Invalid hash format, cannot authenticate |
 | Nix trusted-users includes regular user | — | Standard single-developer practice |
 | Ollama/Open-WebUI exposure | 7/10 | Desktop workstation, conditional on Tailscale |

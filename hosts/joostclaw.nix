@@ -154,8 +154,8 @@
 
   # System limits and performance tuning
   boot.kernel.sysctl = {
-    "fs.inotify.max_user_watches" = 524288;
-    "fs.inotify.max_user_instances" = 512;
+    "fs.inotify.max_user_watches" = 2097152;
+    "fs.inotify.max_user_instances" = 2048;
     "fs.file-max" = 2097152;
     "kernel.pid_max" = 4194303;
     "net.core.somaxconn" = 65535;

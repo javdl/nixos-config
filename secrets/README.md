@@ -31,23 +31,23 @@ Add the age key to `../.sops.yaml`:
 
 ```yaml
 keys:
-  - &hetzner-dev age1abc123...  # Replace with actual key
+  - &<hostname> age1abc123...  # Replace with actual key
 
 creation_rules:
-  - path_regex: secrets/hetzner-dev\.yaml$
+  - path_regex: secrets/<hostname>\.yaml$
     key_groups:
       - age:
-          - *hetzner-dev
+          - *<hostname>
 ```
 
 ### 4. Create/Edit secrets
 
 ```bash
 # Create new secrets file
-sops secrets/hetzner-dev.yaml
+sops secrets/<hostname>.yaml
 
 # Edit existing secrets
-sops secrets/hetzner-dev.yaml
+sops secrets/<hostname>.yaml
 ```
 
 Example secrets file content:
@@ -61,10 +61,10 @@ tailscale/authkey: tskey-auth-xxx
 ### 5. Reference secrets in NixOS config
 
 ```nix
-# In hosts/hetzner-dev.nix
+# In hosts/<hostname>.nix
 {
   # Set the secrets file for this host
-  sops.defaultSopsFile = ../secrets/hetzner-dev.yaml;
+  sops.defaultSopsFile = ../secrets/<hostname>.yaml;
 
   # Define secrets to decrypt
   sops.secrets.tailscale-authkey = {};
@@ -80,7 +80,7 @@ tailscale/authkey: tskey-auth-xxx
 ```
 secrets/
 ├── README.md          # This file
-├── hetzner-dev.yaml   # Encrypted secrets for hetzner-dev
+├── <hostname>.yaml   # Encrypted secrets for <hostname>
 └── <hostname>.yaml    # Add more hosts as needed
 ```
 

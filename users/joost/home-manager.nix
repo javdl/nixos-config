@@ -908,27 +908,6 @@ in {
         identitiesOnly = true;
       };
 
-      # Hetzner remote dev server via Tailscale SSH
-      # Tailscale handles auth - no SSH keys needed
-      "hetzner-dev" = {
-        hostname = "100.120.8.90";  # Tailscale IP
-        user = "joost";
-        forwardAgent = true;  # Forward SSH agent for git operations
-        extraOptions = {
-          RequestTTY = "yes";
-          RemoteCommand = "tmux new-session -A -s main";
-        };
-      };
-      # Direct access via public IPv6 (fallback if Tailscale is down)
-      "hetzner-dev-public" = {
-        hostname = "2a01:4f8:1c1f:ad3c::1";  # IPv6
-        user = "joost";
-        forwardAgent = true;
-        extraOptions = {
-          RequestTTY = "yes";
-          RemoteCommand = "tmux new-session -A -s main";
-        };
-      };
     };
   };
 

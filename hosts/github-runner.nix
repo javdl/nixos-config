@@ -74,8 +74,8 @@
   # GitHub Actions specific optimizations
   boot.kernel.sysctl = {
     # Increase inotify limits for file watching
-    "fs.inotify.max_user_watches" = 524288;
-    "fs.inotify.max_user_instances" = 512;
+    "fs.inotify.max_user_watches" = 2097152;
+    "fs.inotify.max_user_instances" = 2048;
     
     # Increase file descriptor limits
     "fs.file-max" = 2097152;
