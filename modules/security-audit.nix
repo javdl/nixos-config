@@ -76,10 +76,6 @@ in {
         # Failure mode (0=silent, 1=printk, 2=panic)
         "-f ${if cfg.failureMode == "silent" then "0" else if cfg.failureMode == "printk" then "1" else "2"}"
 
-        # Monitor process execution
-        "-a always,exit -F arch=b64 -S execve -k process_execution"
-        "-a always,exit -F arch=b32 -S execve -k process_execution"
-
         # Monitor sensitive files
         "-w /etc/passwd -p wa -k identity"
         "-w /etc/group -p wa -k identity"
@@ -91,9 +87,6 @@ in {
         # Monitor SSH configuration and keys
         "-w /etc/ssh/ -p wa -k sshd_config"
         "-w /root/.ssh/ -p wa -k ssh_keys"
-
-        # Monitor user SSH directories (common locations)
-        "-w /home/ -p wa -k user_home"
 
         # Monitor network configuration
         "-w /etc/hosts -p wa -k network_config"

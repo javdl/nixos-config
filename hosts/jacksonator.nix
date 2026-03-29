@@ -17,6 +17,7 @@
     ../modules/automatic-nix-gc.nix
     ../modules/nixos-auto-update.nix
     ../modules/security-audit.nix
+    ../modules/disk-cleanup.nix
     ../modules/podman.nix
     ../modules/repo-updater.nix
     ../modules/ghostty-terminfo.nix
@@ -79,13 +80,11 @@
     ];
   };
 
-  # Security auditing with auditd
-  services.securityAudit = {
-    enable = true;
-    failureMode = "printk";
-    maxLogFile = 50;
-    numLogs = 10;
-  };
+  # Security auditing — disabled, auditd filled disks on dev servers
+  services.securityAudit.enable = false;
+
+  # Weekly disk cleanup (logs, tmp, containers, nix)
+  services.diskCleanup.enable = true;
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
