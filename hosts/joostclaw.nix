@@ -16,6 +16,7 @@
     ../modules/automatic-nix-gc.nix
     ../modules/nixos-auto-update.nix
     ../modules/security-audit.nix
+    ../modules/disk-cleanup.nix
     ../modules/podman.nix
     ../modules/openclaw-oci.nix
     ../modules/ironclaw-oci.nix
@@ -76,13 +77,16 @@
     ];
   };
 
-  # Security auditing with auditd
+  # Security auditing — enabled for claw machines (production)
   services.securityAudit = {
     enable = true;
     failureMode = "printk";
     maxLogFile = 50;
     numLogs = 10;
   };
+
+  # Weekly disk cleanup (logs, tmp, containers, nix)
+  services.diskCleanup.enable = true;
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;

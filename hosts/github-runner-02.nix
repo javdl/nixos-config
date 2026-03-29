@@ -71,13 +71,8 @@
     allowReboot = false;
   };
 
-  # Security auditing with auditd
-  services.securityAudit = {
-    enable = true;
-    failureMode = "printk";
-    maxLogFile = 50;
-    numLogs = 5;  # 250MB max total (50MB x 5) — CI doesn't need deep history
-  };
+  # Security auditing — disabled, auditd filled disks on dev servers
+  services.securityAudit.enable = false;
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
