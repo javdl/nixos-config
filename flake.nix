@@ -164,11 +164,7 @@
       server = true;
     };
 
-    nixosConfigurations.hetzner-dev = mkSystem "hetzner-dev" {
-      system = "x86_64-linux";
-      user   = "joost";
-      server = true;
-    };
+
 
     nixosConfigurations.loom = mkSystem "loom" {
       system = "x86_64-linux";

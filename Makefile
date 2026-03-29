@@ -190,10 +190,10 @@ vm/switch:
 # After bootstrap:
 #   make hetzner/switch NIXADDR=<ip>       # Copy config and apply changes
 #   make hetzner/tailscale-auth NIXADDR=<ip> TAILSCALE_AUTHKEY=<key>  # Set up Tailscale
-#   ssh hetzner-dev                        # Connect via SSH
+#   ssh <hostname>                          # Connect via SSH
 #
 # Once Tailscale is set up:
-#   ssh joost@hetzner-dev                  # Via Tailscale SSH (no keys needed)
+#   ssh joost@<hostname>                   # Via Tailscale SSH (no keys needed)
 
 HETZNER_SSH_OPTIONS=-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no
 

@@ -40,10 +40,10 @@ Mac Studio M1 configured as a minimal scraping workstation. Uses `isMinimal` fla
 
 Apply config from GitHub: `darwin-rebuild switch --flake "github:javdl/nixos-config#fu146"`
 
-### Hetzner Dev Box (joost)
+### Hetzner Servers
 - `make hetzner/provision NIXADDR=<ip> NIXNAME=<hostname>` - **Single-command provisioning** (no rescue mode needed, uses nixos-anywhere + disko)
 - `make hetzner/copy NIXADDR=<ip>` - Copy config to Hetzner server
-- `make hetzner/switch NIXADDR=<ip> NIXNAME=hetzner-dev` - Apply NixOS config on Hetzner
+- `make hetzner/switch NIXADDR=<ip> NIXNAME=<hostname>` - Apply NixOS config on Hetzner
 - `make hetzner/bootstrap0 NIXADDR=<ip>` - Initial NixOS install (legacy, requires rescue mode)
 - `make hetzner/bootstrap NIXADDR=<ip>` - Complete setup after bootstrap0 (legacy)
 - `make hetzner/secrets NIXADDR=<ip>` - Copy SSH/GPG keys to server
