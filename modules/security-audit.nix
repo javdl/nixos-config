@@ -41,7 +41,8 @@ in {
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkMerge [
+    (mkIf cfg.enable {
     # Enable the audit daemon
     security.auditd.enable = true;
 
@@ -134,5 +135,11 @@ in {
     environment.systemPackages = with pkgs; [
       audit  # Provides ausearch, aureport, auditctl
     ];
-  };
+  })
+    (mkIf (!cfg.enable) {
+    # Explicitly disable auditd when module is imported but not enabled
+    security.auditd.enable = false;
+    security.audit.enable = false;
+  })
+  ];
 }
