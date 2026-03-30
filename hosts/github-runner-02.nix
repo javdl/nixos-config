@@ -30,8 +30,9 @@
   # Latest kernel for best hardware support
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
-  # Use systemd-boot for UEFI
+  # Use systemd-boot for UEFI — limit boot entries to prevent /boot filling up
   boot.loader.systemd-boot.enable = true;
+  boot.loader.systemd-boot.configurationLimit = 3;
   boot.loader.efi.canTouchEfiVariables = true;
 
   # Hostname
@@ -58,8 +59,8 @@
     enable = true;
     minFreeGB = 50;
     maxFreeGB = 100;
-    scheduledThresholdGB = 50;
-    keepDays = 7;
+    scheduledThresholdGB = 100;  # Higher threshold for 640G disk — don't let store grow unchecked
+    keepDays = 5;
   };
 
   # Automatic NixOS updates from git repository

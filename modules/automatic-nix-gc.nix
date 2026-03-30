@@ -83,21 +83,32 @@ in {
         THRESHOLD_GB=${toString cfg.scheduledThresholdGB}
         KEEP_DAYS=${toString cfg.keepDays}
 
+        # Always prune old generations — this is cheap and prevents unbounded growth
+        # on large disks that never hit the threshold (e.g. 640G runner-02)
+        echo "Pruning generations older than ''${KEEP_DAYS}d..."
+        ${config.nix.package}/bin/nix-collect-garbage --delete-older-than ''${KEEP_DAYS}d
+        echo "Generation pruning complete"
+
+        # Also clean old system profile links that nix-collect-garbage misses
+        if [ -d /nix/var/nix/profiles ]; then
+          ${pkgs.findutils}/bin/find /nix/var/nix/profiles -name "system-*-link" -mtime +''${KEEP_DAYS} -delete 2>/dev/null || true
+        fi
+
         # Get available space in GB
         AVAIL_GB=$(${pkgs.coreutils}/bin/df -BG "$STORE_PATH" | ${pkgs.gawk}/bin/awk 'NR==2 {gsub("G",""); print $4}')
 
         echo "Available space: ''${AVAIL_GB}GB, threshold: ''${THRESHOLD_GB}GB"
 
         if [ "$AVAIL_GB" -lt "$THRESHOLD_GB" ]; then
-          echo "Below threshold, running garbage collection..."
-          ${config.nix.package}/bin/nix-collect-garbage --delete-older-than ''${KEEP_DAYS}d
-          echo "Garbage collection complete"
+          echo "Below threshold, running store garbage collection..."
+          ${config.nix.package}/bin/nix-store --gc
+          echo "Store garbage collection complete"
 
           # Report new available space
           NEW_AVAIL=$(${pkgs.coreutils}/bin/df -BG "$STORE_PATH" | ${pkgs.gawk}/bin/awk 'NR==2 {gsub("G",""); print $4}')
           echo "Available space after GC: ''${NEW_AVAIL}GB"
         else
-          echo "Sufficient space available, skipping garbage collection"
+          echo "Sufficient space available, skipping store GC"
         fi
       '';
       serviceConfig = {

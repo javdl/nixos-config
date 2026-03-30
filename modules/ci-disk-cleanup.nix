@@ -1,6 +1,7 @@
 { config, lib, pkgs, ... }:
 
-# CI disk cleanup: Docker pruning, journal vacuum, tmp cleanup, tool cache cleanup
+# CI disk cleanup: Docker pruning, journal vacuum, tmp cleanup, tool cache cleanup,
+# runner work dir cleanup, pnpm/npm cache cleanup
 # Designed for GitHub Actions runners where build artifacts are ephemeral
 
 let
@@ -33,6 +34,12 @@ in {
       default = "/run/github-runner";
       description = "GitHub Actions runner work directory root";
     };
+
+    runnerWorkCleanupAge = mkOption {
+      type = types.int;
+      default = 7;
+      description = "Delete runner checkout/cache dirs older than this many days";
+    };
   };
 
   config = mkIf cfg.enable {
@@ -51,6 +58,8 @@ in {
       requires = [ "docker.service" ];
       script = ''
         ${pkgs.docker}/bin/docker builder prune --force --filter "until=168h"
+        # Also prune dangling volumes (not cleaned by docker system prune)
+        ${pkgs.docker}/bin/docker volume prune --force 2>/dev/null || true
       '';
       serviceConfig = {
         Type = "oneshot";
@@ -64,6 +73,93 @@ in {
       wantedBy = [ "timers.target" ];
       timerConfig = {
         OnCalendar = "weekly";
+        RandomizedDelaySec = 900;
+        Persistent = true;
+      };
+    };
+
+    # Clean stale runner work directories (repo checkouts, tool caches, pnpm stores)
+    # Self-hosted runners persist data between jobs — this prevents unbounded growth
+    systemd.services.ci-runner-work-cleanup = {
+      description = "Clean stale GitHub Actions runner work directories";
+      path = with pkgs; [ coreutils findutils gawk ];
+      script = ''
+        set -euo pipefail
+        RUNNER_DIR="${cfg.runnerWorkDir}"
+        AGE_DAYS=${toString cfg.runnerWorkCleanupAge}
+
+        if [ ! -d "$RUNNER_DIR" ]; then
+          echo "Runner dir $RUNNER_DIR not found, skipping"
+          exit 0
+        fi
+
+        echo "=== Runner work directory cleanup (>''${AGE_DAYS}d) ==="
+        BEFORE=$(du -sh "$RUNNER_DIR" 2>/dev/null | awk '{print $1}')
+        echo "Before: $BEFORE"
+
+        # Clean _tool caches (setup-node, setup-gcloud, etc. — re-downloaded on use)
+        find "$RUNNER_DIR" -type d -name "_tool" -mtime +"$AGE_DAYS" -exec rm -rf {} + 2>/dev/null || true
+
+        # Clean _temp directories
+        find "$RUNNER_DIR" -type d -name "_temp" -not -empty -mtime +"$AGE_DAYS" -exec rm -rf {} + 2>/dev/null || true
+
+        # Clean setup-pnpm global store caches (these get huge)
+        find "$RUNNER_DIR" -type d -name "setup-pnpm" -mtime +"$AGE_DAYS" -exec rm -rf {} + 2>/dev/null || true
+
+        # Clean old repo checkout directories (but not _actions, _PipelineMapping, _diag)
+        for dir in "$RUNNER_DIR"/*/; do
+          [ -d "$dir" ] || continue
+          basename=$(basename "$dir")
+          # Skip runner internal directories
+          case "$basename" in
+            _actions|_PipelineMapping|_diag|_temp|_tool|setup-pnpm) continue ;;
+          esac
+          # Skip fuww-runner-* directories themselves (they contain the runner state)
+          [[ "$basename" == fuww-runner* ]] && continue
+        done
+
+        # Within each runner dir, clean old repo checkouts
+        for runner in "$RUNNER_DIR"/fuww-runner*/; do
+          [ -d "$runner" ] || continue
+          for dir in "$runner"/*/; do
+            [ -d "$dir" ] || continue
+            basename=$(basename "$dir")
+            # Skip runner internal directories
+            case "$basename" in
+              _actions|_PipelineMapping|_diag|_temp) continue ;;
+            esac
+            # Remove if older than threshold and not actively in use
+            if [ "$(find "$dir" -maxdepth 0 -mtime +"$AGE_DAYS" 2>/dev/null)" ]; then
+              echo "Removing stale work dir: $dir"
+              rm -rf "$dir"
+            fi
+          done
+        done
+
+        # Clean npm/pnpm caches under the github-runner home
+        for cache_dir in /home/github-runner/.npm /home/github-runner/.pnpm-store /home/github-runner/.cache/pnpm /home/github-runner/.local/share/pnpm; do
+          if [ -d "$cache_dir" ]; then
+            SIZE=$(du -sh "$cache_dir" 2>/dev/null | awk '{print $1}')
+            echo "Cleaning $cache_dir ($SIZE)"
+            rm -rf "$cache_dir"
+          fi
+        done
+
+        AFTER=$(du -sh "$RUNNER_DIR" 2>/dev/null | awk '{print $1}')
+        echo "After: $AFTER"
+      '';
+      serviceConfig = {
+        Type = "oneshot";
+        Nice = 19;
+        IOSchedulingClass = "idle";
+      };
+    };
+
+    systemd.timers.ci-runner-work-cleanup = {
+      description = "Timer for runner work directory cleanup";
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnCalendar = "daily";
         RandomizedDelaySec = 900;
         Persistent = true;
       };
@@ -97,7 +193,8 @@ in {
           # 2. Aggressive Docker cleanup — remove everything older than 4h
           docker system prune --all --force --filter "until=4h" 2>/dev/null || true
           docker builder prune --all --force 2>/dev/null || true
-          echo "Cleaned Docker images and build cache"
+          docker volume prune --force 2>/dev/null || true
+          echo "Cleaned Docker images, build cache, and volumes"
 
           # 3. Nix store GC
           nix-collect-garbage --delete-older-than 3d 2>/dev/null || true
@@ -115,6 +212,25 @@ in {
               truncate -s 0 /var/log/audit/audit.log
               echo "Truncated audit logs"
             fi
+          fi
+
+          # 6. Clean npm/pnpm caches
+          rm -rf /home/github-runner/.npm /home/github-runner/.pnpm-store 2>/dev/null || true
+          rm -rf /home/github-runner/.cache/pnpm /home/github-runner/.local/share/pnpm 2>/dev/null || true
+
+          # 7. Clean all runner work dirs (repos re-clone on next job)
+          if [ -d "$RUNNER_DIR" ]; then
+            for runner in "$RUNNER_DIR"/fuww-runner*/; do
+              [ -d "$runner" ] || continue
+              for dir in "$runner"/*/; do
+                [ -d "$dir" ] || continue
+                case "$(basename "$dir")" in
+                  _actions|_PipelineMapping|_diag) continue ;;
+                esac
+                rm -rf "$dir"
+              done
+            done
+            echo "Cleaned all runner work directories"
           fi
 
           NEW_AVAIL=$(df -BG / | awk 'NR==2 {gsub("G",""); print $4}')
