@@ -40,6 +40,12 @@ in {
       default = 7;
       description = "Delete runner checkout/cache dirs older than this many days";
     };
+
+    monitorIntervalMin = mkOption {
+      type = types.int;
+      default = 10;
+      description = "How often the disk monitor runs (minutes)";
+    };
   };
 
   config = mkIf cfg.enable {
@@ -249,7 +255,7 @@ in {
       wantedBy = [ "timers.target" ];
       timerConfig = {
         OnBootSec = "5m";
-        OnUnitActiveSec = "10m";
+        OnUnitActiveSec = "${toString cfg.monitorIntervalMin}m";
         AccuracySec = "1m";
       };
     };

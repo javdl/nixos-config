@@ -55,6 +55,7 @@
   services.ciDiskCleanup = {
     enable = true;
     diskThresholdGB = 40;  # Higher threshold for 220G disk
+    monitorIntervalMin = 5;  # Check more often — 220G fills fast during Docker builds
   };
 
   # Disk-based garbage collection (shorter retention for CI - builds are ephemeral)
@@ -249,6 +250,37 @@
   # The systemd service runs configure as the 'github-runner' user (not root).
   # On each start, the unconfigure script (root) copies the token to .new-token,
   # then the configure script (github-runner) consumes it to register with GitHub.
+  # Pre-job cleanup: runs before EACH job via runner hook (not just on service start)
+  # Uses ACTIONS_RUNNER_HOOK_JOB_STARTED to check disk before every job pickup
+  environment.etc."github-runner-pre-job.sh" = {
+    mode = "0755";
+    text = ''
+      #!/bin/bash
+      AVAIL_GB=$(df -BG / | awk 'NR==2 {gsub("G",""); print $4}')
+      echo "Pre-job disk check: ''${AVAIL_GB}GB available"
+      if [ "$AVAIL_GB" -lt 40 ]; then
+        echo "Low disk — running emergency cleanup before job"
+        # Docker cleanup (runs as github-runner user who is in docker group)
+        docker system prune --all --force --filter "until=4h" 2>/dev/null || true
+        docker builder prune --all --force 2>/dev/null || true
+        docker volume prune --force 2>/dev/null || true
+        # Clean old runner work dirs
+        for dir in /run/github-runner/fuww-runner/*/; do
+          [ -d "$dir" ] || continue
+          case "$(basename "$dir")" in
+            _actions|_PipelineMapping|_diag|_temp) continue ;;
+          esac
+          if [ "$(find "$dir" -maxdepth 0 -mtime +1 2>/dev/null)" ]; then
+            echo "Removing stale: $dir"
+            rm -rf "$dir"
+          fi
+        done
+        NEW_AVAIL=$(df -BG / | awk 'NR==2 {gsub("G",""); print $4}')
+        echo "After cleanup: ''${NEW_AVAIL}GB available"
+      fi
+    '';
+  };
+
   services.github-runners.fuww-runner = {
     enable = true;
     replace = true;
@@ -260,6 +292,7 @@
     extraPackages = config.services.github-actions-runner.packages.forRunner;
     extraEnvironment = {
       DOCKER_HOST = "unix:///var/run/docker.sock";
+      ACTIONS_RUNNER_HOOK_JOB_STARTED = "/etc/github-runner-pre-job.sh";
     };
   };
 
@@ -274,6 +307,7 @@
     extraPackages = config.services.github-actions-runner.packages.forRunner;
     extraEnvironment = {
       DOCKER_HOST = "unix:///var/run/docker.sock";
+      ACTIONS_RUNNER_HOOK_JOB_STARTED = "/etc/github-runner-pre-job.sh";
     };
   };
 
