@@ -899,6 +899,7 @@ in {
         compression = true;
         serverAliveInterval = 60;
         serverAliveCountMax = 3;
+        identityAgent = "~/.bitwarden-ssh-agent.sock";
       };
 
       "hetzner-work" = {
