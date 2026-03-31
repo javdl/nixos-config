@@ -584,6 +584,12 @@ in {
 
       alias cd = __zoxide_z
       alias cdi = __zoxide_zi
+
+      # Auto-start zellij on SSH login (attach to existing session or create new)
+      if 'ZELLIJ' not-in ($env | columns) and 'SSH_TTY' in ($env | columns) {
+        zellij attach -c
+        exit
+      }
     '';
   };
 
