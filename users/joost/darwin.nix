@@ -39,6 +39,7 @@ let
     "bitwarden"
     "airfoil"
     "beeper"
+    "caffeine"
     "brave-browser"
     "chatgpt"
     "claude"
