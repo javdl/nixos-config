@@ -46,6 +46,7 @@ let
     "cleanshot"
     "cmux"
     "codex-app" # OpenAI Codex desktop app
+    "codexbar" # steipete/tap - Codex menu bar app
     "companion" # Bitfocus companion, Streamdeck extension and emulation software
     "datagrip"
     "dataspell"
@@ -158,6 +159,7 @@ in
       "bearcove/tap"
       "dicklesworthstone/tap"
       "manaflow-ai/cmux"
+      "steipete/tap"
       "workos/tap"
     ];
     brews = [
