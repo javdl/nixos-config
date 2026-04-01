@@ -108,12 +108,18 @@ in {
     # libGL # ML
     # libGLU # ML
     # libheif
-    # lmstudio # Run local LLMs - broken
+    lmstudio
     # ollama
     opencode
+    oxlint
     railway
     ripgrep
     ast-grep
+    shellcheck
+    shfmt
+    actionlint
+    zizmor
+    pnpm
     # vercel CLI installed via npm in activation script (removed from nixpkgs)
     supabase-cli
     tree
@@ -158,13 +164,20 @@ in {
     # Rust should be in flake.nix for each project. However, those configs do need an initial Cargo.lock.Therefore, to create new projects we want Rust globally installed.
     rustup # rust-analyzer, cargo # installed by rustup
     cargo-generate # create project from git template
+    cargo-deny # lint dependencies for licenses, bans, advisories
+    cargo-careful # run Rust code with extra UB checking
+    prek # better pre-commit, written in Rust
     # rust-script
     # rustc
     pre-commit
+    # worktrunk: installed via cargo in activation script below
     wasm-pack
     # pkgsUnstable.fermyon-spin  # Use unstable version
 
     uv
+    ruff # Python linter/formatter
+    ty # Python type checker
+    pip-audit # scan Python deps for vulnerabilities
 
     slack
   ] ++ (lib.optionals (!isMinimal) [
@@ -234,6 +247,7 @@ in {
   ] ++ (lib.optionals (currentSystemName != "macbook-air-m4") [
     vault
   ]) ++ (lib.optionals isDarwin [
+    pkgs.darwin.trash # macos-trash: move files to macOS Trash from CLI
     aerospace
     # This is automatically setup on Linux
     cachix
@@ -312,6 +326,14 @@ in {
   home.activation.installClaudeCode = lib.hm.dag.entryAfter ["writeBoundary"] ''
     if [ ! -f "$HOME/.local/bin/claude" ]; then
       $DRY_RUN_CMD bash -c "curl -fsSL https://claude.ai/install.sh | bash"
+    fi
+  '';
+
+  # Install worktrunk via cargo
+  home.activation.installWorktrunk = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    if ! command -v worktrunk &>/dev/null; then
+      echo "Installing worktrunk..."
+      $DRY_RUN_CMD bash -c "${pkgs.rustup}/bin/rustup run stable cargo install worktrunk" || echo "worktrunk install failed"
     fi
   '';
 
