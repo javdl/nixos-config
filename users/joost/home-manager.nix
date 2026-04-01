@@ -739,6 +739,7 @@ in {
 
      shellAliases = shared.shellAliases // {
        am = "systemctl --user status agent-mail";
+       claude-yolo = "claude --dangerously-skip-permissions";
      };
 
     profileExtra = ''
@@ -750,6 +751,14 @@ in {
     '';
 
     initContent = ''
+      # Claude Code with local LM Studio models
+      claude-local() {
+        ANTHROPIC_BASE_URL=http://localhost:1234 \
+        ANTHROPIC_AUTH_TOKEN=lmstudio \
+        CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 \
+        claude --model qwen/qwen3-coder-next "$@"
+      }
+
       export GPG_TTY=$(tty)
 
       # Force block cursor (escape sequence)
