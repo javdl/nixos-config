@@ -1338,6 +1338,9 @@ in {
       # Ensure nushell knows XDG_CONFIG_HOME (macOS defaults to ~/Library/Application Support/)
       $env.XDG_CONFIG_HOME = ($env.HOME | path join ".config")
 
+      # Bitwarden SSH agent socket (mirrors home.sessionVariables for shells that read it)
+      $env.SSH_AUTH_SOCK = ($env.HOME | path join ".bitwarden-ssh-agent.sock")
+
       # Add nix, homebrew, and user directories to PATH
       # Ghostty launches nu directly (not via login shell), so nix-darwin's /etc/zshenv
       # never runs — we must add nix profile paths explicitly
