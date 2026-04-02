@@ -163,7 +163,7 @@ in {
     code-cursor
     fabric-ai
     #local.files-to-prompt
-    lmstudio # to try, open-webui-like?
+    # lmstudio # broken in nixpkgs
     #local.magic-cli
     mods # pipe command output to a question
     openai-whisper

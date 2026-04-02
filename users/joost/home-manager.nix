@@ -109,7 +109,7 @@ in {
     # libGL # ML
     # libGLU # ML
     # libheif
-    lmstudio
+    # lmstudio # broken in nixpkgs; on macOS use Homebrew cask
     # ollama
     opencode
     oxlint
