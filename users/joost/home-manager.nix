@@ -72,6 +72,7 @@ in {
     alacritty
     brev-cli
     btop
+    bubblewrap
     chezmoi
     kitty
     wezterm
@@ -117,6 +118,7 @@ in {
     ast-grep
     shellcheck
     shfmt
+    socat
     actionlint
     zizmor
     pnpm
