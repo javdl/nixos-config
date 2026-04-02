@@ -44,6 +44,10 @@ in {
 
     # Agent Mail
     am = "systemctl --user status agent-mail";
+
+    # PAI (Personal AI Infrastructure)
+    pai = "bun ~/.claude/PAI/ACTIONS/pai.ts";
+    algorithm = "bun ~/.claude/PAI/Tools/algorithm.ts";
   } // (if isLinux then {
     # Two decades of using a Mac has made this such a strong memory
     # that I'm just going to keep it consistent.
@@ -62,6 +66,10 @@ in {
     EDITOR = "nvim";
     PAGER = "less -FirSwX";
     MANPAGER = "${manpager}/bin/manpager";
+
+    # PAI (Personal AI Infrastructure)
+    PAI_DIR = "$HOME/.claude";
+    PAI_CONFIG_DIR = "$HOME/.config/PAI";
   };
 
   # Common fish plugins - removed with niv

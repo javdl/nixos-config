@@ -22,3 +22,6 @@ mcp_agent_mail/
 
 # SLB state (don't commit pending requests)
 .slb/
+
+# PAI repo (installed via chezmoi to ~/.claude/PAI/, not part of Nix config)
+Personal_AI_Infrastructure/
