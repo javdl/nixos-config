@@ -15,7 +15,7 @@ let
     "firefox"
     "firefox@developer-edition"
     "google-chrome"
-    "librewolf"
+    # "librewolf"
     "zen"
     # Essential tools
     "chromedriver"
@@ -71,7 +71,7 @@ let
     "istat-menus"
     "jetbrains-gateway"
     "jetbrains-toolbox"
-    "librewolf"
+    # "librewolf"
     "linear-linear"
     "legcord"
     "lm-studio"
