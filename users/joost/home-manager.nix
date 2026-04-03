@@ -72,7 +72,6 @@ in {
     alacritty
     brev-cli
     btop
-    bubblewrap
     chezmoi
     kitty
     wezterm
@@ -109,7 +108,7 @@ in {
     # libGL # ML
     # libGLU # ML
     # libheif
-    # lmstudio # broken in nixpkgs; on macOS use Homebrew cask
+    # lmstudio — macOS via brew cask (lm-studio), Linux via nixpkgs-unstable overlay
     # ollama
     opencode
     oxlint
@@ -261,6 +260,7 @@ in {
     # tailscale # do not add here, it will recompile each time
     yabai # tiling window manager
   ]) ++ (lib.optionals (isLinux && !isWSL) [
+    bubblewrap
     chromium
     firefox-devedition
     # brave
@@ -1367,6 +1367,8 @@ in {
 
   programs.nushell = {
     enable = true;
+    # Nushell aliases are managed separately — shared shellAliases use bash/zsh
+    # syntax (TERM=..., command, ~, pipes) that's incompatible with nushell.
     extraEnv = ''
       # Ensure nushell knows XDG_CONFIG_HOME (macOS defaults to ~/Library/Application Support/)
       $env.XDG_CONFIG_HOME = ($env.HOME | path join ".config")
@@ -1438,6 +1440,52 @@ in {
           ^claude ...$args
         }
       }
+
+      # ── Nushell-native aliases (shared-home-manager equivalents) ──
+      # Jujutsu
+      alias jd = jj desc
+      alias jf = jj git fetch
+      alias jn = jj new
+      alias jp = jj git push
+      alias js = jj st
+
+      # File navigation (eza)
+      alias ls = eza --icons --group-directories-first
+      alias lsa = eza --icons --group-directories-first -a
+      alias lt = eza --icons --group-directories-first --tree --level=2
+      alias lta = eza --icons --group-directories-first --tree --level=2 -a
+
+      # TUI tools
+      alias lzg = lazygit
+      alias lzd = lazydocker
+      alias z = zellij
+      alias bd = br
+
+      # AI coding agents
+      alias cc = claude
+      alias cod = codex
+
+      # Gemini (needs TERM override)
+      def --wrapped gemini [...args: string] {
+        with-env { TERM: "xterm-256color" } { ^gemini ...$args }
+      }
+      def --wrapped gmi [...args: string] {
+        with-env { TERM: "xterm-256color" } { ^gemini ...$args }
+      }
+
+      # ── PAI (Personal AI Infrastructure) ──
+      def --wrapped pai [...args: string] { bun ($env.HOME | path join ".claude/PAI/ACTIONS/pai.ts") ...$args }
+      def --wrapped algorithm [...args: string] { bun ($env.HOME | path join ".claude/PAI/Tools/algorithm.ts") ...$args }
+      def --wrapped arbol-run [...args: string] { bun ($env.HOME | path join ".claude/PAI/ACTIONS/lib/runner.v2.ts") ...$args }
+      def --wrapped arbol-pipe [...args: string] { bun ($env.HOME | path join ".claude/PAI/ACTIONS/lib/pipeline-runner.ts") ...$args }
+
+      # ── PAI Voice Server ──
+      def voice-start [] { bash ($env.HOME | path join ".claude/VoiceServer/start.sh") }
+      def voice-stop [] { bash ($env.HOME | path join ".claude/VoiceServer/stop.sh") }
+      def voice-restart [] { bash ($env.HOME | path join ".claude/VoiceServer/restart.sh") }
+      def voice-status [] { bash ($env.HOME | path join ".claude/VoiceServer/status.sh") }
+      def voice-test [] { http post -t application/json http://localhost:8888/notify { message: "Voice system online" } }
+      def voice-health [] { http get http://localhost:8888/health }
     '';
   };
 

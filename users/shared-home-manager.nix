@@ -48,6 +48,16 @@ in {
     # PAI (Personal AI Infrastructure)
     pai = "bun ~/.claude/PAI/ACTIONS/pai.ts";
     algorithm = "bun ~/.claude/PAI/Tools/algorithm.ts";
+    arbol-run = "bun ~/.claude/PAI/ACTIONS/lib/runner.v2.ts";
+    arbol-pipe = "bun ~/.claude/PAI/ACTIONS/lib/pipeline-runner.ts";
+
+    # PAI Voice Server
+    voice-start = "~/.claude/VoiceServer/start.sh";
+    voice-stop = "~/.claude/VoiceServer/stop.sh";
+    voice-restart = "~/.claude/VoiceServer/restart.sh";
+    voice-status = "~/.claude/VoiceServer/status.sh";
+    voice-test = "curl -s -X POST http://localhost:8888/notify -H 'Content-Type: application/json' -d '{\"message\":\"Voice system online\"}'";
+    voice-health = "curl -s http://localhost:8888/health | jq";
   } // (if isLinux then {
     # Two decades of using a Mac has made this such a strong memory
     # that I'm just going to keep it consistent.

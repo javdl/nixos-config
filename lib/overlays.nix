@@ -1548,6 +1548,9 @@
             };
           };
 
+          # LM Studio desktop app (Linux only, macOS uses brew cask)
+          lmstudio = if prev.stdenv.isLinux then pkgs-unstable.lmstudio else null;
+
           # gh CLI on stable has bugs.
           gh = pkgs-unstable.gh;
 

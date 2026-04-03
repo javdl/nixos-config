@@ -74,6 +74,7 @@ let
     "librewolf"
     "linear-linear"
     "legcord"
+    "lm-studio"
     "libreoffice"
     # "logitech-g-hub" # Disabled - errors on each make switch
     "macwhisper"

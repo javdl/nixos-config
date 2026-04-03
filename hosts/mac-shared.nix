@@ -110,6 +110,20 @@ in {
       };
     };
 
+    # PAI Voice Server (ElevenLabs TTS on port 8888)
+    launchd.user.agents.pai-voice-server = {
+      serviceConfig = {
+        ProgramArguments = [
+          "/bin/sh" "-c"
+          ''export PATH="/etc/profiles/per-user/$USER/bin:/run/current-system/sw/bin:/nix/var/nix/profiles/default/bin:/usr/local/bin:/usr/bin:/bin:$HOME/.bun/bin"; exec bun run "$HOME/.claude/VoiceServer/server.ts"''
+        ];
+        RunAtLoad = true;
+        KeepAlive = true;
+        StandardOutPath = "/tmp/pai-voice-server.log";
+        StandardErrorPath = "/tmp/pai-voice-server.log";
+      };
+    };
+
     # Keyboard
     system.keyboard.enableKeyMapping = true;
     system.keyboard.remapCapsLockToEscape = true;
