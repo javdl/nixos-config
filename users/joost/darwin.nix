@@ -113,7 +113,7 @@ let
     "digikam"
     "imazing-profile-editor"
     "kobo"
-    "lmstudio"
+    "lm-studio"
     "licecap"
     "loopback" # Rogue Amoeba
     "macfuse"
