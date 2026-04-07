@@ -270,20 +270,26 @@
     '';
   };
 
-  services.github-runners.fuww-runner = {
-    enable = true;
-    replace = true;
-    name = "github-runner-02";
-    tokenFile = config.sops.secrets.github-runner-token.path;
-    url = "https://github.com/fuww";
-    extraLabels = [ "hetzner" "nixos" "cpx62" "self-hosted-16-cores" ];
-    user = "github-runner";
-    extraPackages = config.services.github-actions-runner.packages.forRunner;
-    extraEnvironment = {
-      DOCKER_HOST = "unix:///var/run/docker.sock";
-      ACTIONS_RUNNER_HOOK_JOB_STARTED = "/etc/github-runner-pre-job.sh";
-    };
-  };
+  # 25 ephemeral runners sharing 1 registration token
+  # Ephemeral runners re-register after each job, so the token can be reused.
+  services.github-runners = lib.listToAttrs (lib.genList (i:
+    let idx = i + 1;
+    in lib.nameValuePair "fuww-runner-${toString idx}" {
+      enable = true;
+      ephemeral = true;
+      replace = true;
+      name = "github-runner-02-${toString idx}";
+      tokenFile = config.sops.secrets.github-runner-token.path;
+      url = "https://github.com/fuww";
+      extraLabels = [ "hetzner" "nixos" "cpx62" "self-hosted-16-cores" ];
+      user = "github-runner";
+      extraPackages = config.services.github-actions-runner.packages.forRunner;
+      extraEnvironment = {
+        DOCKER_HOST = "unix:///var/run/docker.sock";
+        ACTIONS_RUNNER_HOOK_JOB_STARTED = "/etc/github-runner-pre-job.sh";
+      };
+    }
+  ) 25);
 
   # This value determines the NixOS release
   system.stateVersion = "25.05";
