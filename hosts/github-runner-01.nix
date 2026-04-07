@@ -281,35 +281,30 @@
     '';
   };
 
-  services.github-runners.fuww-runner = {
-    enable = true;
-    replace = true;
-    name = "github-runner-01";
-    tokenFile = config.sops.secrets.github-runner-token.path;
-    url = "https://github.com/fuww";
-    extraLabels = [ "hetzner" "nixos" "ccx33" "self-hosted-16-cores" ];
-    user = "github-runner";
-    extraPackages = config.services.github-actions-runner.packages.forRunner;
-    extraEnvironment = {
-      DOCKER_HOST = "unix:///var/run/docker.sock";
-      ACTIONS_RUNNER_HOOK_JOB_STARTED = "/etc/github-runner-pre-job.sh";
-    };
-  };
-
-  services.github-runners.fuww-runner-2 = {
-    enable = true;
-    replace = true;
-    name = "github-runner-01b";
-    tokenFile = config.sops.secrets.github-runner-token-2.path;
-    url = "https://github.com/fuww";
-    extraLabels = [ "hetzner" "nixos" "ccx33" "self-hosted-16-cores" ];
-    user = "github-runner";
-    extraPackages = config.services.github-actions-runner.packages.forRunner;
-    extraEnvironment = {
-      DOCKER_HOST = "unix:///var/run/docker.sock";
-      ACTIONS_RUNNER_HOOK_JOB_STARTED = "/etc/github-runner-pre-job.sh";
-    };
-  };
+  # Generate 25 ephemeral runners sharing 2 registration tokens (round-robin)
+  # Ephemeral runners re-register after each job, so tokens can be reused.
+  services.github-runners = lib.listToAttrs (lib.genList (i:
+    let
+      idx = i + 1;
+      tokenSecret = if lib.mod i 2 == 0
+        then "github-runner-token"
+        else "github-runner-token-2";
+    in lib.nameValuePair "fuww-runner-${toString idx}" {
+      enable = true;
+      ephemeral = true;
+      replace = true;
+      name = "github-runner-01-${toString idx}";
+      tokenFile = config.sops.secrets.${tokenSecret}.path;
+      url = "https://github.com/fuww";
+      extraLabels = [ "hetzner" "nixos" "ccx33" "self-hosted-16-cores" ];
+      user = "github-runner";
+      extraPackages = config.services.github-actions-runner.packages.forRunner;
+      extraEnvironment = {
+        DOCKER_HOST = "unix:///var/run/docker.sock";
+        ACTIONS_RUNNER_HOOK_JOB_STARTED = "/etc/github-runner-pre-job.sh";
+      };
+    }
+  ) 25);
 
   # This value determines the NixOS release
   system.stateVersion = "25.05";
