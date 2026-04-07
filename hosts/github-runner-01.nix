@@ -241,15 +241,8 @@
     mode = "0400";
     owner = "root";
   };
-  sops.secrets.github-runner-token-2 = {
-    mode = "0400";
-    owner = "root";
-  };
 
   # GitHub Actions runner service for fuww organization
-  # The systemd service runs configure as the 'github-runner' user (not root).
-  # On each start, the unconfigure script (root) copies the token to .new-token,
-  # then the configure script (github-runner) consumes it to register with GitHub.
   # Pre-job cleanup: runs before EACH job via runner hook (not just on service start)
   # Uses ACTIONS_RUNNER_HOOK_JOB_STARTED to check disk before every job pickup
   environment.etc."github-runner-pre-job.sh" = {
@@ -286,21 +279,6 @@
     replace = true;
     name = "github-runner-01";
     tokenFile = config.sops.secrets.github-runner-token.path;
-    url = "https://github.com/fuww";
-    extraLabels = [ "hetzner" "nixos" "ccx33" "self-hosted-16-cores" ];
-    user = "github-runner";
-    extraPackages = config.services.github-actions-runner.packages.forRunner;
-    extraEnvironment = {
-      DOCKER_HOST = "unix:///var/run/docker.sock";
-      ACTIONS_RUNNER_HOOK_JOB_STARTED = "/etc/github-runner-pre-job.sh";
-    };
-  };
-
-  services.github-runners.fuww-runner-2 = {
-    enable = true;
-    replace = true;
-    name = "github-runner-01b";
-    tokenFile = config.sops.secrets.github-runner-token-2.path;
     url = "https://github.com/fuww";
     extraLabels = [ "hetzner" "nixos" "ccx33" "self-hosted-16-cores" ];
     user = "github-runner";

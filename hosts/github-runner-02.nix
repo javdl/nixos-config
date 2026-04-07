@@ -237,10 +237,6 @@
     mode = "0400";
     owner = "root";
   };
-  sops.secrets.github-runner-token-2 = {
-    mode = "0400";
-    owner = "root";
-  };
 
   # GitHub Actions runner service for fuww organization
   # The systemd service runs configure as the 'github-runner' user (not root).
@@ -279,21 +275,6 @@
     replace = true;
     name = "github-runner-02";
     tokenFile = config.sops.secrets.github-runner-token.path;
-    url = "https://github.com/fuww";
-    extraLabels = [ "hetzner" "nixos" "cpx62" "self-hosted-16-cores" ];
-    user = "github-runner";
-    extraPackages = config.services.github-actions-runner.packages.forRunner;
-    extraEnvironment = {
-      DOCKER_HOST = "unix:///var/run/docker.sock";
-      ACTIONS_RUNNER_HOOK_JOB_STARTED = "/etc/github-runner-pre-job.sh";
-    };
-  };
-
-  services.github-runners.fuww-runner-2 = {
-    enable = true;
-    replace = true;
-    name = "github-runner-02b";
-    tokenFile = config.sops.secrets.github-runner-token-2.path;
     url = "https://github.com/fuww";
     extraLabels = [ "hetzner" "nixos" "cpx62" "self-hosted-16-cores" ];
     user = "github-runner";
