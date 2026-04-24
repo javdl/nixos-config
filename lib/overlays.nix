@@ -1558,5 +1558,8 @@
           nushell = pkgs-unstable.nushell;
           google-cloud-sdk = pkgs-unstable.google-cloud-sdk;
 
+          # direnv 2.37.1 test-fish gets SIGKILLed in the Darwin sandbox; skip tests.
+          direnv = prev.direnv.overrideAttrs (_: { doCheck = false; });
+
         })
 ]

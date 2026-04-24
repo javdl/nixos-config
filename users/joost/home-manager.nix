@@ -245,7 +245,6 @@ in {
     bun
     nodejs_22
     nodePackages.firebase-tools
-    nodePackages.nx
   ] ++ (lib.optionals (currentSystemName != "macbook-air-m4") [
     vault
   ]) ++ (lib.optionals isDarwin [
