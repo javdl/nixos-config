@@ -316,13 +316,14 @@ in {
     # '';
   };
 
-  # Install/update Vercel CLI via npm (removed from nixpkgs)
-  home.activation.installVercel = lib.hm.dag.entryAfter ["writeBoundary"] ''
+  # Install/update Vercel CLI via npm (removed from nixpkgs).
+  # On Darwin, vercel-cli is managed by homebrew (see darwin.nix), so skip there.
+  home.activation.installVercel = lib.mkIf (!isDarwin) (lib.hm.dag.entryAfter ["writeBoundary"] ''
     if ! command -v vercel &>/dev/null || [ "$(vercel --version 2>/dev/null | head -1)" != "$(${pkgs.nodejs_20}/bin/npm view vercel version 2>/dev/null)" ]; then
       echo "Installing/updating Vercel CLI..."
       $DRY_RUN_CMD ${pkgs.nodejs_20}/bin/npm install -g vercel@latest 2>/dev/null || echo "Vercel CLI install failed"
     fi
-  '';
+  '');
 
   # Install Claude Code CLI if not present
   home.activation.installClaudeCode = lib.hm.dag.entryAfter ["writeBoundary"] ''
@@ -331,19 +332,21 @@ in {
     fi
   '';
 
-  # Install worktrunk via cargo
+  # Install worktrunk via cargo. Recent versions require rustc >= 1.93,
+  # so make sure the stable toolchain is up-to-date before installing.
   home.activation.installWorktrunk = lib.hm.dag.entryAfter ["writeBoundary"] ''
     if ! command -v worktrunk &>/dev/null; then
       echo "Installing worktrunk..."
-      $DRY_RUN_CMD bash -c "${pkgs.rustup}/bin/rustup run stable cargo install worktrunk" || echo "worktrunk install failed"
+      $DRY_RUN_CMD bash -c "${pkgs.rustup}/bin/rustup update stable && ${pkgs.rustup}/bin/rustup run stable cargo install worktrunk" || echo "worktrunk install failed"
     fi
   '';
 
-  # Install caut (coding agent usage tracker) via cargo nightly
+  # Install caut (coding agent usage tracker) via cargo nightly.
+  # Ensures the nightly toolchain is installed before invoking it.
   home.activation.installCaut = lib.hm.dag.entryAfter ["writeBoundary"] ''
     if ! command -v caut &>/dev/null; then
       echo "Installing caut (coding agent usage tracker)..."
-      $DRY_RUN_CMD bash -c "${pkgs.rustup}/bin/rustup run nightly cargo install --git https://github.com/Dicklesworthstone/coding_agent_usage_tracker" || echo "caut install failed (requires rustup nightly)"
+      $DRY_RUN_CMD bash -c "${pkgs.rustup}/bin/rustup toolchain install nightly --profile minimal && ${pkgs.rustup}/bin/rustup run nightly cargo install --git https://github.com/Dicklesworthstone/coding_agent_usage_tracker" || echo "caut install failed (requires rustup nightly)"
     fi
   '';
 
@@ -358,6 +361,7 @@ in {
     if ! $HOME/.cargo/bin/ft --version &>/dev/null; then
       echo "Installing frankenterm (ft)..."
       $DRY_RUN_CMD bash -c '
+        ${pkgs.rustup}/bin/rustup toolchain install nightly --profile minimal && \
         OPENSSL_DIR='"'"'${pkgs.openssl.dev}'"'"' \
         OPENSSL_LIB_DIR='"'"'${pkgs.openssl.out}/lib'"'"' \
         PKG_CONFIG_PATH='"'"'${pkgs.openssl.dev}/lib/pkgconfig'"'"' \
@@ -369,10 +373,16 @@ in {
   # Agent Mail is now a pre-built Rust binary (mcp-agent-mail package)
   # No activation script needed - installed via home.packages
 
-  # Sync dotfiles from chezmoi repo (auto-applies, warns on conflicts)
+  # Sync dotfiles from chezmoi repo (auto-applies, warns on conflicts).
+  # Recover from detached HEAD before update so `chezmoi update`'s git pull
+  # has a branch to rebase against.
   home.activation.chezmoiSync = lib.hm.dag.entryAfter ["writeBoundary"] ''
     CHEZMOI_SOURCE="$HOME/.local/share/chezmoi"
     if [ -d "$CHEZMOI_SOURCE" ]; then
+      if ! ${pkgs.git}/bin/git -C "$CHEZMOI_SOURCE" symbolic-ref -q HEAD >/dev/null; then
+        echo "chezmoi repo is in detached HEAD; checking out main before sync..."
+        $DRY_RUN_CMD ${pkgs.git}/bin/git -C "$CHEZMOI_SOURCE" checkout main || true
+      fi
       echo "Syncing dotfiles from chezmoi repo..."
       $DRY_RUN_CMD ${pkgs.chezmoi}/bin/chezmoi update || true
     else
@@ -849,6 +859,24 @@ in {
       claude() {
         SHELL=/bin/bash VSCODE_PID= VSCODE_CWD= TERM_PROGRAM= command claude "$@"
       }
+
+      # Gemini (needs TERM override)
+      gemini() { TERM=xterm-256color command gemini "$@"; }
+      gmi()    { TERM=xterm-256color command gemini "$@"; }
+
+      # ── PAI (Personal AI Infrastructure) ──
+      pai()        { bun "$HOME/.claude/PAI/ACTIONS/pai.ts" "$@" }
+      algorithm()  { bun "$HOME/.claude/PAI/Tools/algorithm.ts" "$@" }
+      arbol-run()  { bun "$HOME/.claude/PAI/ACTIONS/lib/runner.v2.ts" "$@" }
+      arbol-pipe() { bun "$HOME/.claude/PAI/ACTIONS/lib/pipeline-runner.ts" "$@" }
+
+      # ── PAI Voice Server ──
+      voice-start()   { bash "$HOME/.claude/VoiceServer/start.sh" }
+      voice-stop()    { bash "$HOME/.claude/VoiceServer/stop.sh" }
+      voice-restart() { bash "$HOME/.claude/VoiceServer/restart.sh" }
+      voice-status()  { bash "$HOME/.claude/VoiceServer/status.sh" }
+      voice-test()    { curl -s -X POST -H 'Content-Type: application/json' -d '{"message":"Voice system online"}' http://localhost:8888/notify }
+      voice-health()  { curl -s http://localhost:8888/health }
 
       ${shared.ntmShellInit.zsh}
     '';
@@ -1439,6 +1467,22 @@ in {
         with-env { SHELL: "/bin/bash", VSCODE_PID: "", VSCODE_CWD: "", TERM_PROGRAM: "" } {
           ^claude ...$args
         }
+      }
+
+      # Claude Code with local LM Studio models
+      def --wrapped claude-local [...args: string] {
+        with-env {
+          ANTHROPIC_BASE_URL: "http://localhost:1234",
+          ANTHROPIC_AUTH_TOKEN: "lmstudio",
+          CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: "1"
+        } {
+          claude --model qwen/qwen3-coder-next ...$args
+        }
+      }
+
+      # Claude Code with --dangerously-skip-permissions
+      def --wrapped claude-yolo [...args: string] {
+        claude --dangerously-skip-permissions ...$args
       }
 
       # ── Nushell-native aliases (shared-home-manager equivalents) ──
