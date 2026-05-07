@@ -119,6 +119,7 @@ let
     "macfuse"
     "monodraw"
     "obs"
+    "paper-design"
     "reaper"
     "screenflow"
     # "screenpipe" outdated on brew
