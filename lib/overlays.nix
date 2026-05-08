@@ -386,7 +386,7 @@
             };
             "aarch64-darwin" = {
               url = "https://github.com/Dicklesworthstone/cross_agent_session_resumer/releases/download/v${casrVersion}/casr-aarch64-apple-darwin.tar.xz";
-              sha256 = "b049d4a05a4ca59eb0a2536767b9289ed3a55c4a6e980d3756ba96d0ad385dfd";
+              sha256 = "add7991d676f378804ff414384ea083d43bf375277de828d96bf3b8e7a309e4d";
             };
           };
           casrSource = casrSources.${prev.stdenv.hostPlatform.system} or null;
