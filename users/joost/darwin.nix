@@ -84,6 +84,7 @@ let
     "podman-desktop"
     "rapidapi"
     "raycast" # for searching nix GUI apps (nix doesnt put bin in Applications folder so macos search doesnt work)
+    "rustdesk"
     "rustrover"
     "signal"
     "stats" # macOS system monitor in menu bar
