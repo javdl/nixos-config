@@ -240,6 +240,12 @@
       darwin = true;
     };
 
+    darwinConfigurations.agent1-m2u = mkSystem "agent1-m2u" {
+      system = "aarch64-darwin";
+      user   = "joost";
+      darwin = true;
+    };
+
     darwinConfigurations.mac-mini-m2 = mkSystem "mac-mini-m2" {
       system = "aarch64-darwin";
       user   = "joost";
