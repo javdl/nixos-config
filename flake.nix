@@ -240,7 +240,7 @@
       darwin = true;
     };
 
-    darwinConfigurations.agent1-m2u = mkSystem "agent1-m2u" {
+    darwinConfigurations.argon = mkSystem "argon" {
       system = "aarch64-darwin";
       user   = "joost";
       darwin = true;
