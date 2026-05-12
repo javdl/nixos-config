@@ -64,6 +64,12 @@ All packages defined in `/home/joost/nixos-config/lib/overlays.nix` that follow 
 
 Do not edit anything for these packages.
 
+**Before refusing, also volunteer current upstream state.** Out-of-scope is not permanent — upstream often *gains* a published release between the time this list was written and the time the user asks. Run a quick `curl https://api.github.com/repos/<owner>/<repo>/releases/latest` for the package's repo and tell the user:
+- If a single-asset release now exists (e.g. one `<name>` binary like csctf), the package can be re-shaped to the standard pattern and graduated into the skill's scope. Offer the conversion.
+- If still source-only or multi-asset, hold the refusal but show the asset list so the user can decide.
+
+In session 2026-05-12 the skill blindly refused `ubs` even though upstream had switched to a single-binary release at v5.2.75 (the docs in `lib/overlays.nix` still fetched ~90 module files from an old tag). The user had to ask to discover this. Don't make the user prompt for it — proactively check at refusal time.
+
 ## Workflow
 
 ### 1. Parse target list
