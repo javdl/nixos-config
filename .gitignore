@@ -25,3 +25,9 @@ mcp_agent_mail/
 
 # PAI repo (installed via chezmoi to ~/.claude/PAI/, not part of Nix config)
 Personal_AI_Infrastructure/
+
+# Plan-mode scratchpad files. Plan mode auto-generates filenames like
+# "Plans/now-<slug>.md". Those are session-internal scratch and shouldn't be
+# committed. Intentional plan docs with descriptive names — e.g.
+# "Plans/add-hermes-agent.md" — are fine to commit.
+Plans/now-*.md

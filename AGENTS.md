@@ -1,5 +1,16 @@
 # Agents Operational Guide
 
+## Operating Principles (applied throughout this file)
+
+1. **Audit consumers before changing a config value.** If a field is interpolated (`${X}/...`), grep every file that consumes it and confirm the consumer handles your new value's shape (no unexpanded tildes, no unexpanded env vars).
+2. **Model the system before acting in it.** Auto-syncs, hooks, schedules, and races are documented in this file and in dotfiles — read them first. Don't get surprised by behavior the docs already explained.
+3. **Expand scope to paired infrastructure.** Before removing X, grep for siblings (X→Y same prefix/suffix, same module-directory pattern, same purpose comment). Surface them: "should Y go too?"
+4. **Investigate before asking.** Read the upstream README/source/`--help` before drafting a plan or presenting a question menu. The answer is often two grep calls away.
+5. **Verify after every change.** Execute the runtime path of what changed — not just "the edit applied". For configs, trigger the consumer. For binaries, run `--version` *and* a representative subcommand.
+6. **Don't blindly stage Plans/.** Auto-generated plan-mode files (`Plans/now-*.md`) are gitignored; descriptive plan docs commit normally. Check names before `git add Plans/`.
+
+
+
 ## Issue Tracking
 
 This project uses **bd (beads)** for issue tracking.
@@ -297,6 +308,32 @@ Run: `sudo nix-store --verify --check-contents --repair`
 
 ### macOS Sequoia Issues
 If nixbld users missing, run the migration script from NixOS/nix repository
+
+### `~/.claude/settings.json` — hooks need absolute paths
+Claude Code performs **literal env-var substitution** on hook commands like `"${PAI_DIR}/hooks/SecurityValidator.hook.ts"`. It does **not** tilde-expand the result. If `PAI_DIR` contains `~/`, hooks silently fail to exec.
+
+The file is therefore a chezmoi template: `~/.local/share/chezmoi/dot_claude/settings.json.tmpl`. All home-rooted env vars use `{{ .chezmoi.homeDir }}` (renders to `/home/joost/...` on Linux, `/Users/joost/...` on macOS). Never put tildes or hardcoded `/home/joost` in the source — edit the `.tmpl`. If a chezmoi auto-sync from another machine reintroduces tildes, revert it.
+
+### chezmoi auto-sync races with manual pushes
+A background hook auto-syncs `~/.claude/MEMORY` (and observably `~/.claude/settings.json`) to `~/.local/share/chezmoi` every ~5 min and `jj git push`es to `javdl/dotfiles`. Manual pushes regularly hit "stale info" rejections. Standard recovery: `jj git fetch && jj rebase -d main@origin && jj bookmark set main -r @ && jj git push`. Plan for one or two rebase cycles; it's not a bug.
+
+### Editing `lib/overlays.nix` — audit siblings before removing
+Many overlay blocks are paired infrastructure (e.g., `ironclaw` + `openclaw` were both AI-assistant gateways with matching modules `modules/ironclaw-oci.nix` and `modules/openclaw-oci.nix`, both wired into `hosts/joostclaw.nix`). Before removing a package, grep for related names in the same files and surface them: "I see X is configured alongside Y — should that go too?"
+
+### Loom uses `home-manager-server.nix`, not `home-manager.nix`
+`loom` is `server = true` in `flake.nix`, so `lib/mksystem.nix` loads `users/joost/home-manager-server.nix` for it. Edits to `users/joost/home-manager.nix` have **no effect on loom**. Confirm which file a host uses before adding home-manager config for it:
+```bash
+nix-instantiate --eval --strict -E '
+  let f = builtins.getFlake (toString ./.);
+  in builtins.attrNames f.nixosConfigurations.<host>.config.home-manager.users.<user>.systemd.user.services'
+```
+
+### Plans/ directory hygiene
+`Plans/` holds two kinds of files:
+- **Auto-generated plan-mode scratchpads** with names like `Plans/now-<slug>.md` — session-internal, gitignored (see `.gitignore`).
+- **Intentional plan docs** with descriptive names — `Plans/add-hermes-agent.md`, `Plans/simplify-build-from-source-overlays.md` — commit normally.
+
+When staging changes, do not blindly `git add Plans/` — check the names first.
 
 ## Important Files
 
