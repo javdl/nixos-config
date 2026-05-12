@@ -1,5 +1,7 @@
 # Plan: Auto-sync `~/.claude/MEMORY` from loom every 5 min
 
+> **Status: implemented** in PR following branch `codex/loom-claude-memory-autosync`. Final approach: Option A as described below — script extracted to `lib/chezmoi-memory-sync.nix`, consumed by both the Darwin launchd agent (`hosts/mac-shared.nix`) and a new Linux systemd user timer (`users/joost/home-manager-server.nix`, gated to loom). Verified: eval shows the timer on loom and absent from j7. After `make switch NIXNAME=loom`, run `systemctl --user enable --now chezmoi-memory-sync.timer` to start it.
+
 ## Context
 
 `hosts/mac-shared.nix` defines a `chezmoiMemorySync` shell script and wires it as a `launchd.user.agents.chezmoi-memory-sync` with `StartInterval = 300`. That's why frequent `chore(memory): auto-sync ...Z` commits show up on `javdl/dotfiles@main` — but **only from Darwin machines**. Loom (Linux) has no equivalent, so anything you write to `~/.claude/MEMORY` on loom stays local until you manually push (or another machine's auto-sync incidentally captures nothing relevant).

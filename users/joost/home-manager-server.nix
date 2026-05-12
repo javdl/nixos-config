@@ -10,6 +10,9 @@ let
   shared = import ../shared-home-manager.nix {
     inherit isWSL inputs pkgs lib isDarwin isLinux;
   };
+
+  # Same script body that Darwin runs via launchd in hosts/mac-shared.nix.
+  chezmoiMemorySync = import ../../lib/chezmoi-memory-sync.nix pkgs;
 in {
   # Home-manager state version
   home.stateVersion = "25.11";
@@ -629,6 +632,48 @@ in {
     };
     Install.WantedBy = [ "default.target" ];
   };
+
+  # chezmoi-memory-sync — Linux counterpart of the Darwin launchd agent in
+  # hosts/mac-shared.nix. Runs every 5 minutes to re-add ~/.claude/MEMORY into
+  # the chezmoi source and push via jj. Script body shared via
+  # lib/chezmoi-memory-sync.nix so both platforms stay in lockstep.
+  #
+  # Gated on loom for now. Linger is already enabled on loom (hosts/loom.nix
+  # via users.users.joost.linger = true → confirmed in this session's eval),
+  # so the timer fires even when no interactive session is open.
+  #
+  # To enable after the next switch:
+  #   systemctl --user daemon-reload
+  #   systemctl --user enable --now chezmoi-memory-sync.timer
+  #   systemctl --user list-timers chezmoi-memory-sync.timer
+  systemd.user.services.chezmoi-memory-sync =
+    lib.mkIf (isLinux && currentSystemName == "loom") {
+      Unit = {
+        Description = "Auto-sync ~/.claude/MEMORY to chezmoi git remote";
+        Documentation = [ "https://github.com/javdl/nixos-config/blob/main/lib/chezmoi-memory-sync.nix" ];
+        After = [ "network-online.target" ];
+        Wants = [ "network-online.target" ];
+      };
+      Service = {
+        Type = "oneshot";
+        ExecStart = "${chezmoiMemorySync}";
+        # journalctl --user -u chezmoi-memory-sync -n 30 to inspect output.
+      };
+    };
+
+  systemd.user.timers.chezmoi-memory-sync =
+    lib.mkIf (isLinux && currentSystemName == "loom") {
+      Unit = {
+        Description = "Run chezmoi-memory-sync every 5 minutes";
+      };
+      Timer = {
+        OnBootSec = "2min";        # don't fight first-boot home-manager activation
+        OnUnitActiveSec = "5min";  # match Darwin's StartInterval = 300
+        AccuracySec = "30s";       # tighter than systemd default for predictable cadence
+        Persistent = false;        # rolling cadence, no catch-up after suspend
+      };
+      Install.WantedBy = [ "timers.target" ];
+    };
 
   # Hermes Agent gateway (NousResearch/hermes-agent — personal AI with built-in
   # Telegram/Discord/Slack channels + cron scheduler).
