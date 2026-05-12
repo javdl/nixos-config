@@ -84,7 +84,6 @@ in systemFunc rec {
       # Upstream bug: https://github.com/nix-community/home-manager/issues/7935
       home-manager.sharedModules = [
         { manual.manpages.enable = false; }
-        inputs.nix-openclaw.homeManagerModules.openclaw
       ];
     }
 

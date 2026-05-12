@@ -47,9 +47,6 @@
     sops-nix.url = "github:Mic92/sops-nix";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
 
-    # OpenClaw AI assistant gateway (used on joostclaw server)
-    nix-openclaw.url = "github:openclaw/nix-openclaw";
-
     nix-index-database.url = "github:nix-community/nix-index-database";
     nix-index-database.inputs.nixpkgs.follows = "nixpkgs";
 
