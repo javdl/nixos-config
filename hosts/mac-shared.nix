@@ -128,12 +128,10 @@ in {
 
     # Auto-sync ~/.claude/MEMORY to chezmoi git remote every 5 minutes.
     # Why: cross-machine sync of WORK PRDs and STATE without manual chezmoi re-add.
+    # Script sets its own PATH (see lib/chezmoi-memory-sync.nix) so no shell wrapper needed.
     launchd.user.agents.chezmoi-memory-sync = {
       serviceConfig = {
-        ProgramArguments = [
-          "/bin/sh" "-c"
-          ''export PATH="/etc/profiles/per-user/$USER/bin:/run/current-system/sw/bin:/nix/var/nix/profiles/default/bin:/usr/local/bin:/usr/bin:/bin"; exec ${chezmoiMemorySync}''
-        ];
+        ProgramArguments = [ "${chezmoiMemorySync}" ];
         RunAtLoad = true;
         StartInterval = 300;
         StandardOutPath = "/tmp/chezmoi-memory-sync.log";
