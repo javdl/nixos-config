@@ -8,6 +8,13 @@
 # Both schedule it every 5 minutes. Body is identical across platforms.
 pkgs: pkgs.writeShellScript "chezmoi-memory-sync" ''
   set -u
+
+  # systemd user services start with a minimal PATH that lacks chezmoi/jj/grep.
+  # Set PATH explicitly so the script works under both systemd (loom) and
+  # launchd (Darwin) without needing per-consumer wrapping. These paths are
+  # present on both NixOS and nix-darwin.
+  export PATH="/etc/profiles/per-user/$USER/bin:/run/current-system/sw/bin:/nix/var/nix/profiles/default/bin:/usr/local/bin:/usr/bin:/bin"
+
   CHEZMOI_SRC="$HOME/.local/share/chezmoi"
   MEMORY_LIVE="$HOME/.claude/MEMORY"
   MEMORY_SRC_PATH="dot_claude/MEMORY"
