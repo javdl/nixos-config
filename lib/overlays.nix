@@ -274,23 +274,23 @@
           dcgSource = dcgSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for dcg: ${prev.stdenv.hostPlatform.system}");
 
           # caam - coding agent account manager (instant auth switching)
-          caamVersion = "0.1.10";
+          caamVersion = "0.1.11";
           caamSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/coding_agent_account_manager/releases/download/v${caamVersion}/caam_${caamVersion}_linux_amd64.tar.gz";
-              sha256 = "e84fa14fbed25fce02aa7a52c981a795ca424b06c3d73b616e30e6e712fa70c2";
+              sha256 = "e0a4e7e3e27c6b3e4f36f7e69ac23f3d59135702d713109de4a4431422a02845";
             };
             "aarch64-linux" = {
               url = "https://github.com/Dicklesworthstone/coding_agent_account_manager/releases/download/v${caamVersion}/caam_${caamVersion}_linux_arm64.tar.gz";
-              sha256 = "093fe1e648eb09f9350d422496a575868c5d8b0d065fe4df8185a248df10883a";
+              sha256 = "65e7808cd8d90e06ba10bb755f728ac55c4ff2c97f4bc50b7af8cf56b0e2f242";
             };
             "x86_64-darwin" = {
               url = "https://github.com/Dicklesworthstone/coding_agent_account_manager/releases/download/v${caamVersion}/caam_${caamVersion}_darwin_amd64.tar.gz";
-              sha256 = "06b1541607955c1cb4e8c83b006538f8055afdd7d6186fe5548ec5cf10641305";
+              sha256 = "dd89be148a8a9c4dd697df296403c00db302ed458fd93e89bcd83f452711478f";
             };
             "aarch64-darwin" = {
               url = "https://github.com/Dicklesworthstone/coding_agent_account_manager/releases/download/v${caamVersion}/caam_${caamVersion}_darwin_arm64.tar.gz";
-              sha256 = "386cf861872740611d42eba14b41cfe526a261552b6ae86e0d9095c635f2f519";
+              sha256 = "3863fb2ddfde51e4e6bded0498c933e0589487ae8a2211b216312840d242a205";
             };
           };
           caamSource = caamSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for caam: ${prev.stdenv.hostPlatform.system}");
@@ -1381,26 +1381,26 @@
 
           # codex - OpenAI coding agent CLI (pre-built binary from npm)
           codex = let
-            codexVersion = "0.114.0";
+            codexVersion = "0.130.0";
             codexSources = {
               "x86_64-linux" = {
                 url = "https://registry.npmjs.org/@openai/codex/-/codex-${codexVersion}-linux-x64.tgz";
-                hash = "sha256-IAsvVZnT/HBwAsrGZhNQe5taFs2RVMffu7zbFwYLCL0=";
+                hash = "sha256-keEqVsSccCyGxcQoEc+j1RW21rwZbXC6nOolInMCqo8=";
                 vendorDir = "x86_64-unknown-linux-musl";
               };
               "aarch64-linux" = {
                 url = "https://registry.npmjs.org/@openai/codex/-/codex-${codexVersion}-linux-arm64.tgz";
-                hash = "sha256-BbKaOAYkIVXpmQVF46yXg9Zmvz/ZKQkBmvjKd+JalX8=";
+                hash = "sha256-PyFyYKvoPG8P16g+BWy0U1N+Q1xnVM0zXs2TWCPY894=";
                 vendorDir = "aarch64-unknown-linux-musl";
               };
               "x86_64-darwin" = {
                 url = "https://registry.npmjs.org/@openai/codex/-/codex-${codexVersion}-darwin-x64.tgz";
-                hash = "sha256-c8jsJrGeZPc5XvPGyt/AOYdauaVoZ5ST895Z3FdeSGk=";
+                hash = "sha256-IfFh/9efq4jFvZHkDRTIlP5tStYepOvIDU/PIBMJYMI=";
                 vendorDir = "x86_64-apple-darwin";
               };
               "aarch64-darwin" = {
                 url = "https://registry.npmjs.org/@openai/codex/-/codex-${codexVersion}-darwin-arm64.tgz";
-                hash = "sha256-T9IVepFpw4jg6o3+1Cd41qQ173SnQ7kfwWcPOXcIeOo=";
+                hash = "sha256-9v7yzu6Jdwea07Mpa0wUwnB5NOa07Bqhoy1uUSGWsS0=";
                 vendorDir = "aarch64-apple-darwin";
               };
             };
