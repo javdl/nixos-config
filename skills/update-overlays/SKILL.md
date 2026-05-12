@@ -7,8 +7,8 @@ description: >
   with `make test NIXNAME=loom`. Use when the user says "update overlays",
   "update overlay packages", "bump codex", "update <pkg> to latest", "refresh
   tool versions", "update dicklesworthstone tools", "update all the AI tools",
-  or "check for new versions of our git tools". Skip ubs, cm, cco, ironclaw —
-  those are build-from-source and must be bumped manually.
+  or "check for new versions of our git tools". Skip ubs, cm, cco — those are
+  build-from-source and must be bumped manually.
 ---
 
 # Update Overlays
@@ -58,7 +58,7 @@ All packages defined in `/home/joost/nixos-config/lib/overlays.nix` that follow 
 
 ## Out of scope — refuse with message
 
-`ubs`, `cm`, `cco`, `ironclaw` build from source and have multi-hash structures (per-file module hashes, cargoHash, vendorHash). If asked to bump any of these, reply:
+`ubs`, `cm`, `cco` build from source and have multi-hash structures (per-file module hashes, cargoHash). If asked to bump any of these, reply:
 
 > "<pkg> is build-from-source and must be bumped manually. See `lib/overlays.nix` for its hash structure."
 
