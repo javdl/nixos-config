@@ -1,4 +1,4 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, lib, inputs, ... }:
 
 # Hetzner dedicated server: loom-32gb-nbg1-1
 # IP: 91.99.204.187 / 2a01:4f8:c0c:d0e8::/64
@@ -21,7 +21,34 @@
     ../modules/podman.nix
     ../modules/repo-updater.nix
     ../modules/ghostty-terminfo.nix
+    inputs.hermes-agent.nixosModules.default
   ];
+
+  # Hermes Agent — personal AI gateway. See Plans/migrate-hermes-to-nix-module.md.
+  # State: /var/lib/hermes/.hermes (mode 2770, hermes:hermes, hardcoded by upstream).
+  # Secrets: secrets/loom.yaml -> sops -> hermes-env (dotenv, concatenated raw).
+  sops.secrets."hermes-env" = {
+    sopsFile = ../secrets/loom.yaml;
+    format = "yaml";
+    key = "hermes-env";
+    owner = "hermes";
+    mode = "0400";
+  };
+
+  services.hermes-agent = {
+    enable = true;
+    addToSystemPackages = true;
+    environmentFiles = [ config.sops.secrets."hermes-env".path ];
+
+    settings.model = {
+      default = "anthropic/claude-opus-4.6";
+      provider = "auto";
+      base_url = "https://openrouter.ai/api/v1";
+    };
+  };
+
+  # joost shares HERMES_HOME with the service (state dir is mode 2770 hermes:hermes).
+  users.users.joost.extraGroups = [ "hermes" ];
 
   # Latest kernel for best hardware support
   boot.kernelPackages = pkgs.linuxPackages_latest;

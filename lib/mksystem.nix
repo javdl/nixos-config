@@ -38,6 +38,14 @@ let
 in systemFunc rec {
   inherit system;
 
+  # specialArgs is the right channel for values needed during `imports` resolution
+  # (e.g., inputs.hermes-agent.nixosModules.default in hosts/loom.nix). Values set
+  # via config._module.args below ONLY become available after config evaluates,
+  # which is too late for the imports list itself.
+  specialArgs = {
+    inherit inputs;
+  };
+
   modules = [
     # Apply our overlays. Overlays are keyed by system type so we have
     # to go through and apply our system type. We do this first so

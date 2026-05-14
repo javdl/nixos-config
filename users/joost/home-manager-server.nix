@@ -675,42 +675,8 @@ in {
       Install.WantedBy = [ "timers.target" ];
     };
 
-  # Hermes Agent gateway (NousResearch/hermes-agent — personal AI with built-in
-  # Telegram/Discord/Slack channels + cron scheduler).
-  #
-  # Loom-only. Other server-shaped hosts that share this home-manager file
-  # (desmondroid, jacksonator, peterbot, rajbot, etc.) don't get this unit.
-  #
-  # Bootstrap (one-time, manual):
-  #   1. curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh \
-  #        | bash -s -- --skip-setup
-  #   2. hermes setup                  # interactive provider config (Anthropic key, model)
-  #   3. ${EDITOR:-vim} ~/.hermes/.env # fill in TELEGRAM_BOT_TOKEN, TELEGRAM_ALLOWED_USERS, etc.
-  #   4. systemctl --user daemon-reload && systemctl --user enable --now hermes-agent-gateway
-  #
-  # The unit idles cleanly when no platforms are configured — safe to enable
-  # before step 3 is finished, just won't actually serve messages yet.
-  #
-  # Do NOT run `hermes gateway install` — that creates a duplicate hermes-managed
-  # unit (~/.config/systemd/user/hermes-gateway.service) that fights this one.
-  # Use `systemctl --user start/stop/restart hermes-agent-gateway` instead.
-  systemd.user.services.hermes-agent-gateway =
-    lib.mkIf (isLinux && currentSystemName == "loom") {
-      Unit = {
-        Description = "Hermes Agent messaging gateway (Telegram/Discord/Slack + cron)";
-        Documentation = [ "https://hermes-agent.nousresearch.com/docs/" ];
-        After = [ "network-online.target" ];
-        Wants = [ "network-online.target" ];
-      };
-      Service = {
-        Type = "simple";
-        ExecStart = "%h/.local/bin/hermes gateway run";
-        # Hermes reads ~/.hermes/.env itself; no EnvironmentFile needed.
-        Restart = "on-failure";
-        RestartSec = 10;
-      };
-      Install.WantedBy = [ "default.target" ];
-    };
+  # Hermes Agent: replaced by upstream `services.hermes-agent` system module
+  # in hosts/loom.nix. See Plans/migrate-hermes-to-nix-module.md.
 
   programs.zellij = {
     enable = true;

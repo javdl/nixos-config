@@ -16,9 +16,10 @@ keys:
 
   # Host keys (derived from SSH host keys using ssh-to-age)
   # Run: ssh-to-age -i /etc/ssh/ssh_host_ed25519_key.pub
-- &joostclaw age17n047nq8vclhr2gja7fe8z9uv8pug49r6k6c27cxd92jgnmups2qcdte99
+  - &joostclaw age17n047nq8vclhr2gja7fe8z9uv8pug49r6k6c27cxd92jgnmups2qcdte99
   - &github-runner-01 age1k77q70qv8h6kp7n8pw92mcyww62xkmwps50mknmzdjwn6s29wu2s3gav4w
   - &github-runner-02 age1payjujelqgvgpkpapl0cske00waj5vn6xtrz2rr9ag8gt8rphyls9d2dz4
+  - &loom age1p26cwwyu2v4jexue6z7krrua9skqv0p3aj4ad3su4m7varky3dwqk0zphj
 
 creation_rules:
   # joostclaw secrets
@@ -40,3 +41,9 @@ creation_rules:
       - age:
           - *github-runner-02
           # - *admin_joost  # Uncomment after adding admin key
+
+  # loom secrets (hermes-agent env)
+  - path_regex: secrets/loom\.yaml$
+    key_groups:
+      - age:
+          - *loom
