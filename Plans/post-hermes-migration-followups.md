@@ -14,11 +14,18 @@ Migration commit: `237ba4a` (on `origin/main`). Service is `active (running)` bu
 ssh loom
 cd ~/code/nixos-config   # or wherever you cloned it on loom
 
-# sops on loom can't auto-find the SSH-host-key-derived age key.
-# Pass it explicitly:
-SOPS_AGE_KEY_FILE=<(sudo ssh-to-age -private-key -i /etc/ssh/ssh_host_ed25519_key) \
-  sudo -E sops secrets/loom.yaml
+# sops on loom can't auto-find the SSH-host-key-derived age key, and the
+# SSH host private key requires root to read. Use SOPS_AGE_KEY_CMD so sops
+# calls sudo itself — process substitution (`<(...)`) does NOT survive
+# through `sudo -E` (the fd belongs to the outer shell, not root).
+SOPS_AGE_KEY_CMD='sudo ssh-to-age -private-key -i /etc/ssh/ssh_host_ed25519_key' \
+  sops secrets/loom.yaml
 ```
+
+This works because:
+- `joost` owns `secrets/loom.yaml` in their checkout — no sudo on `sops` needed
+- `wheel` is configured passwordless in `hosts/loom.nix:115`, so the inner `sudo` doesn't prompt
+- `SOPS_AGE_KEY_CMD` is sops-native (>= 3.8); sops execs the command and reads stdout
 
 Inside the editor, uncomment and fill in:
 
