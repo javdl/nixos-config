@@ -20,6 +20,11 @@ keys:
   - &github-runner-01 age1k77q70qv8h6kp7n8pw92mcyww62xkmwps50mknmzdjwn6s29wu2s3gav4w
   - &github-runner-02 age1payjujelqgvgpkpapl0cske00waj5vn6xtrz2rr9ag8gt8rphyls9d2dz4
   - &loom age1p26cwwyu2v4jexue6z7krrua9skqv0p3aj4ad3su4m7varky3dwqk0zphj
+  # hermes-fu: placeholder. Replace with the real age recipient (derived from
+  # /etc/ssh/ssh_host_ed25519_key.pub via `ssh-to-age`) after provisioning the VM.
+  # Until then, secrets/hermes-fu.yaml cannot be encrypted (creation rule below
+  # references this anchor); hosts/hermes-fu.nix has the sops block commented out.
+  - &hermes-fu age1__TBD__derived_after_provisioning__
 
 creation_rules:
   # joostclaw secrets
@@ -47,3 +52,12 @@ creation_rules:
     key_groups:
       - age:
           - *loom
+
+  # hermes-fu secrets (FashionUnited company-wide hermes-agent env)
+  # NOTE: anchor &hermes-fu is a placeholder until the VM is provisioned.
+  # `sops secrets/hermes-fu.yaml` will fail until the anchor is replaced with
+  # the real age recipient derived from the new host's SSH host key.
+  - path_regex: secrets/hermes-fu\.yaml$
+    key_groups:
+      - age:
+          - *hermes-fu

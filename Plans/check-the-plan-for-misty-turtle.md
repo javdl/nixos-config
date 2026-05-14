@@ -1,232 +1,268 @@
-# Audit: `Plans/migrate-hermes-to-nix-module.md`
+# Plan: Clone loom's hermes-agent setup to a new Hetzner Cloud host `hermes-fu`
 
 ## Context
 
-The migration plan at `Plans/migrate-hermes-to-nix-module.md` proposes swapping loom's `install.sh`-based hermes-agent setup for the upstream `services.hermes-agent` NixOS module. Before executing, I verified its load-bearing assumptions against (a) the actual Nix wiring in this repo, (b) the upstream module source, and (c) loom-specific runtime concerns. The audit confirms most claims and surfaces **one real bug**, **two corrections to factual claims**, and **three procedural tightenings**. Each is small; the migration's overall shape is sound.
+We've just finished migrating `loom`'s hermes-agent runtime from the install.sh path to the upstream `services.hermes-agent` NixOS module (commits `237ba4a` + follow-ups). That setup now needs to be **replicated to a fresh Hetzner Cloud VM** that will serve as the **company-wide hermes-agent host for FashionUnited**.
 
-This file is the audit deliverable. The fixes below should be applied to `Plans/migrate-hermes-to-nix-module.md` in a follow-up session (this session is plan-mode read-only).
+The user's directive is explicit: *"no changes to config yet, first just a clone with new naming."* So this plan is a pure copy + new-naming + new-host-infrastructure operation. Hermes-agent settings (model, provider, base_url, `extraDependencyGroups = [ "messaging" ]`) are preserved verbatim. Tuning the deployment for FashionUnited's specific workload (allowlists, different model, Discord/Slack adapters, etc.) is a deliberate later phase.
 
----
+Locked naming decisions (from clarifying questions just answered):
 
-## ✅ Verified correct (no changes needed)
+| Decision | Value |
+|---|---|
+| Hostname | `hermes-fu` |
+| Admin user | `agent` |
+| Flake target | `nixosConfigurations.hermes-fu` |
+| Auto-update ref | `github:javdl/nixos-config#hermes-fu` |
+| Hardware profile | Hetzner Cloud (shared modules, NOT dedicated) |
 
-These three claims in the migration plan are accurate; I include them so they are not re-litigated:
-
-1. **`inputs` is threaded into host modules.** `lib/mksystem.nix:93-99` sets `config._module.args.inputs = inputs;`. The migration plan's `{ config, pkgs, lib, inputs, ... }:` signature for `hosts/loom.nix` will work as written.
-2. **sops-nix module is already globally imported.** `lib/mksystem.nix:63` conditionally adds `inputs.sops-nix.nixosModules.sops` to the module list for non-Darwin systems. Existing usage at `hosts/joostclaw.nix:208` and `hosts/github-runner-01.nix:240-243` confirms `sops.secrets.*` works without further plumbing.
-3. **`users.users.joost.extraGroups = [ "hermes" ]` merges additively.** Current joost groups are `[ "docker" "wheel" ]` at `users/joost/nixos.nix:14-26`; NixOS concatenates `extraGroups` lists across modules unless `mkForce` is used. The hermes group is created at activation by the upstream module's `createUser = true`, so eval-time ordering doesn't matter.
-
----
-
-## 🔴 Critical bug — must be fixed before executing
-
-### A1. `nixosAutoUpdate` will race the state migration
-
-**Where:** `Plans/migrate-hermes-to-nix-module.md`, Risk table row "make switch from a workstation…" and Phase 5 (runtime work).
-
-**The problem:** `hosts/loom.nix:59-65` enables `services.nixosAutoUpdate` with `dates = "04:00"` ± 30 min randomized delay. `modules/nixos-auto-update.nix:90-104` runs:
-```
-nixos-rebuild switch --no-write-lock-file -L --refresh --flake github:javdl/nixos-config#loom --upgrade
-```
-If the migration commit is pushed to `main` at, say, 22:00, the auto-update timer fires at ~04:00 and **activates the new generation autonomously** — `hermes-agent` will start with an empty `/var/lib/hermes/.hermes/` before any human has rsync'd state from `~/.hermes/`. Result: hermes loses session history, kanban, SOUL.md, and skills/ until manual recovery.
-
-The migration plan's current workflow ("push to main first, then `nixos-rebuild switch`") implicitly assumes the operator immediately runs Phase 5 after pushing. There is no enforcement.
-
-**Fix to apply to the migration plan — add a new Phase 0:**
-
-```markdown
-### Phase 0 — Quiesce auto-update (runtime, on loom, before Phase 3 commit lands on `main`)
-
-sudo systemctl stop nixos-upgrade.timer
-sudo systemctl mask nixos-upgrade.timer    # survives reboot until unmasked
-
-After Phase 6 verification passes:
-sudo systemctl unmask nixos-upgrade.timer
-sudo systemctl start nixos-upgrade.timer
-
-If you forget to mask: the next scheduled rebuild *will* fire with the new
-config and start the service against an empty state dir. This is recoverable
-(stop service, rsync state, restart) but loud.
-```
-
-**Also update Phase 5** to verify the timer is masked before proceeding (`systemctl is-enabled nixos-upgrade.timer` should report `masked`).
+This plan is scoped to **repository changes only** plus a provisioning runbook. Actual `nixos-anywhere` execution happens in a separate session once the Hetzner Cloud VM is ordered and its IP is known.
 
 ---
 
-## 🟡 Factual corrections (claims in the plan that are wrong-but-non-fatal)
+## File-level plan
 
-### B1. Plan's audit summary says docs prescribe `ExecStart: hermes gateway run --replace`. Upstream module's actual ExecStart is `hermes gateway` (no `--replace`).
+### New files
 
-**Where:** `Plans/migrate-hermes-to-nix-module.md`, "Context" section table row "Entry command" — and the parent comparison in my prior turn.
+| File | Source template | Required substitutions |
+|---|---|---|
+| `hosts/hermes-fu.nix` | `hosts/loom.nix` (current commit `bafbc94`) | See **A** below |
+| `users/agent/nixos.nix` | `users/desmond/nixos.nix` | See **B** below |
+| `users/agent/home-manager-server.nix` | `users/desmond/home-manager-server.nix` | See **C** below |
+| `secrets/hermes-fu.yaml` | Created **post-provisioning** (chicken-and-egg) | See **F** below |
 
-**Ground truth:** `nix/nixosModules.nix` lines 873-876 of the upstream module:
+### Edited files
+
+| File | Edit |
+|---|---|
+| `flake.nix` | Add `nixosConfigurations.hermes-fu` entry next to colleague servers (see **D**) |
+| `.sops.yaml` | Reserve a slot for `hermes-fu`'s age recipient + creation rule (see **E**) |
+
+### Files **not** touched
+
+- `lib/mksystem.nix` — `inputs` is already in `specialArgs` from the loom migration
+- `flake.nix` `inputs` section — `hermes-agent` input already present
+- `modules/hetzner-cloud-hardware.nix`, `modules/disko-hetzner-cloud.nix` — reused as-is
+- `users/joost/*` — untouched (joost is not the admin of hermes-fu)
+
+---
+
+### A. `hosts/hermes-fu.nix` — what to copy vs change from `hosts/loom.nix`
+
+**Copy verbatim from `hosts/loom.nix`:**
+- Module imports: `../modules/cachix.nix`, `../modules/secrets.nix`, `../modules/automatic-nix-gc.nix`, `../modules/nixos-auto-update.nix`, `../modules/security-audit.nix`, `../modules/disk-cleanup.nix`, `../modules/podman.nix`, `../modules/ghostty-terminfo.nix`
+- `inputs.hermes-agent.nixosModules.default` import
+- The entire `sops.secrets."hermes-env" = { ... }` block (just point `sopsFile = ../secrets/hermes-fu.yaml;`)
+- The entire `services.hermes-agent = { ... }` block including `extraDependencyGroups = [ "messaging" ]` and `settings.model = { default = "anthropic/claude-opus-4.6"; ...; }`
+- `boot.loader.systemd-boot.enable = true;` + EFI bits
+- `nix = { ... }` (experimental-features etc.)
+- `services.automaticNixGC = { ... }`
+- `services.diskCleanup.enable = true;`
+- `services.securityAudit.enable = false;`
+- `nixpkgs.config.allowUnfree`
+- Firewall base (port 22 only), `services.openssh = { ... }`, `security.sudo.wheelNeedsPassword = false`
+- `users.mutableUsers = false`
+- `virtualisation.docker` + `virtualisation.podmanConfig`
+- The `environment.systemPackages` list (essentials)
+- Locale, `programs.zsh.enable`, `programs.nix-ld.enable`
+- BBR sysctl + inotify limits + PAM limits
+- `services.tailscale = { enable = true; authKeyFile = "/etc/tailscale/authkey"; extraUpFlags = [ "--ssh" "--accept-routes" "--accept-dns=false" ]; }` — **note: drop `--advertise-exit-node`** (loom-specific)
+- Tailscale firewall passthrough
+- `services.xserver.enable = false; services.printing.enable = false; services.pulseaudio.enable = false; services.nscd.enable = true; services.dbus.enable = true;`
+- `system.stateVersion = "25.05"`
+
+**Change from loom:**
+
+| Loom value | New value |
+|---|---|
+| Top-of-file header: `# Hetzner dedicated server: loom-32gb-nbg1-1\n# IP: 91.99.204.187 / 2a01:4f8:c0c:d0e8::/64` | `# Hetzner Cloud VM: hermes-fu — FashionUnited company-wide hermes-agent host\n# IP: <fill in after order>` |
+| `imports = [ ./hardware/loom.nix ... ]` | `imports = [ ../modules/hetzner-cloud-hardware.nix ../modules/disko-hetzner-cloud.nix ... ]` |
+| `networking.hostName = "loom";` | `networking.hostName = "hermes-fu";` |
+| `services.nixosAutoUpdate.flake = "github:javdl/nixos-config#loom";` | `services.nixosAutoUpdate.flake = "github:javdl/nixos-config#hermes-fu";` |
+| `users.users.joost.shell = lib.mkForce pkgs.zsh;` | `users.users.agent.shell = lib.mkForce pkgs.zsh;` |
+| `users.users.joost.extraGroups = [ "hermes" ];` | `users.users.agent.extraGroups = [ "hermes" ];` |
+
+**Drop entirely (loom-specific, won't apply to a fresh cloud VM):**
+- `services.repoUpdater = { user = "joost"; projectsDir = "/home/joost/code"; ... };` — joost doesn't exist on hermes-fu; this would crash. If the company eventually wants per-user repo sync, add it back later targeting the `agent` user.
+- The static IPv6 block `networking.interfaces.enp1s0.ipv6.addresses = [...]` + `networking.defaultGateway6 = {...}` — Hetzner Cloud handles IPv6 via cloud-init/RA, not a static config.
+
+---
+
+### B. `users/agent/nixos.nix` — copy of `users/desmond/nixos.nix`
+
+Replace every `desmond` → `agent` (username, home dir). TODOs the operator fills before provisioning:
+
+| Field | How to fill |
+|---|---|
+| `users.users.agent.openssh.authorizedKeys.keys` | Paste the SSH public keys of whoever will administer `agent@hermes-fu` |
+| `users.users.agent.hashedPassword` | `mkpasswd -m sha-512` on any machine; the resulting hash goes here (won't be used interactively because SSH is key-only, but `users.mutableUsers = false` requires *something*) |
+
+`extraGroups` should be `[ "docker" "wheel" ]` (matches loom and colleagues; `hermes` group is added by `hosts/hermes-fu.nix` to keep host-vs-user concerns separated).
+
+---
+
+### C. `users/agent/home-manager-server.nix` — copy of `users/desmond/home-manager-server.nix`
+
+Replace these three fields (the only personal data in the colleague-server template):
+
 ```nix
-ExecStart = lib.concatStringsSep " " ([
-  "${effectivePackage}/bin/hermes"
-  "gateway"
-] ++ cfg.extraArgs);
-```
-`--replace` is only added in **container** mode, not native. The docs page is misleading.
-
-**Fix:** Update the comparison table in the migration plan's Context section to read `hermes gateway` (no `--replace`). If the user actually wants `--replace` behavior (e.g., to forcibly take over a stale lock), add `services.hermes-agent.extraArgs = [ "--replace" ];` to the module config in Phase 3 — recommend NOT adding it by default, since the module's systemd unit already handles restarts via `Restart = "always"`.
-
-### B2. Plan implies `hermes` user might not exist when sops-nix runs
-
-**Where:** `Plans/migrate-hermes-to-nix-module.md`, Phase 3 code comment "`owner default = root; hermes service reads it via systemd LoadCredential or…`" and Risk table row "Module's `environmentFiles` expects different file perms than sops default".
-
-**Ground truth:** `nix/nixosModules.nix:707` registers the hermes-agent activation script with `lib.stringAfter ([ "users" ] ++ lib.optional (… ? setupSecrets) "setupSecrets")`. NixOS creates `users.users.hermes` via standard `users` activation; sops-nix's `setupSecrets` runs after users. So **`owner = "hermes"` on `sops.secrets."hermes-env"` is safe** — no ordering cycle, and the file will be readable by the service.
-
-**Fix:** In Phase 3, change the sops snippet to:
-```nix
-sops.secrets."hermes-env" = {
-  sopsFile = ../secrets/loom.yaml;
-  format = "yaml";
-  key = "hermes-env";          # explicit
-  owner = "hermes";            # safe; user exists at sops-nix activation
-  mode = "0400";
+programs.git = {
+  userName = "FashionUnited Agent";       # was "Desmond …"
+  userEmail = "<TBD>@fashionunited.com";  # the operator picks
+  github.user = "<TBD>";                  # GitHub handle for the box, or leave blank
 };
 ```
-Remove the comment that handwaves the issue.
 
-### B3. Plan's `environmentFiles` claim is correct, but for the wrong reason
-
-**Where:** `Plans/migrate-hermes-to-nix-module.md`, Risk table.
-
-**Ground truth:** `nix/nixosModules.nix:752-756` activation script literally `cat`s each `environmentFiles` path into `$HERMES_HOME/.env` — raw concatenation, no parsing. So as long as the decrypted plaintext is shell-env-style (`KEY=VALUE\n` lines), it works. The sops yaml `format` with a multiline-string value produces exactly that.
-
-**Fix:** Add a one-line note in the secrets file format example clarifying the file is concatenated raw — not parsed by systemd as an `EnvironmentFile=` would be (e.g., quoting rules differ: hermes reads it as dotenv, not systemd-env).
+Everything else (zellij layouts, shared shell setup, server-shaped home-manager bits) reuses verbatim.
 
 ---
 
-## 🟠 Procedural tightenings (gaps that aren't bugs but could surprise the operator)
+### D. `flake.nix` entry
 
-### C1. State directory mode is `2770` — confirmed working, but plan should say so explicitly
+Add this entry adjacent to the colleague servers (after `loom`, before `joostclaw`, alphabetical-ish):
 
-**Where:** Risk table row "joost can't read /var/lib/hermes/.hermes/ despite group" notes "Verify mode bits are `g+rX`; if not, set via `services.hermes-agent.stateDirMode` if exposed".
-
-**Ground truth:** `nix/nixosModules.nix:732-741` hardcodes:
 ```nix
-systemd.tmpfiles.rules = [
-  "d ${cfg.stateDir}            2770 ${cfg.user} ${cfg.group} - -"
-  "d ${cfg.stateDir}/.hermes    2770 ${cfg.user} ${cfg.group} - -"
-];
-```
-Mode `2770` = `drwxrwx---` plus setgid. Group members (`joost ∈ hermes`) get rwx; new files inherit the `hermes` group. **There is no `stateDirMode` option** — the value is hardcoded. The plan's risk is non-existent, but the plan currently leaves it as an open question.
-
-**Fix:** Replace that risk row with a positive verification step in Phase 6: `stat -c '%a' /var/lib/hermes/.hermes` returns `2770`. Delete the speculative "set via `stateDirMode` if exposed" suggestion.
-
-### C2. PATH ordering: `~/.local/bin/hermes` may shadow the Nix-installed binary in zsh
-
-**Where:** Phase 6 verification step `which hermes # → /run/current-system/sw/bin/hermes`, Phase 7 cleanup step `rm -f ~/.local/bin/hermes`.
-
-**The problem:** When `addToSystemPackages = true`, the module installs `hermes` at `/run/current-system/sw/bin/hermes` and exports `HERMES_HOME` via `environment.variables.HERMES_HOME` (confirmed `nixosModules.nix:485-488`). But many user zsh setups prepend `~/.local/bin` to `$PATH` — if `~/.local/bin/hermes` (the install.sh shim) still exists, it wins. The shim points at `~/.hermes/`, not `/var/lib/hermes/.hermes/`, so the user's interactive TUI would run against stale state even though the service runs correctly.
-
-**Fix:** Reorder Phase 7 — move `rm -f ~/.local/bin/hermes` to **before** Phase 6's `which hermes` verification, or split: delete the shim in Phase 5 step 0 (alongside stopping the user unit), then verify in Phase 6. New ordering for Phase 5:
-1. `systemctl --user stop hermes-agent-gateway`
-2. `systemctl --user disable hermes-agent-gateway`
-3. **`rm -f ~/.local/bin/hermes`** *(NEW)*
-4. `sudo nixos-rebuild switch …`
-5. `sudo systemctl stop hermes-agent`
-6. rsync state into `/var/lib/hermes/.hermes/`
-7. `sudo chown -R hermes:hermes …`
-8. `sudo systemctl start hermes-agent`
-
-The `~/.hermes/` data dir is *not* deleted in this step (still preserved for rollback); only the shim binary goes.
-
-### C3. `jj op restore` rollback won't work alone if the commit was pushed
-
-**Where:** Rollback section.
-
-**Ground truth:** `/home/joost/nixos-config/.jj/` and `/home/joost/nixos-config/.git/` both exist — repo is jj-on-top-of-git. `jj op restore` rewinds the local jj op log but does NOT rewrite git refs on the remote. If Phase 3-4 commits have already been pushed to `main` (the migration plan's workflow assumes this, since `nixosAutoUpdate` pulls from `github:javdl/nixos-config#loom`), then `jj op restore` alone leaves `origin/main` ahead.
-
-**Fix:** Replace the rollback section with two scenarios:
-
-```markdown
-## Rollback
-
-### Scenario A — failure detected BEFORE pushing Phase 3-4 commit
-jj op log
-jj op restore <op-id-before-phase-3>
-# Working copy is now clean; no further action needed.
-
-### Scenario B — failure detected AFTER pushing
-# Either revert via a new commit:
-jj new main
-# Edit out the hermes changes manually OR jj backout the migration commit
-jj git push
-
-# Or, if you must hard-reset the remote (only if no other commits have landed):
-git tag pre-hermes-migration <pre-migration-sha>   # belt-and-suspenders backup
-git push origin pre-hermes-migration
-git reset --hard pre-hermes-migration
-git push --force-with-lease origin main
-
-# In either case, on loom:
-sudo systemctl stop hermes-agent
-sudo systemctl disable hermes-agent
-sudo nixos-rebuild switch --flake github:javdl/nixos-config#loom
-systemctl --user daemon-reload
-systemctl --user enable --now hermes-agent-gateway
+nixosConfigurations.hermes-fu = mkSystem "hermes-fu" {
+  system = "x86_64-linux";
+  user   = "agent";
+  server = true;
+};
 ```
 
-Add a "Phase 0.5" suggestion: before Phase 3, run `git tag pre-hermes-migration HEAD` to make rollback explicit.
+The `server = true` flag causes `lib/mksystem.nix` to load `users/agent/home-manager-server.nix` (not `home-manager.nix`) — same pattern as loom.
 
 ---
 
-## Files that will be modified by the migration (for the eventual edit session)
+### E. `.sops.yaml` edit
 
-These paths are unchanged from the original plan; listing for traceability:
+Two sub-edits.
 
-- `flake.nix` — add `inputs.hermes-agent` (Phase 1)
-- `.sops.yaml` — add loom recipient + `secrets/loom.yaml` creation rule (Phase 1)
-- `secrets/loom.yaml` (new, encrypted) — `hermes-env` payload (Phase 2)
-- `hosts/loom.nix` — import module, declare `services.hermes-agent.*`, sops secret, add joost to hermes group (Phase 3)
-- `users/joost/home-manager-server.nix` — delete lines 678-713 (Phase 4)
+**E1.** Reserve an anchor for `hermes-fu`'s age key. At provisioning time we don't have it yet (the VM has no SSH host key until first boot). Two options:
 
-The upstream NixOS module is at `inputs.hermes-agent.nixosModules.default` — `github:NousResearch/hermes-agent/nix/nixosModules.nix:707-756, 873-876, 485-488, 732-741` are the key spans (referenced above).
+- **Option E1a (recommended): leave a TODO line.** Add:
+  ```yaml
+    - &hermes-fu age1__TBD__derived_after_provisioning__
+  ```
+  with a comment marking it as a placeholder. The plan's provisioning runbook (section **G** below) replaces this line once the VM is up.
+- **Option E1b: temporarily encrypt to loom.** Per CLAUDE.md's "SOPS chicken-and-egg for new runners" section, you could encrypt the secret to loom's age key for the first nixos-anywhere build and re-key after. Avoided here because it requires keeping a chunk of secrets readable by loom, which we don't want long-term.
+
+**E2.** Add a creation rule that references `&hermes-fu`:
+
+```yaml
+  # hermes-fu secrets (hermes-agent env for FashionUnited company-wide host)
+  - path_regex: secrets/hermes-fu\.yaml$
+    key_groups:
+      - age:
+          - *hermes-fu
+```
+
+The path regex won't match anything until `secrets/hermes-fu.yaml` exists (section **F**), but having the rule pre-staged means `sops secrets/hermes-fu.yaml` Just Works once the recipient is finalized.
 
 ---
 
-## Verification of the (corrected) plan
+### F. `secrets/hermes-fu.yaml` — created **after** provisioning
 
-The corrected migration plan can be verified end-to-end as follows once executed:
+Until the VM exists and its age recipient is known, we can't encrypt to it. Two-step plan:
+
+1. **Before provisioning:** in `hosts/hermes-fu.nix`, **comment out** the `sops.secrets."hermes-env"` block and `services.hermes-agent.environmentFiles` line. Hermes-agent will start with no provider keys (same state loom was in for ~10 minutes during its own migration). Service will be `active (running)` with the same "No adapter / No allowlists" warnings — non-fatal.
+2. **After provisioning** (section **G** below): derive the host's age key, populate `.sops.yaml`, create + encrypt `secrets/hermes-fu.yaml` with the same `hermes-env` payload shape as `secrets/loom.yaml`, uncomment the two lines in `hosts/hermes-fu.nix`, commit, and `nixos-rebuild switch` on the new host.
+
+---
+
+## G. Post-creation provisioning runbook
+
+Steps after the repo PR lands (separate session):
 
 ```bash
-# Before any edits
-git tag pre-hermes-migration HEAD                          # rollback anchor
-sudo systemctl mask nixos-upgrade.timer                    # quiesce auto-update on loom
+# 1. Order a Hetzner Cloud VM (CCX-class recommended for hermes uv2nix builds)
+#    Note the IP. Update hosts/hermes-fu.nix header comment.
 
-# After Phases 1-4 are committed and Phase 5 runtime work completes
-systemctl is-active hermes-agent                           # → active
-stat -c '%a %U:%G' /var/lib/hermes/.hermes                 # → 2770 hermes:hermes
-sudo -u joost test -r /var/lib/hermes/.hermes/state.db && echo OK   # group access works
-which hermes                                                # → /run/current-system/sw/bin/hermes
-echo "$HERMES_HOME"                                         # → /var/lib/hermes/.hermes
-hermes config | grep -E 'model:|default:'                   # matches services.hermes-agent.settings
-journalctl -u hermes-agent -n 50 --no-pager | grep -iE 'error|exception' || echo "no errors"
+# 2. Provision via nixos-anywhere (one-command, no rescue mode needed)
+make hetzner/provision NIXADDR=<new-ip> NIXNAME=hermes-fu
 
-# Telegram smoke test
-# Send "hi" from whitelisted account → bot replies
+# 3. Derive the new host's age key
+ssh agent@<new-ip>                    # or root if password still set
+sudo ssh-to-age -i /etc/ssh/ssh_host_ed25519_key.pub
+#    → age1xxxx...
 
-# Finalize
-sudo systemctl unmask nixos-upgrade.timer
-sudo systemctl start nixos-upgrade.timer
+# 4. Back on a workstation: replace the placeholder in .sops.yaml
+#    - &hermes-fu age1__TBD__...   →   - &hermes-fu age1xxxx...
+
+# 5. Create + encrypt secrets/hermes-fu.yaml — mirror secrets/loom.yaml structure
+#    (sops creation rule from E2 routes encryption to the new recipient)
+sops secrets/hermes-fu.yaml          # editor opens; paste hermes-env: | block
+
+# 6. Uncomment the sops.secrets + environmentFiles lines in hosts/hermes-fu.nix
+
+# 7. Commit + push
+git add -p
+git commit -m "hermes-fu: enable sops secrets after provisioning"
+git push
+
+# 8. Pull on the new host + switch
+ssh agent@<new-ip> sudo nixos-rebuild switch --flake github:javdl/nixos-config#hermes-fu
+
+# 9. Tailscale auth
+make hetzner/tailscale-auth NIXADDR=<new-ip> TAILSCALE_AUTHKEY=tskey-auth-...
 ```
 
-If any verification fails, follow Rollback Scenario A or B above.
+This mirrors the established colleague-server runbook (CLAUDE.md "Bootstrap a new colleague server"); only step 5 is hermes-specific.
 
 ---
 
-## Summary of changes the migration plan needs
+## Verification
 
-| # | Type | Location in `migrate-hermes-to-nix-module.md` | Action |
-|---|---|---|---|
-| A1 | 🔴 bug | Risks table + Phase 5 prologue | Insert **Phase 0**: mask `nixos-upgrade.timer` before push; unmask after Phase 6 |
-| B1 | 🟡 fact | "Context" comparison table | Change `hermes gateway run --replace` → `hermes gateway` |
-| B2 | 🟡 fact | Phase 3 sops snippet + Risks row | Set `owner = "hermes"; mode = "0400";` and remove the "expects different perms" risk |
-| B3 | 🟡 fact | Phase 2 secrets format note | Add one-liner: file is concatenated raw, not parsed by systemd |
-| C1 | 🟠 gap | Risks row "joost can't read…" | Replace risk with positive verification: `stat -c '%a' /var/lib/hermes/.hermes` = `2770` |
-| C2 | 🟠 gap | Phase 5 step order | Move `rm -f ~/.local/bin/hermes` from Phase 7 to Phase 5 step 3 (before `nixos-rebuild switch`) |
-| C3 | 🟠 gap | Rollback section | Add Scenario A / Scenario B split; recommend `git tag pre-hermes-migration` before Phase 3 |
+**Before merging the PR (Nix code is correct):**
 
-All seven fixes are localized — no rewrite needed.
+```bash
+# Evaluate the new host without provisioning
+nix eval .#nixosConfigurations.hermes-fu.config.services.hermes-agent.enable
+#   → true
+
+nix eval .#nixosConfigurations.hermes-fu.config.networking.hostName
+#   → "hermes-fu"
+
+nix eval --raw .#nixosConfigurations.hermes-fu.config.systemd.services.hermes-agent.serviceConfig.ExecStart 2>/dev/null \
+  || nix eval .#nixosConfigurations.hermes-fu.config.systemd.services.hermes-agent.serviceConfig.ExecStart
+#   → /nix/store/.../bin/hermes gateway
+
+nix eval .#nixosConfigurations.hermes-fu.config.users.users.agent.extraGroups
+#   → [ "hermes" "docker" "wheel" ]   (order may differ)
+
+# Full build (slow first time; no commit yet)
+nix build .#nixosConfigurations.hermes-fu.config.system.build.toplevel --no-link
+```
+
+**After provisioning (service runs on the new host):**
+
+```bash
+ssh agent@<hermes-fu-ip>
+systemctl is-active hermes-agent                     # → active
+sudo stat -c '%a %U:%G' /var/lib/hermes/.hermes      # → 2770 hermes:hermes
+which hermes                                          # → /run/current-system/sw/bin/hermes
+echo "$HERMES_HOME"                                   # → /var/lib/hermes/.hermes
+sudo journalctl -u hermes-agent --since "2 minutes ago" --no-pager | grep -iE 'error|exception' \
+  || echo "no errors"
+```
+
+---
+
+## What this plan deliberately leaves out (out of scope)
+
+- **FashionUnited-specific hermes tuning.** Model choice, provider mix, allowlists (`TELEGRAM_ALLOWED_USERS` for a company shared bot — almost certainly different from loom's), MCP servers, declarative SOUL.md / documents. All explicitly punted per user directive.
+- **State migration.** Unlike loom, this is a green-field host with no `~/.hermes/` to import. The module's bootstrap creates fresh state directly.
+- **High-availability / multi-region.** Out of scope; single VM.
+- **Per-user / multi-tenant adapters.** Out of scope; the box runs one hermes gateway with one set of credentials.
+- **Tailscale `--advertise-exit-node`.** Loom advertised; hermes-fu won't (likely no need for a company AI server to be an exit node).
+- **`services.repoUpdater`.** Dropped — joost's loom-side repos aren't relevant to a company server. Add later if the company wants automated repo sync for `agent`.
+- **Removing the audit/migration plan docs.** `Plans/migrate-hermes-to-nix-module.md`, `Plans/post-hermes-migration-followups.md`, and `Plans/add-hermes-agent.md` stay — they're loom history and don't conflict with adding a second hermes host.
+
+---
+
+## Estimated effort
+
+- Repo PR (sections A–E): **30 min** (mostly mechanical copy + grep-replace)
+- Verification eval/build: **15 min** (first build pulls uv2nix deps; cachix hits should reduce this)
+- Provisioning (section G, separate session, requires VM ordered): **45 min** (nixos-anywhere + tailscale + secrets re-key + switch + verify)
+
+**Total active operator time: ~90 min** spread across two sessions, plus whatever lead time Hetzner takes to provision the VM.

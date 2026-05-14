@@ -176,6 +176,14 @@
       server = true;
     };
 
+    # FashionUnited company-wide hermes-agent host.
+    # Clone of loom's hermes-agent setup; see Plans/check-the-plan-for-misty-turtle.md.
+    nixosConfigurations.hermes-fu = mkSystem "hermes-fu" {
+      system = "x86_64-linux";
+      user   = "agent";
+      server = true;
+    };
+
     nixosConfigurations.joostclaw = mkSystem "joostclaw" {
       system = "x86_64-linux";
       user   = "joost";
