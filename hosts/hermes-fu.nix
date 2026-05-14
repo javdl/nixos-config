@@ -29,6 +29,7 @@
   ];
 
   # Hermes Agent — FashionUnited company-wide AI gateway.
+  # Primary messaging platform: Slack (Socket Mode, no public endpoint required).
   # State: /var/lib/hermes/.hermes (mode 2770, hermes:hermes, hardcoded by upstream).
   # Secrets: secrets/hermes-fu.yaml -> sops -> hermes-env (dotenv, concatenated raw).
   #
@@ -37,7 +38,17 @@
   # until first boot. Workflow:
   #   1. Provision host (this config builds; service starts without env vars)
   #   2. Derive age key from /etc/ssh/ssh_host_ed25519_key.pub, add to .sops.yaml
-  #   3. `sops secrets/hermes-fu.yaml` to create the encrypted payload
+  #   3. `sops secrets/hermes-fu.yaml` to create the encrypted payload. Required keys:
+  #        SLACK_BOT_TOKEN       xoxb-... (from Slack app's Install App page)
+  #        SLACK_APP_TOKEN       xapp-... (Socket Mode token, scope: connections:write)
+  #        SLACK_ALLOWED_USERS   U01ABC2DEF3,U01XYZ... (comma-separated Slack member IDs)
+  #      Optional:
+  #        SLACK_HOME_CHANNEL       C012345... (target channel for cron / unsolicited posts)
+  #        SLACK_HOME_CHANNEL_NAME  general    (human-readable label for the above)
+  #        ANTHROPIC_API_KEY        (or OPENROUTER_API_KEY — provider auto-detect picks one)
+  #      Slack app setup steps + required OAuth scopes / event subscriptions are
+  #      documented at hermes-agent.nousresearch.com/docs/user-guide/messaging/slack
+  #      (or run `hermes slack manifest --write` on the host to generate a manifest).
   #   4. Uncomment the two blocks below
   #   5. Commit + `nixos-rebuild switch --flake github:javdl/nixos-config#hermes-fu`
   #
@@ -55,15 +66,34 @@
     # environmentFiles = [ config.sops.secrets."hermes-env".path ];
 
     # The default sealed venv ships core deps only. The `messaging` extra
-    # (pyproject.toml) adds python-telegram-bot, discord.py, slack-bolt —
-    # required for the gateway adapters. Without it the service starts but
-    # logs "No adapter available for telegram" and no platforms come up.
+    # (pyproject.toml) adds slack-bolt, slack-sdk, python-telegram-bot, discord.py
+    # — required for the gateway adapters. Without it the service starts but
+    # logs "No adapter available for slack" and no platforms come up.
     extraDependencyGroups = [ "messaging" ];
 
-    settings.model = {
-      default = "anthropic/claude-opus-4.6";
-      provider = "auto";
-      base_url = "https://openrouter.ai/api/v1";
+    settings = {
+      model = {
+        default = "anthropic/claude-opus-4.6";
+        provider = "auto";
+        base_url = "https://openrouter.ai/api/v1";
+      };
+
+      # Slack platform — FashionUnited primary surface. Adapter auto-activates
+      # when SLACK_BOT_TOKEN is present in $HERMES_HOME/.env; these settings
+      # shape the in-channel behavior. Schema reference:
+      # github:NousResearch/hermes-agent/gateway/config.py (PlatformConfig).
+      platforms.slack = {
+        enabled = true;
+        reply_to_mode = "first";    # thread only the first chunk of multi-part replies
+        extra = {
+          reply_in_thread = true;   # keep channels tidy; replies thread under the prompt
+          require_mention = true;   # don't auto-engage on every channel message
+          unauthorized_dm_behavior = "ignore";  # SLACK_ALLOWED_USERS is the gate
+        };
+      };
+
+      # Per-user conversation isolation in shared channels (top-level GatewayConfig field).
+      group_sessions_per_user = true;
     };
   };
 
