@@ -40,6 +40,12 @@
     addToSystemPackages = true;
     environmentFiles = [ config.sops.secrets."hermes-env".path ];
 
+    # The default sealed venv ships core deps only. The `messaging` extra
+    # (pyproject.toml) adds python-telegram-bot, discord.py, slack-bolt —
+    # required for the gateway adapters. Without it the service starts but
+    # logs "No adapter available for telegram" and no platforms come up.
+    extraDependencyGroups = [ "messaging" ];
+
     settings.model = {
       default = "anthropic/claude-opus-4.6";
       provider = "auto";
