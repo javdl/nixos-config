@@ -357,20 +357,6 @@
           };
           mcpAgentMailSource = mcpAgentMailSources.${prev.stdenv.hostPlatform.system} or null;
 
-          # frankensearch (fsfs) - full-text search engine
-          frankensearchVersion = "1.1.2";
-          frankensearchSources = {
-            "x86_64-linux" = {
-              url = "https://github.com/Dicklesworthstone/frankensearch/releases/download/v${frankensearchVersion}/fsfs-${frankensearchVersion}-x86_64-unknown-linux-musl.tar.xz";
-              sha256 = "1d6c0f70812b2b27a30cac6738de2400104c5aa16c52b0d10b85b87edaa7bc06";
-            };
-            "aarch64-darwin" = {
-              url = "https://github.com/Dicklesworthstone/frankensearch/releases/download/v${frankensearchVersion}/fsfs-${frankensearchVersion}-aarch64-apple-darwin.tar.xz";
-              sha256 = "aee1647692f6ce44e88b41ed945cc1f1025777e6c76add290fb9875ee46eadd9";
-            };
-          };
-          frankensearchSource = frankensearchSources.${prev.stdenv.hostPlatform.system} or null;
-
           # casr - cross agent session resumer
           casrVersion = "0.1.1";
           casrSources = {
@@ -1045,26 +1031,6 @@
           # No binary releases; requires Rust nightly. Install via: cargo install --git https://github.com/Dicklesworthstone/coding_agent_usage_tracker
           caut = null;
 
-          # frankenterm (ft) - swarm-native terminal for AI agent orchestration
-          # Cannot build from source: Cargo.lock has local git path deps (file:///dp/frankensearch)
-          # Install via: cargo install --git https://github.com/Dicklesworthstone/frankenterm ft
-          frankenterm = null;
-
-          # franken_whisper - Agent-first Rust ASR orchestration (wraps whisper.cpp/insanely-fast-whisper/whisper-diarization)
-          # Needs backend setup (whisper.cpp, Python venvs, HF tokens) - clone and run from folder
-          # git clone https://github.com/Dicklesworthstone/franken_whisper && cd franken_whisper && cargo run -- robot health
-          franken-whisper = null;
-
-          # frankensqlite - Rust reimplementation of SQLite with concurrent writers
-          # Cannot build: requires Rust nightly (#![feature(unix_socket_ancillary_data)])
-          # Install via: cargo +nightly install --git https://github.com/Dicklesworthstone/frankensqlite
-          frankensqlite = null;
-
-          # frankentui (ftui) - minimal TUI kernel for flicker-free terminal UIs
-          # Cannot build from source: no Cargo.lock in repo
-          # Install via: git clone https://github.com/Dicklesworthstone/frankentui && cd frankentui && cargo run -p ftui-demo-showcase
-          frankentui = null;
-
           # giil - git intelligent issue linker (x86_64-linux only)
           giil = if prev.stdenv.hostPlatform.system == "x86_64-linux" then prev.stdenv.mkDerivation {
             pname = "giil";
@@ -1180,36 +1146,6 @@
             meta = with prev.lib; {
               description = "MCP Agent Mail - async multi-agent coordination (Rust)";
               homepage = "https://github.com/Dicklesworthstone/mcp_agent_mail_rust";
-              license = licenses.mit;
-              platforms = [ "x86_64-linux" "aarch64-darwin" ];
-            };
-          } else null;
-
-          # frankensearch (fsfs) - full-text search engine
-          frankensearch = if frankensearchSource != null then prev.stdenv.mkDerivation {
-            pname = "frankensearch";
-            version = frankensearchVersion;
-
-            src = prev.fetchurl {
-              url = frankensearchSource.url;
-              sha256 = frankensearchSource.sha256;
-            };
-
-            sourceRoot = ".";
-
-            unpackPhase = ''
-              ${prev.xz}/bin/xz -d < $src | tar xf -
-            '';
-
-            installPhase = ''
-              mkdir -p $out/bin
-              cp fsfs $out/bin/
-              chmod +x $out/bin/fsfs
-            '';
-
-            meta = with prev.lib; {
-              description = "Full-text search engine";
-              homepage = "https://github.com/Dicklesworthstone/frankensearch";
               license = licenses.mit;
               platforms = [ "x86_64-linux" "aarch64-darwin" ];
             };

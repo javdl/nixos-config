@@ -718,7 +718,6 @@ Tools from [Jeffrey Emanuel](https://github.com/Dicklesworthstone) included in t
 | cass_memory | `cm` | [cass_memory_system](https://github.com/Dicklesworthstone/cass_memory_system) | Procedural memory for AI agents: cross-agent persistent memory (Linux only) |
 | caut | `caut` | [coding_agent_usage_tracker](https://github.com/Dicklesworthstone/coding_agent_usage_tracker) | Track and monitor LLM provider usage across AI coding agents |
 | dcg | `dcg` | [destructive_command_guard](https://github.com/Dicklesworthstone/destructive_command_guard) | Safety hook that blocks dangerous git/shell commands from AI agents |
-| frankensearch | `fsfs` | [frankensearch](https://github.com/Dicklesworthstone/frankensearch) | Full-text search engine |
 | giil | `giil` | [giil](https://github.com/Dicklesworthstone/giil) | Git intelligent issue linker (x86_64-linux only) |
 | grepai | `grepai` | [grepai](https://github.com/yoanbernabeu/grepai) | Semantic code search CLI for AI coding assistants |
 | mcp_agent_mail_rust | `mcp-agent-mail`, `am` | [mcp_agent_mail_rust](https://github.com/Dicklesworthstone/mcp_agent_mail_rust) | MCP server for multi-agent coordination (Rust, replaces Python version) |
@@ -727,15 +726,6 @@ Tools from [Jeffrey Emanuel](https://github.com/Dicklesworthstone) included in t
 | repo_updater | `ru` | [repo_updater](https://github.com/Dicklesworthstone/repo_updater) | CLI for keeping GitHub repos in sync with parallel clone/pull |
 | ubs | `ubs` | [ultimate_bug_scanner](https://github.com/Dicklesworthstone/ultimate_bug_scanner) | Static analysis catching 1000+ bug patterns across languages |
 | xf | `xf` | [xf](https://github.com/Dicklesworthstone/xf) | Cross-format file converter |
-
-**Clone-and-run tools** (not packaged as Nix overlays due to runtime dependencies):
-
-| Tool | Source | Description |
-|------|--------|-------------|
-| franken_whisper | [franken_whisper](https://github.com/Dicklesworthstone/franken_whisper) | Agent-first Rust ASR orchestration (wraps whisper.cpp/insanely-fast-whisper) |
-| frankenterm | [frankenterm](https://github.com/Dicklesworthstone/frankenterm) | Swarm-native terminal for AI agent orchestration |
-| frankensqlite | [frankensqlite](https://github.com/Dicklesworthstone/frankensqlite) | Rust reimplementation of SQLite with concurrent writers (requires nightly) |
-| frankentui | [frankentui](https://github.com/Dicklesworthstone/frankentui) | Minimal TUI kernel for flicker-free terminal UIs |
 
 Run `ntm deps -v` to check the health status of all tools.
 

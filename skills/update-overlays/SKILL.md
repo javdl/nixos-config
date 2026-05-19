@@ -47,7 +47,6 @@ All packages defined in `/home/joost/nixos-config/lib/overlays.nix` that follow 
 | pi | gh-release | Dicklesworthstone/pi_agent_rust |
 | xf | gh-release | Dicklesworthstone/xf |
 | mcp-agent-mail | gh-release | Dicklesworthstone/mcp_agent_mail_rust |
-| fsfs (frankensearch) | gh-release | Dicklesworthstone/frankensearch |
 | casr | gh-release | Dicklesworthstone/cross_agent_session_resumer |
 | s2p | gh-release (bare binary) | Dicklesworthstone/source_to_prompt_tui |
 | pt | gh-release | Dicklesworthstone/process_triage |

@@ -92,15 +92,10 @@ in {
   ] ++ (lib.optional (pkgs.meta-skill != null) pkgs.meta-skill) ++ [
     slb               # Shannon Language Benchmark for LLM evaluation
     ubs               # AI-native code quality scanner
-    # frankenterm (ft): installed via cargo nightly in activation script below
-    # franken_whisper: clone and run from folder (needs whisper backends) - https://github.com/Dicklesworthstone/franken_whisper
-    # frankensqlite: install via `cargo +nightly install --git https://github.com/Dicklesworthstone/frankensqlite` (requires nightly)
-    # frankentui: install via `git clone ... && cargo run -p ftui-demo-showcase` (no Cargo.lock)
   ] ++ (lib.optional (pkgs.giil != null) pkgs.giil)
     ++ (lib.optional (pkgs.pi-agent != null) pkgs.pi-agent)
     ++ (lib.optional (pkgs.xf != null) pkgs.xf)
     ++ (lib.optional (pkgs.mcp-agent-mail != null) pkgs.mcp-agent-mail)
-    ++ (lib.optional (pkgs.frankensearch != null) pkgs.frankensearch)
     ++ (lib.optional (pkgs.cross-agent-session-resumer != null) pkgs.cross-agent-session-resumer)
     ++ (lib.optional (pkgs.process-triage != null) pkgs.process-triage)
     ++ (lib.optional (pkgs.remote-compilation-helper != null) pkgs.remote-compilation-helper)
@@ -171,25 +166,6 @@ in {
     if ! $HOME/.cargo/bin/caut --version &>/dev/null; then
       echo "Installing caut (coding agent usage tracker)..."
       $DRY_RUN_CMD bash -c "PKG_CONFIG_PATH='${pkgs.sqlite.dev}/lib/pkgconfig' LIBRARY_PATH='${pkgs.sqlite.out}/lib' ${pkgs.rustup}/bin/rustup run nightly cargo install --git https://github.com/Dicklesworthstone/coding_agent_usage_tracker" || echo "caut install failed (requires rustup nightly + sqlite)"
-    fi
-  '';
-
-  # Clone Dicklesworthstone repos and install frankenterm (ft)
-  # frankenterm workspace has path deps on frankenredis + frankentui as siblings
-  home.activation.installFrankenterm = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    DW="$HOME/code/Dicklesworthstone"
-    $DRY_RUN_CMD mkdir -p "$DW"
-    for repo in frankenterm frankenredis frankentui; do
-      [ -d "$DW/$repo" ] || $DRY_RUN_CMD ${pkgs.git}/bin/git clone --depth 1 "https://github.com/Dicklesworthstone/$repo" "$DW/$repo"
-    done
-    if ! $HOME/.cargo/bin/ft --version &>/dev/null; then
-      echo "Installing frankenterm (ft)..."
-      $DRY_RUN_CMD bash -c '
-        PKG_CONFIG_PATH='"'"'${pkgs.openssl.dev}/lib/pkgconfig'"'"' \
-        OPENSSL_DIR='"'"'${pkgs.openssl.dev}'"'"' \
-        OPENSSL_LIB_DIR='"'"'${pkgs.openssl.out}/lib'"'"' \
-        ${pkgs.rustup}/bin/rustup run nightly cargo install --path "'"$DW"'/frankenterm/crates/frankenterm"
-      ' || echo "frankenterm install failed (requires rustup nightly + openssl)"
     fi
   '';
 

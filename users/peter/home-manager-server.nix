@@ -90,7 +90,6 @@ in {
     ++ (lib.optional (pkgs.pi-agent != null) pkgs.pi-agent)
     ++ (lib.optional (pkgs.xf != null) pkgs.xf)
     ++ (lib.optional (pkgs.mcp-agent-mail != null) pkgs.mcp-agent-mail)
-    ++ (lib.optional (pkgs.frankensearch != null) pkgs.frankensearch)
     ++ (lib.optional (pkgs.cross-agent-session-resumer != null) pkgs.cross-agent-session-resumer)
     ++ (lib.optional (pkgs.process-triage != null) pkgs.process-triage)
     ++ (lib.optional (pkgs.remote-compilation-helper != null) pkgs.remote-compilation-helper)
