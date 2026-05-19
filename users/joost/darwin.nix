@@ -24,7 +24,7 @@ let
     "insync"
     "istat-menus"
     "libreoffice"
-    "linear-linear"
+    "linear"
     "obsidian"
     "podman-desktop"
     "raycast" # for searching nix GUI apps
@@ -72,7 +72,7 @@ let
     "jetbrains-gateway"
     "jetbrains-toolbox"
     # "librewolf"
-    "linear-linear"
+    "linear"
     "legcord"
     "lm-studio"
     "libreoffice"
@@ -205,27 +205,28 @@ in
   environment.systemPackages = [ pkgs.duti ];
 
   system.activationScripts.postActivation.text = ''
-    # Set Zed as default editor for dev files
-    # Using || true to ignore errors for file types the app doesn't declare support for
-    ${pkgs.duti}/bin/duti -s dev.zed.Zed .json all || true
-    ${pkgs.duti}/bin/duti -s dev.zed.Zed .md all || true
-    ${pkgs.duti}/bin/duti -s dev.zed.Zed .yaml all || true
-    ${pkgs.duti}/bin/duti -s dev.zed.Zed .yml all || true
-    ${pkgs.duti}/bin/duti -s dev.zed.Zed .toml all || true
-    ${pkgs.duti}/bin/duti -s dev.zed.Zed .rs all || true
-    ${pkgs.duti}/bin/duti -s dev.zed.Zed .py all || true
-    ${pkgs.duti}/bin/duti -s dev.zed.Zed .js all || true
-    ${pkgs.duti}/bin/duti -s dev.zed.Zed .ts all || true
-    ${pkgs.duti}/bin/duti -s dev.zed.Zed .tsx all || true
-    ${pkgs.duti}/bin/duti -s dev.zed.Zed .jsx all || true
-    ${pkgs.duti}/bin/duti -s dev.zed.Zed .css all || true
-    ${pkgs.duti}/bin/duti -s dev.zed.Zed .scss all || true
-    ${pkgs.duti}/bin/duti -s dev.zed.Zed .nix all || true
-    ${pkgs.duti}/bin/duti -s dev.zed.Zed .sh all || true
-    ${pkgs.duti}/bin/duti -s dev.zed.Zed .txt all || true
-    ${pkgs.duti}/bin/duti -s dev.zed.Zed .xml all || true
-    ${pkgs.duti}/bin/duti -s dev.zed.Zed .sql all || true
-    ${pkgs.duti}/bin/duti -s dev.zed.Zed .go all || true
-    ${pkgs.duti}/bin/duti -s dev.zed.Zed .lua all || true
+    # Set Zed as the best-effort default for stable text/source UTIs.
+    if [ -d /Applications/Zed.app ]; then
+      "/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister" -f /Applications/Zed.app >/dev/null 2>&1 || true
+
+      zedDutiFailed=0
+      for uti in \
+        public.plain-text \
+        public.text \
+        public.source-code \
+        public.shell-script \
+        public.json \
+        public.xml \
+        public.css \
+        public.html; do
+        ${pkgs.duti}/bin/duti -s dev.zed.Zed "$uti" all >/dev/null 2>&1 || zedDutiFailed=1
+      done
+
+      if [ "$zedDutiFailed" -ne 0 ]; then
+        echo "Some Zed default-app associations could not be applied; continuing."
+      fi
+    else
+      echo "Skipping Zed default-app associations: /Applications/Zed.app not found"
+    fi
   '';
 }

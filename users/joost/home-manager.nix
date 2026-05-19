@@ -334,25 +334,25 @@ in {
 
   # Install worktrunk via cargo. Recent versions require rustc >= 1.93,
   # so make sure the stable toolchain is up-to-date before installing.
-  home.activation.installWorktrunk = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    if ! command -v worktrunk &>/dev/null; then
+  home.activation.installWorktrunk = lib.mkIf (!isMinimal) (lib.hm.dag.entryAfter ["writeBoundary"] ''
+    if ! $HOME/.cargo/bin/worktrunk --version &>/dev/null; then
       echo "Installing worktrunk..."
       $DRY_RUN_CMD bash -c "${pkgs.rustup}/bin/rustup update stable && ${pkgs.rustup}/bin/rustup run stable cargo install worktrunk" || echo "worktrunk install failed"
     fi
-  '';
+  '');
 
   # Install caut (coding agent usage tracker) via cargo nightly.
   # Ensures the nightly toolchain is installed before invoking it.
-  home.activation.installCaut = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    if ! command -v caut &>/dev/null; then
+  home.activation.installCaut = lib.mkIf (!isMinimal) (lib.hm.dag.entryAfter ["writeBoundary"] ''
+    if ! $HOME/.cargo/bin/caut --version &>/dev/null; then
       echo "Installing caut (coding agent usage tracker)..."
       $DRY_RUN_CMD bash -c "${pkgs.rustup}/bin/rustup toolchain install nightly --profile minimal && ${pkgs.rustup}/bin/rustup run nightly cargo install --git https://github.com/Dicklesworthstone/coding_agent_usage_tracker" || echo "caut install failed (requires rustup nightly)"
     fi
-  '';
+  '');
 
   # Clone Dicklesworthstone repos and install frankenterm (ft)
   # frankenterm workspace has path deps on frankenredis + frankentui as siblings
-  home.activation.installFrankenterm = lib.hm.dag.entryAfter ["writeBoundary"] ''
+  home.activation.installFrankenterm = lib.mkIf (!isMinimal) (lib.hm.dag.entryAfter ["writeBoundary"] ''
     DW="$HOME/code/Dicklesworthstone"
     $DRY_RUN_CMD mkdir -p "$DW"
     for repo in frankenterm frankenredis frankentui; do
@@ -368,7 +368,7 @@ in {
         ${pkgs.rustup}/bin/rustup run nightly cargo install --path "'"$DW"'/frankenterm/crates/frankenterm"
       ' || echo "frankenterm install failed (requires rustup nightly + openssl)"
     fi
-  '';
+  '');
 
   # Agent Mail is now a pre-built Rust binary (mcp-agent-mail package)
   # No activation script needed - installed via home.packages
@@ -384,7 +384,7 @@ in {
         $DRY_RUN_CMD ${pkgs.git}/bin/git -C "$CHEZMOI_SOURCE" checkout main || true
       fi
       echo "Syncing dotfiles from chezmoi repo..."
-      $DRY_RUN_CMD ${pkgs.chezmoi}/bin/chezmoi update || true
+      $DRY_RUN_CMD env PATH="${pkgs.bitwarden-cli}/bin:${pkgs.git}/bin:$PATH" ${pkgs.chezmoi}/bin/chezmoi update || true
     else
       echo "Chezmoi not initialized. Run: chezmoi init --apply git@github.com:javdl/dotfiles.git"
     fi

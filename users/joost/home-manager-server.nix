@@ -201,7 +201,7 @@ in {
     CHEZMOI_SOURCE="$HOME/.local/share/chezmoi"
     if [ -d "$CHEZMOI_SOURCE" ]; then
       echo "Syncing dotfiles from chezmoi repo..."
-      $DRY_RUN_CMD ${pkgs.chezmoi}/bin/chezmoi update || true
+      $DRY_RUN_CMD env PATH="${pkgs.bitwarden-cli}/bin:${pkgs.git}/bin:$PATH" ${pkgs.chezmoi}/bin/chezmoi update || true
     else
       echo "Chezmoi not initialized. Run: chezmoi init --apply https://github.com/javdl/dotfiles.git"
     fi
