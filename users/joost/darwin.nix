@@ -64,6 +64,7 @@ let
     "google-chrome"
     "google-drive"
     "gpg-suite"
+    "granola"
     "hammerspoon"
     "imageoptim"
     "insync"
