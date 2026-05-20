@@ -25,6 +25,16 @@ let
   # Use shared manpager
   manpager = shared.manpager;
 
+  sshTailscaleHost = host: {
+    hostname = "${host}.buri-hoki.ts.net";
+    user = "joost";
+    extraOptions = {
+      PreferredAuthentications = "publickey";
+      PubkeyAuthentication = "yes";
+      PasswordAuthentication = "no";
+    };
+  };
+
   gdk = pkgs.google-cloud-sdk.withExtraComponents( with pkgs.google-cloud-sdk.components; [
     gke-gcloud-auth-plugin
     alpha
@@ -944,6 +954,13 @@ in {
         identityFile = "~/.ssh/id_ed25519_hetzner_work";
         identitiesOnly = true;
       };
+
+      "j8" = sshTailscaleHost "j8";
+      "pikvm" = sshTailscaleHost "pikvm";
+      "router" = sshTailscaleHost "router";
+      "j9" = sshTailscaleHost "j9";
+      "nas" = sshTailscaleHost "nas";
+      "terra" = sshTailscaleHost "terra";
 
     };
   };
