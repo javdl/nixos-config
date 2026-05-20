@@ -30,10 +30,15 @@ This is a NixOS/nix-darwin configuration repository using Nix flakes. It manages
 ## Build Commands
 
 ### Primary Commands
-- `make switch` - Apply configuration to current system (detects OS type automatically)
-- `make test` - Test configuration without applying changes
-- `make update` - Update flake.lock and switch to new configuration
-- `make upgrade` - Update packages and switch configuration
+
+**Always pass `NIXNAME=<hostname>` explicitly.** The Makefile defaults `NIXNAME ?= vm-intel`, so an unqualified `make switch` silently targets the wrong host. The OS branch (Darwin vs NixOS) is detected automatically; the host name is not.
+
+- `make switch NIXNAME=<host>` - Apply configuration to the named host (e.g. `make switch NIXNAME=fu146`)
+- `make test NIXNAME=<host>` - Test configuration without applying changes
+- `make update NIXNAME=<host>` - Update flake.lock and switch
+- `make upgrade NIXNAME=<host>` - Update packages and switch
+
+`<host>` is the matching key in `flake.nix` `darwinConfigurations` / `nixosConfigurations` (usually `hostname -s` on the local machine).
 
 ### Platform-Specific
 - `make wsl` - Build WSL installer tarball

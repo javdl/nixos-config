@@ -209,6 +209,8 @@ in
     if [ -d /Applications/Zed.app ]; then
       "/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister" -f /Applications/Zed.app >/dev/null 2>&1 || true
 
+      # Intentionally excludes public.html so HTML files (and URL clicks
+      # resolved via the html handler) open in the system default browser.
       zedDutiFailed=0
       for uti in \
         public.plain-text \
@@ -217,8 +219,7 @@ in
         public.shell-script \
         public.json \
         public.xml \
-        public.css \
-        public.html; do
+        public.css; do
         ${pkgs.duti}/bin/duti -s dev.zed.Zed "$uti" all >/dev/null 2>&1 || zedDutiFailed=1
       done
 
@@ -227,6 +228,23 @@ in
       fi
     else
       echo "Skipping Zed default-app associations: /Applications/Zed.app not found"
+    fi
+
+    # Pin Brave Browser as the default for HTML files and http(s) URL clicks.
+    if [ -d "/Applications/Brave Browser.app" ]; then
+      braveDutiFailed=0
+      for handler in \
+        public.html \
+        public.url-scheme.http \
+        public.url-scheme.https; do
+        ${pkgs.duti}/bin/duti -s com.brave.Browser "$handler" all >/dev/null 2>&1 || braveDutiFailed=1
+      done
+
+      if [ "$braveDutiFailed" -ne 0 ]; then
+        echo "Some Brave default-handler associations could not be applied; continuing."
+      fi
+    else
+      echo "Skipping Brave default-handler associations: /Applications/Brave Browser.app not found"
     fi
   '';
 }
