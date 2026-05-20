@@ -274,13 +274,19 @@
     '';
   };
 
-  # 25 ephemeral runners sharing 1 registration token
-  # Ephemeral runners re-register after each job, so the token can be reused.
+  # 25 long-lived runners sharing 1 registration token at first start.
+  # ephemeral = false: runners persist credentials in /var/lib/github-runner/.runner
+  # after first registration and do NOT need the SOPS token on subsequent restarts
+  # (unconfigure.sh takes the diff_config path and skips re-registration unless
+  # the module config or token changes). This is the only design that survives
+  # the GitHub registration token's 1h TTL.
+  # replace = true is kept so that if the module config DOES change later, the
+  # one-time re-registration cleanly replaces any stale GitHub-side runner.
   services.github-runners = lib.listToAttrs (lib.genList (i:
     let idx = i + 1;
     in lib.nameValuePair "fuww-runner-${toString idx}" {
       enable = true;
-      ephemeral = true;
+      ephemeral = false;
       replace = true;
       name = "github-runner-01-${toString idx}";
       tokenFile = config.sops.secrets.github-runner-token.path;
