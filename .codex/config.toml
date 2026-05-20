@@ -1,0 +1,13 @@
+[mcp_servers.context7]
+args = [
+    "-c",
+    "PATH=/run/current-system/sw/bin:/etc/profiles/per-user/$USER/bin:$PATH exec npx -y @upstash/context7-mcp",
+]
+command = "/bin/sh"
+
+[mcp_servers.fetch]
+args = [
+    "-c",
+    "PATH=/run/current-system/sw/bin:/etc/profiles/per-user/$USER/bin:$PATH exec uvx mcp-server-fetch",
+]
+command = "/bin/sh"
