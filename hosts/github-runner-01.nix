@@ -312,25 +312,31 @@
     "d /var/lib/github-runner-work/fuww-runner-${toString (i + 1)} 0700 github-runner users -"
   ) 8;
 
-  services.github-runners = lib.listToAttrs (lib.genList (i:
-    let idx = i + 1;
-    in lib.nameValuePair "fuww-runner-${toString idx}" {
-      enable = true;
-      ephemeral = false;
-      replace = true;
-      name = "github-runner-01-${toString idx}";
-      tokenFile = config.sops.secrets.github-runner-token.path;
-      url = "https://github.com/fuww";
-      workDir = "/var/lib/github-runner-work/fuww-runner-${toString idx}";
-      extraLabels = [ "hetzner" "nixos" "ccx33" "self-hosted-16-cores" ];
-      user = "github-runner";
-      extraPackages = config.services.github-actions-runner.packages.forRunner;
-      extraEnvironment = {
-        DOCKER_HOST = "unix:///var/run/docker.sock";
-        ACTIONS_RUNNER_HOOK_JOB_STARTED = "/etc/github-runner-pre-job.sh";
-      };
-    }
-  ) 8);
+  # Disabled 2026-05-21: runner-01 retired in favor of runner-02 (larger disk).
+  # The 8 systemd units are gated off, leaving the host config (Tailscale, etc.)
+  # intact. Flip `runnersEnabled` back to `true` and rebuild to re-register.
+  # GitHub-side registrations were removed via `gh api -X DELETE` from j8.
+  services.github-runners =
+    let runnersEnabled = false;
+    in lib.optionalAttrs runnersEnabled (lib.listToAttrs (lib.genList (i:
+      let idx = i + 1;
+      in lib.nameValuePair "fuww-runner-${toString idx}" {
+        enable = true;
+        ephemeral = false;
+        replace = true;
+        name = "github-runner-01-${toString idx}";
+        tokenFile = config.sops.secrets.github-runner-token.path;
+        url = "https://github.com/fuww";
+        workDir = "/var/lib/github-runner-work/fuww-runner-${toString idx}";
+        extraLabels = [ "hetzner" "nixos" "ccx33" "self-hosted-16-cores" ];
+        user = "github-runner";
+        extraPackages = config.services.github-actions-runner.packages.forRunner;
+        extraEnvironment = {
+          DOCKER_HOST = "unix:///var/run/docker.sock";
+          ACTIONS_RUNNER_HOOK_JOB_STARTED = "/etc/github-runner-pre-job.sh";
+        };
+      }
+    ) 8));
 
   # This value determines the NixOS release
   system.stateVersion = "25.05";
