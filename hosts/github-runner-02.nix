@@ -242,22 +242,37 @@
   # The systemd service runs configure as the 'github-runner' user (not root).
   # On each start, the unconfigure script (root) copies the token to .new-token,
   # then the configure script (github-runner) consumes it to register with GitHub.
-  # Pre-job cleanup hook (shared with runner-01 pattern)
+  # Pre-job cleanup hook (shared with runner-01 pattern).
+  # Monitors BOTH root disk and /run tmpfs — workspaces moved off tmpfs via workDir,
+  # but _actions/_temp caches still land in /run and can fill it under heavy load.
   environment.etc."github-runner-pre-job.sh" = {
     mode = "0755";
     text = ''
       #!/bin/bash
       AVAIL_GB=$(df -BG / | awk 'NR==2 {gsub("G",""); print $4}')
-      echo "Pre-job disk check: ''${AVAIL_GB}GB available"
+      TMPFS_PCT=$(df --output=pcent /run | tail -1 | tr -d ' %')
+      echo "Pre-job disk check: ''${AVAIL_GB}GB free on /, /run tmpfs at ''${TMPFS_PCT}%"
+
+      # Tmpfs pressure: clear runtime caches first (they re-download on use)
+      if [ "$TMPFS_PCT" -ge 80 ]; then
+        echo "Tmpfs /run pressure — clearing _actions/_temp caches"
+        find /run/github-runner -type d -name "_actions" -exec rm -rf {} + 2>/dev/null || true
+        find /run/github-runner -type d -name "_temp" -exec rm -rf {} + 2>/dev/null || true
+        find /run/github-runner -type d -name "_tool" -exec rm -rf {} + 2>/dev/null || true
+        NEW_PCT=$(df --output=pcent /run | tail -1 | tr -d ' %')
+        echo "Tmpfs /run after cleanup: ''${NEW_PCT}%"
+      fi
+
       if [ "$AVAIL_GB" -lt 40 ]; then
         echo "Low disk — running emergency cleanup before job"
         docker system prune --all --force --filter "until=4h" 2>/dev/null || true
         docker builder prune --all --force 2>/dev/null || true
         docker volume prune --force 2>/dev/null || true
-        for dir in /run/github-runner/fuww-runner/*/; do
+        # Clean old runner workspace dirs (numbered: fuww-runner-1, fuww-runner-2, ...)
+        for dir in /var/lib/github-runner-work/fuww-runner-*/*/; do
           [ -d "$dir" ] || continue
           case "$(basename "$dir")" in
-            _actions|_PipelineMapping|_diag|_temp) continue ;;
+            _actions|_PipelineMapping|_diag|_temp|_tool) continue ;;
           esac
           if [ "$(find "$dir" -maxdepth 0 -mtime +1 2>/dev/null)" ]; then
             echo "Removing stale: $dir"
@@ -278,6 +293,10 @@
   # the GitHub registration token's 1h TTL.
   # replace = true is kept so that if the module config DOES change later, the
   # one-time re-registration cleanly replaces any stale GitHub-side runner.
+  # workDir overrides the upstream default of /run/github-runner/<name> (tmpfs).
+  # Workspaces (_work/<repo>, _actions cache, _tool cache) now live on /var/lib
+  # which sits on the 640G data disk instead of a 7.7G memory-backed tmpfs.
+  # The workspace root is pre-created with the correct owner by ci-disk-cleanup.
   services.github-runners = lib.listToAttrs (lib.genList (i:
     let idx = i + 1;
     in lib.nameValuePair "fuww-runner-${toString idx}" {
@@ -287,6 +306,7 @@
       name = "github-runner-02-${toString idx}";
       tokenFile = config.sops.secrets.github-runner-token.path;
       url = "https://github.com/fuww";
+      workDir = "/var/lib/github-runner-work/fuww-runner-${toString idx}";
       extraLabels = [ "hetzner" "nixos" "cpx62" "self-hosted-16-cores" ];
       user = "github-runner";
       extraPackages = config.services.github-actions-runner.packages.forRunner;

@@ -31,8 +31,29 @@ in {
 
     runnerWorkDir = mkOption {
       type = types.str;
+      default = "/var/lib/github-runner-work";
+      description = ''
+        GitHub Actions runner work directory root (on persistent disk).
+        Must match the per-runner `workDir` set in services.github-runners.
+        The default `/run/github-runner` from upstream is tmpfs-backed and
+        fills under load; we override it to use the data disk instead.
+      '';
+    };
+
+    runnerRuntimeDir = mkOption {
+      type = types.str;
       default = "/run/github-runner";
-      description = "GitHub Actions runner work directory root";
+      description = ''
+        Legacy tmpfs runtime dir where systemd still places the runner binary
+        and a small _actions cache. Monitored for fullness as a safety net,
+        but workspaces should not live here.
+      '';
+    };
+
+    tmpfsThresholdPct = mkOption {
+      type = types.int;
+      default = 80;
+      description = "Trigger tmpfs cleanup when /run usage exceeds this percentage";
     };
 
     runnerWorkCleanupAge = mkOption {
@@ -112,20 +133,8 @@ in {
         # Clean setup-pnpm global store caches (these get huge)
         find "$RUNNER_DIR" -type d -name "setup-pnpm" -mtime +"$AGE_DAYS" -exec rm -rf {} + 2>/dev/null || true
 
-        # Clean old repo checkout directories (but not _actions, _PipelineMapping, _diag)
-        for dir in "$RUNNER_DIR"/*/; do
-          [ -d "$dir" ] || continue
-          basename=$(basename "$dir")
-          # Skip runner internal directories
-          case "$basename" in
-            _actions|_PipelineMapping|_diag|_temp|_tool|setup-pnpm) continue ;;
-          esac
-          # Skip fuww-runner-* directories themselves (they contain the runner state)
-          [[ "$basename" == fuww-runner* ]] && continue
-        done
-
         # Within each runner dir, clean old repo checkouts
-        for runner in "$RUNNER_DIR"/fuww-runner*/; do
+        for runner in "$RUNNER_DIR"/fuww-runner-*/; do
           [ -d "$runner" ] || continue
           for dir in "$runner"/*/; do
             [ -d "$dir" ] || continue
@@ -172,7 +181,9 @@ in {
     };
 
     # Proactive disk space monitor — runs every 10 minutes
-    # Cleans Docker, Actions tool cache, and nix store when disk is low
+    # Cleans Docker, Actions tool cache, and nix store when disk is low.
+    # Also monitors /run (tmpfs) since the upstream github-runner module places
+    # runtime state there and any spillover (e.g., _actions/_temp) fills it fast.
     systemd.services.ci-disk-monitor = {
       description = "CI disk space monitor and emergency cleanup";
       after = [ "docker.service" ];
@@ -181,9 +192,27 @@ in {
         set -euo pipefail
         THRESHOLD=${toString cfg.diskThresholdGB}
         RUNNER_DIR="${cfg.runnerWorkDir}"
+        RUNTIME_DIR="${cfg.runnerRuntimeDir}"
+        TMPFS_PCT_THRESHOLD=${toString cfg.tmpfsThresholdPct}
 
         AVAIL_GB=$(df -BG / | awk 'NR==2 {gsub("G",""); print $4}')
-        echo "Available: ''${AVAIL_GB}GB, threshold: ''${THRESHOLD}GB"
+        TMPFS_USE_PCT=$(df --output=pcent /run | tail -1 | tr -d ' %')
+        echo "Disk available: ''${AVAIL_GB}GB (threshold: ''${THRESHOLD}GB)"
+        echo "Tmpfs /run usage: ''${TMPFS_USE_PCT}% (threshold: ''${TMPFS_PCT_THRESHOLD}%)"
+
+        # Tmpfs cleanup: even though workspaces live on disk now, _actions caches
+        # and tool downloads still land under $RUNTIME_DIR. Clear them aggressively
+        # whenever /run gets crowded — they re-download on next use.
+        if [ "$TMPFS_USE_PCT" -ge "$TMPFS_PCT_THRESHOLD" ]; then
+          echo "=== TMPFS PRESSURE — clearing runtime caches ==="
+          if [ -d "$RUNTIME_DIR" ]; then
+            find "$RUNTIME_DIR" -type d -name "_actions" -exec rm -rf {} + 2>/dev/null || true
+            find "$RUNTIME_DIR" -type d -name "_temp" -exec rm -rf {} + 2>/dev/null || true
+            find "$RUNTIME_DIR" -type d -name "_tool" -exec rm -rf {} + 2>/dev/null || true
+          fi
+          NEW_PCT=$(df --output=pcent /run | tail -1 | tr -d ' %')
+          echo "Tmpfs /run after cleanup: ''${NEW_PCT}%"
+        fi
 
         if [ "$AVAIL_GB" -lt "$THRESHOLD" ]; then
           echo "=== LOW DISK SPACE — running emergency cleanup ==="
@@ -226,7 +255,7 @@ in {
 
           # 7. Clean all runner work dirs (repos re-clone on next job)
           if [ -d "$RUNNER_DIR" ]; then
-            for runner in "$RUNNER_DIR"/fuww-runner*/; do
+            for runner in "$RUNNER_DIR"/fuww-runner-*/; do
               [ -d "$runner" ] || continue
               for dir in "$runner"/*/; do
                 [ -d "$dir" ] || continue
@@ -265,9 +294,11 @@ in {
       SystemMaxUse=${cfg.journalMaxSize}
     '';
 
-    # Clean old tmp files
+    # Clean old tmp files; pre-create runner workspace root with correct ownership
+    # so the per-runner StateDirectory entries can be created on first start.
     systemd.tmpfiles.rules = [
       "d /tmp 1777 root root ${cfg.tmpCleanupAge}"
+      "d ${cfg.runnerWorkDir} 0755 github-runner users -"
     ];
   };
 }
