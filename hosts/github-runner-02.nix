@@ -296,7 +296,13 @@
   # workDir overrides the upstream default of /run/github-runner/<name> (tmpfs).
   # Workspaces (_work/<repo>, _actions cache, _tool cache) now live on /var/lib
   # which sits on the 640G data disk instead of a 7.7G memory-backed tmpfs.
-  # The workspace root is pre-created with the correct owner by ci-disk-cleanup.
+  # Each per-runner subdir must exist before the unit starts — systemd's
+  # BindPaths= fails namespacing if the source path is missing. The parent
+  # is created by ci-disk-cleanup; the children are pre-created here.
+  systemd.tmpfiles.rules = lib.genList (i:
+    "d /var/lib/github-runner-work/fuww-runner-${toString (i + 1)} 0700 github-runner users -"
+  ) 25;
+
   services.github-runners = lib.listToAttrs (lib.genList (i:
     let idx = i + 1;
     in lib.nameValuePair "fuww-runner-${toString idx}" {
