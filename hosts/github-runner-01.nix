@@ -288,7 +288,7 @@
     '';
   };
 
-  # 25 long-lived runners sharing 1 registration token at first start.
+  # 8 long-lived runners sharing 1 registration token at first start.
   # ephemeral = false: runners persist credentials in /var/lib/github-runner/.runner
   # after first registration and do NOT need the SOPS token on subsequent restarts
   # (unconfigure.sh takes the diff_config path and skips re-registration unless
@@ -304,7 +304,7 @@
   # is created by ci-disk-cleanup; the children are pre-created here.
   systemd.tmpfiles.rules = lib.genList (i:
     "d /var/lib/github-runner-work/fuww-runner-${toString (i + 1)} 0700 github-runner users -"
-  ) 25;
+  ) 8;
 
   services.github-runners = lib.listToAttrs (lib.genList (i:
     let idx = i + 1;
@@ -324,7 +324,7 @@
         ACTIONS_RUNNER_HOOK_JOB_STARTED = "/etc/github-runner-pre-job.sh";
       };
     }
-  ) 25);
+  ) 8);
 
   # This value determines the NixOS release
   system.stateVersion = "25.05";
