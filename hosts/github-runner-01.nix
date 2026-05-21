@@ -255,6 +255,12 @@
       TMPFS_PCT=$(df --output=pcent /run | tail -1 | tr -d ' %')
       echo "Pre-job disk check: ''${AVAIL_GB}GB free on /, /run tmpfs at ''${TMPFS_PCT}%"
 
+      # Always purge cache dirs that Docker containers (e.g., Lighthouse CI)
+      # write as non-runner UIDs. Workflows re-create them but cannot `chmod`
+      # the leftovers since only the original owner can chmod. Parent dirs are
+      # runner-owned, so `rm` only needs write-on-parent (no sudo).
+      find /var/lib/github-runner-work -type d -name ".lighthouseci" -exec rm -rf {} + 2>/dev/null || true
+
       # Tmpfs pressure: clear runtime caches first (they re-download on use)
       if [ "$TMPFS_PCT" -ge 80 ]; then
         echo "Tmpfs /run pressure — clearing _actions/_temp caches"
