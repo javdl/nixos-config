@@ -5,6 +5,7 @@ iso/nixos.iso
 .env
 .qodo
 .claude/worktrees/
+.claude/scheduled_tasks.lock
 backup.tar.gz
 settings.local.json
 CLAUDE.local.md

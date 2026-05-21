@@ -80,12 +80,29 @@ Each colleague has a dedicated NixOS server config with auto-update enabled:
 ### GitHub Actions Runner
 Dedicated self-hosted runner for the `fuww` GitHub organization:
 
-| Server           | Host Config          | Flake Target          | Instance | User Config                              |
-|------------------|----------------------|-----------------------|----------|------------------------------------------|
-| github-runner-01 | `github-runner-01`   | `#github-runner-01`   | CCX33    | `users/github-runner/home-manager-server.nix` |
-| github-runner-02 | `github-runner-02`   | `#github-runner-02`   | CPX62    | `users/github-runner/home-manager-server.nix` |
+| Server           | Host Config          | Flake Target          | Instance         | User Config                              |
+|------------------|----------------------|-----------------------|------------------|------------------------------------------|
+| github-runner-01 | `github-runner-01`   | `#github-runner-01`   | CCX33 (cloud)    | `users/github-runner/home-manager-server.nix` |
+| github-runner-02 | `github-runner-02`   | `#github-runner-02`   | CPX62 (cloud)    | `users/github-runner/home-manager-server.nix` |
+| github-runner-03 | `github-runner-03`   | `#github-runner-03`   | EX63 (dedicated) | `users/github-runner/home-manager-server.nix` |
 
-The runners use `modules/github-actions-runner.nix` for CI packages (Docker, languages, build tools, browsers, cloud CLIs) and `services.github-runners` for runner registration. Tokens are SOPS-encrypted in `secrets/github-runner-{01,02}.yaml`. See `docs/github-runner-hetzner-setup.md` for full setup/scaling guide.
+The runners use `modules/github-actions-runner.nix` for CI packages (Docker, languages, build tools, browsers, cloud CLIs) and `services.github-runners` for runner registration. Tokens are SOPS-encrypted in `secrets/github-runner-{01,02,03}.yaml`. See `docs/github-runner-hetzner-setup.md` for full setup/scaling guide.
+
+**Cloud (CPX/CCX) vs dedicated (EX) hardware:** runner-01 and runner-02 are Hetzner Cloud VMs and import `modules/hetzner-cloud-hardware.nix` + `modules/disko-hetzner-cloud.nix` (qemu-guest profile, single `/dev/sda`). runner-03 is bare-metal EX63 and imports `modules/hetzner-dedicated-hardware.nix` + `modules/disko-hetzner-dedicated.nix` (no qemu-guest, NVMe initrd, `/dev/nvme0n1`). The second NVMe (`/dev/nvme1n1`) is intentionally left unmanaged so a future host can mount it at `/var/lib/github-runner-work` without rebuilding the root layout.
+
+**EX63 provisioning notes:**
+- **SSH access**: rescue mode only ships the SSH key registered at order time (e.g. `j8 mac studio`). Run `make hetzner/provision NIXADDR=<ip> NIXNAME=github-runner-03` from a machine that holds the matching private key, or add an extra pubkey to rescue via Hetzner Robot first.
+- **Pre-provision disk prep** (in rescue, before `make hetzner/provision`): EX-series Robot orders sometimes include software RAID superblocks from the installimage step. Wipe both NVMes so disko has a clean canvas: `for d in /dev/nvme0n1 /dev/nvme1n1; do mdadm --stop --scan; mdadm --zero-superblock --force "$d" 2>/dev/null || true; wipefs -af "$d"; done`. Also confirm UEFI boot before proceeding: `[ -d /sys/firmware/efi ] && echo UEFI || echo BIOS`. If BIOS-only, swap `boot.loader.systemd-boot` for `boot.loader.grub` (devices = `[ "/dev/nvme0n1" ]`) before provisioning.
+- **Disk-name stability**: the disko module hardcodes `/dev/nvme0n1`. If a particular EX63 enumerates the boot disk as `nvme1n1`, override per-host with `disko.devices.disk.main.device = lib.mkForce "/dev/disk/by-id/nvme-<eui>";`.
+- **SOPS re-key after first boot**: the secrets file is initially encrypted to loom's age key. After provisioning succeeds, derive the server's real age key and re-encrypt:
+  ```
+  ssh-keyscan <ip> 2>/dev/null | grep ed25519 | ssh-to-age
+  # replace the &github-runner-03 anchor in .sops.yaml with the printed key
+  sops updatekeys secrets/github-runner-03.yaml
+  make hetzner/copy NIXADDR=<ip> NIXUSER=joost
+  make hetzner/switch NIXADDR=<ip> NIXNAME=github-runner-03 NIXUSER=joost
+  ```
+- **Token rotation**: the placeholder token in `secrets/github-runner-03.yaml` must be replaced with a fresh org runner registration token from https://github.com/organizations/fuww/settings/actions/runners/new (29-char `AAU5P4...`, expires in 1 hour, single-use). Edit via `sops secrets/github-runner-03.yaml`, then rebuild on the server.
 
 **Runner token type:** The `tokenFile` must contain an **org-level runner registration token** (format: `AAU5P4...`, 29 chars), NOT a GitHub PAT. Get it from https://github.com/organizations/fuww/settings/actions/runners/new → copy the `--token` value. Tokens expire in 1 hour and are single-use.
 

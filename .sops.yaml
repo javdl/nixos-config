@@ -19,6 +19,11 @@ keys:
   - &joostclaw age17n047nq8vclhr2gja7fe8z9uv8pug49r6k6c27cxd92jgnmups2qcdte99
   - &github-runner-01 age1k77q70qv8h6kp7n8pw92mcyww62xkmwps50mknmzdjwn6s29wu2s3gav4w
   - &github-runner-02 age1payjujelqgvgpkpapl0cske00waj5vn6xtrz2rr9ag8gt8rphyls9d2dz4
+  # github-runner-03 (EX63): placeholder pointing at loom's age key until the
+  # host's real SSH ed25519 key is provisioned. After provisioning, derive the
+  # server's age key via `ssh-keyscan <ip> | grep ed25519 | ssh-to-age`, replace
+  # the anchor below, then `sops updatekeys secrets/github-runner-03.yaml`.
+  - &github-runner-03 age1p26cwwyu2v4jexue6z7krrua9skqv0p3aj4ad3su4m7varky3dwqk0zphj
   - &loom age1p26cwwyu2v4jexue6z7krrua9skqv0p3aj4ad3su4m7varky3dwqk0zphj
   # hermes-fu: placeholder. Replace with the real age recipient (derived from
   # /etc/ssh/ssh_host_ed25519_key.pub via `ssh-to-age`) after provisioning the VM.
@@ -46,6 +51,15 @@ creation_rules:
       - age:
           - *github-runner-02
           # - *admin_joost  # Uncomment after adding admin key
+
+  # github-runner-03 secrets (GitHub runner token) — EX63 dedicated server.
+  # NOTE: anchor &github-runner-03 currently aliases loom's age key. After the
+  # EX63 is provisioned, replace the anchor with the server's real age key and
+  # run `sops updatekeys secrets/github-runner-03.yaml` to re-encrypt.
+  - path_regex: secrets/github-runner-03\.yaml$
+    key_groups:
+      - age:
+          - *github-runner-03
 
   # loom secrets (hermes-agent env)
   - path_regex: secrets/loom\.yaml$

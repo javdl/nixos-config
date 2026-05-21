@@ -168,6 +168,12 @@
       server = true;
     };
 
+    nixosConfigurations.github-runner-03 = mkSystem "github-runner-03" {
+      system = "x86_64-linux";
+      user   = "github-runner";
+      server = true;
+    };
+
 
 
     nixosConfigurations.loom = mkSystem "loom" {
