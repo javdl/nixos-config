@@ -19,6 +19,7 @@ let
     "zen"
     # Essential tools
     "chromedriver"
+    "codexbar" # steipete/tap - Codex menu bar app
     "companion" # Bitfocus companion, Streamdeck extension and emulation software
     "google-drive"
     "insync"
