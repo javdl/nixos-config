@@ -1368,22 +1368,21 @@
           # gemini-cli - Google Gemini coding agent CLI (pre-built JS bundle)
           gemini-cli = prev.stdenv.mkDerivation {
             pname = "gemini-cli";
-            version = "0.32.1";
+            version = "0.43.0";
 
-            src = prev.fetchurl {
-              url = "https://github.com/google-gemini/gemini-cli/releases/download/v0.32.1/gemini.js";
-              hash = "sha256-9GpzzqY+5vvDhSsKnK1jOvx5QXWeG3y7QB2UYK/rZ28=";
+            src = prev.fetchzip {
+              url = "https://github.com/google-gemini/gemini-cli/releases/download/v0.43.0/gemini-cli-bundle.zip";
+              hash = "sha256-V8ByiluPQiQFsycsdGlqPWeibxSekxiINmKaBvupjDM=";
+              stripRoot = false;
             };
-
-            dontUnpack = true;
 
             nativeBuildInputs = [ prev.makeWrapper ];
 
             installPhase = ''
               mkdir -p $out/lib $out/bin
-              cp $src $out/lib/gemini.js
+              cp -r . $out/lib/gemini-cli
               makeWrapper ${prev.nodejs}/bin/node $out/bin/gemini \
-                --add-flags "$out/lib/gemini.js"
+                --add-flags "$out/lib/gemini-cli/gemini.js"
             '';
 
             meta = with prev.lib; {
