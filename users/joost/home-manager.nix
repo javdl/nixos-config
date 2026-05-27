@@ -872,6 +872,14 @@ in {
       if [ -e "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh" ]; then
         . "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"
       fi
+
+      # Load secrets rendered by chezmoi from Bitwarden (CODEX_GITHUB_PERSONAL_ACCESS_TOKEN, ELEVENLABS_API_KEY, APIFY_TOKEN, …).
+      # File is created by `chezmoi apply` from private_dot_env.tmpl; absent until vault is unlocked.
+      if [ -f "$HOME/.env" ]; then
+        set -a
+        . "$HOME/.env"
+        set +a
+      fi
     '';
   };
 
