@@ -306,6 +306,9 @@ in {
     BROWSER = "chromium";
     PAGER = "less -R";
     LANG = "en_US.UTF-8";
+
+    # Default GCP project — read by gemini CLI, gcloud client libs (ADC), terraform-google, etc.
+    GOOGLE_CLOUD_PROJECT = "kubernetes-164514";
   } // lib.optionalAttrs isDarwin {
     # Bitwarden SSH agent socket
     SSH_AUTH_SOCK = "$HOME/.bitwarden-ssh-agent.sock";

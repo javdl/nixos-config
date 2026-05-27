@@ -30,6 +30,9 @@ in {
   # fixes all shells (including already-running zellij panes).
   home.sessionVariables = {
     SSH_AUTH_SOCK = "$HOME/.ssh/ssh_auth_sock";
+
+    # Default GCP project — read by gemini CLI, gcloud client libs (ADC), terraform-google, etc.
+    GOOGLE_CLOUD_PROJECT = "kubernetes-164514";
   };
 
   # Cargo-installed binaries (caut, etc.)
