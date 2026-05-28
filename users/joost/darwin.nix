@@ -22,7 +22,6 @@ let
     # "librewolf"
     "zen"
     # Essential tools
-    "chromedriver"
     "codexbar" # steipete/tap - Codex menu bar app
     "companion" # Bitfocus companion, Streamdeck extension and emulation software
     "google-drive"
@@ -57,7 +56,6 @@ let
     "brave-browser"
     "chatgpt"
     "claude"
-    "chromedriver"
     "cleanshot"
     "codex-app" # OpenAI Codex desktop app
     "codexbar" # steipete/tap - Codex menu bar app
@@ -124,7 +122,6 @@ let
     # "advanced-renamer" # download fails
     "balenaetcher"
     "calibre"
-    "digikam"
     "imazing-profile-editor"
     "kobo"
     "lm-studio"
