@@ -1,8 +1,12 @@
 { inputs, pkgs, currentSystemName, lib, ... }:
 
 let
-  # Machines that get a minimal set of casks (scraping/browsing focus)
-  isMinimal = builtins.elem currentSystemName [ "fu146" ];
+  # Machines that get a minimal set of casks (scraping/browsing focus, or
+  # headless macOS servers that should stay lean — see serversMacos below).
+  isMinimal = builtins.elem currentSystemName [ "fu146" "argon" "radon" ];
+
+  # Per-host extra casks layered on top of the base set.
+  extraCasks = lib.optionals (currentSystemName == "radon") [ "rouvy" ];
 
   # Machines without audio production tools
   noAudio = builtins.elem currentSystemName [ "macbook-air-m4" ];
@@ -113,9 +117,8 @@ let
   # Creative and personal casks (skip on minimal machines)
   personalCasks = [
     "adobe-dng-converter"
-    "affinity-designer"
-    "affinity-photo"
-    "affinity-publisher"
+    # Unified Affinity app (v3) — replaces the discontinued affinity-{designer,photo,publisher} casks
+    "affinity"
     # "arturia-software-center" # broken or breaks existing installation
     "audio-hijack"
     # "advanced-renamer" # download fails
@@ -189,10 +192,11 @@ in
       "vercel-cli"
       "workos/tap/workos-cli"
     ];
-    casks = withoutServerCasks (if isMinimal then minimalCasks
+    casks = withoutServerCasks ((if isMinimal then minimalCasks
       else coreCasks
         ++ personalCasks
-        ++ lib.optionals (!noAudio) audioCasks);
+        ++ lib.optionals (!noAudio) audioCasks)
+      ++ extraCasks);
     masApps = { # to find ID, App Store > Share > Copy link
       # masApps reinstall or do a slow check on each run. Manual install is the best option I guess.
       # "Bitwarden" = 1352778147; # Use brew/dmg version for SSH agent to work
