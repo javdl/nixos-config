@@ -1,6 +1,6 @@
 { config, pkgs, ... }: {
   # nix-darwin stateVersion. Host runs macOS Tahoe.
-  system.stateVersion = 5;
+  system.stateVersion = 6;
 
   # This makes it work with the Determinate Nix installer
   ids.gids.nixbld = 30000;
