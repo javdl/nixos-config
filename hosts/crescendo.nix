@@ -3,7 +3,8 @@
     ../modules/cachix.nix
   ];
 
-  system.stateVersion = 5;
+  # nix-darwin stateVersion. Host runs macOS Tahoe.
+  system.stateVersion = 6;
 
   # This makes it work with the Determinate Nix installer
   ids.gids.nixbld = 30000;

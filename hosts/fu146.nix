@@ -1,6 +1,7 @@
 { config, pkgs, ... }: {
 
-  system.stateVersion = 5;
+  # nix-darwin stateVersion. Host runs macOS Tahoe.
+  system.stateVersion = 6;
 
   # Mac Studio M1 office desk Joost
   networking.hostName = "fu146";
