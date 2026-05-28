@@ -11,9 +11,16 @@ in {
   ];
 
   # Determinate Nix includes nix.custom.conf - set restricted settings here
-  # so the daemon applies them globally (avoids "not a trusted user" warnings)
+  # so the daemon applies them globally (avoids "not a trusted user" warnings).
+  # nix.enable = false means nix-darwin does NOT manage nix.conf, so the
+  # substituters from modules/cachix.nix never reach the daemon. Mirror them
+  # here (extra-* so they merge with Determinate's defaults) — otherwise
+  # cache-only packages like the neovim nightly get built from source.
   environment.etc."nix/nix.custom.conf".text = ''
     download-buffer-size = 536870912
+    extra-substituters = https://javdl-nixos-config.cachix.org https://devenv.cachix.org https://nix-community.cachix.org
+    extra-trusted-substituters = https://javdl-nixos-config.cachix.org https://devenv.cachix.org https://nix-community.cachix.org
+    extra-trusted-public-keys = javdl-nixos-config.cachix.org-1:6xuHXHavvpdfBLQq+RzxDAMxhWkea0NaYvLtDssDJIU= devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw= nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs=
   '';
 
     # Allow unfree packages
