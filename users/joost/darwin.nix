@@ -33,6 +33,15 @@ let
     "zed"
   ];
 
+  # servers-macos: Mac hardware used as headless/always-on servers.
+  # These hosts run tailscaled as a root launchd daemon instead of the GUI
+  # cask, so we strip "tailscale-app" from their cask set.
+  serversMacos = [ "argon" "radon" ];
+  withoutServerCasks = casks:
+    if builtins.elem currentSystemName serversMacos
+    then builtins.filter (cask: cask != "tailscale-app") casks
+    else casks;
+
   # Core casks installed on all non-minimal machines
   coreCasks = [
     # "bitwarden" Must be installed via Mac App Store for browser integration to work
@@ -180,10 +189,10 @@ in
       "vercel-cli"
       "workos/tap/workos-cli"
     ];
-    casks = if isMinimal then minimalCasks
+    casks = withoutServerCasks (if isMinimal then minimalCasks
       else coreCasks
         ++ personalCasks
-        ++ lib.optionals (!noAudio) audioCasks;
+        ++ lib.optionals (!noAudio) audioCasks);
     masApps = { # to find ID, App Store > Share > Copy link
       # masApps reinstall or do a slow check on each run. Manual install is the best option I guess.
       # "Bitwarden" = 1352778147; # Use brew/dmg version for SSH agent to work
