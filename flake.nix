@@ -246,6 +246,12 @@
       darwin = true;
     };
 
+    darwinConfigurations.radon = mkSystem "radon" {
+      system = "aarch64-darwin";
+      user   = "joost";
+      darwin = true;
+    };
+
     darwinConfigurations.mac-mini-m2 = mkSystem "mac-mini-m2" {
       system = "aarch64-darwin";
       user   = "joost";
