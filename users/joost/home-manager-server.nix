@@ -175,14 +175,21 @@ in {
   # Agent Mail is now a pre-built Rust binary (mcp-agent-mail package)
   # No activation script needed - installed via home.packages
 
-  # Sync dotfiles from chezmoi repo (auto-applies on each rebuild)
+  # Sync dotfiles from chezmoi repo (auto-applies on each rebuild). On a fresh
+  # machine the source is missing, so bootstrap by cloning javdl/dotfiles over
+  # HTTPS (relies on a git credential helper, e.g. gh auth). GIT_TERMINAL_PROMPT=0
+  # makes a missing credential fail fast instead of hanging activation; every
+  # step is non-fatal. Secret templates fill in on the next switch after the
+  # Bitwarden vault is unlocked.
   home.activation.chezmoiSync = lib.hm.dag.entryAfter ["writeBoundary"] ''
     CHEZMOI_SOURCE="$HOME/.local/share/chezmoi"
+    if [ ! -d "$CHEZMOI_SOURCE" ]; then
+      echo "Chezmoi source missing — bootstrapping from javdl/dotfiles..."
+      $DRY_RUN_CMD env PATH="${pkgs.bitwarden-cli}/bin:${pkgs.git}/bin:$PATH" GIT_TERMINAL_PROMPT=0 ${pkgs.chezmoi}/bin/chezmoi init https://github.com/javdl/dotfiles.git || echo "chezmoi clone failed (check git auth); will retry on next switch."
+    fi
     if [ -d "$CHEZMOI_SOURCE" ]; then
       echo "Syncing dotfiles from chezmoi repo..."
-      $DRY_RUN_CMD env PATH="${pkgs.bitwarden-cli}/bin:${pkgs.git}/bin:$PATH" ${pkgs.chezmoi}/bin/chezmoi update || true
-    else
-      echo "Chezmoi not initialized. Run: chezmoi init --apply https://github.com/javdl/dotfiles.git"
+      $DRY_RUN_CMD env PATH="${pkgs.bitwarden-cli}/bin:${pkgs.git}/bin:$PATH" ${pkgs.chezmoi}/bin/chezmoi update || echo "chezmoi apply incomplete (unlock Bitwarden, then re-run rebuild)."
     fi
   '';
 

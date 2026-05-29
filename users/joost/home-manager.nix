@@ -362,19 +362,29 @@ in {
   # No activation script needed - installed via home.packages
 
   # Sync dotfiles from chezmoi repo (auto-applies, warns on conflicts).
+  # On a fresh personal machine the source is missing, so bootstrap it by
+  # cloning javdl/dotfiles — that way every personal host gets dotfiles on
+  # the first `make switch` with no manual `chezmoi init`. Thereafter
+  # `chezmoi update` pulls + applies. Secret templates (Bitwarden-backed:
+  # ~/.env, ~/.claude/settings.json, codex, ccr) fill in on the next switch
+  # after `bw unlock`. GIT_TERMINAL_PROMPT=0 + SSH BatchMode keep activation
+  # from hanging on a credential/host-key prompt; every step is non-fatal so
+  # a missing key or locked vault never breaks the switch.
   # Recover from detached HEAD before update so `chezmoi update`'s git pull
   # has a branch to rebase against.
   home.activation.chezmoiSync = lib.hm.dag.entryAfter ["writeBoundary"] ''
     CHEZMOI_SOURCE="$HOME/.local/share/chezmoi"
+    if [ ! -d "$CHEZMOI_SOURCE" ]; then
+      echo "Chezmoi source missing — bootstrapping from javdl/dotfiles..."
+      $DRY_RUN_CMD env PATH="${pkgs.bitwarden-cli}/bin:${pkgs.git}/bin:$PATH" GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=15" GIT_TERMINAL_PROMPT=0 ${pkgs.chezmoi}/bin/chezmoi init git@github.com:javdl/dotfiles.git || echo "chezmoi clone failed (check git auth); will retry on next switch."
+    fi
     if [ -d "$CHEZMOI_SOURCE" ]; then
       if ! ${pkgs.git}/bin/git -C "$CHEZMOI_SOURCE" symbolic-ref -q HEAD >/dev/null; then
         echo "chezmoi repo is in detached HEAD; checking out main before sync..."
         $DRY_RUN_CMD ${pkgs.git}/bin/git -C "$CHEZMOI_SOURCE" checkout main || true
       fi
       echo "Syncing dotfiles from chezmoi repo..."
-      $DRY_RUN_CMD env PATH="${pkgs.bitwarden-cli}/bin:${pkgs.git}/bin:$PATH" ${pkgs.chezmoi}/bin/chezmoi update || true
-    else
-      echo "Chezmoi not initialized. Run: chezmoi init --apply git@github.com:javdl/dotfiles.git"
+      $DRY_RUN_CMD env PATH="${pkgs.bitwarden-cli}/bin:${pkgs.git}/bin:$PATH" ${pkgs.chezmoi}/bin/chezmoi update || echo "chezmoi apply incomplete (unlock Bitwarden, then re-run 'make switch')."
     fi
   '';
 
