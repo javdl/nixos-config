@@ -17,7 +17,19 @@
   imports =
     [
       ./mac-shared.nix
+      ../modules/darwin-auto-update.nix
+      ../modules/darwin-nix-gc.nix
     ];
+
+  # Stay current: rebuild from the GitHub flake daily (launchd equivalent of
+  # the colleague Linux servers' services.nixosAutoUpdate at 04:00).
+  services.darwinAutoUpdate = {
+    enable = true;
+    flake = "github:javdl/nixos-config#radon";
+  };
+
+  # Keep the Nix store from growing unbounded — Determinate does no auto-GC.
+  services.darwinNixGC.enable = true;
 
   # Run Tailscale like a server service on this Mac. The Homebrew LaunchAgent
   # starts tailscaled as the logged-in user, which exits because tailscaled
