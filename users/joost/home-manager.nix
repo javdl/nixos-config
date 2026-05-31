@@ -727,7 +727,11 @@ in {
   programs.direnv= {
       enable = true;
       nix-direnv.enable = true; # faster
-      enableNushellIntegration = false; # broken?
+      # Fixed in home-manager release-25.11 (commit cc09c0f...): the
+      # old block used `default {|x| $x}` which breaks under nushell
+      # 0.95+ closure-capture rules; the current generator uses
+      # `if ($in | is-empty) { {|x| $x} } else { $in }` instead.
+      enableNushellIntegration = true;
 
       config = {
         whitelist = {
