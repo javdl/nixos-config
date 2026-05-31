@@ -25,8 +25,8 @@ let
   # Use shared manpager
   manpager = shared.manpager;
 
-  sshTailscaleHost = host: {
-    hostname = "${host}.buri-hoki.ts.net";
+  sshTailscaleHost = hostname: {
+    inherit hostname;
     user = "joost";
     extraOptions = {
       PreferredAuthentications = "publickey";
@@ -34,6 +34,8 @@ let
       PasswordAuthentication = "no";
     };
   };
+
+  sshBuriHokiHost = host: sshTailscaleHost "${host}.buri-hoki.ts.net";
 
   gdk = pkgs.google-cloud-sdk.withExtraComponents( with pkgs.google-cloud-sdk.components; [
     gke-gcloud-auth-plugin
@@ -976,12 +978,16 @@ in {
         identitiesOnly = true;
       };
 
-      "j8" = sshTailscaleHost "j8";
-      "pikvm" = sshTailscaleHost "pikvm";
-      "router" = sshTailscaleHost "router";
-      "j9" = sshTailscaleHost "j9";
-      "nas" = sshTailscaleHost "nas";
-      "terra" = sshTailscaleHost "terra";
+      "argon" = sshTailscaleHost "100.106.10.12";
+      "j8" = sshTailscaleHost "100.99.236.94";
+      "j9" = sshBuriHokiHost "j9";
+      "loom" = sshTailscaleHost "100.123.226.58";
+      "pikvm" = (sshTailscaleHost "100.121.9.3") // { user = "root"; };
+      "radon" = sshTailscaleHost "100.101.199.29";
+      "router" = (sshTailscaleHost "100.97.154.115") // { user = "root"; };
+
+      "nas" = sshBuriHokiHost "nas";
+      "terra" = sshBuriHokiHost "terra";
 
     };
   };

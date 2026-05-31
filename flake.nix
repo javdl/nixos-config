@@ -320,7 +320,11 @@
         inherit inputs;
       };
       modules = [
-        (import ./users/joost/home-manager.nix { isWSL = false; inherit inputs; })
+        (import ./users/joost/home-manager.nix {
+          isWSL = false;
+          inherit inputs;
+          currentSystemName = "j9";
+        })
         ({ lib, pkgs, ... }: {
           nixpkgs.config.allowUnfree = true;
           home.username = "joost";
