@@ -19,6 +19,7 @@
       ./mac-shared.nix
       ../modules/darwin-auto-update.nix
       ../modules/darwin-nix-gc.nix
+      ../modules/darwin-tailscaled.nix
     ];
 
   # Stay current: rebuild from the GitHub flake daily (launchd equivalent of
@@ -31,18 +32,13 @@
   # Keep the Nix store from growing unbounded — Determinate does no auto-GC.
   services.darwinNixGC.enable = true;
 
-  # Run Tailscale like a server service on this Mac. The Homebrew LaunchAgent
-  # starts tailscaled as the logged-in user, which exits because tailscaled
-  # needs root on macOS.
-  launchd.daemons.tailscaled = {
-    serviceConfig = {
-      ProgramArguments = [
-        "/opt/homebrew/opt/tailscale/bin/tailscaled"
-      ];
-      RunAtLoad = true;
-      KeepAlive = true;
-      StandardOutPath = "/opt/homebrew/var/log/tailscaled.log";
-      StandardErrorPath = "/opt/homebrew/var/log/tailscaled.log";
-    };
+  # Hardened headless Tailscale (replaces the inline launchd daemon). Persistent
+  # state, userspace networking (required on macOS without macsys), joost as
+  # operator (no sudo for `tailscale ...`). Place an auth key at the path below
+  # (mode 0600 root) to enable unattended re-auth after reboots/rebuilds.
+  services.darwinTailscaled = {
+    enable = true;
+    operator = "joost";
+    authKeyFile = "/etc/tailscale/authkey";
   };
 }
