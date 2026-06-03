@@ -155,6 +155,14 @@ in {
     fi
   '';
 
+  # Install tokei (lines-of-code counter) via cargo stable
+  home.activation.installTokei = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    if ! $HOME/.cargo/bin/tokei --version &>/dev/null; then
+      echo "Installing tokei (lines-of-code counter)..."
+      $DRY_RUN_CMD bash -c "${pkgs.rustup}/bin/rustup run stable cargo install tokei" || echo "tokei install failed"
+    fi
+  '';
+
   #---------------------------------------------------------------------
   # Programs
   #---------------------------------------------------------------------
