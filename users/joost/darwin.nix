@@ -103,6 +103,7 @@ let
     "sublime-text"
     "superwhisper"
     "tailscale-app" # GUI apps via Brew
+    "telegram-desktop"
     "termius"
     "thunderbird"
     "veracrypt"
