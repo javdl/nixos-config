@@ -183,6 +183,8 @@ in
       # "dicklesworthstone/tap/cass"  # Now built from source via Nix overlay
       "dicklesworthstone/tap/cm" # CASS Memory - procedural memory system for AI agents
       "gifski" # Highest-quality GIF encoder
+      "mole" # Deep clean and optimize your Mac (github.com/tw93/Mole)
+      "pake" # Turn any webpage into a desktop app with Rust (github.com/tw93/Pake)
       "podman"
       "protobuf"
       "tailscale"
