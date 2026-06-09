@@ -118,6 +118,7 @@ in {
     httpie
     imagemagick
     jq
+    just # Command runner (justfiles)
     # kubernetes-helm
     # libGL # ML
     # libGLU # ML
@@ -129,6 +130,7 @@ in {
     railway
     ripgrep
     ast-grep
+    rumdl # Markdown linter/formatter in Rust
     shellcheck
     shfmt
     socat
