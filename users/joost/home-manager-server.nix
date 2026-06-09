@@ -142,7 +142,7 @@ in {
   home.activation.installVercel = lib.hm.dag.entryAfter ["writeBoundary"] ''
     if ! command -v vercel &>/dev/null; then
       echo "Installing Vercel CLI..."
-      $DRY_RUN_CMD ${pkgs.nodejs_20}/bin/npm install -g vercel@latest 2>/dev/null || echo "Vercel CLI install failed"
+      $DRY_RUN_CMD ${pkgs.nodejs_22}/bin/npm install -g vercel@latest 2>/dev/null || echo "Vercel CLI install failed"
     fi
   '';
 
@@ -606,9 +606,6 @@ in {
   # fish/zsh prefers the forwarded agent and falls back to this one.
   services.ssh-agent = lib.mkIf isLinux {
     enable = true;
-    enableFishIntegration = false;
-    enableZshIntegration = false;
-    enableBashIntegration = false;
   };
 
   # Agent Mail - MCP HTTP server for async agent coordination (Rust binary)

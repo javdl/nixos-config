@@ -50,10 +50,11 @@ in
           python3
           python3Packages.pip
           python3Packages.virtualenv
-          nodejs_20
-          nodePackages.npm
-          nodePackages.yarn
-          nodePackages.pnpm
+          nodejs_22 # was nodejs_20; Node 20 reached EOL / flagged insecure in nixpkgs 26.05
+          # npm ships bundled with nodejs; standalone nodePackages.npm
+          # was removed in nixpkgs 26.05
+          yarn
+          pnpm
           go
           rustc
           cargo
@@ -73,7 +74,7 @@ in
 
           # Database clients
           postgresql
-          mysql80
+          mysql84 # mysql80 reached EOL and was removed in nixpkgs 26.05
           mongodb-tools
           redis
           sqlite

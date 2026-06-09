@@ -180,10 +180,10 @@ in {
     # gimp
     nautilus
     killall
-    python311
-    python311Packages.pip
-    # python311.withPackages my-python-packages
-    # python311Packages.pip
+    python3 # was python311; py3.11 pip pulls sphinx, which dropped 3.11 in nixpkgs 26.05
+    python3Packages.pip
+    # python3.withPackages my-python-packages
+    # python3Packages.pip
     rxvt-unicode-unwrapped
     #spotify
     #thunderbird

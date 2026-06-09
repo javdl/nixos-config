@@ -104,8 +104,8 @@
   # Disable unnecessary services for a runner
   services.xserver.enable = false;
   services.printing.enable = false;
-  sound.enable = false;
-  
+  # sound.enable removed — option dropped in nixpkgs 26.05 (no longer has any effect)
+
   # Enable useful services for CI/CD
   services.nscd.enable = true;
   services.dbus.enable = true;

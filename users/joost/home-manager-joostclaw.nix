@@ -215,9 +215,6 @@ in {
 
   services.ssh-agent = lib.mkIf isLinux {
     enable = true;
-    enableFishIntegration = false;
-    enableZshIntegration = false;
-    enableBashIntegration = false;
   };
 
   # Ensure ~/.ssh directory exists for agent socket symlink

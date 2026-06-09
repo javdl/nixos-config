@@ -147,7 +147,7 @@ curl -L https://nixos.org/nix/install | sh -s -- --daemon --yes
 . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
 
 echo '==> Installing NixOS install tools...'
-nix-channel --add https://nixos.org/channels/nixos-25.11 nixos
+nix-channel --add https://nixos.org/channels/nixos-26.05 nixos
 nix-channel --update
 nix-env -iE "_: with import <nixpkgs> {}; with pkgs; [ nixos-install-tools ]"
 

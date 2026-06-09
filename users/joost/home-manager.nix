@@ -200,7 +200,7 @@ in {
     # google-chrome  # Marked insecure in nixpkgs (updater broken). Use Homebrew cask on macOS, chromium on Linux.
     inkscape
     postman
-    neofetch
+    fastfetch # neofetch removed (unmaintained) in nixpkgs 26.05
     transmission_4
     # spotify
     # telegram-desktop
@@ -251,7 +251,7 @@ in {
     # Node is required for Copilot.vim
     bun
     nodejs_22
-    nodePackages.firebase-tools
+    firebase-tools
   ] ++ (lib.optionals (currentSystemName != "macbook-air-m4") [
     vault
   ]) ++ (lib.optionals isDarwin [
@@ -329,9 +329,9 @@ in {
   # Install/update Vercel CLI via npm (removed from nixpkgs).
   # On Darwin, vercel-cli is managed by homebrew (see darwin.nix), so skip there.
   home.activation.installVercel = lib.mkIf (!isDarwin) (lib.hm.dag.entryAfter ["writeBoundary"] ''
-    if ! command -v vercel &>/dev/null || [ "$(vercel --version 2>/dev/null | head -1)" != "$(${pkgs.nodejs_20}/bin/npm view vercel version 2>/dev/null)" ]; then
+    if ! command -v vercel &>/dev/null || [ "$(vercel --version 2>/dev/null | head -1)" != "$(${pkgs.nodejs_22}/bin/npm view vercel version 2>/dev/null)" ]; then
       echo "Installing/updating Vercel CLI..."
-      $DRY_RUN_CMD ${pkgs.nodejs_20}/bin/npm install -g vercel@latest 2>/dev/null || echo "Vercel CLI install failed"
+      $DRY_RUN_CMD ${pkgs.nodejs_22}/bin/npm install -g vercel@latest 2>/dev/null || echo "Vercel CLI install failed"
     fi
   '');
 

@@ -24,7 +24,7 @@ in {
     # pkgs.google-chrome  # Marked insecure in nixpkgs (updater broken). Using chromium in Linux section below.
     pkgs.delta          # Better git diffs
     pkgs.htop
-    pkgs.neofetch
+    pkgs.fastfetch # neofetch removed (unmaintained) in nixpkgs 26.05
     pkgs.tailscale
     pkgs.vscodium # gives a blank screen on bare metal install > Electron apps with Nvidia card in Wayland will. Either switch to X11 or use Integrated GPU from AMD or Intel and it will load fine
     pkgs.wezterm

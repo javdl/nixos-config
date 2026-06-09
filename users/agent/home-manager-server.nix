@@ -563,9 +563,6 @@ in {
   # SSH agent - persistent local agent so keys survive disconnects/tmux
   services.ssh-agent = lib.mkIf isLinux {
     enable = true;
-    enableFishIntegration = false;
-    enableZshIntegration = false;
-    enableBashIntegration = false;
   };
 
   # Claude Code statusline (Rose Pine themed)
