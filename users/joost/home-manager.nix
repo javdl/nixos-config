@@ -195,7 +195,6 @@ in {
   ] ++ (lib.optionals (!isMinimal) [
     aichat
     crush
-    darktable
     dbeaver-bin
     devcontainer
     discord
