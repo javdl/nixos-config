@@ -5,6 +5,9 @@ let
   # Body lives in lib/chezmoi-memory-sync.nix so loom (Linux, systemd-timer)
   # and Darwin hosts (launchd, 5-min StartInterval below) share one source.
   chezmoiMemorySync = import ../lib/chezmoi-memory-sync.nix pkgs;
+
+  # Cachix push setup (shared with modules/cachix.nix + users/joost/cachix-daemon.nix).
+  cp = import ../lib/cachix-push-hook.nix pkgs;
 in {
   imports = [
     ../modules/cachix.nix
@@ -21,6 +24,8 @@ in {
     extra-substituters = https://javdl-nixos-config.cachix.org https://devenv.cachix.org https://nix-community.cachix.org
     extra-trusted-substituters = https://javdl-nixos-config.cachix.org https://devenv.cachix.org https://nix-community.cachix.org
     extra-trusted-public-keys = javdl-nixos-config.cachix.org-1:6xuHXHavvpdfBLQq+RzxDAMxhWkea0NaYvLtDssDJIU= devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw= nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs=
+    # Hand locally-built paths to joost's per-user cachix daemon (async upload).
+    post-build-hook = ${cp.hook}
   '';
 
     # Allow unfree packages

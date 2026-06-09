@@ -14,6 +14,8 @@ let
   # Same script body that Darwin runs via launchd in hosts/mac-shared.nix.
   chezmoiMemorySync = import ../../lib/chezmoi-memory-sync.nix pkgs;
 in {
+  imports = [ ./cachix-daemon.nix ]; # auto-push locally-built paths to javdl-nixos-config cachix
+
   # Home-manager state version
   home.stateVersion = "25.11";
 

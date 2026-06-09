@@ -1,5 +1,14 @@
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, currentSystemUser ? null, ... }:
 
+let
+  # Push side (see lib/cachix-push-hook.nix). The post-build-hook is a
+  # daemon-side (root) nix.conf setting, so enable it only for joost's machines
+  # — colleague servers also import this module but must not push to joost's
+  # personal cache. On Darwin nix-darwin doesn't manage nix.conf
+  # (nix.enable = false), so the Mac equivalent lives in hosts/mac-shared.nix.
+  cp = import ../lib/cachix-push-hook.nix pkgs;
+  pushEnabled = currentSystemUser == "joost" && pkgs.stdenv.isLinux;
+in
 {
   # Install cachix CLI tool
   environment.systemPackages = [ pkgs.cachix ];
@@ -29,5 +38,8 @@
 
     # Larger download buffer for faster fetches (512 MiB)
     download-buffer-size = 536870912;
+  } // lib.optionalAttrs pushEnabled {
+    # Hand locally-built paths to joost's per-user cachix daemon (async upload).
+    post-build-hook = "${cp.hook}";
   };
 }
