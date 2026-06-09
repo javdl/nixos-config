@@ -351,6 +351,8 @@ in {
 
   programs.neovim = {
     enable = true;
+    withRuby = false; # 26.05: adopt new default (no ruby provider)
+    withPython3 = false;
     viAlias = true;
     vimAlias = true;
     defaultEditor = true;
@@ -506,6 +508,7 @@ in {
 
   programs.zsh = {
     enable = true;
+    dotDir = config.home.homeDirectory; # 26.05: pin legacy ~/.zshrc location
     enableCompletion = true;
     autosuggestion.enable = true;
     syntaxHighlighting.enable = true;

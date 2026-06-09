@@ -28,11 +28,11 @@ let
   sshTailscaleHost = hostname: {
     inherit hostname;
     user = "joost";
-    extraOptions = {
-      PreferredAuthentications = "publickey";
-      PubkeyAuthentication = "yes";
-      PasswordAuthentication = "no";
-    };
+    # 26.05: raw OpenSSH directives go directly in the block (freeform type);
+    # programs.ssh.matchBlocks.*.extraOptions is deprecated.
+    PreferredAuthentications = "publickey";
+    PubkeyAuthentication = "yes";
+    PasswordAuthentication = "no";
   };
 
   sshBuriHokiHost = host: sshTailscaleHost "${host}.buri-hoki.ts.net";
@@ -757,6 +757,7 @@ in {
 
   programs.zsh = {
     enable = true;
+    dotDir = config.home.homeDirectory; # 26.05: pin legacy location (~/.zshrc); default moves to XDG
     enableCompletion = true;
     autosuggestion.enable = true;
     syntaxHighlighting.enable = true;
@@ -975,7 +976,7 @@ in {
       "~/.ssh/brev-ssh-config"  # Brev CLI manages this file for GPU cloud instances
     ];
 
-    matchBlocks = {
+    settings = {
       "*" = {
         compression = true;
         serverAliveInterval = 60;
@@ -1229,8 +1230,9 @@ in {
     package = inputs.neovim-nightly-overlay.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
     withPython3 = false;
+    withRuby = false; # 26.05 default; pin to silence stateVersion-gated warning
 
-    extraLuaConfig = ''
+    initLua = ''
       -- Setup Rose Pine theme
       require("rose-pine").setup({
         variant = "main",

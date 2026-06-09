@@ -116,7 +116,7 @@
   programs.ssh = {
     enable = true;
     enableDefaultConfig = false;
-    matchBlocks."*" = {
+    settings."*" = { # 26.05: matchBlocks renamed to settings
       compression = true;
       serverAliveInterval = 60;
       serverAliveCountMax = 3;
