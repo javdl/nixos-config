@@ -1442,5 +1442,14 @@
           # direnv 2.37.1 test-fish gets SIGKILLed in the Darwin sandbox; skip tests.
           direnv = prev.direnv.overrideAttrs (_: { doCheck = false; });
 
+          # pipx 1.8.0 tests/test_package_specifier.py expects PEP 508 URL specs
+          # without a space ("black@ https://...") but the current `packaging`
+          # canonicalizes with a space ("black @ https://..."), so 7 tests fail and
+          # the build aborts. The output isn't in any binary cache anymore, so a
+          # clean store (the runners) can't build it. Skip that one stale test file.
+          pipx = prev.pipx.overridePythonAttrs (old: {
+            disabledTestPaths = (old.disabledTestPaths or []) ++ [ "tests/test_package_specifier.py" ];
+          });
+
         })
 ]
