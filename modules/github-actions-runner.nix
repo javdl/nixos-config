@@ -32,6 +32,7 @@ in
           automake
           libtool
           pkg-config
+          glibc.bin # provides ldd; jdx/mise-action probes libc with it
 
           # Container tools
           docker
