@@ -138,6 +138,54 @@ in {
     starship
     wezterm
     zoxide
+
+    # fu: open/attach the "fuww" tmux session — one tab per project,
+    # each tab split into 4 side-by-side columns starting in that project dir.
+    (writeShellScriptBin "fu" ''
+      set -euo pipefail
+      session="fuww"
+      base="$HOME/code/fuww"
+
+      attach() {
+        if [ -n "''${TMUX:-}" ]; then
+          exec tmux switch-client -t "$session"
+        else
+          exec tmux attach -t "$session"
+        fi
+      }
+
+      if tmux has-session -t "$session" 2>/dev/null; then
+        attach
+      fi
+
+      mkwin() {
+        # $1 = window name, $2 = dir, $3 = "first" for the session-creating window
+        if [ "$3" = "first" ]; then
+          tmux new-session -d -s "$session" -n "$1" -c "$2"
+          # keep our tab names from being clobbered by the running command
+          tmux set-option -t "$session" automatic-rename off
+          tmux set-option -t "$session" allow-rename off
+        else
+          tmux new-window -t "$session" -n "$1" -c "$2"
+        fi
+        # 3 vertical splits => 4 columns, all rooted in the project dir
+        tmux split-window -h -t "$session:$1" -c "$2"
+        tmux split-window -h -t "$session:$1" -c "$2"
+        tmux split-window -h -t "$session:$1" -c "$2"
+        tmux select-layout -t "$session:$1" even-horizontal
+        tmux select-pane  -t "$session:$1.0"
+      }
+
+      mkwin fashionunited "$base/fashionunited"            first
+      mkwin frontend      "$base/frontend"                 next
+      mkwin api           "$base/api"                      next
+      mkwin integrations  "$base/integrations"             next
+      mkwin pdb-feeds     "$base/product-database-feeds"   next
+      mkwin nixos-config  "$HOME/nixos-config"             next
+
+      tmux select-window -t "$session:fashionunited"
+      attach
+    '')
   ];
 
   # Install/update Vercel CLI via npm (removed from nixpkgs)
@@ -340,6 +388,15 @@ in {
       set -ga terminal-overrides ",*256col*:Tc"
       set -g status-bg black
       set -g status-fg white
+
+      # Show each pane's current folder on its border (per-split awareness)
+      set -g pane-border-status top
+      set -g pane-border-format " #P  #{s|$HOME|~|:pane_current_path} "
+      set -g pane-border-style        "fg=colour240"
+      set -g pane-active-border-style "fg=colour39,bold"
+
+      # Focused pane's folder in the status bar
+      set -g status-right " #{s|$HOME|~|:pane_current_path} "
 
       # OSC 52 clipboard: copies in tmux go to the connecting machine's clipboard over SSH
       set -s set-clipboard on
