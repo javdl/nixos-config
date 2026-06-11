@@ -617,8 +617,8 @@ in {
 #    "rofi/config.rasi".text = builtins.readFile ./rofi;
   } // (if isDarwin then {
     "ghostty/config".text = builtins.replaceStrings
-      ["command = nu --config"]
-      ["command = ${pkgs.nushell}/bin/nu --config"]
+      ["command = zsh"]
+      ["command = ${pkgs.zsh}/bin/zsh"]
       (builtins.readFile ./ghostty.conf);
     "skhd/skhdrc".text = builtins.readFile ./skhdrc;
     "aerospace/aerospace.toml".text = builtins.readFile ./aerospace.toml;
@@ -645,8 +645,8 @@ in {
         };
   } else {}) // (if isLinux then {
     "ghostty/config".text = builtins.replaceStrings
-      ["command = nu"]
-      ["command = ${pkgs.nushell}/bin/nu"]
+      ["command = zsh"]
+      ["command = ${pkgs.zsh}/bin/zsh"]
       (builtins.readFile ./ghostty.linux);
     "sublime-text/Packages/User/Preferences.sublime-settings".text = builtins.readFile ./sublime-preferences.json;
     "sublime-text/Packages/User/Package Control.sublime-settings".text = builtins.readFile ./sublime-package-control.json;
@@ -1582,7 +1582,7 @@ in {
   programs.zellij = {
     enable = true;
     settings = {
-      default_shell = "${pkgs.nushell}/bin/nu";
+      default_shell = "${pkgs.zsh}/bin/zsh";
       theme = "rose-pine";
       themes = {
         rose-pine = {

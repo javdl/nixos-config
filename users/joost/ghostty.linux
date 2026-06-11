@@ -1,5 +1,5 @@
-# Use nushell in ghostty (login shell stays zsh)
-command = nu
+# Use zsh in ghostty (login shell sources nix profiles)
+command = zsh -l
 font-size = 14
 font-family = CaskaydiaMono Nerd Font
 background-opacity = 0.95
