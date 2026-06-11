@@ -283,6 +283,13 @@
           if [ "$(find "$dir" -maxdepth 0 -mtime +1 2>/dev/null)" ]; then
             echo "Removing stale: $dir"
             rm -rf "$dir"
+            # The runner records each repo's workspace path in _PipelineMapping
+            # and reuses it on later jobs WITHOUT re-checking that it exists.
+            # Deleting a workspace while keeping its mapping makes the next job
+            # cwd into a now-deleted directory and fail at the first step with
+            # "No such file or directory". Drop the mapping too so the runner
+            # treats the next job as a fresh checkout and recreates the workspace.
+            rm -rf "$(dirname "$dir")/_PipelineMapping"
           fi
         done
         NEW_AVAIL=$(df -BG / | awk 'NR==2 {gsub("G",""); print $4}')
