@@ -332,6 +332,13 @@
       extraEnvironment = {
         DOCKER_HOST = "unix:///var/run/docker.sock";
         ACTIONS_RUNNER_HOOK_JOB_STARTED = "/etc/github-runner-pre-job.sh";
+        # nixpkgs 26.05 ships github-runner with ONLY the node24 externals
+        # (Node 20 is EOL and was dropped upstream). Node 20 JS actions
+        # (actions/checkout@v4, actions/upload-artifact@v4, ...) would try to
+        # exec the missing lib/externals/node20/bin/node and fail with
+        # "No such file or directory". Force them onto the bundled node24,
+        # which GitHub makes the default on 2026-06-16 anyway.
+        FORCE_JAVASCRIPT_ACTIONS_TO_NODE24 = "true";
       };
     }
   ) 16);
