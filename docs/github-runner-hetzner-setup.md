@@ -8,8 +8,11 @@ Dedicated NixOS servers running as org-level self-hosted runners for `fuww`:
 
 | Runner           | Instance | Provisioning | Status |
 |------------------|----------|--------------|--------|
-| github-runner-01 | CCX33 (dedicated cores) | Legacy rescue mode | Active |
 | github-runner-02 | CPX62 (16 shared vCPUs, 32GB RAM) | disko + nixos-anywhere | Active |
+| github-runner-03 | EX63 (dedicated, bare metal) | disko + nixos-anywhere | Active |
+
+> `github-runner-01` (CCX33) was decommissioned on 2026-05-21 and its config
+> removed on 2026-06-11. See [github-runner-decommission.md](github-runner-decommission.md).
 
 Each runner:
 - Registers as an org-level self-hosted runner for `fuww`
@@ -30,16 +33,15 @@ Each runner:
 
 | File | Purpose |
 |------|---------|
-| `hosts/github-runner-01.nix` | Runner 01 host config (legacy hardware import) |
 | `hosts/github-runner-02.nix` | Runner 02 host config (disko + shared hardware modules) |
-| `hosts/hardware/github-runner-01.nix` | Runner 01 Hetzner QEMU hardware config |
+| `hosts/github-runner-03.nix` | Runner 03 host config (bare-metal EX63, disko + dedicated hardware modules) |
 | `modules/hetzner-cloud-hardware.nix` | Shared Hetzner Cloud hardware config (used by runner-02+) |
 | `modules/disko-hetzner-cloud.nix` | Shared disko partitioning for Hetzner Cloud (used by runner-02+) |
 | `users/github-runner/nixos.nix` | Dedicated system user (shared across all runners) |
 | `users/github-runner/home-manager-server.nix` | Minimal home-manager for CI (shared across all runners) |
-| `flake.nix` | Entries: `nixosConfigurations.github-runner-{01,02}` |
+| `flake.nix` | Entries: `nixosConfigurations.github-runner-{02,03}` |
 | `.sops.yaml` | Age keys + creation rules for secrets |
-| `secrets/github-runner-{01,02}.yaml` | SOPS-encrypted runner tokens |
+| `secrets/github-runner-{02,03}.yaml` | SOPS-encrypted runner tokens |
 
 ## Architecture
 
@@ -73,7 +75,8 @@ This SSHs into the server, kexec into a NixOS installer, partitions with disko, 
 
 ### Option B: Legacy rescue mode bootstrap
 
-Used by: `github-runner-01` (predates disko support).
+No active host uses this path — it predates disko support and is kept only as
+a reference for non-disko hardware. New runners should use Option A.
 
 1. Order Hetzner server. Note the IP address.
 2. Boot into rescue mode (Linux 64-bit) from Hetzner Cloud Console.
@@ -87,7 +90,7 @@ make hetzner/bootstrap0 NIXADDR=<ip>
 
 ```bash
 make hetzner/copy NIXADDR=<ip>
-ssh root@<ip> "nixos-rebuild switch --flake /nix-config#github-runner-01"
+ssh root@<ip> "nixos-rebuild switch --flake /nix-config#<hostname>"
 ```
 
 ### Phase 3: Set Up Secrets (SOPS + Runner Token)
@@ -130,19 +133,19 @@ make hetzner/tailscale-auth NIXADDR=<ip> TAILSCALE_AUTHKEY=tskey-auth-xxx
 ### Phase 5: Commit and Push
 
 ```bash
-jj describe -m "feat: add github-runner-01 Hetzner GitHub Actions runner"
+jj describe -m "feat: add <hostname> Hetzner GitHub Actions runner"
 jj bookmark set main -r @
 jj git push
 ```
 
-After push, the server's `nixosAutoUpdate` will pull from `github:javdl/nixos-config#github-runner-01` daily at 4 AM.
+After push, the server's `nixosAutoUpdate` will pull from `github:javdl/nixos-config#<hostname>` daily at 4 AM.
 
 ## Verification
 
 1. **Runner service**: `systemctl status github-runner-fuww-runner`
 2. **GitHub UI**: https://github.com/organizations/fuww/settings/actions/runners
-   - runner-01 labels: `self-hosted`, `linux`, `x86_64`, `hetzner`, `nixos`, `ccx33`, `self-hosted-16-cores`
    - runner-02 labels: `self-hosted`, `linux`, `x86_64`, `hetzner`, `nixos`, `cpx62`, `self-hosted-16-cores`
+   - runner-03 labels: `self-hosted`, `linux`, `x86_64`, `hetzner`, `nixos`, `ex63`, `self-hosted-16-cores`
 3. **Auto-update timer**: `systemctl status nixos-upgrade.timer`
 4. **Tailscale**: `tailscale status`
 

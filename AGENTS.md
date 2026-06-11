@@ -82,7 +82,6 @@ Dedicated self-hosted runner for the `fuww` GitHub organization:
 
 | Server           | Host Config          | Flake Target          | Instance         | User Config                              |
 |------------------|----------------------|-----------------------|------------------|------------------------------------------|
-| github-runner-01 | `github-runner-01`   | `#github-runner-01`   | CCX33 (cloud)    | `users/github-runner/home-manager-server.nix` |
 | github-runner-02 | `github-runner-02`   | `#github-runner-02`   | CPX62 (cloud)    | `users/github-runner/home-manager-server.nix` |
 | github-runner-03 | `github-runner-03`   | `#github-runner-03`   | EX63 (dedicated) | `users/github-runner/home-manager-server.nix` |
 

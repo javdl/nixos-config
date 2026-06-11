@@ -156,12 +156,6 @@
       user   = "joost";
     };
 
-    nixosConfigurations.github-runner-01 = mkSystem "github-runner-01" {
-      system = "x86_64-linux";
-      user   = "github-runner";
-      server = true;
-    };
-
     nixosConfigurations.github-runner-02 = mkSystem "github-runner-02" {
       system = "x86_64-linux";
       user   = "github-runner";
