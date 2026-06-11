@@ -1451,5 +1451,24 @@
             disabledTestPaths = (old.disabledTestPaths or []) ++ [ "tests/test_package_specifier.py" ];
           });
 
+          # nixpkgs 26.05 wires only the node24 externals into github-runner
+          # (Node 20 is EOL). But the runner still uses node20 for its built-in
+          # hashFiles() helper (and for node20 JS actions before GitHub's
+          # 2026-06-16 cutover), exec'ing lib/externals/node20/bin/node. With
+          # node20 absent, any ${{ hashFiles(...) }} expression fails template
+          # evaluation with "An error occurred trying to start process
+          # .../node20/bin/node ... No such file or directory". The
+          # FORCE_JAVASCRIPT_ACTIONS_TO_NODE24 runner env var only covers JS
+          # *actions*, not hashFiles. Alias node20 -> node24 so every node20
+          # invocation runs on the present node24 (GitHub's 2026-06-16 default).
+          github-runner = prev.github-runner.overrideAttrs (old: {
+            postFixup = (old.postFixup or "") + ''
+              ext="$out/lib/externals"
+              if [ -e "$ext/node24" ] && [ ! -e "$ext/node20" ]; then
+                ln -s node24 "$ext/node20"
+              fi
+            '';
+          });
+
         })
 ]
