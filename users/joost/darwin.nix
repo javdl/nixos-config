@@ -83,6 +83,7 @@ let
     "istat-menus"
     "jetbrains-gateway"
     "jetbrains-toolbox"
+    "keka" # archive/compression utility
     # "librewolf"
     "linear"
     "legcord"
