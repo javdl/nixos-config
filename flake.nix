@@ -72,311 +72,352 @@
 
   };
 
-  outputs = { self, nixpkgs, nixos-hardware, home-manager, darwin, disko, ... }@inputs: let
-    # Overlays is the list of overlays we want to apply from flake inputs.
-    overlays = import ./lib/overlays.nix { inherit inputs; };
+  outputs =
+    {
+      self,
+      nixpkgs,
+      nixos-hardware,
+      home-manager,
+      darwin,
+      disko,
+      ...
+    }@inputs:
+    let
+      # Overlays is the list of overlays we want to apply from flake inputs.
+      overlays = import ./lib/overlays.nix { inherit inputs; };
 
-    mkSystem = import ./lib/mksystem.nix {
-      inherit overlays nixpkgs inputs;
-    };
-  in {
-    nixosConfigurations.vm-aarch64 = mkSystem "vm-aarch64" {
-      system = "aarch64-linux";
-      user   = "joost";
-    };
-
-    # vm-aarch64-prl removed — hosts/vm-aarch64-prl.nix does not exist
-
-    nixosConfigurations.vm-aarch64-utm = mkSystem "vm-aarch64-utm" rec {
-      system = "aarch64-linux";
-      user   = "joost";
-    };
-
-    nixosConfigurations.vm-intel = mkSystem "vm-intel" rec {
-      system = "x86_64-linux";
-      user   = "joost";
-    };
-
-    nixosConfigurations.wsl = mkSystem "wsl" {
-      system = "x86_64-linux";
-      user   = "joost";
-      wsl    = true;
-    };
-
-    nixosConfigurations.fumusic = mkSystem "fumusic" rec {
-      system = "x86_64-linux";
-      user   = "joost";
-    };
-
-
-    nixosConfigurations.fu095 = mkSystem "fu095" rec {
-      system = "x86_64-linux";
-      user   = "joost";
-    };
-
-    darwinConfigurations.fu129 = mkSystem "fu129" {
-      system = "aarch64-darwin";
-      user   = "joost";
-      darwin = true;
-    };
-
-    nixosConfigurations.fu137 = mkSystem "fu137" rec {
-      system = "x86_64-linux";
-      user   = "joost";
-      raphael = true;
-      pstate = true; # for modern AMD cpu's
-      zenpower = true; # for modern AMD cpu's
-    };
-
-    darwinConfigurations.fu146 = mkSystem "fu146" {
-      system = "aarch64-darwin";
-      user   = "joost";
-      darwin = true;
-    };
-
-    nixosConfigurations.j7 = mkSystem "j7" rec {
-      system = "x86_64-linux";
-      user   = "joost";
-      raphael = true;
-      pstate = true;
-      zenpower = true;
-    };
-
-    darwinConfigurations.j8 = mkSystem "j8" {
-      system = "aarch64-darwin";
-      user   = "joost";
-      darwin = true;
-    };
-
-    # j9 is Arch Linux (Omarchy) — managed via homeConfigurations."j9" below,
-    # not as a nixosConfiguration.
-
-    nixosConfigurations.github-runner = mkSystem "github-runner" {
-      system = "x86_64-linux";
-      user   = "joost";
-    };
-
-    nixosConfigurations.github-runner-02 = mkSystem "github-runner-02" {
-      system = "x86_64-linux";
-      user   = "github-runner";
-      server = true;
-    };
-
-    nixosConfigurations.github-runner-03 = mkSystem "github-runner-03" {
-      system = "x86_64-linux";
-      user   = "github-runner";
-      server = true;
-    };
-
-
-
-    nixosConfigurations.loom = mkSystem "loom" {
-      system = "x86_64-linux";
-      user   = "joost";
-      server = true;
-    };
-
-    # FashionUnited company-wide hermes-agent host.
-    # Clone of loom's hermes-agent setup; see Plans/check-the-plan-for-misty-turtle.md.
-    nixosConfigurations.hermes-fu = mkSystem "hermes-fu" {
-      system = "x86_64-linux";
-      user   = "agent";
-      server = true;
-    };
-
-    nixosConfigurations.joostclaw = mkSystem "joostclaw" {
-      system = "x86_64-linux";
-      user   = "joost";
-      server = true;
-      hmConfig = "home-manager-joostclaw";
-    };
-
-    # Colleague AI dev servers (robot-themed names)
-    nixosConfigurations.desmondroid = mkSystem "desmondroid" {
-      system = "x86_64-linux";
-      user   = "desmond";
-      server = true;
-    };
-
-    nixosConfigurations.jacksonator = mkSystem "jacksonator" {
-      system = "x86_64-linux";
-      user   = "jackson";
-      server = true;
-    };
-
-    nixosConfigurations.peterbot = mkSystem "peterbot" {
-      system = "x86_64-linux";
-      user   = "peter";
-      server = true;
-    };
-
-    nixosConfigurations.rajbot = mkSystem "rajbot" {
-      system = "x86_64-linux";
-      user   = "rajesh";
-      server = true;
-    };
-
-    nixosConfigurations.jeevanator = mkSystem "jeevanator" {
-      system = "x86_64-linux";
-      user   = "jeevan";
-      server = true;
-    };
-
-    nixosConfigurations.lennardroid = mkSystem "lennardroid" {
-      system = "x86_64-linux";
-      user   = "lennard";
-      server = true;
-    };
-
-    darwinConfigurations.macbook-pro-m1 = mkSystem "macbook-pro-m1" {
-      system = "aarch64-darwin";
-      user   = "joost";
-      darwin = true;
-    };
-
-    darwinConfigurations.macbook-air-m1 = mkSystem "macbook-air-m1" {
-      system = "aarch64-darwin";
-      user   = "joost";
-      darwin = true;
-    };
-
-    darwinConfigurations.mac-studio-m1 = mkSystem "mac-studio-m1" {
-      system = "aarch64-darwin";
-      user   = "joost";
-      darwin = true;
-    };
-
-    darwinConfigurations.mac-studio-m2 = mkSystem "mac-studio-m2" {
-      system = "aarch64-darwin";
-      user   = "joost";
-      darwin = true;
-    };
-
-    darwinConfigurations.argon = mkSystem "argon" {
-      system = "aarch64-darwin";
-      user   = "joost";
-      darwin = true;
-    };
-
-    darwinConfigurations.radon = mkSystem "radon" {
-      system = "aarch64-darwin";
-      user   = "joost";
-      darwin = true;
-    };
-
-    darwinConfigurations.mac-mini-m2 = mkSystem "mac-mini-m2" {
-      system = "aarch64-darwin";
-      user   = "joost";
-      darwin = true;
-    };
-
-    darwinConfigurations.mac-mini-m4 = mkSystem "mac-mini-m4" {
-      system = "aarch64-darwin";
-      user   = "joost";
-      darwin = true;
-    };
-
-    darwinConfigurations.macbook-air-m4 = mkSystem "macbook-air-m4" {
-      system = "aarch64-darwin";
-      user   = "joost";
-      darwin = true;
-    };
-
-    darwinConfigurations.crescendo = mkSystem "crescendo" {
-      system = "aarch64-darwin";
-      user   = "joost";
-      darwin = true;
-    };
-
-    # Home Manager configuration for GitHub runner on Ubuntu
-    homeConfigurations."githubrunner" = home-manager.lib.homeManagerConfiguration {
-      pkgs = import nixpkgs {
-        system = "x86_64-linux";
-        overlays = overlays;
+      mkSystem = import ./lib/mksystem.nix {
+        inherit overlays nixpkgs inputs;
       };
-      modules = [
-        ./users/githubrunner/home-manager.nix
+
+      # Systems we expose dev-tooling outputs (formatter / checks / devShells) for.
+      forAllSystems = nixpkgs.lib.genAttrs [
+        "x86_64-linux"
+        "aarch64-linux"
+        "x86_64-darwin"
+        "aarch64-darwin"
       ];
-    };
 
-    # Home Manager configuration for j9 (standalone, non-NixOS Linux - Arch/Omarchy)
-    # Omarchy package lists: ~/.local/share/omarchy/install/omarchy-{base,other}.packages
-    # Wayland/Hyprland tools are managed by Omarchy via pacman, not Nix
-    homeConfigurations."j9" = let
-      pkgs = import nixpkgs {
-        system = "x86_64-linux";
-        overlays = overlays;
-        config.allowUnfree = true;
-      };
-    in home-manager.lib.homeManagerConfiguration {
-      inherit pkgs;
-      extraSpecialArgs = {
-        inherit inputs;
-      };
-      modules = [
-        (import ./users/joost/home-manager.nix {
-          isWSL = false;
-          inherit inputs;
-          currentSystemName = "j9";
-        })
-        ({ lib, pkgs, ... }: {
-          nixpkgs.config.allowUnfree = true;
-          home.username = "joost";
-          home.homeDirectory = "/home/joost";
+      # nixpkgs with our overlays applied, used only for the tooling outputs below.
+      pkgsFor =
+        system:
+        import nixpkgs {
+          inherit system overlays;
+          config.allowUnfree = true;
+        };
 
-          # Additional packages from Omarchy that complement the Nix setup
-          # These are CLI tools that work alongside Omarchy without conflicting
-          home.packages = with pkgs; [
-            gum           # Terminal UI toolkit for shell scripts
-            tldr          # Simplified man pages
-            mpv           # Media player
-            playerctl     # Media player control (MPRIS)
-            localsend     # Local file sharing (LAN)
-            inxi          # System information tool
-            # Wayland tools managed by Omarchy: hyprland, waybar, mako, etc.
+      # Standard x86_64-linux auto-updating server (colleague dev boxes etc.).
+      mkServer =
+        name: user:
+        mkSystem name {
+          system = "x86_64-linux";
+          inherit user;
+          server = true;
+        };
+
+      # Standard aarch64-darwin workstation for joost.
+      mkDarwin =
+        name:
+        mkSystem name {
+          system = "aarch64-darwin";
+          user = "joost";
+          darwin = true;
+        };
+    in
+    {
+      # `nix fmt` — formats this repo's own Nix sources only. Skips vendored trees
+      # (mcp_agent_mail, skills, .claude worktrees) and the dead all-comment
+      # modules/programs.nix, which is not valid standalone Nix.
+      formatter = forAllSystems (
+        system:
+        let
+          pkgs = pkgsFor system;
+        in
+        pkgs.writeShellApplication {
+          name = "nixfmt-repo";
+          runtimeInputs = [
+            pkgs.nixfmt
+            pkgs.findutils
           ];
+          text = ''
+            if [ "$#" -gt 0 ] && [ "$*" != "." ]; then
+              exec nixfmt "$@"
+            fi
+            find flake.nix lib modules hosts users -name '*.nix' \
+              ! -name programs.nix \
+              ! -path '*/music/autostart.nix' \
+              -print0 | xargs -0 nixfmt
+          '';
+        }
+      );
 
-          # Protect Omarchy-managed directories
-          home.file.".config/omarchy".enable = false;
-          home.file.".config/hypr".enable = false;
-          home.file.".config/alacritty".enable = false;
-          home.file.".config/btop/themes".enable = false;
+      # `nix develop` — pinned contributor toolchain for working on this flake.
+      devShells = forAllSystems (
+        system:
+        let
+          pkgs = pkgsFor system;
+        in
+        {
+          default = pkgs.mkShell {
+            packages = with pkgs; [
+              nixfmt
+              statix
+              deadnix
+              sops
+              ssh-to-age
+              age
+            ];
+          };
+        }
+      );
 
-          # Disable nixpkgs module's <nixpkgs> lookup for pure evaluation
-          _module.args.pkgsPath = lib.mkForce nixpkgs;
-        })
-      ];
-    };
+      # `nix flake check` — format gate over the repo's own Nix sources. Lints
+      # (statix/deadnix) live in the devShell but are kept out of checks for now to
+      # avoid blocking on pre-existing legacy findings.
+      checks = forAllSystems (
+        system:
+        let
+          pkgs = pkgsFor system;
+        in
+        {
+          format =
+            pkgs.runCommandLocal "check-nixfmt"
+              {
+                nativeBuildInputs = [
+                  pkgs.nixfmt
+                  pkgs.findutils
+                ];
+              }
+              ''
+                cd ${self}
+                if ! find flake.nix lib modules hosts users -name '*.nix' \
+                  ! -name programs.nix \
+                  ! -path '*/music/autostart.nix' \
+                  -print0 | xargs -0 nixfmt --check; then
+                  echo "Nix files are not formatted. Run 'nix fmt' to fix." >&2
+                  exit 1
+                fi
+                touch $out
+              '';
+        }
+      );
 
-    # Home Manager configuration for Omarchy (standalone, non-NixOS Linux)
-    homeConfigurations."omarchy" = let
-      pkgs = import nixpkgs {
+      nixosConfigurations.vm-aarch64 = mkSystem "vm-aarch64" {
+        system = "aarch64-linux";
+        user = "joost";
+      };
+
+      # vm-aarch64-prl removed — hosts/vm-aarch64-prl.nix does not exist
+
+      nixosConfigurations.vm-aarch64-utm = mkSystem "vm-aarch64-utm" rec {
+        system = "aarch64-linux";
+        user = "joost";
+      };
+
+      nixosConfigurations.vm-intel = mkSystem "vm-intel" rec {
         system = "x86_64-linux";
-        overlays = overlays;
-        config.allowUnfree = true;
+        user = "joost";
       };
-    in home-manager.lib.homeManagerConfiguration {
-      inherit pkgs;
-      extraSpecialArgs = {
-        inherit inputs;
+
+      nixosConfigurations.wsl = mkSystem "wsl" {
+        system = "x86_64-linux";
+        user = "joost";
+        wsl = true;
       };
-      modules = [
-        (import ./users/joost/home-manager.nix { isWSL = false; inherit inputs; })
-        ({ lib, ... }: {
-          nixpkgs.config.allowUnfree = true;
-          home.username = "joost";
-          home.homeDirectory = "/home/joost";
 
-          # Protect Omarchy-managed directories
-          home.file.".config/omarchy".enable = false;
-          home.file.".config/hypr".enable = false;
-          home.file.".config/alacritty".enable = false;
-          home.file.".config/btop/themes".enable = false;
+      nixosConfigurations.fumusic = mkSystem "fumusic" rec {
+        system = "x86_64-linux";
+        user = "joost";
+      };
 
-          # Disable nixpkgs module's <nixpkgs> lookup for pure evaluation
-          _module.args.pkgsPath = lib.mkForce nixpkgs;
-        })
-      ];
+      nixosConfigurations.fu095 = mkSystem "fu095" rec {
+        system = "x86_64-linux";
+        user = "joost";
+      };
+
+      nixosConfigurations.fu137 = mkSystem "fu137" rec {
+        system = "x86_64-linux";
+        user = "joost";
+        raphael = true;
+        pstate = true; # for modern AMD cpu's
+        zenpower = true; # for modern AMD cpu's
+      };
+
+      nixosConfigurations.j7 = mkSystem "j7" rec {
+        system = "x86_64-linux";
+        user = "joost";
+        raphael = true;
+        pstate = true;
+        zenpower = true;
+      };
+
+      # j9 is Arch Linux (Omarchy) — managed via homeConfigurations."j9" below,
+      # not as a nixosConfiguration.
+
+      nixosConfigurations.github-runner = mkSystem "github-runner" {
+        system = "x86_64-linux";
+        user = "joost";
+      };
+
+      nixosConfigurations.github-runner-02 = mkSystem "github-runner-02" {
+        system = "x86_64-linux";
+        user = "github-runner";
+        server = true;
+      };
+
+      nixosConfigurations.github-runner-03 = mkSystem "github-runner-03" {
+        system = "x86_64-linux";
+        user = "github-runner";
+        server = true;
+      };
+
+      nixosConfigurations.loom = mkSystem "loom" {
+        system = "x86_64-linux";
+        user = "joost";
+        server = true;
+      };
+
+      # FashionUnited company-wide hermes-agent host.
+      # Clone of loom's hermes-agent setup; see Plans/check-the-plan-for-misty-turtle.md.
+      nixosConfigurations.hermes-fu = mkSystem "hermes-fu" {
+        system = "x86_64-linux";
+        user = "agent";
+        server = true;
+      };
+
+      nixosConfigurations.joostclaw = mkSystem "joostclaw" {
+        system = "x86_64-linux";
+        user = "joost";
+        server = true;
+        hmConfig = "home-manager-joostclaw";
+      };
+
+      # Colleague AI dev servers (robot-themed names)
+      nixosConfigurations.desmondroid = mkServer "desmondroid" "desmond";
+
+      nixosConfigurations.jacksonator = mkServer "jacksonator" "jackson";
+
+      nixosConfigurations.peterbot = mkServer "peterbot" "peter";
+
+      nixosConfigurations.rajbot = mkServer "rajbot" "rajesh";
+
+      nixosConfigurations.jeevanator = mkServer "jeevanator" "jeevan";
+
+      nixosConfigurations.lennardroid = mkServer "lennardroid" "lennard";
+
+      # All aarch64-darwin workstations share one definition (see mkDarwin).
+      darwinConfigurations = nixpkgs.lib.genAttrs [
+        "fu129"
+        "fu146"
+        "j8"
+        "macbook-pro-m1"
+        "macbook-air-m1"
+        "mac-studio-m1"
+        "mac-studio-m2"
+        "argon"
+        "radon"
+        "mac-mini-m2"
+        "mac-mini-m4"
+        "macbook-air-m4"
+        "crescendo"
+      ] mkDarwin;
+
+      # Home Manager configuration for GitHub runner on Ubuntu
+      homeConfigurations."githubrunner" = home-manager.lib.homeManagerConfiguration {
+        pkgs = import nixpkgs {
+          system = "x86_64-linux";
+          overlays = overlays;
+        };
+        modules = [
+          ./users/githubrunner/home-manager.nix
+        ];
+      };
+
+      # Home Manager configuration for j9 (standalone, non-NixOS Linux - Arch/Omarchy)
+      # Omarchy package lists: ~/.local/share/omarchy/install/omarchy-{base,other}.packages
+      # Wayland/Hyprland tools are managed by Omarchy via pacman, not Nix
+      homeConfigurations."j9" =
+        let
+          pkgs = import nixpkgs {
+            system = "x86_64-linux";
+            overlays = overlays;
+            config.allowUnfree = true;
+          };
+        in
+        home-manager.lib.homeManagerConfiguration {
+          inherit pkgs;
+          extraSpecialArgs = {
+            inherit inputs;
+          };
+          modules = [
+            (import ./users/joost/home-manager.nix {
+              isWSL = false;
+              inherit inputs;
+              currentSystemName = "j9";
+            })
+            ({ lib, pkgs, ... }: {
+              nixpkgs.config.allowUnfree = true;
+              home.username = "joost";
+              home.homeDirectory = "/home/joost";
+
+              # Additional packages from Omarchy that complement the Nix setup
+              # These are CLI tools that work alongside Omarchy without conflicting
+              home.packages = with pkgs; [
+                gum # Terminal UI toolkit for shell scripts
+                tldr # Simplified man pages
+                mpv # Media player
+                playerctl # Media player control (MPRIS)
+                localsend # Local file sharing (LAN)
+                inxi # System information tool
+                # Wayland tools managed by Omarchy: hyprland, waybar, mako, etc.
+              ];
+
+              # Protect Omarchy-managed directories
+              home.file.".config/omarchy".enable = false;
+              home.file.".config/hypr".enable = false;
+              home.file.".config/alacritty".enable = false;
+              home.file.".config/btop/themes".enable = false;
+
+              # Disable nixpkgs module's <nixpkgs> lookup for pure evaluation
+              _module.args.pkgsPath = lib.mkForce nixpkgs;
+            })
+          ];
+        };
+
+      # Home Manager configuration for Omarchy (standalone, non-NixOS Linux)
+      homeConfigurations."omarchy" =
+        let
+          pkgs = import nixpkgs {
+            system = "x86_64-linux";
+            overlays = overlays;
+            config.allowUnfree = true;
+          };
+        in
+        home-manager.lib.homeManagerConfiguration {
+          inherit pkgs;
+          extraSpecialArgs = {
+            inherit inputs;
+          };
+          modules = [
+            (import ./users/joost/home-manager.nix {
+              isWSL = false;
+              inherit inputs;
+            })
+            ({ lib, ... }: {
+              nixpkgs.config.allowUnfree = true;
+              home.username = "joost";
+              home.homeDirectory = "/home/joost";
+
+              # Protect Omarchy-managed directories
+              home.file.".config/omarchy".enable = false;
+              home.file.".config/hypr".enable = false;
+              home.file.".config/alacritty".enable = false;
+              home.file.".config/btop/themes".enable = false;
+
+              # Disable nixpkgs module's <nixpkgs> lookup for pure evaluation
+              _module.args.pkgsPath = lib.mkForce nixpkgs;
+            })
+          ];
+        };
     };
-  };
 }
