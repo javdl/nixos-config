@@ -1311,26 +1311,26 @@
 
           # codex - OpenAI coding agent CLI (pre-built binary from npm)
           codex = let
-            codexVersion = "0.130.0";
+            codexVersion = "0.139.0";
             codexSources = {
               "x86_64-linux" = {
                 url = "https://registry.npmjs.org/@openai/codex/-/codex-${codexVersion}-linux-x64.tgz";
-                hash = "sha256-keEqVsSccCyGxcQoEc+j1RW21rwZbXC6nOolInMCqo8=";
+                hash = "sha256-+BO39k/esntNvU5EyaEuri8DR831bbUspGE0kmtlfxI=";
                 vendorDir = "x86_64-unknown-linux-musl";
               };
               "aarch64-linux" = {
                 url = "https://registry.npmjs.org/@openai/codex/-/codex-${codexVersion}-linux-arm64.tgz";
-                hash = "sha256-PyFyYKvoPG8P16g+BWy0U1N+Q1xnVM0zXs2TWCPY894=";
+                hash = "sha256-YZVnfkulHyKpobXw4qAaJVpCpXVbdAEjzmj1MO0t08o=";
                 vendorDir = "aarch64-unknown-linux-musl";
               };
               "x86_64-darwin" = {
                 url = "https://registry.npmjs.org/@openai/codex/-/codex-${codexVersion}-darwin-x64.tgz";
-                hash = "sha256-IfFh/9efq4jFvZHkDRTIlP5tStYepOvIDU/PIBMJYMI=";
+                hash = "sha256-twMFprAxE+SOc9N6FlMSPTDSDRKH7OvR7LdZk8Iup4w=";
                 vendorDir = "x86_64-apple-darwin";
               };
               "aarch64-darwin" = {
                 url = "https://registry.npmjs.org/@openai/codex/-/codex-${codexVersion}-darwin-arm64.tgz";
-                hash = "sha256-9v7yzu6Jdwea07Mpa0wUwnB5NOa07Bqhoy1uUSGWsS0=";
+                hash = "sha256-74/Ddmw5MLUsqV5U7lSGVp4kMn1xvBDnlvrTrOSSD6s=";
                 vendorDir = "aarch64-apple-darwin";
               };
             };
@@ -1351,10 +1351,16 @@
               tar xzf $src
             '';
 
+            # codex 0.139.0 changed the npm tarball to layoutVersion 1: the binary
+            # lives at vendor/<target>/bin/codex and resolves sibling codex-resources/
+            # (bundled zsh) and codex-path/ (bundled rg) relative to the real exe path.
+            # Install the whole vendor tree and symlink the entrypoint so those resolve.
             installPhase = ''
-              mkdir -p $out/bin
-              cp package/vendor/${source.vendorDir}/codex/codex $out/bin/codex
-              chmod +x $out/bin/codex
+              mkdir -p $out/bin $out/libexec
+              cp -r package/vendor/${source.vendorDir} $out/libexec/codex
+              chmod -R u+w $out/libexec/codex
+              chmod +x $out/libexec/codex/bin/codex
+              ln -s $out/libexec/codex/bin/codex $out/bin/codex
             '';
 
             meta = with prev.lib; {
