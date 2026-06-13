@@ -5,21 +5,24 @@
 { config, pkgs, ... }:
 
 {
-  imports =
-    [ # Include the results of the hardware scan.
-     # <nixos-hardware/common/cpu/amd/raphael/igpu>
-      ./hardware/fu137.nix
-      ../modules/nvidia-drivers-535.nix
-      ../modules/amd-drivers.nix # IGPU
-      ../modules/common-pc-ssd.nix
-      ../modules/hyprland.nix
-      ../modules/sway.nix
-      ./bare-metal-shared-linux.nix
-    ];
+  imports = [
+    # Include the results of the hardware scan.
+    # <nixos-hardware/common/cpu/amd/raphael/igpu>
+    ./hardware/fu137.nix
+    ../modules/nvidia-drivers-535.nix
+    ../modules/amd-drivers.nix # IGPU
+    ../modules/common-pc-ssd.nix
+    ../modules/hyprland.nix
+    ../modules/sway.nix
+    ./bare-metal-shared-linux.nix
+  ];
 
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  nix.settings.experimental-features = [
+    "nix-command"
+    "flakes"
+  ];
 
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
@@ -82,10 +85,13 @@
   users.users.joost = {
     isNormalUser = true;
     description = "joost";
-    extraGroups = [ "networkmanager" "wheel" ];
+    extraGroups = [
+      "networkmanager"
+      "wheel"
+    ];
     packages = with pkgs; [
-    #  thunderbird
-    gnumake
+      #  thunderbird
+      gnumake
     ];
   };
 
@@ -99,10 +105,10 @@
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
-   vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
-   wget
-   chromium
-   glib
+    vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
+    wget
+    chromium
+    glib
     #github-runner
     gitlab-runner
     #  wget

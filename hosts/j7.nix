@@ -5,39 +5,40 @@
 { config, pkgs, ... }:
 
 {
-  imports =
-    [ # Include the results of the hardware scan.
-      ./hardware/j7.nix
-      #../modules/nvidia-drivers.nix
-      ../modules/amd-drivers.nix # IGPU
-      ../modules/common-pc-ssd.nix
-      #../modules/hyprland.nix
-      #../modules/sway.nix
-      # ../modules/programs.nix https://github.com/gpskwlkr/nixos-hyprland-flake/tree/main
-      ./bare-metal-shared-linux.nix
-    ];
+  imports = [
+    # Include the results of the hardware scan.
+    ./hardware/j7.nix
+    #../modules/nvidia-drivers.nix
+    ../modules/amd-drivers.nix # IGPU
+    ../modules/common-pc-ssd.nix
+    #../modules/hyprland.nix
+    #../modules/sway.nix
+    # ../modules/programs.nix https://github.com/gpskwlkr/nixos-hyprland-flake/tree/main
+    ./bare-metal-shared-linux.nix
+  ];
 
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
   boot.kernelPackages = pkgs.linuxPackages_latest;
- 
+
   # Setup keyfile
   boot.initrd.secrets = {
     "/crypto_keyfile.bin" = null;
   };
 
   # Enable swap on luks
-  boot.initrd.luks.devices."luks-0d8223a5-7ee5-4d19-86e1-f7a9aa5b89f8".device = "/dev/disk/by-uuid/0d8223a5-7ee5-4d19-86e1-f7a9aa5b89f8";
-  boot.initrd.luks.devices."luks-0d8223a5-7ee5-4d19-86e1-f7a9aa5b89f8".keyFile = "/crypto_keyfile.bin";
+  boot.initrd.luks.devices."luks-0d8223a5-7ee5-4d19-86e1-f7a9aa5b89f8".device =
+    "/dev/disk/by-uuid/0d8223a5-7ee5-4d19-86e1-f7a9aa5b89f8";
+  boot.initrd.luks.devices."luks-0d8223a5-7ee5-4d19-86e1-f7a9aa5b89f8".keyFile =
+    "/crypto_keyfile.bin";
 
   boot.extraModprobeConfig = ''
     options kvm_intel nested=1
     options kvm_intel emulate_invalid_guest_state=0
     options kvm ignore_msrs=1
   '';
-
 
   networking.hostName = "j7"; # Define your hostname.
 
@@ -63,27 +64,34 @@
   #       device memory 0x80800000-808fffff
 
   networking = {
-    interfaces.en01 = { # 10G op mobo, valt steeds uit
-      ipv4.addresses = [{
-        address = "172.20.0.10";
-        prefixLength = 24;
-      }];
+    interfaces.en01 = {
+      # 10G op mobo, valt steeds uit
+      ipv4.addresses = [
+        {
+          address = "172.20.0.10";
+          prefixLength = 24;
+        }
+      ];
     };
     interfaces.en02 = {
       # ipv6.addresses = [{
       #   address = "2a01:4f8:1c1b:16d0::1";
       #   prefixLength = 64;
       # }];
-      ipv4.addresses = [{
-        address = "172.20.0.11";
-        prefixLength = 24;
-      }];
+      ipv4.addresses = [
+        {
+          address = "172.20.0.11";
+          prefixLength = 24;
+        }
+      ];
     };
     interfaces.wlp8s0 = {
-      ipv4.addresses = [{
-        address = "172.20.0.12";
-        prefixLength = 24;
-      }];
+      ipv4.addresses = [
+        {
+          address = "172.20.0.12";
+          prefixLength = 24;
+        }
+      ];
     };
     defaultGateway = {
       address = "172.20.0.1";
@@ -96,7 +104,7 @@
     nameservers = [
       "172.20.0.1"
       "9.9.9.9"
-      "8.8.8.8" 
+      "8.8.8.8"
       "8.8.4.4"
     ];
   };
@@ -148,7 +156,11 @@
   users.users.joost = {
     isNormalUser = true;
     description = "Joost van der Laan";
-    extraGroups = [ "networkmanager" "wheel" "docker" ];
+    extraGroups = [
+      "networkmanager"
+      "wheel"
+      "docker"
+    ];
     packages = with pkgs; [
       firefox-devedition
       gnumake
@@ -157,16 +169,19 @@
   };
 
   # enable flakes
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  nix.settings.experimental-features = [
+    "nix-command"
+    "flakes"
+  ];
 
   # # Allow unfree packages
   # nixpkgs.config.allowUnfree = true;
   # nixpkgs.config.allowUnfreePredicate = _: true;
 
   nixpkgs.config.permittedInsecurePackages = [
-            #"openssl-1.1.1w" # For Sublimetext4, REMOVE WHEN OPENSSL 1.1 DOES NOT GET SECURITY UPDATES ANYMORE
-            #"electron-25.9.0"
-              ];
+    #"openssl-1.1.1w" # For Sublimetext4, REMOVE WHEN OPENSSL 1.1 DOES NOT GET SECURITY UPDATES ANYMORE
+    #"electron-25.9.0"
+  ];
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget
@@ -228,18 +243,18 @@
   services = {
     github-runners = {
       # We suggest using the fine-grained PATs
-        # https://search.nixos.org/options?channel=24.05&show=services.github-runners.%3Cname%3E.tokenFile&from=0&size=50&sort=relevance&type=packages&query=services.github-runner
-        # The file should contain exactly one line with the token without any newline.
-        # https://github.com/settings/personal-access-tokens/new
-        # echo -n 'TOKEN' > $HOME/.github-runner-token
-        # echo -n 'TOKEN' > $HOME/.fuww-github-runner-token
-        # Give it “Read and Write access to organization/repository self hosted runners”, depending on whether it is organization wide or per-repository.
-        # JL: op personal account heb je die niet, daar een classic PAT maken met `manage_runners:org` AND `repo` access.
-        # For classic PATs:
-        # Make sure the PAT has a scope of admin:org for organization-wide registrations or a scope of repo for a single repository.
-        # voor een personal account beide geven. Daar kun je nl. alleen per repo
-        # een url instellen, niet voor je hele username. https://github.com/javdl
-        # werkt dus niet.
+      # https://search.nixos.org/options?channel=24.05&show=services.github-runners.%3Cname%3E.tokenFile&from=0&size=50&sort=relevance&type=packages&query=services.github-runner
+      # The file should contain exactly one line with the token without any newline.
+      # https://github.com/settings/personal-access-tokens/new
+      # echo -n 'TOKEN' > $HOME/.github-runner-token
+      # echo -n 'TOKEN' > $HOME/.fuww-github-runner-token
+      # Give it “Read and Write access to organization/repository self hosted runners”, depending on whether it is organization wide or per-repository.
+      # JL: op personal account heb je die niet, daar een classic PAT maken met `manage_runners:org` AND `repo` access.
+      # For classic PATs:
+      # Make sure the PAT has a scope of admin:org for organization-wide registrations or a scope of repo for a single repository.
+      # voor een personal account beide geven. Daar kun je nl. alleen per repo
+      # een url instellen, niet voor je hele username. https://github.com/javdl
+      # werkt dus niet.
       runner1 = {
         enable = true;
         name = "j7-runner-nixos-config";
@@ -252,7 +267,8 @@
         tokenFile = "/home/joost/.github-runner-token";
         url = "https://github.com/javdl/top200-rs";
       };
-      runner2fuww = { # will show in systemctl as github-runner-runner2fuww.service
+      runner2fuww = {
+        # will show in systemctl as github-runner-runner2fuww.service
         enable = true;
         name = "j7-fuww-runner";
         tokenFile = "/home/joost/.fuww-github-runner-token";

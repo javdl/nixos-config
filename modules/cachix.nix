@@ -1,4 +1,10 @@
-{ config, lib, pkgs, currentSystemUser ? null, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  currentSystemUser ? null,
+  ...
+}:
 
 let
   # Push side (see lib/cachix-push-hook.nix). The post-build-hook is a
@@ -20,7 +26,8 @@ in
       "https://javdl-nixos-config.cachix.org"
       "https://devenv.cachix.org"
       "https://nix-community.cachix.org"
-    ] ++ lib.optionals pkgs.stdenv.isLinux [
+    ]
+    ++ lib.optionals pkgs.stdenv.isLinux [
       "https://hyprland.cachix.org"
     ];
 
@@ -29,16 +36,21 @@ in
       "javdl-nixos-config.cachix.org-1:6xuHXHavvpdfBLQq+RzxDAMxhWkea0NaYvLtDssDJIU="
       "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="
       "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
-    ] ++ lib.optionals pkgs.stdenv.isLinux [
+    ]
+    ++ lib.optionals pkgs.stdenv.isLinux [
       "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="
     ];
 
     # Trust users to manage the Nix store
-    trusted-users = [ "joost" "root" ];
+    trusted-users = [
+      "joost"
+      "root"
+    ];
 
     # Larger download buffer for faster fetches (512 MiB)
     download-buffer-size = 536870912;
-  } // lib.optionalAttrs pushEnabled {
+  }
+  // lib.optionalAttrs pushEnabled {
     # Hand locally-built paths to joost's per-user cachix daemon (async upload).
     post-build-hook = "${cp.hook}";
   };

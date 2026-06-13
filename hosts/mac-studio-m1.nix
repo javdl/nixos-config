@@ -1,9 +1,8 @@
 { config, pkgs, ... }: {
-  imports =
-    [
-      ./mac-shared.nix
-      ../modules/cachix.nix
-    ];
+  imports = [
+    ./mac-shared.nix
+    ../modules/cachix.nix
+  ];
   # nix-darwin stateVersion. Host runs macOS Tahoe.
   system.stateVersion = 6;
 
@@ -14,13 +13,13 @@
   system.primaryUser = "joost";
 
   # Don't let nix-darwin manage nix configuration since we use Determinate
-  nix.settings = {};
+  nix.settings = { };
 
   # Prevent nix-darwin from managing nix.conf
   environment.etc."nix/nix.conf".enable = false;
 
-    # Enable tailscale. We manually authenticate when we want with
-    # "sudo tailscale up". If you don't use tailscale, you should comment
-    # out or delete all of this.
-    # services.tailscale.enable = true; # do not add here, it will recompile each time
+  # Enable tailscale. We manually authenticate when we want with
+  # "sudo tailscale up". If you don't use tailscale, you should comment
+  # out or delete all of this.
+  # services.tailscale.enable = true; # do not add here, it will recompile each time
 }

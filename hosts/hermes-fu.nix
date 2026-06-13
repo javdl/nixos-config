@@ -1,4 +1,10 @@
-{ config, pkgs, lib, inputs, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  inputs,
+  ...
+}:
 
 # Hetzner Cloud VM: hermes-fu — FashionUnited company-wide hermes-agent host
 # IP: <fill in after order>
@@ -84,11 +90,11 @@
       # github:NousResearch/hermes-agent/gateway/config.py (PlatformConfig).
       platforms.slack = {
         enabled = true;
-        reply_to_mode = "first";    # thread only the first chunk of multi-part replies
+        reply_to_mode = "first"; # thread only the first chunk of multi-part replies
         extra = {
-          reply_in_thread = true;   # keep channels tidy; replies thread under the prompt
-          require_mention = true;   # don't auto-engage on every channel message
-          unauthorized_dm_behavior = "ignore";  # SLACK_ALLOWED_USERS is the gate
+          reply_in_thread = true; # keep channels tidy; replies thread under the prompt
+          require_mention = true; # don't auto-engage on every channel message
+          unauthorized_dm_behavior = "ignore"; # SLACK_ALLOWED_USERS is the gate
         };
       };
 

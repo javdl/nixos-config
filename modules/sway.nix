@@ -5,7 +5,12 @@
 # looks like you have to start it with --unsupported-gpu regardless of the driver
 # you use or that the monitor is connected to the iGPU.
 
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 {
   environment.systemPackages = with pkgs; [
     # the minimum
@@ -56,30 +61,30 @@
     bindsym Mod4+Shift+v exec cliphist list | wofi --dmenu | cliphist delete
   '';
 
-# older config, for ref:
-#     programs.sway = {
-#     enable = false;
-#     wrapperFeatures.gtk = true; # so that gtk works properly
-#     extraPackages = with pkgs; [
-#       swaylock
-#       swayidle
-#       wl-clipboard
-#       wf-recorder
-#       mako # notification daemon
-#       grim
-#       #kanshi
-#       slurp
-#       #dmenu # Dmenu is the default in the config but i recommend wofi since its wayland native
-#       wofi
-#       gtk3 # fixes issue where Kitty doesnt start after logging in to Hyprland.
-#     ];
-#     extraSessionCommands = ''
-#       export SDL_VIDEODRIVER=wayland
-#       export QT_QPA_PLATFORM=wayland
-#       export QT_WAYLAND_DISABLE_WINDOWDECORATION="1"
-#       export _JAVA_AWT_WM_NONREPARENTING=1
-#       export MOZ_ENABLE_WAYLAND=1
-#     '';
-#   };
+  # older config, for ref:
+  #     programs.sway = {
+  #     enable = false;
+  #     wrapperFeatures.gtk = true; # so that gtk works properly
+  #     extraPackages = with pkgs; [
+  #       swaylock
+  #       swayidle
+  #       wl-clipboard
+  #       wf-recorder
+  #       mako # notification daemon
+  #       grim
+  #       #kanshi
+  #       slurp
+  #       #dmenu # Dmenu is the default in the config but i recommend wofi since its wayland native
+  #       wofi
+  #       gtk3 # fixes issue where Kitty doesnt start after logging in to Hyprland.
+  #     ];
+  #     extraSessionCommands = ''
+  #       export SDL_VIDEODRIVER=wayland
+  #       export QT_QPA_PLATFORM=wayland
+  #       export QT_WAYLAND_DISABLE_WINDOWDECORATION="1"
+  #       export _JAVA_AWT_WM_NONREPARENTING=1
+  #       export MOZ_ENABLE_WAYLAND=1
+  #     '';
+  #   };
 
 }

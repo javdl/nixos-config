@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 # K3s lightweight Kubernetes module
 #
@@ -11,13 +16,24 @@
 
 let
   cfg = config.services.k3sConfig;
-  inherit (lib) mkEnableOption mkOption types mkIf mkDefault optionalString;
-in {
+  inherit (lib)
+    mkEnableOption
+    mkOption
+    types
+    mkIf
+    mkDefault
+    optionalString
+    ;
+in
+{
   options.services.k3sConfig = {
     enable = mkEnableOption "K3s lightweight Kubernetes";
 
     role = mkOption {
-      type = types.enum [ "server" "agent" ];
+      type = types.enum [
+        "server"
+        "agent"
+      ];
       default = "server";
       description = "K3s role: server (control plane) or agent (worker only)";
     };
@@ -53,14 +69,19 @@ in {
     };
 
     flannelBackend = mkOption {
-      type = types.enum [ "vxlan" "host-gw" "wireguard-native" "none" ];
+      type = types.enum [
+        "vxlan"
+        "host-gw"
+        "wireguard-native"
+        "none"
+      ];
       default = "vxlan";
       description = "Flannel CNI backend";
     };
 
     extraFlags = mkOption {
       type = types.listOf types.str;
-      default = [];
+      default = [ ];
       description = "Additional flags to pass to k3s";
     };
 
@@ -90,33 +111,36 @@ in {
       tokenFile = mkIf (cfg.tokenFile != null) cfg.tokenFile;
 
       # Build extra flags
-      extraFlags = let
-        disableFlags = lib.optionals cfg.disableTraefik [ "--disable=traefik" ]
-          ++ lib.optionals cfg.disableServicelb [ "--disable=servicelb" ]
-          ++ lib.optionals cfg.disableLocalStorage [ "--disable=local-storage" ];
-        networkFlags = [
-          "--flannel-backend=${cfg.flannelBackend}"
-          "--cluster-cidr=${cfg.clusterCIDR}"
-          "--service-cidr=${cfg.serviceCIDR}"
-        ];
-      in disableFlags ++ networkFlags ++ cfg.extraFlags;
+      extraFlags =
+        let
+          disableFlags =
+            lib.optionals cfg.disableTraefik [ "--disable=traefik" ]
+            ++ lib.optionals cfg.disableServicelb [ "--disable=servicelb" ]
+            ++ lib.optionals cfg.disableLocalStorage [ "--disable=local-storage" ];
+          networkFlags = [
+            "--flannel-backend=${cfg.flannelBackend}"
+            "--cluster-cidr=${cfg.clusterCIDR}"
+            "--service-cidr=${cfg.serviceCIDR}"
+          ];
+        in
+        disableFlags ++ networkFlags ++ cfg.extraFlags;
     };
 
     # Kubernetes CLI tools
     environment.systemPackages = with pkgs; [
-      kubectl           # Kubernetes CLI
-      kubernetes-helm   # Helm package manager
-      k9s               # Terminal UI for Kubernetes
+      kubectl # Kubernetes CLI
+      kubernetes-helm # Helm package manager
+      k9s # Terminal UI for Kubernetes
     ];
 
     # Open firewall ports for K3s
     networking.firewall = mkIf (cfg.role == "server") {
       allowedTCPPorts = [
-        6443  # Kubernetes API server
+        6443 # Kubernetes API server
         10250 # Kubelet metrics
       ];
       allowedUDPPorts = [
-        8472  # Flannel VXLAN
+        8472 # Flannel VXLAN
       ];
     };
 

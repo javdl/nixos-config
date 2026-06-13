@@ -1,9 +1,14 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
   # Basic home-manager configuration for GitHub runner on Ubuntu
   home = {
-    username = "githubrunner";  # Use the actual user running this
+    username = "githubrunner"; # Use the actual user running this
     homeDirectory = "/home/githubrunner";
     stateVersion = "25.05";
   };
@@ -66,7 +71,7 @@
     yq
 
     # Languages and runtimes
-    temurin-bin-21  # Eclipse Temurin (Adoptium JDK)
+    temurin-bin-21 # Eclipse Temurin (Adoptium JDK)
     erlang
     mono
     R
@@ -92,7 +97,7 @@
     ripgrep
     fd
     bat
-    delta           # Better git diffs
+    delta # Better git diffs
   ];
 
   # Environment variables
@@ -116,7 +121,8 @@
   programs.ssh = {
     enable = true;
     enableDefaultConfig = false;
-    settings."*" = { # 26.05: matchBlocks renamed to settings
+    settings."*" = {
+      # 26.05: matchBlocks renamed to settings
       compression = true;
       serverAliveInterval = 60;
       serverAliveCountMax = 3;

@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 # Scheduled Nix garbage collection for nix-darwin hosts — the macOS
 # counterpart of services.automaticNixGC on the Linux servers.
@@ -11,8 +16,14 @@
 
 let
   cfg = config.services.darwinNixGC;
-  inherit (lib) mkEnableOption mkOption types mkIf;
-in {
+  inherit (lib)
+    mkEnableOption
+    mkOption
+    types
+    mkIf
+    ;
+in
+{
   options.services.darwinNixGC = {
     enable = mkEnableOption "scheduled Nix garbage collection (launchd)";
 
@@ -45,7 +56,11 @@ in {
       serviceConfig = {
         RunAtLoad = false;
         StartCalendarInterval = [
-          { Weekday = cfg.weekday; Hour = cfg.hour; Minute = 0; }
+          {
+            Weekday = cfg.weekday;
+            Hour = cfg.hour;
+            Minute = 0;
+          }
         ];
         StandardOutPath = "/var/log/nix-gc.log";
         StandardErrorPath = "/var/log/nix-gc.log";

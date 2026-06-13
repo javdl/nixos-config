@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 # repo_updater (ru) module
 #
@@ -10,7 +15,12 @@
 
 let
   cfg = config.services.repoUpdater;
-  inherit (lib) mkEnableOption mkOption types mkIf;
+  inherit (lib)
+    mkEnableOption
+    mkOption
+    types
+    mkIf
+    ;
 
   ru = pkgs.stdenvNoCC.mkDerivation rec {
     pname = "repo-updater";
@@ -24,7 +34,8 @@ let
       install -Dm755 $src $out/bin/ru
     '';
   };
-in {
+in
+{
   options.services.repoUpdater = {
     enable = mkEnableOption "repo_updater (ru) periodic sync";
 
@@ -54,7 +65,7 @@ in {
 
     repos = mkOption {
       type = types.listOf types.str;
-      default = [];
+      default = [ ];
       description = ''
         List of GitHub repositories to sync (e.g. "owner/repo").
         Written to a Nix-managed config file that ru reads.
@@ -63,7 +74,11 @@ in {
 
     extraFlags = mkOption {
       type = types.listOf types.str;
-      default = [ "--non-interactive" "--parallel" "4" ];
+      default = [
+        "--non-interactive"
+        "--parallel"
+        "4"
+      ];
       description = "Extra flags passed to `ru sync`";
     };
   };
@@ -73,7 +88,7 @@ in {
     environment.systemPackages = [ cfg.package ];
 
     # Write Nix-managed repo list
-    environment.etc."repo-updater/repos.txt" = mkIf (cfg.repos != []) {
+    environment.etc."repo-updater/repos.txt" = mkIf (cfg.repos != [ ]) {
       text = lib.concatStringsSep "\n" cfg.repos + "\n";
       mode = "0644";
     };
@@ -86,7 +101,7 @@ in {
     ];
 
     # Symlink Nix-managed repos into ru's repos.d directory
-    system.activationScripts.repoUpdaterLink = mkIf (cfg.repos != []) {
+    system.activationScripts.repoUpdaterLink = mkIf (cfg.repos != [ ]) {
       text = ''
         mkdir -p /home/${cfg.user}/.config/ru/repos.d
         chown -R ${cfg.user}:users /home/${cfg.user}/.config/ru
@@ -100,7 +115,12 @@ in {
       description = "Sync repositories with repo_updater";
       after = [ "network-online.target" ];
       wants = [ "network-online.target" ];
-      path = [ pkgs.git pkgs.gh pkgs.openssh pkgs.coreutils ];
+      path = [
+        pkgs.git
+        pkgs.gh
+        pkgs.openssh
+        pkgs.coreutils
+      ];
       environment = {
         HOME = "/home/${cfg.user}";
         RU_PROJECTS_DIR = cfg.projectsDir;

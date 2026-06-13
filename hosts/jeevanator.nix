@@ -1,4 +1,9 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 # Hetzner dedicated server for jeevan (jeevanator)
 # IP: TBD (update after provisioning)

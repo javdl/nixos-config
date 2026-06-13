@@ -12,18 +12,17 @@
   nixpkgs.config.allowUnfree = true;
 
   # Don't let nix-darwin manage nix configuration since we use Determinate
-  nix.settings = {};
+  nix.settings = { };
 
   # Prevent nix-darwin from managing nix.conf
   environment.etc."nix/nix.conf".enable = false;
 
-  imports =
-    [
-      ./mac-shared.nix
-    ];
+  imports = [
+    ./mac-shared.nix
+  ];
 
-    # Enable tailscale. We manually authenticate when we want with
-    # "sudo tailscale up". If you don't use tailscale, you should comment
-    # out or delete all of this.
-    # services.tailscale.enable = true;
+  # Enable tailscale. We manually authenticate when we want with
+  # "sudo tailscale up". If you don't use tailscale, you should comment
+  # out or delete all of this.
+  # services.tailscale.enable = true;
 }

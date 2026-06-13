@@ -1,6 +1,10 @@
 # This function creates a NixOS system based on our VM setup for a
 # particular architecture.
-{ nixpkgs, overlays, inputs }:
+{
+  nixpkgs,
+  overlays,
+  inputs,
+}:
 
 name:
 {
@@ -12,7 +16,7 @@ name:
   pstate ? false,
   zenpower ? false,
   server ? false,
-  hmConfig ? (if server then "home-manager-server" else "home-manager")
+  hmConfig ? (if server then "home-manager-server" else "home-manager"),
 }:
 
 let
@@ -29,13 +33,15 @@ let
 
   # The config files for this system.
   machineConfig = ../hosts/${name}.nix;
-  userOSConfig = ../users/${user}/${if darwin then "darwin" else "nixos" }.nix;
+  userOSConfig = ../users/${user}/${if darwin then "darwin" else "nixos"}.nix;
   userHMConfig = ../users/${user}/${hmConfig}.nix;
 
   # NixOS vs nix-darwin functionst
   systemFunc = if darwin then inputs.darwin.lib.darwinSystem else nixpkgs.lib.nixosSystem;
-  home-manager = if darwin then inputs.home-manager.darwinModules else inputs.home-manager.nixosModules;
-in systemFunc rec {
+  home-manager =
+    if darwin then inputs.home-manager.darwinModules else inputs.home-manager.nixosModules;
+in
+systemFunc rec {
   inherit system;
 
   # specialArgs is the right channel for values needed during `imports` resolution
@@ -56,30 +62,35 @@ in systemFunc rec {
     { nixpkgs.config.allowUnfree = true; }
 
     # Bring in WSL if this is a WSL build
-    (if isWSL then inputs.nixos-wsl.nixosModules.wsl else {})
+    (if isWSL then inputs.nixos-wsl.nixosModules.wsl else { })
 
     # Bring in AMD Raphael iGPI if this is a Raphael build
-    (if isRaphael then inputs.nixos-hardware.nixosModules.common-cpu-amd-raphael-igpu else {})
+    (if isRaphael then inputs.nixos-hardware.nixosModules.common-cpu-amd-raphael-igpu else { })
     # pstate for modern AMD CPUs
-    (if isPstate then inputs.nixos-hardware.nixosModules.common-cpu-amd-pstate else {})
-    (if isZenpower then inputs.nixos-hardware.nixosModules.common-cpu-amd-zenpower else {})
+    (if isPstate then inputs.nixos-hardware.nixosModules.common-cpu-amd-pstate else { })
+    (if isZenpower then inputs.nixos-hardware.nixosModules.common-cpu-amd-zenpower else { })
 
     # Snapd on Linux
-    (if isLinux then inputs.nix-snapd.nixosModules.default else {})
+    (if isLinux then inputs.nix-snapd.nixosModules.default else { })
 
     # SOPS secrets management on Linux (not Darwin)
-    (if !darwin then inputs.sops-nix.nixosModules.sops else {})
+    (if !darwin then inputs.sops-nix.nixosModules.sops else { })
 
     # Disko declarative disk partitioning (no-op without disko.devices config)
-    (if !darwin then inputs.disko.nixosModules.disko else {})
+    (if !darwin then inputs.disko.nixosModules.disko else { })
 
     # Pre-built nix-index database (avoids slow/broken nix-env enumeration)
-    (if darwin then inputs.nix-index-database.darwinModules.nix-index
-               else inputs.nix-index-database.nixosModules.nix-index)
+    (
+      if darwin then
+        inputs.nix-index-database.darwinModules.nix-index
+      else
+        inputs.nix-index-database.nixosModules.nix-index
+    )
 
     machineConfig
     userOSConfig
-    home-manager.home-manager {
+    home-manager.home-manager
+    {
       home-manager.backupFileExtension = "backup";
       home-manager.useGlobalPkgs = true;
       home-manager.useUserPackages = true;

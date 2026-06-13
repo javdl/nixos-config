@@ -1,6 +1,16 @@
-{ isWSL, inputs, currentSystemName, ... }:
+{
+  isWSL,
+  inputs,
+  currentSystemName,
+  ...
+}:
 
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   isDarwin = pkgs.stdenv.isDarwin;
@@ -9,7 +19,14 @@ let
 
   # Import shared configuration
   shared = import ../shared-home-manager.nix {
-    inherit isWSL inputs pkgs lib isDarwin isLinux;
+    inherit
+      isWSL
+      inputs
+      pkgs
+      lib
+      isDarwin
+      isLinux
+      ;
   };
 
   # Get unstable packages
@@ -37,29 +54,33 @@ let
 
   sshBuriHokiHost = host: sshTailscaleHost "${host}.buri-hoki.ts.net";
 
-  gdk = pkgs.google-cloud-sdk.withExtraComponents( with pkgs.google-cloud-sdk.components; [
-    gke-gcloud-auth-plugin
-    alpha
-    app-engine-go
-    # app-engine-python
-    beta
-    # bq
+  gdk = pkgs.google-cloud-sdk.withExtraComponents (
+    with pkgs.google-cloud-sdk.components;
+    [
+      gke-gcloud-auth-plugin
+      alpha
+      app-engine-go
+      # app-engine-python
+      beta
+      # bq
 
-    gsutil
-    kubectl
-    minikube
-    # pubsub-emulator
-    skaffold
-    terraform-tools
+      gsutil
+      kubectl
+      minikube
+      # pubsub-emulator
+      skaffold
+      terraform-tools
 
-    # google-cloud-cli-skaffold
-    # google-cloud-cli-cloud-run-proxy
-    #
-    # should not be enabled for darwin:
-    # cloud-build-local
-  ]);
+      # google-cloud-cli-skaffold
+      # google-cloud-cli-cloud-run-proxy
+      #
+      # should not be enabled for darwin:
+      # cloud-build-local
+    ]
+  );
 
-in {
+in
+{
   imports = [ ./cachix-daemon.nix ]; # auto-push locally-built paths to javdl-nixos-config cachix
 
   # Home-manager 22.11 requires this be set. We never set it so we have
@@ -80,221 +101,233 @@ in {
   # not a huge list.
   fonts.fontconfig.enable = true;
 
-  home.packages =  with pkgs; [
-    asciinema
-    air # Live reload for Go
-    alacritty
-    brev-cli
-    btop
-    chezmoi
-    kitty
-    wezterm
-    lazydocker
-    lazygit
-    bat
-    cachix
-    # code-cursor-fhs
-    dasht # Search API docs offline, in terminal or browser
-    devenv
-    docker
-    docker-compose
-    # podman
-    # podman-tui
-    # colima
-    eza # Modern replacement for ls
-    fastfetch
-    fd
-    # ffmpeg_5 # libgl, needed for ML
-    ffmpeg
-    fzf
-    gemini-cli
-    gh
-    graphite-cli
-    # ghostty
-    git-lfs
-    gdk
-    # google-cloud-sdk # See above, gdk with components list
-    htop
-    httpie
-    imagemagick
-    jq
-    just # Command runner (justfiles)
-    # kubernetes-helm
-    # libGL # ML
-    # libGLU # ML
-    # libheif
-    # lmstudio — macOS via brew cask (lm-studio), Linux via nixpkgs-unstable overlay
-    # ollama
-    opencode
-    oxlint
-    railway
-    ripgrep
-    ast-grep
-    rumdl # Markdown linter/formatter in Rust
-    shellcheck
-    shfmt
-    socat
-    actionlint
-    zizmor
-    pnpm
-    # vercel CLI installed via npm in activation script (removed from nixpkgs)
-    supabase-cli
-    tree
-    watch
-    xh # for sending HTTP requests (like HTTPie)
-    zellij # Terminal workspace with batteries included
-    zoxide # Fast cd command that learns your habits
+  home.packages =
+    with pkgs;
+    [
+      asciinema
+      air # Live reload for Go
+      alacritty
+      brev-cli
+      btop
+      chezmoi
+      kitty
+      wezterm
+      lazydocker
+      lazygit
+      bat
+      cachix
+      # code-cursor-fhs
+      dasht # Search API docs offline, in terminal or browser
+      devenv
+      docker
+      docker-compose
+      # podman
+      # podman-tui
+      # colima
+      eza # Modern replacement for ls
+      fastfetch
+      fd
+      # ffmpeg_5 # libgl, needed for ML
+      ffmpeg
+      fzf
+      gemini-cli
+      gh
+      graphite-cli
+      # ghostty
+      git-lfs
+      gdk
+      # google-cloud-sdk # See above, gdk with components list
+      htop
+      httpie
+      imagemagick
+      jq
+      just # Command runner (justfiles)
+      # kubernetes-helm
+      # libGL # ML
+      # libGLU # ML
+      # libheif
+      # lmstudio — macOS via brew cask (lm-studio), Linux via nixpkgs-unstable overlay
+      # ollama
+      opencode
+      oxlint
+      railway
+      ripgrep
+      ast-grep
+      rumdl # Markdown linter/formatter in Rust
+      shellcheck
+      shfmt
+      socat
+      actionlint
+      zizmor
+      pnpm
+      # vercel CLI installed via npm in activation script (removed from nixpkgs)
+      supabase-cli
+      tree
+      watch
+      xh # for sending HTTP requests (like HTTPie)
+      zellij # Terminal workspace with batteries included
+      zoxide # Fast cd command that learns your habits
 
-    agent-browser # Browser automation CLI for AI agents
-    amp-cli
-    beads-rust # fast Rust port of beads (br command, aliased as bd)
-    beads-viewer # TUI for beads issue tracking (bv command)
-    caam # Instant auth switching for AI coding subscriptions
-    codex
-    destructive-command-guard # Safety hook for AI agents (dcg command)
-    grepai # Semantic code search for AI coding assistants
-    gws # Google Workspace CLI
-    ntm # Named Tmux Manager for AI agent coordination
-    repo-updater # GitHub repo sync tool (ru command)
-    brenner # Sydney Brenner research platform CLI
-    csctf # Convert AI chat share links to Markdown/HTML transcripts
-    toon # Token-Optimized Object Notation converter
-  ] ++ (lib.optional (pkgs.meta-skill != null) pkgs.meta-skill) ++ [
-    slb # Shannon Language Benchmark for LLM evaluation
-    ubs # AI-native code quality scanner
-    # caut: install via `cargo install --git https://github.com/Dicklesworthstone/coding_agent_usage_tracker`
-  ] ++ (lib.optional (pkgs.giil != null) pkgs.giil)
+      agent-browser # Browser automation CLI for AI agents
+      amp-cli
+      beads-rust # fast Rust port of beads (br command, aliased as bd)
+      beads-viewer # TUI for beads issue tracking (bv command)
+      caam # Instant auth switching for AI coding subscriptions
+      codex
+      destructive-command-guard # Safety hook for AI agents (dcg command)
+      grepai # Semantic code search for AI coding assistants
+      gws # Google Workspace CLI
+      ntm # Named Tmux Manager for AI agent coordination
+      repo-updater # GitHub repo sync tool (ru command)
+      brenner # Sydney Brenner research platform CLI
+      csctf # Convert AI chat share links to Markdown/HTML transcripts
+      toon # Token-Optimized Object Notation converter
+    ]
+    ++ (lib.optional (pkgs.meta-skill != null) pkgs.meta-skill)
+    ++ [
+      slb # Shannon Language Benchmark for LLM evaluation
+      ubs # AI-native code quality scanner
+      # caut: install via `cargo install --git https://github.com/Dicklesworthstone/coding_agent_usage_tracker`
+    ]
+    ++ (lib.optional (pkgs.giil != null) pkgs.giil)
     ++ (lib.optional (pkgs.pi-agent != null) pkgs.pi-agent)
     ++ (lib.optional (pkgs.xf != null) pkgs.xf)
     ++ (lib.optional (pkgs.mcp-agent-mail != null) pkgs.mcp-agent-mail)
     ++ (lib.optional (pkgs.cross-agent-session-resumer != null) pkgs.cross-agent-session-resumer)
     ++ (lib.optional (pkgs.process-triage != null) pkgs.process-triage)
     ++ (lib.optional (pkgs.remote-compilation-helper != null) pkgs.remote-compilation-helper)
-    ++ (lib.optional (pkgs.cass != null) pkgs.cass) ++ (lib.optional (pkgs.cass-memory != null) pkgs.cass-memory) ++ [
-    s2p # Turn code projects into LLM prompts with a TUI
+    ++ (lib.optional (pkgs.cass != null) pkgs.cass)
+    ++ (lib.optional (pkgs.cass-memory != null) pkgs.cass-memory)
+    ++ [
+      s2p # Turn code projects into LLM prompts with a TUI
 
-    # Rust should be in flake.nix for each project. However, those configs do need an initial Cargo.lock.Therefore, to create new projects we want Rust globally installed.
-    rustup # rust-analyzer, cargo # installed by rustup
-    cargo-generate # create project from git template
-    cargo-deny # lint dependencies for licenses, bans, advisories
-    cargo-careful # run Rust code with extra UB checking
-    prek # better pre-commit, written in Rust
-    # rust-script
-    # rustc
-    pre-commit
-    # worktrunk: installed via cargo in activation script below
-    wasm-pack
-    # pkgsUnstable.fermyon-spin  # Use unstable version
+      # Rust should be in flake.nix for each project. However, those configs do need an initial Cargo.lock.Therefore, to create new projects we want Rust globally installed.
+      rustup # rust-analyzer, cargo # installed by rustup
+      cargo-generate # create project from git template
+      cargo-deny # lint dependencies for licenses, bans, advisories
+      cargo-careful # run Rust code with extra UB checking
+      prek # better pre-commit, written in Rust
+      # rust-script
+      # rustc
+      pre-commit
+      # worktrunk: installed via cargo in activation script below
+      wasm-pack
+      # pkgsUnstable.fermyon-spin  # Use unstable version
 
-    uv
-    ruff # Python linter/formatter
-    ty # Python type checker
-    pip-audit # scan Python deps for vulnerabilities
+      uv
+      ruff # Python linter/formatter
+      ty # Python type checker
+      pip-audit # scan Python deps for vulnerabilities
 
-    slack
-  ] ++ (lib.optionals (!isMinimal) [
-    aichat
-    crush
-    dbeaver-bin
-    devcontainer
-    discord
-    # element-web  # Temporarily disabled due to nodejs build failures
-    # gimp
-    # google-chrome  # Marked insecure in nixpkgs (updater broken). Use Homebrew cask on macOS, chromium on Linux.
-    inkscape
-    postman
-    fastfetch # neofetch removed (unmaintained) in nixpkgs 26.05
-    transmission_4
-    # spotify
-    # telegram-desktop
-  ]) ++ [
+      slack
+    ]
+    ++ (lib.optionals (!isMinimal) [
+      aichat
+      crush
+      dbeaver-bin
+      devcontainer
+      discord
+      # element-web  # Temporarily disabled due to nodejs build failures
+      # gimp
+      # google-chrome  # Marked insecure in nixpkgs (updater broken). Use Homebrew cask on macOS, chromium on Linux.
+      inkscape
+      postman
+      fastfetch # neofetch removed (unmaintained) in nixpkgs 26.05
+      transmission_4
+      # spotify
+      # telegram-desktop
+    ])
+    ++ [
 
-    # Fonts
-    font-awesome # waybar icons
-    fira-code
-    fira-code-symbols
-    geist-font # Vercel Geist (sans + mono)
-    ia-writer-duospace
-    ia-writer-mono
-    ia-writer-quattro
-    ibm-plex
-    jetbrains-mono
-    liberation_ttf
-    mplus-outline-fonts.githubRelease
-    nerd-fonts.caskaydia-mono # Cascadia Code with Nerd Font patches
-    # nerdfonts # Changed: nerdfonts separated into individual packages
-    noto-fonts
-    noto-fonts-cjk-sans
-    noto-fonts-color-emoji
-    rubik
-    proggyfonts
+      # Fonts
+      font-awesome # waybar icons
+      fira-code
+      fira-code-symbols
+      geist-font # Vercel Geist (sans + mono)
+      ia-writer-duospace
+      ia-writer-mono
+      ia-writer-quattro
+      ibm-plex
+      jetbrains-mono
+      liberation_ttf
+      mplus-outline-fonts.githubRelease
+      nerd-fonts.caskaydia-mono # Cascadia Code with Nerd Font patches
+      # nerdfonts # Changed: nerdfonts separated into individual packages
+      noto-fonts
+      noto-fonts-cjk-sans
+      noto-fonts-color-emoji
+      rubik
+      proggyfonts
 
-    bashmount # Easily mount (encrypted/usb) drives
-    flyctl
-    git-crypt
-    glab
-    k9s # Kuberenetes CLI
-    nixd # Nix language server, used by Zed
-    # obs-studio
-    pocketbase
-    # surrealdb # Builds from src
-    # tailscale # install via Brew to prevent system extension problems on macos
-    yubikey-manager
-    bitwarden-cli
+      bashmount # Easily mount (encrypted/usb) drives
+      flyctl
+      git-crypt
+      glab
+      k9s # Kuberenetes CLI
+      nixd # Nix language server, used by Zed
+      # obs-studio
+      pocketbase
+      # surrealdb # Builds from src
+      # tailscale # install via Brew to prevent system extension problems on macos
+      yubikey-manager
+      bitwarden-cli
 
-    # Modern CLI tools
-    delta         # Better git diff
-    tokei         # Code statistics
-    dust          # Disk usage analyzer
-    procs         # Better ps
-    lazygit       # Git TUI
+      # Modern CLI tools
+      delta # Better git diff
+      tokei # Code statistics
+      dust # Disk usage analyzer
+      procs # Better ps
+      lazygit # Git TUI
 
-    # zed # Broken
+      # zed # Broken
 
-    # Node is required for Copilot.vim
-    bun
-    nodejs_22
-    firebase-tools
-  ] ++ (lib.optionals (currentSystemName != "macbook-air-m4") [
-    vault
-  ]) ++ (lib.optionals isDarwin [
-    pkgs.darwin.trash # macos-trash: move files to macOS Trash from CLI
-    aerospace
-    # This is automatically setup on Linux
-    cachix
-    pinentry_mac
-    raycast
-    sketchybar
-    sketchybar-app-font
-    skhd # hotkeys for yabai
-    # tailscale # do not add here, it will recompile each time
-    yabai # tiling window manager
-  ]) ++ (lib.optionals (isLinux && !isWSL) [
-    bubblewrap
-    chromium
-    firefox-devedition
-    # brave
-    rofi
-    zathura
-    xfce.xfce4-terminal
-    libwacom
-    libinput
-    xclip           # X11 clipboard
-    wl-clipboard    # Wayland clipboard
-    # bitwarden
-    bitwarden-cli
-    bitwarden-menu # Dmenu/rofi frontend
-    geekbench
-    nextcloud-client
-    obsidian
-    podman-desktop
-    rpi-imager
-    # sublime4 # do not install, needs old openssl?
-    signal-desktop
-    tailscale-systray
-    # windsurf  # Replaced with VS Code
-    baobab # Disk usage, gnome only
-  ]);
+      # Node is required for Copilot.vim
+      bun
+      nodejs_22
+      firebase-tools
+    ]
+    ++ (lib.optionals (currentSystemName != "macbook-air-m4") [
+      vault
+    ])
+    ++ (lib.optionals isDarwin [
+      pkgs.darwin.trash # macos-trash: move files to macOS Trash from CLI
+      aerospace
+      # This is automatically setup on Linux
+      cachix
+      pinentry_mac
+      raycast
+      sketchybar
+      sketchybar-app-font
+      skhd # hotkeys for yabai
+      # tailscale # do not add here, it will recompile each time
+      yabai # tiling window manager
+    ])
+    ++ (lib.optionals (isLinux && !isWSL) [
+      bubblewrap
+      chromium
+      firefox-devedition
+      # brave
+      rofi
+      zathura
+      xfce.xfce4-terminal
+      libwacom
+      libinput
+      xclip # X11 clipboard
+      wl-clipboard # Wayland clipboard
+      # bitwarden
+      bitwarden-cli
+      bitwarden-menu # Dmenu/rofi frontend
+      geekbench
+      nextcloud-client
+      obsidian
+      podman-desktop
+      rpi-imager
+      # sublime4 # do not install, needs old openssl?
+      signal-desktop
+      tailscale-systray
+      # windsurf  # Replaced with VS Code
+      baobab # Disk usage, gnome only
+    ]);
 
   #---------------------------------------------------------------------
   # Env vars and dotfiles
@@ -303,43 +336,48 @@ in {
   # Cargo-installed binaries (caut, ft, etc.)
   home.sessionPath = [ "$HOME/.cargo/bin" ];
 
-  home.sessionVariables = shared.sessionVariables // {
-    NPM_CONFIG_PREFIX = "$HOME/.npm-global";
-    PATH = "$HOME/.local/bin:$HOME/go/bin:$HOME/.npm-global/bin:$PATH";
-    EDITOR = "hx";
-    VISUAL = "hx";
-    BROWSER = "chromium";
-    PAGER = "less -R";
-    LANG = "en_US.UTF-8";
+  home.sessionVariables =
+    shared.sessionVariables
+    // {
+      NPM_CONFIG_PREFIX = "$HOME/.npm-global";
+      PATH = "$HOME/.local/bin:$HOME/go/bin:$HOME/.npm-global/bin:$PATH";
+      EDITOR = "hx";
+      VISUAL = "hx";
+      BROWSER = "chromium";
+      PAGER = "less -R";
+      LANG = "en_US.UTF-8";
 
-    # Default GCP project — read by gemini CLI, gcloud client libs (ADC), terraform-google, etc.
-    GOOGLE_CLOUD_PROJECT = "kubernetes-164514";
-  } // lib.optionalAttrs isDarwin {
-    # Bitwarden SSH agent socket
-    SSH_AUTH_SOCK = "$HOME/.bitwarden-ssh-agent.sock";
+      # Default GCP project — read by gemini CLI, gcloud client libs (ADC), terraform-google, etc.
+      GOOGLE_CLOUD_PROJECT = "kubernetes-164514";
+    }
+    // lib.optionalAttrs isDarwin {
+      # Bitwarden SSH agent socket
+      SSH_AUTH_SOCK = "$HOME/.bitwarden-ssh-agent.sock";
 
-    # Rose Pine theme for fzf
-    # FZF_DEFAULT_OPTS = ''
-    #   --color=fg:#e0def4,bg:#191724,hl:#c4a7e7
-    #   --color=fg+:#e0def4,bg+:#26233a,hl+:#c4a7e7
-    #   --color=info:#9ccfd8,prompt:#eb6f92,pointer:#f6c177
-    #   --color=marker:#ebbcba,spinner:#f6c177,header:#9ccfd8
-    #   --color=border:#403d52,label:#6e6a86,query:#e0def4
-    #   --border="rounded" --border-label="" --preview-window="border-rounded" --prompt="> "
-    # '';
-  };
+      # Rose Pine theme for fzf
+      # FZF_DEFAULT_OPTS = ''
+      #   --color=fg:#e0def4,bg:#191724,hl:#c4a7e7
+      #   --color=fg+:#e0def4,bg+:#26233a,hl+:#c4a7e7
+      #   --color=info:#9ccfd8,prompt:#eb6f92,pointer:#f6c177
+      #   --color=marker:#ebbcba,spinner:#f6c177,header:#9ccfd8
+      #   --color=border:#403d52,label:#6e6a86,query:#e0def4
+      #   --border="rounded" --border-label="" --preview-window="border-rounded" --prompt="> "
+      # '';
+    };
 
   # Install/update Vercel CLI via npm (removed from nixpkgs).
   # On Darwin, vercel-cli is managed by homebrew (see darwin.nix), so skip there.
-  home.activation.installVercel = lib.mkIf (!isDarwin) (lib.hm.dag.entryAfter ["writeBoundary"] ''
-    if ! command -v vercel &>/dev/null || [ "$(vercel --version 2>/dev/null | head -1)" != "$(${pkgs.nodejs_22}/bin/npm view vercel version 2>/dev/null)" ]; then
-      echo "Installing/updating Vercel CLI..."
-      $DRY_RUN_CMD ${pkgs.nodejs_22}/bin/npm install -g vercel@latest 2>/dev/null || echo "Vercel CLI install failed"
-    fi
-  '');
+  home.activation.installVercel = lib.mkIf (!isDarwin) (
+    lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      if ! command -v vercel &>/dev/null || [ "$(vercel --version 2>/dev/null | head -1)" != "$(${pkgs.nodejs_22}/bin/npm view vercel version 2>/dev/null)" ]; then
+        echo "Installing/updating Vercel CLI..."
+        $DRY_RUN_CMD ${pkgs.nodejs_22}/bin/npm install -g vercel@latest 2>/dev/null || echo "Vercel CLI install failed"
+      fi
+    ''
+  );
 
   # Install Claude Code CLI if not present
-  home.activation.installClaudeCode = lib.hm.dag.entryAfter ["writeBoundary"] ''
+  home.activation.installClaudeCode = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     if [ ! -f "$HOME/.local/bin/claude" ]; then
       $DRY_RUN_CMD bash -c "curl -fsSL https://claude.ai/install.sh | bash"
     fi
@@ -347,29 +385,35 @@ in {
 
   # Install worktrunk via cargo. Recent versions require rustc >= 1.93,
   # so make sure the stable toolchain is up-to-date before installing.
-  home.activation.installWorktrunk = lib.mkIf (!isMinimal) (lib.hm.dag.entryAfter ["writeBoundary"] ''
-    if ! $HOME/.cargo/bin/worktrunk --version &>/dev/null; then
-      echo "Installing worktrunk..."
-      $DRY_RUN_CMD bash -c "${pkgs.rustup}/bin/rustup update stable && ${pkgs.rustup}/bin/rustup run stable cargo install worktrunk" || echo "worktrunk install failed"
-    fi
-  '');
+  home.activation.installWorktrunk = lib.mkIf (!isMinimal) (
+    lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      if ! $HOME/.cargo/bin/worktrunk --version &>/dev/null; then
+        echo "Installing worktrunk..."
+        $DRY_RUN_CMD bash -c "${pkgs.rustup}/bin/rustup update stable && ${pkgs.rustup}/bin/rustup run stable cargo install worktrunk" || echo "worktrunk install failed"
+      fi
+    ''
+  );
 
   # Install caut (coding agent usage tracker) via cargo nightly.
   # Ensures the nightly toolchain is installed before invoking it.
-  home.activation.installCaut = lib.mkIf (!isMinimal) (lib.hm.dag.entryAfter ["writeBoundary"] ''
-    if ! $HOME/.cargo/bin/caut --version &>/dev/null; then
-      echo "Installing caut (coding agent usage tracker)..."
-      $DRY_RUN_CMD bash -c "${pkgs.rustup}/bin/rustup toolchain install nightly --profile minimal && ${pkgs.rustup}/bin/rustup run nightly cargo install --git https://github.com/Dicklesworthstone/coding_agent_usage_tracker" || echo "caut install failed (requires rustup nightly)"
-    fi
-  '');
+  home.activation.installCaut = lib.mkIf (!isMinimal) (
+    lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      if ! $HOME/.cargo/bin/caut --version &>/dev/null; then
+        echo "Installing caut (coding agent usage tracker)..."
+        $DRY_RUN_CMD bash -c "${pkgs.rustup}/bin/rustup toolchain install nightly --profile minimal && ${pkgs.rustup}/bin/rustup run nightly cargo install --git https://github.com/Dicklesworthstone/coding_agent_usage_tracker" || echo "caut install failed (requires rustup nightly)"
+      fi
+    ''
+  );
 
   # Install tokei (lines-of-code counter) via cargo stable.
-  home.activation.installTokei = lib.mkIf (!isMinimal) (lib.hm.dag.entryAfter ["writeBoundary"] ''
-    if ! $HOME/.cargo/bin/tokei --version &>/dev/null; then
-      echo "Installing tokei (lines-of-code counter)..."
-      $DRY_RUN_CMD bash -c "${pkgs.rustup}/bin/rustup run stable cargo install tokei" || echo "tokei install failed"
-    fi
-  '');
+  home.activation.installTokei = lib.mkIf (!isMinimal) (
+    lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      if ! $HOME/.cargo/bin/tokei --version &>/dev/null; then
+        echo "Installing tokei (lines-of-code counter)..."
+        $DRY_RUN_CMD bash -c "${pkgs.rustup}/bin/rustup run stable cargo install tokei" || echo "tokei install failed"
+      fi
+    ''
+  );
 
   # Agent Mail is now a pre-built Rust binary (mcp-agent-mail package)
   # No activation script needed - installed via home.packages
@@ -385,7 +429,7 @@ in {
   # a missing key or locked vault never breaks the switch.
   # Recover from detached HEAD before update so `chezmoi update`'s git pull
   # has a branch to rebase against.
-  home.activation.chezmoiSync = lib.hm.dag.entryAfter ["writeBoundary"] ''
+  home.activation.chezmoiSync = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     CHEZMOI_SOURCE="$HOME/.local/share/chezmoi"
     if [ ! -d "$CHEZMOI_SOURCE" ]; then
       echo "Chezmoi source missing — bootstrapping from javdl/dotfiles..."
@@ -403,12 +447,14 @@ in {
 
   # Symlink nushell configs to macOS default location (~/Library/Application Support/nushell/)
   # so nushell finds the home-manager-managed configs regardless of how it's launched
-  home.activation.syncNushellConfig = lib.mkIf isDarwin (lib.hm.dag.entryAfter ["writeBoundary"] ''
-    NUSHELL_MACOS_DIR="$HOME/Library/Application Support/nushell"
-    $DRY_RUN_CMD mkdir -p "$NUSHELL_MACOS_DIR"
-    $DRY_RUN_CMD ln -sf "$HOME/.config/nushell/config.nu" "$NUSHELL_MACOS_DIR/config.nu"
-    $DRY_RUN_CMD ln -sf "$HOME/.config/nushell/env.nu" "$NUSHELL_MACOS_DIR/env.nu"
-  '');
+  home.activation.syncNushellConfig = lib.mkIf isDarwin (
+    lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      NUSHELL_MACOS_DIR="$HOME/Library/Application Support/nushell"
+      $DRY_RUN_CMD mkdir -p "$NUSHELL_MACOS_DIR"
+      $DRY_RUN_CMD ln -sf "$HOME/.config/nushell/config.nu" "$NUSHELL_MACOS_DIR/config.nu"
+      $DRY_RUN_CMD ln -sf "$HOME/.config/nushell/env.nu" "$NUSHELL_MACOS_DIR/env.nu"
+    ''
+  );
 
   home.file = {
     ".config/zellij/layouts/devops.kdl".source = ../zellij-monitor-runners.kdl;
@@ -579,15 +625,23 @@ in {
       /.lefthook-local/
     '';
 
-  } // (if isDarwin then {
-    "Library/Application Support/Sublime Text/Packages/User/Preferences.sublime-settings".text = builtins.readFile ./sublime-preferences.json;
-    "Library/Application Support/Sublime Text/Packages/User/Package Control.sublime-settings".text = builtins.readFile ./sublime-package-control.json;
-    ".gnupg/gpg-agent.conf".text = ''
-      pinentry-program ${pkgs.pinentry_mac}/Applications/pinentry-mac.app/Contents/MacOS/pinentry-mac
-      default-cache-ttl 600
-      max-cache-ttl 7200
-    '';
-  } else {});
+  }
+  // (
+    if isDarwin then
+      {
+        "Library/Application Support/Sublime Text/Packages/User/Preferences.sublime-settings".text =
+          builtins.readFile ./sublime-preferences.json;
+        "Library/Application Support/Sublime Text/Packages/User/Package Control.sublime-settings".text =
+          builtins.readFile ./sublime-package-control.json;
+        ".gnupg/gpg-agent.conf".text = ''
+          pinentry-program ${pkgs.pinentry_mac}/Applications/pinentry-mac.app/Contents/MacOS/pinentry-mac
+          default-cache-ttl 600
+          max-cache-ttl 7200
+        '';
+      }
+    else
+      { }
+  );
 
   xdg.configFile = {
     "wezterm/wezterm.lua".text = ''
@@ -597,70 +651,82 @@ in {
       return config
     '';
     # Linux only
-#    "hypr/hyprland.conf".text = builtins.readFile ./hypr/hyprland.conf;
-#    "hypr/hyprlock.conf".text = builtins.readFile ./hypr/hyprlock.conf;
-#    "hypr/hypridle.conf".text = builtins.readFile ./hypr/hypridle.conf;
-#    "hypr/hyprpaper.conf".text = builtins.readFile ./hypr/hyprpaper.conf;
-#    "wofi/config".text = builtins.readFile ./wofi/config;
-#    "waybar/config".text = builtins.readFile ./waybar/config;
-#    "waybar/modules".text = builtins.readFile ./waybar/modules;
-#    "waybar/style.css".text = builtins.readFile ./waybar/style.css;
-#    "mpd/mpd.conf".text = builtins.readFile ./mpd/mpd.conf;
-#    "electron-flags.conf".text = builtins.readFile ./electron-flags.conf;
-#    "electron-flags28.conf".source  = ./electron-flags.conf;
-#    "code-flags.conf".text = builtins.readFile ./code-flags.conf;
-#    "btop/btop.conf".text = builtins.readFile ./btop.conf;
-#
-#    "wallpapers/04167_unreachable_3840x2160.png".source = ./wallpapers/04167_unreachable_3840x2160.png;
-#
-#    "i3/config".text = builtins.readFile ./i3;
-#    "rofi/config.rasi".text = builtins.readFile ./rofi;
-  } // (if isDarwin then {
-    "ghostty/config".text = builtins.replaceStrings
-      ["command = zsh"]
-      ["command = ${pkgs.zsh}/bin/zsh"]
-      (builtins.readFile ./ghostty.conf);
-    "skhd/skhdrc".text = builtins.readFile ./skhdrc;
-    "aerospace/aerospace.toml".text = builtins.readFile ./aerospace.toml;
-    "sketchybar/sketchybarrc" = {
-      source = ./sketchybar/sketchybarrc;
-      executable = true;
-    };
-    "sketchybar/colors.sh".text = builtins.readFile ./sketchybar/colors.sh;
-    "sketchybar/icons.sh".text = builtins.readFile ./sketchybar/icons.sh;
-    "sketchybar/plugins" = {
+    #    "hypr/hyprland.conf".text = builtins.readFile ./hypr/hyprland.conf;
+    #    "hypr/hyprlock.conf".text = builtins.readFile ./hypr/hyprlock.conf;
+    #    "hypr/hypridle.conf".text = builtins.readFile ./hypr/hypridle.conf;
+    #    "hypr/hyprpaper.conf".text = builtins.readFile ./hypr/hyprpaper.conf;
+    #    "wofi/config".text = builtins.readFile ./wofi/config;
+    #    "waybar/config".text = builtins.readFile ./waybar/config;
+    #    "waybar/modules".text = builtins.readFile ./waybar/modules;
+    #    "waybar/style.css".text = builtins.readFile ./waybar/style.css;
+    #    "mpd/mpd.conf".text = builtins.readFile ./mpd/mpd.conf;
+    #    "electron-flags.conf".text = builtins.readFile ./electron-flags.conf;
+    #    "electron-flags28.conf".source  = ./electron-flags.conf;
+    #    "code-flags.conf".text = builtins.readFile ./code-flags.conf;
+    #    "btop/btop.conf".text = builtins.readFile ./btop.conf;
+    #
+    #    "wallpapers/04167_unreachable_3840x2160.png".source = ./wallpapers/04167_unreachable_3840x2160.png;
+    #
+    #    "i3/config".text = builtins.readFile ./i3;
+    #    "rofi/config.rasi".text = builtins.readFile ./rofi;
+  }
+  // (
+    if isDarwin then
+      {
+        "ghostty/config".text =
+          builtins.replaceStrings [ "command = zsh" ] [ "command = ${pkgs.zsh}/bin/zsh" ]
+            (builtins.readFile ./ghostty.conf);
+        "skhd/skhdrc".text = builtins.readFile ./skhdrc;
+        "aerospace/aerospace.toml".text = builtins.readFile ./aerospace.toml;
+        "sketchybar/sketchybarrc" = {
+          source = ./sketchybar/sketchybarrc;
+          executable = true;
+        };
+        "sketchybar/colors.sh".text = builtins.readFile ./sketchybar/colors.sh;
+        "sketchybar/icons.sh".text = builtins.readFile ./sketchybar/icons.sh;
+        "sketchybar/plugins" = {
           source = ./sketchybar/plugins;
           recursive = true;
           executable = true;
         };
-    "sketchybar/items" = {
+        "sketchybar/items" = {
           source = ./sketchybar/items;
           recursive = true;
           executable = true;
         };
-    "sketchybar/helper" = {
+        "sketchybar/helper" = {
           source = ./sketchybar/helper;
           recursive = true;
           executable = true;
         };
-  } else {}) // (if isLinux then {
-    "ghostty/config".text = builtins.replaceStrings
-      ["command = zsh"]
-      ["command = ${pkgs.zsh}/bin/zsh"]
-      (builtins.readFile ./ghostty.linux);
-    "sublime-text/Packages/User/Preferences.sublime-settings".text = builtins.readFile ./sublime-preferences.json;
-    "sublime-text/Packages/User/Package Control.sublime-settings".text = builtins.readFile ./sublime-package-control.json;
-  } else {});
+      }
+    else
+      { }
+  )
+  // (
+    if isLinux then
+      {
+        "ghostty/config".text =
+          builtins.replaceStrings [ "command = zsh" ] [ "command = ${pkgs.zsh}/bin/zsh" ]
+            (builtins.readFile ./ghostty.linux);
+        "sublime-text/Packages/User/Preferences.sublime-settings".text =
+          builtins.readFile ./sublime-preferences.json;
+        "sublime-text/Packages/User/Package Control.sublime-settings".text =
+          builtins.readFile ./sublime-package-control.json;
+      }
+    else
+      { }
+  );
 
   # Gnome settings
   # Use `dconf watch /` to track stateful changes you are doing, then set them here.
   dconf.settings = shared.dconfSettings // {
     "org/gnome/shell" = {
       favorite-apps = [
-          "firefox.desktop"
-          "com.mitchellh.ghostty.desktop"
-          "code.desktop"
-          # "kitty.desktop"
+        "firefox.desktop"
+        "com.mitchellh.ghostty.desktop"
+        "code.desktop"
+        # "kitty.desktop"
         # "kgx.desktop" # Should be Gnome console. kgx in terminal to start it does work.
         #"vscode.desktop"
         # "codium.desktop"
@@ -700,7 +766,7 @@ in {
         ms-toolsai.jupyter
         ms-vscode-remote.remote-ssh
         vscode-icons-team.vscode-icons
-        mvllow.rose-pine  # Rose Pine theme
+        mvllow.rose-pine # Rose Pine theme
       ];
 
       userSettings = {
@@ -718,8 +784,11 @@ in {
 
   programs.bash = {
     enable = true;
-    shellOptions = [];
-    historyControl = [ "ignoredups" "ignorespace" ];
+    shellOptions = [ ];
+    historyControl = [
+      "ignoredups"
+      "ignorespace"
+    ];
     initExtra = ''
       ${builtins.readFile ./bashrc}
       export GPG_TTY=$(tty)
@@ -735,28 +804,28 @@ in {
     shellAliases = shared.shellAliases;
   };
 
-  programs.direnv= {
-      enable = true;
-      nix-direnv.enable = true; # faster
-      # Fixed in home-manager release-25.11 (commit cc09c0f...): the
-      # old block used `default {|x| $x}` which breaks under nushell
-      # 0.95+ closure-capture rules; the current generator uses
-      # `if ($in | is-empty) { {|x| $x} } else { $in }` instead.
-      enableNushellIntegration = true;
+  programs.direnv = {
+    enable = true;
+    nix-direnv.enable = true; # faster
+    # Fixed in home-manager release-25.11 (commit cc09c0f...): the
+    # old block used `default {|x| $x}` which breaks under nushell
+    # 0.95+ closure-capture rules; the current generator uses
+    # `if ($in | is-empty) { {|x| $x} } else { $in }` instead.
+    enableNushellIntegration = true;
 
-      config = {
-        whitelist = {
-          prefix= [
-            "$HOME/code/go/src/github.com/fuww"
-            "$HOME/code/go/src/github.com/javdl"
-            "$HOME/git/fuww"
-            "$HOME/git/javdl"
-          ];
+    config = {
+      whitelist = {
+        prefix = [
+          "$HOME/code/go/src/github.com/fuww"
+          "$HOME/code/go/src/github.com/javdl"
+          "$HOME/git/fuww"
+          "$HOME/git/javdl"
+        ];
 
-          exact = ["$HOME/.envrc"];
-        };
+        exact = [ "$HOME/.envrc" ];
       };
     };
+  };
 
   programs.zsh = {
     enable = true;
@@ -765,10 +834,10 @@ in {
     autosuggestion.enable = true;
     syntaxHighlighting.enable = true;
 
-     shellAliases = shared.shellAliases // {
-       am = "systemctl --user status agent-mail";
-       claude-yolo = "claude --dangerously-skip-permissions";
-     };
+    shellAliases = shared.shellAliases // {
+      am = "systemctl --user status agent-mail";
+      claude-yolo = "claude --dangerously-skip-permissions";
+    };
 
     profileExtra = ''
       # Homebrew
@@ -916,12 +985,14 @@ in {
 
   programs.fish = {
     enable = true;
-    interactiveShellInit = lib.strings.concatStrings (lib.strings.intersperse "\n" ([
-      (builtins.readFile ./config.fish)
-      "set -g SHELL ${pkgs.fish}/bin/fish"
-      "set -gx GPG_TTY (tty)"
-      shared.ntmShellInit.fish
-    ]));
+    interactiveShellInit = lib.strings.concatStrings (
+      lib.strings.intersperse "\n" ([
+        (builtins.readFile ./config.fish)
+        "set -g SHELL ${pkgs.fish}/bin/fish"
+        "set -gx GPG_TTY (tty)"
+        shared.ntmShellInit.fish
+      ])
+    );
 
     shellAliases = shared.shellAliases;
 
@@ -954,10 +1025,10 @@ in {
       };
 
       "filter \"lfs\"" = {
-          clean = "${pkgs.git-lfs}/bin/git-lfs clean -- %f";
-          smudge = "${pkgs.git-lfs}/bin/git-lfs smudge --skip -- %f";
-          required = true;
-        };
+        clean = "${pkgs.git-lfs}/bin/git-lfs clean -- %f";
+        smudge = "${pkgs.git-lfs}/bin/git-lfs smudge --skip -- %f";
+        required = true;
+      };
 
     };
   };
@@ -976,7 +1047,7 @@ in {
     enableDefaultConfig = false;
 
     includes = [
-      "~/.ssh/brev-ssh-config"  # Brev CLI manages this file for GPU cloud instances
+      "~/.ssh/brev-ssh-config" # Brev CLI manages this file for GPU cloud instances
     ];
 
     settings = {
@@ -998,9 +1069,13 @@ in {
       "j8" = sshTailscaleHost "100.99.236.94";
       "j9" = sshBuriHokiHost "j9";
       "loom" = sshTailscaleHost "100.123.226.58";
-      "pikvm" = (sshTailscaleHost "100.121.9.3") // { user = "root"; };
+      "pikvm" = (sshTailscaleHost "100.121.9.3") // {
+        user = "root";
+      };
       "radon" = sshTailscaleHost "100.101.199.29";
-      "router" = (sshTailscaleHost "100.97.154.115") // { user = "root"; };
+      "router" = (sshTailscaleHost "100.97.154.115") // {
+        user = "root";
+      };
 
       "nas" = sshBuriHokiHost "nas";
       "terra" = sshBuriHokiHost "terra";
@@ -1012,7 +1087,10 @@ in {
     enable = true;
     env = {
       GOPATH = "${config.home.homeDirectory}/go";
-      GOPRIVATE = [ "github.com/javdl" "github.com/fuww"  ];
+      GOPRIVATE = [
+        "github.com/javdl"
+        "github.com/fuww"
+      ];
     };
   };
 
@@ -1029,10 +1107,21 @@ in {
         behavior = "own";
       };
       aliases = {
-        b = ["branch"];
-        n = ["new"];
-        tug = ["bookmark" "move" "--from" "closest_bookmark(@-)" "--to" "@-"];
-        retrunk = ["rebase" "-d" "trunk()"];
+        b = [ "branch" ];
+        n = [ "new" ];
+        tug = [
+          "bookmark"
+          "move"
+          "--from"
+          "closest_bookmark(@-)"
+          "--to"
+          "@-"
+        ];
+        retrunk = [
+          "rebase"
+          "-d"
+          "trunk()"
+        ];
       };
       revset-aliases = {
         "closest_bookmark(to)" = "heads(::to & bookmarks())";
@@ -1105,15 +1194,21 @@ in {
       bind -T copy-mode-vi v send-keys -X begin-selection
       bind -T copy-mode-vi C-v send-keys -X rectangle-toggle
       bind -T copy-mode-vi Escape send-keys -X cancel
-    '' + (if isDarwin then ''
-      # macOS clipboard integration
-      bind -T copy-mode-vi y send-keys -X copy-pipe-and-cancel "pbcopy"
-      bind -T copy-mode-vi MouseDragEnd1Pane send-keys -X copy-pipe-and-cancel "pbcopy"
-    '' else ''
-      # Linux clipboard integration (auto-detect Wayland vs X11)
-      bind -T copy-mode-vi y send-keys -X copy-pipe-and-cancel "if [ -n \"$WAYLAND_DISPLAY\" ]; then wl-copy; else xclip -selection clipboard; fi"
-      bind -T copy-mode-vi MouseDragEnd1Pane send-keys -X copy-pipe-and-cancel "if [ -n \"$WAYLAND_DISPLAY\" ]; then wl-copy; else xclip -selection clipboard; fi"
-    '');
+    ''
+    + (
+      if isDarwin then
+        ''
+          # macOS clipboard integration
+          bind -T copy-mode-vi y send-keys -X copy-pipe-and-cancel "pbcopy"
+          bind -T copy-mode-vi MouseDragEnd1Pane send-keys -X copy-pipe-and-cancel "pbcopy"
+        ''
+      else
+        ''
+          # Linux clipboard integration (auto-detect Wayland vs X11)
+          bind -T copy-mode-vi y send-keys -X copy-pipe-and-cancel "if [ -n \"$WAYLAND_DISPLAY\" ]; then wl-copy; else xclip -selection clipboard; fi"
+          bind -T copy-mode-vi MouseDragEnd1Pane send-keys -X copy-pipe-and-cancel "if [ -n \"$WAYLAND_DISPLAY\" ]; then wl-copy; else xclip -selection clipboard; fi"
+        ''
+    );
   };
 
   programs.alacritty = {
@@ -1151,12 +1246,36 @@ in {
       };
 
       key_bindings = [
-        { key = "K"; mods = "Command"; chars = "ClearHistory"; }
-        { key = "V"; mods = "Command"; action = "Paste"; }
-        { key = "C"; mods = "Command"; action = "Copy"; }
-        { key = "Key0"; mods = "Command"; action = "ResetFontSize"; }
-        { key = "Equals"; mods = "Command"; action = "IncreaseFontSize"; }
-        { key = "Minus"; mods = "Command"; action = "DecreaseFontSize"; }
+        {
+          key = "K";
+          mods = "Command";
+          chars = "ClearHistory";
+        }
+        {
+          key = "V";
+          mods = "Command";
+          action = "Paste";
+        }
+        {
+          key = "C";
+          mods = "Command";
+          action = "Copy";
+        }
+        {
+          key = "Key0";
+          mods = "Command";
+          action = "ResetFontSize";
+        }
+        {
+          key = "Equals";
+          mods = "Command";
+          action = "IncreaseFontSize";
+        }
+        {
+          key = "Minus";
+          mods = "Command";
+          action = "DecreaseFontSize";
+        }
       ];
 
       # Rose Pine theme colors
@@ -1249,7 +1368,7 @@ in {
     plugins = with pkgs; [
 
       # Themes
-      vimPlugins.rose-pine  # Default theme
+      vimPlugins.rose-pine # Default theme
       vimPlugins.tokyonight-nvim
       vimPlugins.catppuccin-nvim
       vimPlugins.nord-nvim
@@ -1325,7 +1444,7 @@ in {
 
   programs.helix = {
     enable = true;
-    defaultEditor = false;  # Keep nvim as EDITOR
+    defaultEditor = false; # Keep nvim as EDITOR
 
     settings = {
       theme = "rose_pine";
@@ -1336,7 +1455,13 @@ in {
         color-modes = true;
         true-color = true;
         bufferline = "multiple";
-        gutters = ["diagnostics" "spacer" "line-numbers" "spacer" "diff"];
+        gutters = [
+          "diagnostics"
+          "spacer"
+          "line-numbers"
+          "spacer"
+          "diff"
+        ];
 
         cursor-shape = {
           insert = "bar";
@@ -1349,9 +1474,20 @@ in {
         };
 
         statusline = {
-          left = ["mode" "spinner" "file-name" "file-modification-indicator"];
-          center = [];
-          right = ["diagnostics" "selections" "register" "position" "file-encoding"];
+          left = [
+            "mode"
+            "spinner"
+            "file-name"
+            "file-modification-indicator"
+          ];
+          center = [ ];
+          right = [
+            "diagnostics"
+            "selections"
+            "register"
+            "position"
+            "file-encoding"
+          ];
           separator = "│";
         };
 
@@ -1569,7 +1705,6 @@ in {
     '';
   };
 
-
   programs.starship = {
     enable = true;
     enableBashIntegration = true;
@@ -1587,120 +1722,472 @@ in {
       themes = {
         rose-pine = {
           text_unselected = {
-            base = [224 222 244];
-            background = [33 32 46];
-            emphasis_0 = [235 188 186];
-            emphasis_1 = [156 207 216];
-            emphasis_2 = [49 116 143];
-            emphasis_3 = [196 167 231];
+            base = [
+              224
+              222
+              244
+            ];
+            background = [
+              33
+              32
+              46
+            ];
+            emphasis_0 = [
+              235
+              188
+              186
+            ];
+            emphasis_1 = [
+              156
+              207
+              216
+            ];
+            emphasis_2 = [
+              49
+              116
+              143
+            ];
+            emphasis_3 = [
+              196
+              167
+              231
+            ];
           };
           text_selected = {
-            base = [224 222 244];
-            background = [64 61 82];
-            emphasis_0 = [235 188 186];
-            emphasis_1 = [156 207 216];
-            emphasis_2 = [49 116 143];
-            emphasis_3 = [196 167 231];
+            base = [
+              224
+              222
+              244
+            ];
+            background = [
+              64
+              61
+              82
+            ];
+            emphasis_0 = [
+              235
+              188
+              186
+            ];
+            emphasis_1 = [
+              156
+              207
+              216
+            ];
+            emphasis_2 = [
+              49
+              116
+              143
+            ];
+            emphasis_3 = [
+              196
+              167
+              231
+            ];
           };
           ribbon_selected = {
-            base = [33 32 46];
-            background = [49 116 143];
-            emphasis_0 = [246 193 119];
-            emphasis_1 = [235 188 186];
-            emphasis_2 = [196 167 231];
-            emphasis_3 = [156 207 216];
+            base = [
+              33
+              32
+              46
+            ];
+            background = [
+              49
+              116
+              143
+            ];
+            emphasis_0 = [
+              246
+              193
+              119
+            ];
+            emphasis_1 = [
+              235
+              188
+              186
+            ];
+            emphasis_2 = [
+              196
+              167
+              231
+            ];
+            emphasis_3 = [
+              156
+              207
+              216
+            ];
           };
           ribbon_unselected = {
-            base = [25 23 36];
-            background = [224 222 244];
-            emphasis_0 = [246 193 119];
-            emphasis_1 = [235 188 186];
-            emphasis_2 = [196 167 231];
-            emphasis_3 = [156 207 216];
+            base = [
+              25
+              23
+              36
+            ];
+            background = [
+              224
+              222
+              244
+            ];
+            emphasis_0 = [
+              246
+              193
+              119
+            ];
+            emphasis_1 = [
+              235
+              188
+              186
+            ];
+            emphasis_2 = [
+              196
+              167
+              231
+            ];
+            emphasis_3 = [
+              156
+              207
+              216
+            ];
           };
           table_title = {
-            base = [49 116 143];
-            background = [0 0 0];
-            emphasis_0 = [235 188 186];
-            emphasis_1 = [156 207 216];
-            emphasis_2 = [49 116 143];
-            emphasis_3 = [196 167 231];
+            base = [
+              49
+              116
+              143
+            ];
+            background = [
+              0
+              0
+              0
+            ];
+            emphasis_0 = [
+              235
+              188
+              186
+            ];
+            emphasis_1 = [
+              156
+              207
+              216
+            ];
+            emphasis_2 = [
+              49
+              116
+              143
+            ];
+            emphasis_3 = [
+              196
+              167
+              231
+            ];
           };
           table_cell_selected = {
-            base = [224 222 244];
-            background = [64 61 82];
-            emphasis_0 = [235 188 186];
-            emphasis_1 = [156 207 216];
-            emphasis_2 = [49 116 143];
-            emphasis_3 = [196 167 231];
+            base = [
+              224
+              222
+              244
+            ];
+            background = [
+              64
+              61
+              82
+            ];
+            emphasis_0 = [
+              235
+              188
+              186
+            ];
+            emphasis_1 = [
+              156
+              207
+              216
+            ];
+            emphasis_2 = [
+              49
+              116
+              143
+            ];
+            emphasis_3 = [
+              196
+              167
+              231
+            ];
           };
           table_cell_unselected = {
-            base = [224 222 244];
-            background = [33 32 46];
-            emphasis_0 = [235 188 186];
-            emphasis_1 = [156 207 216];
-            emphasis_2 = [49 116 143];
-            emphasis_3 = [196 167 231];
+            base = [
+              224
+              222
+              244
+            ];
+            background = [
+              33
+              32
+              46
+            ];
+            emphasis_0 = [
+              235
+              188
+              186
+            ];
+            emphasis_1 = [
+              156
+              207
+              216
+            ];
+            emphasis_2 = [
+              49
+              116
+              143
+            ];
+            emphasis_3 = [
+              196
+              167
+              231
+            ];
           };
           list_selected = {
-            base = [224 222 244];
-            background = [64 61 82];
-            emphasis_0 = [235 188 186];
-            emphasis_1 = [156 207 216];
-            emphasis_2 = [49 116 143];
-            emphasis_3 = [196 167 231];
+            base = [
+              224
+              222
+              244
+            ];
+            background = [
+              64
+              61
+              82
+            ];
+            emphasis_0 = [
+              235
+              188
+              186
+            ];
+            emphasis_1 = [
+              156
+              207
+              216
+            ];
+            emphasis_2 = [
+              49
+              116
+              143
+            ];
+            emphasis_3 = [
+              196
+              167
+              231
+            ];
           };
           list_unselected = {
-            base = [224 222 244];
-            background = [33 32 46];
-            emphasis_0 = [235 188 186];
-            emphasis_1 = [156 207 216];
-            emphasis_2 = [49 116 143];
-            emphasis_3 = [196 167 231];
+            base = [
+              224
+              222
+              244
+            ];
+            background = [
+              33
+              32
+              46
+            ];
+            emphasis_0 = [
+              235
+              188
+              186
+            ];
+            emphasis_1 = [
+              156
+              207
+              216
+            ];
+            emphasis_2 = [
+              49
+              116
+              143
+            ];
+            emphasis_3 = [
+              196
+              167
+              231
+            ];
           };
           frame_selected = {
-            base = [49 116 143];
-            background = [0 0 0];
-            emphasis_0 = [235 188 186];
-            emphasis_1 = [156 207 216];
-            emphasis_2 = [196 167 231];
-            emphasis_3 = [0 0 0];
+            base = [
+              49
+              116
+              143
+            ];
+            background = [
+              0
+              0
+              0
+            ];
+            emphasis_0 = [
+              235
+              188
+              186
+            ];
+            emphasis_1 = [
+              156
+              207
+              216
+            ];
+            emphasis_2 = [
+              196
+              167
+              231
+            ];
+            emphasis_3 = [
+              0
+              0
+              0
+            ];
           };
           frame_highlight = {
-            base = [235 188 186];
-            background = [0 0 0];
-            emphasis_0 = [235 188 186];
-            emphasis_1 = [235 188 186];
-            emphasis_2 = [235 188 186];
-            emphasis_3 = [235 188 186];
+            base = [
+              235
+              188
+              186
+            ];
+            background = [
+              0
+              0
+              0
+            ];
+            emphasis_0 = [
+              235
+              188
+              186
+            ];
+            emphasis_1 = [
+              235
+              188
+              186
+            ];
+            emphasis_2 = [
+              235
+              188
+              186
+            ];
+            emphasis_3 = [
+              235
+              188
+              186
+            ];
           };
           exit_code_success = {
-            base = [49 116 143];
-            background = [0 0 0];
-            emphasis_0 = [156 207 216];
-            emphasis_1 = [33 32 46];
-            emphasis_2 = [196 167 231];
-            emphasis_3 = [49 116 143];
+            base = [
+              49
+              116
+              143
+            ];
+            background = [
+              0
+              0
+              0
+            ];
+            emphasis_0 = [
+              156
+              207
+              216
+            ];
+            emphasis_1 = [
+              33
+              32
+              46
+            ];
+            emphasis_2 = [
+              196
+              167
+              231
+            ];
+            emphasis_3 = [
+              49
+              116
+              143
+            ];
           };
           exit_code_error = {
-            base = [235 111 146];
-            background = [0 0 0];
-            emphasis_0 = [246 193 119];
-            emphasis_1 = [0 0 0];
-            emphasis_2 = [0 0 0];
-            emphasis_3 = [0 0 0];
+            base = [
+              235
+              111
+              146
+            ];
+            background = [
+              0
+              0
+              0
+            ];
+            emphasis_0 = [
+              246
+              193
+              119
+            ];
+            emphasis_1 = [
+              0
+              0
+              0
+            ];
+            emphasis_2 = [
+              0
+              0
+              0
+            ];
+            emphasis_3 = [
+              0
+              0
+              0
+            ];
           };
           multiplayer_user_colors = {
-            player_1 = [196 167 231];
-            player_2 = [49 116 143];
-            player_3 = [235 188 186];
-            player_4 = [246 193 119];
-            player_5 = [156 207 216];
-            player_6 = [235 111 146];
-            player_7 = [0 0 0];
-            player_8 = [0 0 0];
-            player_9 = [0 0 0];
-            player_10 = [0 0 0];
+            player_1 = [
+              196
+              167
+              231
+            ];
+            player_2 = [
+              49
+              116
+              143
+            ];
+            player_3 = [
+              235
+              188
+              186
+            ];
+            player_4 = [
+              246
+              193
+              119
+            ];
+            player_5 = [
+              156
+              207
+              216
+            ];
+            player_6 = [
+              235
+              111
+              146
+            ];
+            player_7 = [
+              0
+              0
+              0
+            ];
+            player_8 = [
+              0
+              0
+              0
+            ];
+            player_9 = [
+              0
+              0
+              0
+            ];
+            player_10 = [
+              0
+              0
+              0
+            ];
           };
         };
       };

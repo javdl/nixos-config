@@ -3,14 +3,24 @@
 # Unlike Hetzner Cloud (qemu-guest virtio), these are bare-metal Intel boxes
 # with PCIe NVMe storage. This module is the dedicated-server counterpart of
 # `modules/hetzner-cloud-hardware.nix`.
-{ config, lib, modulesPath, ... }: {
+{
+  config,
+  lib,
+  modulesPath,
+  ...
+}:
+{
   imports = [
     (modulesPath + "/installer/scan/not-detected.nix")
   ];
 
   # NVMe + AHCI for bare-metal Hetzner EX-series.
   boot.initrd.availableKernelModules = [
-    "nvme" "ahci" "xhci_pci" "usbhid" "sd_mod"
+    "nvme"
+    "ahci"
+    "xhci_pci"
+    "usbhid"
+    "sd_mod"
   ];
 
   # Allow Intel microcode + other redistributable firmware blobs.

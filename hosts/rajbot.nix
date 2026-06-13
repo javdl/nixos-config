@@ -1,4 +1,9 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 # Hetzner dedicated server for rajesh (rajbot)
 # IP: TBD (update after provisioning)

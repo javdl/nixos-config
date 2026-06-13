@@ -1,6 +1,11 @@
 { isWSL, inputs, ... }:
 
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   isDarwin = pkgs.stdenv.isDarwin;
@@ -8,13 +13,21 @@ let
 
   # Import shared configuration
   shared = import ../shared-home-manager.nix {
-    inherit isWSL inputs pkgs lib isDarwin isLinux;
+    inherit
+      isWSL
+      inputs
+      pkgs
+      lib
+      isDarwin
+      isLinux
+      ;
   };
 
   # Use shared manpager
   manpager = shared.manpager;
 
-in {
+in
+{
   home.stateVersion = "18.09";
 
   xdg.enable = true;
@@ -22,17 +35,19 @@ in {
   home.packages = [
     pkgs.cachix
     # pkgs.google-chrome  # Marked insecure in nixpkgs (updater broken). Using chromium in Linux section below.
-    pkgs.delta          # Better git diffs
+    pkgs.delta # Better git diffs
     pkgs.htop
     pkgs.fastfetch # neofetch removed (unmaintained) in nixpkgs 26.05
     pkgs.tailscale
     pkgs.vscodium # gives a blank screen on bare metal install > Electron apps with Nvidia card in Wayland will. Either switch to X11 or use Integrated GPU from AMD or Intel and it will load fine
     pkgs.wezterm
-  ] ++ (lib.optionals isDarwin [
+  ]
+  ++ (lib.optionals isDarwin [
     # This is automatically setup on Linux
     pkgs.cachix
     pkgs.tailscale
-  ]) ++ (lib.optionals (isLinux && !isWSL) [
+  ])
+  ++ (lib.optionals (isLinux && !isWSL) [
     pkgs.chromium
     pkgs.firefox-devedition
     pkgs.zathura
@@ -70,14 +85,17 @@ in {
 
   programs.bash = {
     enable = true;
-    shellOptions = [];
-    historyControl = [ "ignoredups" "ignorespace" ];
+    shellOptions = [ ];
+    historyControl = [
+      "ignoredups"
+      "ignorespace"
+    ];
     initExtra = builtins.readFile ./bashrc;
 
     shellAliases = shared.shellAliases;
   };
 
-  programs.direnv= {
+  programs.direnv = {
     enable = true;
     enableBashIntegration = true; # see note on other shells below
     nix-direnv.enable = true;
@@ -87,10 +105,12 @@ in {
 
   programs.fish = {
     enable = true;
-    interactiveShellInit = lib.strings.concatStrings (lib.strings.intersperse "\n" ([
-      (builtins.readFile ./config.fish)
-      "set -g SHELL ${pkgs.fish}/bin/fish"
-    ]));
+    interactiveShellInit = lib.strings.concatStrings (
+      lib.strings.intersperse "\n" ([
+        (builtins.readFile ./config.fish)
+        "set -g SHELL ${pkgs.fish}/bin/fish"
+      ])
+    );
 
     shellAliases = shared.shellAliases;
 

@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 # Podman module for rootless containers
 #
@@ -10,8 +15,14 @@
 
 let
   cfg = config.virtualisation.podmanConfig;
-  inherit (lib) mkEnableOption mkOption types mkIf;
-in {
+  inherit (lib)
+    mkEnableOption
+    mkOption
+    types
+    mkIf
+    ;
+in
+{
   options.virtualisation.podmanConfig = {
     enable = mkEnableOption "Podman container runtime";
 
@@ -34,7 +45,12 @@ in {
     };
 
     storageDriver = mkOption {
-      type = types.enum [ "overlay" "btrfs" "zfs" "vfs" ];
+      type = types.enum [
+        "overlay"
+        "btrfs"
+        "zfs"
+        "vfs"
+      ];
       default = "overlay";
       description = "Container storage driver";
     };
@@ -64,13 +80,16 @@ in {
       autoPrune = {
         enable = cfg.autoPrune;
         dates = "weekly";
-        flags = [ "--all" "--volumes" ];
+        flags = [
+          "--all"
+          "--volumes"
+        ];
       };
 
       # Extra packages for rootless support
       extraPackages = with pkgs; [
-        slirp4netns      # For rootless networking
-        fuse-overlayfs   # For rootless port forwarding
+        slirp4netns # For rootless networking
+        fuse-overlayfs # For rootless port forwarding
       ];
     };
 
@@ -79,9 +98,9 @@ in {
 
     # Container tools
     environment.systemPackages = with pkgs; [
-      podman-compose  # Docker Compose compatible
-      buildah         # OCI image builder
-      skopeo          # Container image operations
+      podman-compose # Docker Compose compatible
+      buildah # OCI image builder
+      skopeo # Container image operations
     ];
 
     # Storage configuration

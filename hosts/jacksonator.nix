@@ -1,4 +1,9 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 # Hetzner dedicated server for jackson (jacksonator)
 # IP: 49.13.202.212 (Nuremberg, CPX32)
@@ -126,7 +131,10 @@
   users.users.joost = {
     isNormalUser = true;
     home = "/home/joost";
-    extraGroups = [ "docker" "wheel" ];
+    extraGroups = [
+      "docker"
+      "wheel"
+    ];
     shell = pkgs.zsh;
     hashedPassword = "$6$nJOFfAkJl1RJMxUW$DuXpYNq7rc/TE7Awuyjv7vyOyzbUnHmxN3YN1Gz1DiAw363a9GkpEU6bU9MvYa94nXaP7oTSFbZegNb8kAcUm1";
     openssh.authorizedKeys.keys = [

@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 # nix-darwin auto-update — launchd equivalent of services.nixosAutoUpdate.
 #
@@ -13,8 +18,14 @@
 
 let
   cfg = config.services.darwinAutoUpdate;
-  inherit (lib) mkEnableOption mkOption types mkIf;
-in {
+  inherit (lib)
+    mkEnableOption
+    mkOption
+    types
+    mkIf
+    ;
+in
+{
   options.services.darwinAutoUpdate = {
     enable = mkEnableOption "nix-darwin automatic updates from a flake";
 
@@ -48,7 +59,10 @@ in {
       serviceConfig = {
         RunAtLoad = false;
         StartCalendarInterval = [
-          { Hour = cfg.hour; Minute = cfg.minute; }
+          {
+            Hour = cfg.hour;
+            Minute = cfg.minute;
+          }
         ];
         StandardOutPath = "/var/log/darwin-auto-update.log";
         StandardErrorPath = "/var/log/darwin-auto-update.log";

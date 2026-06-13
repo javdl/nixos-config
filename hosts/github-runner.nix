@@ -1,4 +1,10 @@
-{ config, pkgs, lib, ... }: {
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
+{
   imports = [
     ./hardware/vm-intel.nix
     ../modules/github-actions-runner.nix
@@ -76,10 +82,10 @@
     # Increase inotify limits for file watching
     "fs.inotify.max_user_watches" = 2097152;
     "fs.inotify.max_user_instances" = 2048;
-    
+
     # Increase file descriptor limits
     "fs.file-max" = 2097152;
-    
+
     # Network optimizations
     "net.core.somaxconn" = 65535;
     "net.ipv4.tcp_max_syn_backlog" = 65535;

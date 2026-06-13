@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 # Netdata monitoring — lightweight, auto-detecting system monitor.
 # Dashboard accessible at http://<host>:19999 (only via Tailscale).

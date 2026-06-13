@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 # Disk-based automatic Nix garbage collection
 #
@@ -15,8 +20,14 @@
 
 let
   cfg = config.services.automaticNixGC;
-  inherit (lib) mkEnableOption mkOption types mkIf;
-in {
+  inherit (lib)
+    mkEnableOption
+    mkOption
+    types
+    mkIf
+    ;
+in
+{
   options.services.automaticNixGC = {
     enable = mkEnableOption "disk-based automatic Nix garbage collection";
 

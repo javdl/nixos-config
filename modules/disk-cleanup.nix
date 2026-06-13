@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 # Weekly disk cleanup for dev servers
 #
@@ -7,8 +12,14 @@
 
 let
   cfg = config.services.diskCleanup;
-  inherit (lib) mkEnableOption mkOption types mkIf;
-in {
+  inherit (lib)
+    mkEnableOption
+    mkOption
+    types
+    mkIf
+    ;
+in
+{
   options.services.diskCleanup = {
     enable = mkEnableOption "weekly disk cleanup (logs, tmp, containers, nix)";
 
@@ -35,7 +46,11 @@ in {
     # Weekly cleanup service
     systemd.services.disk-cleanup = {
       description = "Weekly disk cleanup (logs, tmp, containers, nix)";
-      path = with pkgs; [ coreutils gawk findutils ];
+      path = with pkgs; [
+        coreutils
+        gawk
+        findutils
+      ];
       script = ''
         set -euo pipefail
         echo "=== Weekly disk cleanup starting ==="

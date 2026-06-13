@@ -1,6 +1,11 @@
 { isWSL, inputs, ... }:
 
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   isDarwin = pkgs.stdenv.isDarwin;
@@ -8,9 +13,17 @@ let
 
   # Import shared configuration
   shared = import ../shared-home-manager.nix {
-    inherit isWSL inputs pkgs lib isDarwin isLinux;
+    inherit
+      isWSL
+      inputs
+      pkgs
+      lib
+      isDarwin
+      isLinux
+      ;
   };
-in {
+in
+{
   # Home-manager state version
   home.stateVersion = "25.11";
 
@@ -36,57 +49,60 @@ in {
   # Packages - Minimal set for remote development server
   #---------------------------------------------------------------------
 
-  home.packages = with pkgs; [
-    # Issue tracking
-    beads-rust        # fast Rust port of beads (br command, aliased as bd)
-    beads-viewer      # TUI for beads issue tracking (bv command)
+  home.packages =
+    with pkgs;
+    [
+      # Issue tracking
+      beads-rust # fast Rust port of beads (br command, aliased as bd)
+      beads-viewer # TUI for beads issue tracking (bv command)
 
-    # Core CLI tools
-    bat
-    btop
-    curl
-    eza
-    fd
-    fzf
-    gh
-    git
-    git-lfs
-    htop
-    httpie
-    jq
-    lazygit
-    ripgrep
-    rsync
-    tmux
-    tree
-    unzip
-    wget
-    zip
-    watch
-    xh              # Modern HTTP client
+      # Core CLI tools
+      bat
+      btop
+      curl
+      eza
+      fd
+      fzf
+      gh
+      git
+      git-lfs
+      htop
+      httpie
+      jq
+      lazygit
+      ripgrep
+      rsync
+      tmux
+      tree
+      unzip
+      wget
+      zip
+      watch
+      xh # Modern HTTP client
 
-    # Modern CLI replacements
-    delta           # Better git diffs
-    tokei           # Code statistics
-    dust            # Disk usage analyzer
-    procs           # Better ps
+      # Modern CLI replacements
+      delta # Better git diffs
+      tokei # Code statistics
+      dust # Disk usage analyzer
+      procs # Better ps
 
-    # AI coding tools (claude-code installed via native installer in activation)
-    aichat
-    amp-cli
-    caam              # Instant auth switching for AI coding subscriptions
-    claude-code-router
-    codex
-    destructive-command-guard # Safety hook for AI agents (dcg command)
-    gemini-cli
-    cco               # Sandbox wrapper for Claude Code (bubblewrap)
-    grepai            # Semantic code search for AI coding assistants
-    gws               # Google Workspace CLI
-    ntm               # Named Tmux Manager for AI agent coordination
-    opencode
-    repo-updater      # GitHub repo sync tool (ru command)
-    ubs               # AI-native code quality scanner
-  ] ++ (lib.optional (pkgs.giil != null) pkgs.giil)
+      # AI coding tools (claude-code installed via native installer in activation)
+      aichat
+      amp-cli
+      caam # Instant auth switching for AI coding subscriptions
+      claude-code-router
+      codex
+      destructive-command-guard # Safety hook for AI agents (dcg command)
+      gemini-cli
+      cco # Sandbox wrapper for Claude Code (bubblewrap)
+      grepai # Semantic code search for AI coding assistants
+      gws # Google Workspace CLI
+      ntm # Named Tmux Manager for AI agent coordination
+      opencode
+      repo-updater # GitHub repo sync tool (ru command)
+      ubs # AI-native code quality scanner
+    ]
+    ++ (lib.optional (pkgs.giil != null) pkgs.giil)
     ++ (lib.optional (pkgs.pi-agent != null) pkgs.pi-agent)
     ++ (lib.optional (pkgs.xf != null) pkgs.xf)
     ++ (lib.optional (pkgs.mcp-agent-mail != null) pkgs.mcp-agent-mail)
@@ -96,59 +112,59 @@ in {
     ++ (lib.optional (pkgs.cass != null) pkgs.cass)
     ++ (lib.optional (pkgs.cass-memory != null) pkgs.cass-memory)
     ++ [
-    s2p               # Turn code projects into LLM prompts with a TUI
+      s2p # Turn code projects into LLM prompts with a TUI
 
-    # Development
-    bun
-    gnumake
-    gcc
-    go
-    nixd              # Nix language server (for Zed remote dev)
-    nodejs_22
-    python3
-    poetry
-    uv
-    rustup
-    cargo-generate
-    elixir
-    erlang
-    pre-commit
-    zed-editor        # Remote dev server for local Zed connections via SSH
+      # Development
+      bun
+      gnumake
+      gcc
+      go
+      nixd # Nix language server (for Zed remote dev)
+      nodejs_22
+      python3
+      poetry
+      uv
+      rustup
+      cargo-generate
+      elixir
+      erlang
+      pre-commit
+      zed-editor # Remote dev server for local Zed connections via SSH
 
-    # DevOps
-    bitwarden-cli
-    cachix
-    chezmoi
-    cosign
-    devcontainer
-    docker-compose
-    flyctl
-    git-crypt
-    lazydocker
-    railway
+      # DevOps
+      bitwarden-cli
+      cachix
+      chezmoi
+      cosign
+      devcontainer
+      docker-compose
+      flyctl
+      git-crypt
+      lazydocker
+      railway
 
-    # Shell
-    starship
-    wezterm
-    zoxide
-  ];
+      # Shell
+      starship
+      wezterm
+      zoxide
+    ];
 
   # Install Claude Code CLI using native installer (always gets latest version)
-  home.activation.installClaudeCode = lib.hm.dag.entryAfter ["writeBoundary"] ''
+  home.activation.installClaudeCode = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     if [ ! -f "$HOME/.local/bin/claude" ]; then
       $DRY_RUN_CMD bash -c "curl -fsSL https://claude.ai/install.sh | bash"
     fi
   '';
 
   # Initialize Rust stable toolchain so cargo/rustc are immediately available
-  home.activation.rustupInit = lib.hm.dag.entryAfter ["writeBoundary"] ''
+  home.activation.rustupInit = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     if ! $HOME/.rustup/toolchains/stable-*/bin/cargo --version &>/dev/null 2>&1; then
       $DRY_RUN_CMD ${pkgs.rustup}/bin/rustup default stable
     fi
   '';
 
   # Install caut (coding agent usage tracker) via cargo nightly
-  home.activation.installCaut = lib.hm.dag.entryAfter ["writeBoundary"] ''
+  home.activation.installCaut = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     if ! $HOME/.cargo/bin/caut --version &>/dev/null; then
       echo "Installing caut (coding agent usage tracker)..."
       $DRY_RUN_CMD bash -c "PKG_CONFIG_PATH='${pkgs.sqlite.dev}/lib/pkgconfig' LIBRARY_PATH='${pkgs.sqlite.out}/lib' ${pkgs.rustup}/bin/rustup run nightly cargo install --git https://github.com/Dicklesworthstone/coding_agent_usage_tracker" || echo "caut install failed (requires rustup nightly + sqlite)"
@@ -156,7 +172,7 @@ in {
   '';
 
   # Install tokei (lines-of-code counter) via cargo stable
-  home.activation.installTokei = lib.hm.dag.entryAfter ["writeBoundary"] ''
+  home.activation.installTokei = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     if ! $HOME/.cargo/bin/tokei --version &>/dev/null; then
       echo "Installing tokei (lines-of-code counter)..."
       $DRY_RUN_CMD bash -c "${pkgs.rustup}/bin/rustup run stable cargo install tokei" || echo "tokei install failed"
@@ -171,8 +187,11 @@ in {
 
   programs.bash = {
     enable = true;
-    shellOptions = [];
-    historyControl = [ "ignoredups" "ignorespace" ];
+    shellOptions = [ ];
+    historyControl = [
+      "ignoredups"
+      "ignorespace"
+    ];
     initExtra = ''
       _update_ssh_agent() {
         local sock best=""
@@ -251,7 +270,7 @@ in {
   programs.git = {
     enable = true;
     signing = {
-      key = null;  # TODO: Add GPG key if using signing
+      key = null; # TODO: Add GPG key if using signing
       signByDefault = false;
     };
     settings = {
@@ -311,7 +330,7 @@ in {
     defaultEditor = true;
     plugins = with pkgs.vimPlugins; [
       claude-code-nvim
-      plenary-nvim  # dependency
+      plenary-nvim # dependency
     ];
   };
 
@@ -341,7 +360,7 @@ in {
 
   programs.helix = {
     enable = true;
-    defaultEditor = false;  # Keep nvim as EDITOR
+    defaultEditor = false; # Keep nvim as EDITOR
 
     settings = {
       theme = "rose_pine";
@@ -352,7 +371,13 @@ in {
         color-modes = true;
         true-color = true;
         bufferline = "multiple";
-        gutters = ["diagnostics" "spacer" "line-numbers" "spacer" "diff"];
+        gutters = [
+          "diagnostics"
+          "spacer"
+          "line-numbers"
+          "spacer"
+          "diff"
+        ];
 
         cursor-shape = {
           insert = "bar";
@@ -365,9 +390,20 @@ in {
         };
 
         statusline = {
-          left = ["mode" "spinner" "file-name" "file-modification-indicator"];
-          center = [];
-          right = ["diagnostics" "selections" "register" "position" "file-encoding"];
+          left = [
+            "mode"
+            "spinner"
+            "file-name"
+            "file-modification-indicator"
+          ];
+          center = [ ];
+          right = [
+            "diagnostics"
+            "selections"
+            "register"
+            "position"
+            "file-encoding"
+          ];
           separator = "│";
         };
 
@@ -574,7 +610,7 @@ in {
   };
 
   # Set up Claude Code statusline in settings.json (merges, doesn't overwrite)
-  home.activation.claudeStatusline = lib.hm.dag.entryAfter ["writeBoundary"] ''
+  home.activation.claudeStatusline = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     SETTINGS_FILE="$HOME/.claude/settings.json"
     $DRY_RUN_CMD mkdir -p "$HOME/.claude"
     if [ -f "$SETTINGS_FILE" ]; then

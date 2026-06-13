@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 # Hardened headless Tailscale for nix-darwin servers (argon, radon) —
 # the macOS counterpart of services.tailscale on the Linux hosts.
@@ -24,8 +29,17 @@
 
 let
   cfg = config.services.darwinTailscaled;
-  inherit (lib) mkEnableOption mkOption types mkIf mkMerge optionalString escapeShellArgs;
-in {
+  inherit (lib)
+    mkEnableOption
+    mkOption
+    types
+    mkIf
+    mkMerge
+    optionalString
+    escapeShellArgs
+    ;
+in
+{
   options.services.darwinTailscaled = {
     enable = mkEnableOption "hardened headless tailscaled launchd daemon";
 
@@ -86,7 +100,10 @@ in {
 
     extraUpFlags = mkOption {
       type = types.listOf types.str;
-      default = [ "--ssh" "--accept-routes" ];
+      default = [
+        "--ssh"
+        "--accept-routes"
+      ];
       description = "Flags passed to `tailscale up` by the auto-up job.";
     };
   };

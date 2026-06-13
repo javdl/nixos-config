@@ -1,9 +1,19 @@
-{ inputs, pkgs, currentSystemName, lib, ... }:
+{
+  inputs,
+  pkgs,
+  currentSystemName,
+  lib,
+  ...
+}:
 
 let
   # Machines that get a minimal set of casks (scraping/browsing focus, or
   # headless macOS servers that should stay lean — see serversMacos below).
-  isMinimal = builtins.elem currentSystemName [ "fu146" "argon" "radon" ];
+  isMinimal = builtins.elem currentSystemName [
+    "fu146"
+    "argon"
+    "radon"
+  ];
 
   # Per-host extra casks layered on top of the base set.
   extraCasks = lib.optionals (currentSystemName == "radon") [ "rouvy" ];
@@ -39,11 +49,16 @@ let
   # servers-macos: Mac hardware used as headless/always-on servers.
   # These hosts run tailscaled as a root launchd daemon instead of the GUI
   # cask, so we strip "tailscale-app" from their cask set.
-  serversMacos = [ "argon" "radon" ];
-  withoutServerCasks = casks:
-    if builtins.elem currentSystemName serversMacos
-    then builtins.filter (cask: cask != "tailscale-app") casks
-    else casks;
+  serversMacos = [
+    "argon"
+    "radon"
+  ];
+  withoutServerCasks =
+    casks:
+    if builtins.elem currentSystemName serversMacos then
+      builtins.filter (cask: cask != "tailscale-app") casks
+    else
+      casks;
 
   # Core casks installed on all non-minimal machines
   coreCasks = [
@@ -93,7 +108,7 @@ let
     "macwhisper"
     "obsidian"
     # "ollama-app"
-"pycharm"
+    "pycharm"
     "podman-desktop"
     "rapidapi"
     "raycast" # for searching nix GUI apps (nix doesnt put bin in Applications folder so macos search doesnt work)
@@ -193,12 +208,17 @@ in
       "vercel-cli"
       "workos/tap/workos-cli"
     ];
-    casks = withoutServerCasks ((if isMinimal then minimalCasks
-      else coreCasks
-        ++ personalCasks
-        ++ lib.optionals (!noAudio) audioCasks)
-      ++ extraCasks);
-    masApps = { # to find ID, App Store > Share > Copy link
+    casks = withoutServerCasks (
+      (
+        if isMinimal then
+          minimalCasks
+        else
+          coreCasks ++ personalCasks ++ lib.optionals (!noAudio) audioCasks
+      )
+      ++ extraCasks
+    );
+    masApps = {
+      # to find ID, App Store > Share > Copy link
       # masApps reinstall or do a slow check on each run. Manual install is the best option I guess.
       # "Bitwarden" = 1352778147; # Use brew/dmg version for SSH agent to work
       # # "Kiwix" = 997079563;

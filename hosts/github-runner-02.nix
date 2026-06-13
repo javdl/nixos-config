@@ -1,4 +1,9 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 # Hetzner dedicated GitHub Actions runner for fuww org (github-runner-02)
 # CPX62 instance (16 shared vCPUs, 32GB RAM, 640GB disk)
@@ -59,7 +64,7 @@
     enable = true;
     minFreeGB = 50;
     maxFreeGB = 100;
-    scheduledThresholdGB = 100;  # Higher threshold for 640G disk — don't let store grow unchecked
+    scheduledThresholdGB = 100; # Higher threshold for 640G disk — don't let store grow unchecked
     keepDays = 5;
   };
 
@@ -106,7 +111,10 @@
   users.users.joost = {
     isNormalUser = true;
     home = "/home/joost";
-    extraGroups = [ "docker" "wheel" ];
+    extraGroups = [
+      "docker"
+      "wheel"
+    ];
     shell = pkgs.zsh;
     hashedPassword = "$6$nJOFfAkJl1RJMxUW$DuXpYNq7rc/TE7Awuyjv7vyOyzbUnHmxN3YN1Gz1DiAw363a9GkpEU6bU9MvYa94nXaP7oTSFbZegNb8kAcUm1";
     openssh.authorizedKeys.keys = [
@@ -312,36 +320,46 @@
   # Each per-runner subdir must exist before the unit starts — systemd's
   # BindPaths= fails namespacing if the source path is missing. The parent
   # is created by ci-disk-cleanup; the children are pre-created here.
-  systemd.tmpfiles.rules = lib.genList (i:
-    "d /var/lib/github-runner-work/fuww-runner-${toString (i + 1)} 0700 github-runner users -"
+  systemd.tmpfiles.rules = lib.genList (
+    i: "d /var/lib/github-runner-work/fuww-runner-${toString (i + 1)} 0700 github-runner users -"
   ) 16;
 
-  services.github-runners = lib.listToAttrs (lib.genList (i:
-    let idx = i + 1;
-    in lib.nameValuePair "fuww-runner-${toString idx}" {
-      enable = true;
-      ephemeral = false;
-      replace = true;
-      name = "github-runner-02-${toString idx}";
-      tokenFile = config.sops.secrets.github-runner-token.path;
-      url = "https://github.com/fuww";
-      workDir = "/var/lib/github-runner-work/fuww-runner-${toString idx}";
-      extraLabels = [ "hetzner" "nixos" "cpx62" "self-hosted-16-cores" ];
-      user = "github-runner";
-      extraPackages = config.services.github-actions-runner.packages.forRunner;
-      extraEnvironment = {
-        DOCKER_HOST = "unix:///var/run/docker.sock";
-        ACTIONS_RUNNER_HOOK_JOB_STARTED = "/etc/github-runner-pre-job.sh";
-        # nixpkgs 26.05 ships github-runner with ONLY the node24 externals
-        # (Node 20 is EOL and was dropped upstream). Node 20 JS actions
-        # (actions/checkout@v4, actions/upload-artifact@v4, ...) would try to
-        # exec the missing lib/externals/node20/bin/node and fail with
-        # "No such file or directory". Force them onto the bundled node24,
-        # which GitHub makes the default on 2026-06-16 anyway.
-        FORCE_JAVASCRIPT_ACTIONS_TO_NODE24 = "true";
-      };
-    }
-  ) 16);
+  services.github-runners = lib.listToAttrs (
+    lib.genList (
+      i:
+      let
+        idx = i + 1;
+      in
+      lib.nameValuePair "fuww-runner-${toString idx}" {
+        enable = true;
+        ephemeral = false;
+        replace = true;
+        name = "github-runner-02-${toString idx}";
+        tokenFile = config.sops.secrets.github-runner-token.path;
+        url = "https://github.com/fuww";
+        workDir = "/var/lib/github-runner-work/fuww-runner-${toString idx}";
+        extraLabels = [
+          "hetzner"
+          "nixos"
+          "cpx62"
+          "self-hosted-16-cores"
+        ];
+        user = "github-runner";
+        extraPackages = config.services.github-actions-runner.packages.forRunner;
+        extraEnvironment = {
+          DOCKER_HOST = "unix:///var/run/docker.sock";
+          ACTIONS_RUNNER_HOOK_JOB_STARTED = "/etc/github-runner-pre-job.sh";
+          # nixpkgs 26.05 ships github-runner with ONLY the node24 externals
+          # (Node 20 is EOL and was dropped upstream). Node 20 JS actions
+          # (actions/checkout@v4, actions/upload-artifact@v4, ...) would try to
+          # exec the missing lib/externals/node20/bin/node and fail with
+          # "No such file or directory". Force them onto the bundled node24,
+          # which GitHub makes the default on 2026-06-16 anyway.
+          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24 = "true";
+        };
+      }
+    ) 16
+  );
 
   # This value determines the NixOS release
   system.stateVersion = "25.05";

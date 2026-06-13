@@ -1,4 +1,10 @@
-{ config, pkgs, lib, inputs, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  inputs,
+  ...
+}:
 
 # Hetzner Cloud server (currently no application stack — pending hermes-agent)
 #
@@ -92,10 +98,12 @@
 
   # Networking - dual stack (IPv4 via DHCP + static IPv6)
   networking.useDHCP = true;
-  networking.interfaces.enp1s0.ipv6.addresses = [{
-    address = "2a01:4f8:c012:9be6::1";
-    prefixLength = 64;
-  }];
+  networking.interfaces.enp1s0.ipv6.addresses = [
+    {
+      address = "2a01:4f8:c012:9be6::1";
+      prefixLength = 64;
+    }
+  ];
   networking.defaultGateway6 = {
     address = "fe80::1";
     interface = "enp1s0";
@@ -133,10 +141,22 @@
 
   # System packages
   environment.systemPackages = with pkgs; [
-    git gnumake htop btop tmux
-    curl wget rsync
-    gcc neovim
-    jq ripgrep fd tree unzip zip
+    git
+    gnumake
+    htop
+    btop
+    tmux
+    curl
+    wget
+    rsync
+    gcc
+    neovim
+    jq
+    ripgrep
+    fd
+    tree
+    unzip
+    zip
     molly-guard
   ];
 
@@ -172,8 +192,18 @@
 
   # PAM limits
   security.pam.loginLimits = [
-    { domain = "*"; type = "soft"; item = "nofile"; value = "65536"; }
-    { domain = "*"; type = "hard"; item = "nofile"; value = "65536"; }
+    {
+      domain = "*";
+      type = "soft";
+      item = "nofile";
+      value = "65536";
+    }
+    {
+      domain = "*";
+      type = "hard";
+      item = "nofile";
+      value = "65536";
+    }
   ];
 
   # Disable unnecessary services for a headless server

@@ -1,6 +1,16 @@
-{ isWSL, inputs, currentSystemName, ... }:
+{
+  isWSL,
+  inputs,
+  currentSystemName,
+  ...
+}:
 
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   isDarwin = pkgs.stdenv.isDarwin;
@@ -8,12 +18,20 @@ let
 
   # Import shared configuration
   shared = import ../shared-home-manager.nix {
-    inherit isWSL inputs pkgs lib isDarwin isLinux;
+    inherit
+      isWSL
+      inputs
+      pkgs
+      lib
+      isDarwin
+      isLinux
+      ;
   };
 
   # Same script body that Darwin runs via launchd in hosts/mac-shared.nix.
   chezmoiMemorySync = import ../../lib/chezmoi-memory-sync.nix pkgs;
-in {
+in
+{
   imports = [ ./cachix-daemon.nix ]; # auto-push locally-built paths to javdl-nixos-config cachix
 
   # Home-manager state version
@@ -44,152 +62,159 @@ in {
   # Packages - Minimal set for remote development server
   #---------------------------------------------------------------------
 
-  home.packages = with pkgs; [
-    # Core CLI tools
-    bat
-    btop
-    curl
-    eza
-    fd
-    fzf
-    gh
-    git
-    git-lfs
-    htop
-    httpie
-    jq
-    lazygit
-    ripgrep
-    rsync
-    tmux
-    tree
-    unzip
-    wget
-    zip
-    watch
-    xh              # Modern HTTP client
+  home.packages =
+    with pkgs;
+    [
+      # Core CLI tools
+      bat
+      btop
+      curl
+      eza
+      fd
+      fzf
+      gh
+      git
+      git-lfs
+      htop
+      httpie
+      jq
+      lazygit
+      ripgrep
+      rsync
+      tmux
+      tree
+      unzip
+      wget
+      zip
+      watch
+      xh # Modern HTTP client
 
-    # Modern CLI replacements
-    delta           # Better git diffs
-    tokei           # Code statistics
-    dust            # Disk usage analyzer
-    procs           # Better ps
+      # Modern CLI replacements
+      delta # Better git diffs
+      tokei # Code statistics
+      dust # Disk usage analyzer
+      procs # Better ps
 
-    # AI coding tools (claude-code installed via native installer in activation)
-    aichat
-    amp-cli
-    beads-rust        # fast Rust port of beads (br command, aliased as bd)
-    beads-viewer      # TUI for beads issue tracking (bv command)
-    caam              # Instant auth switching for AI coding subscriptions
-    claude-code-router
-    codex
-    gemini-cli
-    destructive-command-guard # Safety hook for AI agents (dcg command)
-    cco               # Sandbox wrapper for Claude Code (bubblewrap)
-    grepai            # Semantic code search for AI coding assistants
-    gws               # Google Workspace CLI
-    ntm               # Named Tmux Manager for AI agent coordination
-    opencode
-    repo-updater      # GitHub repo sync tool (ru command)
-    brenner           # Sydney Brenner research platform CLI
-    csctf             # Convert AI chat share links to Markdown/HTML transcripts
-    toon              # Token-Optimized Object Notation converter
-  ] ++ (lib.optional (pkgs.meta-skill != null) pkgs.meta-skill) ++ [
-    slb               # Shannon Language Benchmark for LLM evaluation
-    ubs               # AI-native code quality scanner
-  ] ++ (lib.optional (pkgs.giil != null) pkgs.giil)
+      # AI coding tools (claude-code installed via native installer in activation)
+      aichat
+      amp-cli
+      beads-rust # fast Rust port of beads (br command, aliased as bd)
+      beads-viewer # TUI for beads issue tracking (bv command)
+      caam # Instant auth switching for AI coding subscriptions
+      claude-code-router
+      codex
+      gemini-cli
+      destructive-command-guard # Safety hook for AI agents (dcg command)
+      cco # Sandbox wrapper for Claude Code (bubblewrap)
+      grepai # Semantic code search for AI coding assistants
+      gws # Google Workspace CLI
+      ntm # Named Tmux Manager for AI agent coordination
+      opencode
+      repo-updater # GitHub repo sync tool (ru command)
+      brenner # Sydney Brenner research platform CLI
+      csctf # Convert AI chat share links to Markdown/HTML transcripts
+      toon # Token-Optimized Object Notation converter
+    ]
+    ++ (lib.optional (pkgs.meta-skill != null) pkgs.meta-skill)
+    ++ [
+      slb # Shannon Language Benchmark for LLM evaluation
+      ubs # AI-native code quality scanner
+    ]
+    ++ (lib.optional (pkgs.giil != null) pkgs.giil)
     ++ (lib.optional (pkgs.pi-agent != null) pkgs.pi-agent)
     ++ (lib.optional (pkgs.xf != null) pkgs.xf)
     ++ (lib.optional (pkgs.mcp-agent-mail != null) pkgs.mcp-agent-mail)
     ++ (lib.optional (pkgs.cross-agent-session-resumer != null) pkgs.cross-agent-session-resumer)
     ++ (lib.optional (pkgs.process-triage != null) pkgs.process-triage)
     ++ (lib.optional (pkgs.remote-compilation-helper != null) pkgs.remote-compilation-helper)
-    ++ (lib.optional (pkgs.cass != null) pkgs.cass) ++ (lib.optional (pkgs.cass-memory != null) pkgs.cass-memory) ++ [
-    s2p               # Turn code projects into LLM prompts with a TUI
+    ++ (lib.optional (pkgs.cass != null) pkgs.cass)
+    ++ (lib.optional (pkgs.cass-memory != null) pkgs.cass-memory)
+    ++ [
+      s2p # Turn code projects into LLM prompts with a TUI
 
-    # Development
-    bun
-    gnumake
-    gcc
-    go
-    nixd              # Nix language server (for Zed remote dev)
-    nodejs_22
-    python3
-    poetry
-    uv
-    rustup
-    cargo-generate
-    pre-commit
+      # Development
+      bun
+      gnumake
+      gcc
+      go
+      nixd # Nix language server (for Zed remote dev)
+      nodejs_22
+      python3
+      poetry
+      uv
+      rustup
+      cargo-generate
+      pre-commit
 
-    # DevOps
-    bitwarden-cli
-    cachix
-    chezmoi
-    cosign
-    devcontainer
-    docker-compose
-    flyctl
-    git-crypt
-    lazydocker
-    # vercel CLI installed via npm in activation script (removed from nixpkgs)
-    railway
+      # DevOps
+      bitwarden-cli
+      cachix
+      chezmoi
+      cosign
+      devcontainer
+      docker-compose
+      flyctl
+      git-crypt
+      lazydocker
+      # vercel CLI installed via npm in activation script (removed from nixpkgs)
+      railway
 
-    # Shell
-    starship
-    wezterm
-    zoxide
+      # Shell
+      starship
+      wezterm
+      zoxide
 
-    # fu: open/attach the "fuww" tmux session — one tab per project,
-    # each tab split into 4 side-by-side columns starting in that project dir.
-    (writeShellScriptBin "fu" ''
-      set -euo pipefail
-      session="fuww"
-      base="$HOME/code/fuww"
+      # fu: open/attach the "fuww" tmux session — one tab per project,
+      # each tab split into 4 side-by-side columns starting in that project dir.
+      (writeShellScriptBin "fu" ''
+        set -euo pipefail
+        session="fuww"
+        base="$HOME/code/fuww"
 
-      attach() {
-        if [ -n "''${TMUX:-}" ]; then
-          exec tmux switch-client -t "$session"
-        else
-          exec tmux attach -t "$session"
+        attach() {
+          if [ -n "''${TMUX:-}" ]; then
+            exec tmux switch-client -t "$session"
+          else
+            exec tmux attach -t "$session"
+          fi
+        }
+
+        if tmux has-session -t "$session" 2>/dev/null; then
+          attach
         fi
-      }
 
-      if tmux has-session -t "$session" 2>/dev/null; then
+        mkwin() {
+          # $1 = window name, $2 = dir, $3 = "first" for the session-creating window
+          if [ "$3" = "first" ]; then
+            tmux new-session -d -s "$session" -n "$1" -c "$2"
+            # keep our tab names from being clobbered by the running command
+            tmux set-option -t "$session" automatic-rename off
+            tmux set-option -t "$session" allow-rename off
+          else
+            tmux new-window -t "$session" -n "$1" -c "$2"
+          fi
+          # 3 vertical splits => 4 columns, all rooted in the project dir
+          tmux split-window -h -t "$session:$1" -c "$2"
+          tmux split-window -h -t "$session:$1" -c "$2"
+          tmux split-window -h -t "$session:$1" -c "$2"
+          tmux select-layout -t "$session:$1" even-horizontal
+          tmux select-pane  -t "$session:$1.0"
+        }
+
+        mkwin fashionunited "$base/fashionunited"            first
+        mkwin frontend      "$base/frontend"                 next
+        mkwin api           "$base/api"                      next
+        mkwin integrations  "$base/integrations"             next
+        mkwin pdb-feeds     "$base/product-database-feeds"   next
+        mkwin nixos-config  "$HOME/nixos-config"             next
+
+        tmux select-window -t "$session:fashionunited"
         attach
-      fi
-
-      mkwin() {
-        # $1 = window name, $2 = dir, $3 = "first" for the session-creating window
-        if [ "$3" = "first" ]; then
-          tmux new-session -d -s "$session" -n "$1" -c "$2"
-          # keep our tab names from being clobbered by the running command
-          tmux set-option -t "$session" automatic-rename off
-          tmux set-option -t "$session" allow-rename off
-        else
-          tmux new-window -t "$session" -n "$1" -c "$2"
-        fi
-        # 3 vertical splits => 4 columns, all rooted in the project dir
-        tmux split-window -h -t "$session:$1" -c "$2"
-        tmux split-window -h -t "$session:$1" -c "$2"
-        tmux split-window -h -t "$session:$1" -c "$2"
-        tmux select-layout -t "$session:$1" even-horizontal
-        tmux select-pane  -t "$session:$1.0"
-      }
-
-      mkwin fashionunited "$base/fashionunited"            first
-      mkwin frontend      "$base/frontend"                 next
-      mkwin api           "$base/api"                      next
-      mkwin integrations  "$base/integrations"             next
-      mkwin pdb-feeds     "$base/product-database-feeds"   next
-      mkwin nixos-config  "$HOME/nixos-config"             next
-
-      tmux select-window -t "$session:fashionunited"
-      attach
-    '')
-  ];
+      '')
+    ];
 
   # Install/update Vercel CLI via npm (removed from nixpkgs)
-  home.activation.installVercel = lib.hm.dag.entryAfter ["writeBoundary"] ''
+  home.activation.installVercel = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     if ! command -v vercel &>/dev/null; then
       echo "Installing Vercel CLI..."
       $DRY_RUN_CMD ${pkgs.nodejs_22}/bin/npm install -g vercel@latest 2>/dev/null || echo "Vercel CLI install failed"
@@ -197,7 +222,7 @@ in {
   '';
 
   # Install Claude Code CLI using native installer (always gets latest version)
-  home.activation.installClaudeCode = lib.hm.dag.entryAfter ["writeBoundary"] ''
+  home.activation.installClaudeCode = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     if [ ! -f "$HOME/.local/bin/claude" ]; then
       if command -v curl >/dev/null 2>&1; then
         $DRY_RUN_CMD bash -c "curl -fsSL https://claude.ai/install.sh | bash"
@@ -208,14 +233,14 @@ in {
   '';
 
   # Initialize Rust stable toolchain so cargo/rustc are immediately available
-  home.activation.rustupInit = lib.hm.dag.entryAfter ["writeBoundary"] ''
+  home.activation.rustupInit = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     if ! $HOME/.rustup/toolchains/stable-*/bin/cargo --version &>/dev/null 2>&1; then
       $DRY_RUN_CMD ${pkgs.rustup}/bin/rustup default stable
     fi
   '';
 
   # Install caut (coding agent usage tracker) via cargo nightly
-  home.activation.installCaut = lib.hm.dag.entryAfter ["writeBoundary"] ''
+  home.activation.installCaut = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     if ! $HOME/.cargo/bin/caut --version &>/dev/null; then
       echo "Installing caut (coding agent usage tracker)..."
       $DRY_RUN_CMD bash -c "PKG_CONFIG_PATH='${pkgs.sqlite.dev}/lib/pkgconfig' LIBRARY_PATH='${pkgs.sqlite.out}/lib' ${pkgs.rustup}/bin/rustup run nightly cargo install --git https://github.com/Dicklesworthstone/coding_agent_usage_tracker" || echo "caut install failed (requires rustup nightly + sqlite)"
@@ -223,7 +248,7 @@ in {
   '';
 
   # Install tokei (lines-of-code counter) via cargo stable
-  home.activation.installTokei = lib.hm.dag.entryAfter ["writeBoundary"] ''
+  home.activation.installTokei = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     if ! $HOME/.cargo/bin/tokei --version &>/dev/null; then
       echo "Installing tokei (lines-of-code counter)..."
       $DRY_RUN_CMD bash -c "${pkgs.rustup}/bin/rustup run stable cargo install tokei" || echo "tokei install failed"
@@ -239,7 +264,7 @@ in {
   # makes a missing credential fail fast instead of hanging activation; every
   # step is non-fatal. Secret templates fill in on the next switch after the
   # Bitwarden vault is unlocked.
-  home.activation.chezmoiSync = lib.hm.dag.entryAfter ["writeBoundary"] ''
+  home.activation.chezmoiSync = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     CHEZMOI_SOURCE="$HOME/.local/share/chezmoi"
     if [ ! -d "$CHEZMOI_SOURCE" ]; then
       echo "Chezmoi source missing — bootstrapping from javdl/dotfiles..."
@@ -252,7 +277,7 @@ in {
   '';
 
   # Rebuild cass search index so ntm health checks pass
-  home.activation.cassIndex = lib.hm.dag.entryAfter ["writeBoundary"] ''
+  home.activation.cassIndex = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     if command -v cass &>/dev/null; then
       echo "Rebuilding cass search index..."
       $DRY_RUN_CMD cass index --full || echo "cass index failed (non-fatal)"
@@ -267,8 +292,11 @@ in {
 
   programs.bash = {
     enable = true;
-    shellOptions = [];
-    historyControl = [ "ignoredups" "ignorespace" ];
+    shellOptions = [ ];
+    historyControl = [
+      "ignoredups"
+      "ignorespace"
+    ];
     initExtra = ''
       _update_ssh_agent() {
         local sock best=""
@@ -417,7 +445,7 @@ in {
     defaultEditor = true;
     plugins = with pkgs.vimPlugins; [
       claude-code-nvim
-      plenary-nvim  # dependency
+      plenary-nvim # dependency
     ];
   };
 
@@ -458,7 +486,7 @@ in {
 
   programs.helix = {
     enable = true;
-    defaultEditor = false;  # Keep nvim as EDITOR
+    defaultEditor = false; # Keep nvim as EDITOR
 
     settings = {
       theme = "rose_pine";
@@ -469,7 +497,13 @@ in {
         color-modes = true;
         true-color = true;
         bufferline = "multiple";
-        gutters = ["diagnostics" "spacer" "line-numbers" "spacer" "diff"];
+        gutters = [
+          "diagnostics"
+          "spacer"
+          "line-numbers"
+          "spacer"
+          "diff"
+        ];
 
         cursor-shape = {
           insert = "bar";
@@ -482,9 +516,20 @@ in {
         };
 
         statusline = {
-          left = ["mode" "spinner" "file-name" "file-modification-indicator"];
-          center = [];
-          right = ["diagnostics" "selections" "register" "position" "file-encoding"];
+          left = [
+            "mode"
+            "spinner"
+            "file-name"
+            "file-modification-indicator"
+          ];
+          center = [ ];
+          right = [
+            "diagnostics"
+            "selections"
+            "register"
+            "position"
+            "file-encoding"
+          ];
           separator = "│";
         };
 
@@ -699,34 +744,32 @@ in {
   #   systemctl --user daemon-reload
   #   systemctl --user enable --now chezmoi-memory-sync.timer
   #   systemctl --user list-timers chezmoi-memory-sync.timer
-  systemd.user.services.chezmoi-memory-sync =
-    lib.mkIf (isLinux && currentSystemName == "loom") {
-      Unit = {
-        Description = "Auto-sync ~/.claude/MEMORY to chezmoi git remote";
-        Documentation = [ "https://github.com/javdl/nixos-config/blob/main/lib/chezmoi-memory-sync.nix" ];
-        After = [ "network-online.target" ];
-        Wants = [ "network-online.target" ];
-      };
-      Service = {
-        Type = "oneshot";
-        ExecStart = "${chezmoiMemorySync}";
-        # journalctl --user -u chezmoi-memory-sync -n 30 to inspect output.
-      };
+  systemd.user.services.chezmoi-memory-sync = lib.mkIf (isLinux && currentSystemName == "loom") {
+    Unit = {
+      Description = "Auto-sync ~/.claude/MEMORY to chezmoi git remote";
+      Documentation = [ "https://github.com/javdl/nixos-config/blob/main/lib/chezmoi-memory-sync.nix" ];
+      After = [ "network-online.target" ];
+      Wants = [ "network-online.target" ];
     };
+    Service = {
+      Type = "oneshot";
+      ExecStart = "${chezmoiMemorySync}";
+      # journalctl --user -u chezmoi-memory-sync -n 30 to inspect output.
+    };
+  };
 
-  systemd.user.timers.chezmoi-memory-sync =
-    lib.mkIf (isLinux && currentSystemName == "loom") {
-      Unit = {
-        Description = "Run chezmoi-memory-sync every 5 minutes";
-      };
-      Timer = {
-        OnBootSec = "2min";        # don't fight first-boot home-manager activation
-        OnUnitActiveSec = "5min";  # match Darwin's StartInterval = 300
-        AccuracySec = "30s";       # tighter than systemd default for predictable cadence
-        Persistent = false;        # rolling cadence, no catch-up after suspend
-      };
-      Install.WantedBy = [ "timers.target" ];
+  systemd.user.timers.chezmoi-memory-sync = lib.mkIf (isLinux && currentSystemName == "loom") {
+    Unit = {
+      Description = "Run chezmoi-memory-sync every 5 minutes";
     };
+    Timer = {
+      OnBootSec = "2min"; # don't fight first-boot home-manager activation
+      OnUnitActiveSec = "5min"; # match Darwin's StartInterval = 300
+      AccuracySec = "30s"; # tighter than systemd default for predictable cadence
+      Persistent = false; # rolling cadence, no catch-up after suspend
+    };
+    Install.WantedBy = [ "timers.target" ];
+  };
 
   # Hermes Agent: replaced by upstream `services.hermes-agent` system module
   # in hosts/loom.nix. See Plans/migrate-hermes-to-nix-module.md.
@@ -752,7 +795,7 @@ in {
   };
 
   # Set up Claude Code statusline in settings.json (merges, doesn't overwrite)
-  home.activation.claudeStatusline = lib.hm.dag.entryAfter ["writeBoundary"] ''
+  home.activation.claudeStatusline = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     SETTINGS_FILE="$HOME/.claude/settings.json"
     $DRY_RUN_CMD mkdir -p "$HOME/.claude"
     if [ -f "$SETTINGS_FILE" ]; then

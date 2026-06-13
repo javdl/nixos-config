@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 # NixOS auto-update module
 #
@@ -15,8 +20,15 @@
 
 let
   cfg = config.services.nixosAutoUpdate;
-  inherit (lib) mkEnableOption mkOption types mkIf mkMerge;
-in {
+  inherit (lib)
+    mkEnableOption
+    mkOption
+    types
+    mkIf
+    mkMerge
+    ;
+in
+{
   options.services.nixosAutoUpdate = {
     enable = mkEnableOption "NixOS automatic updates from git";
 
@@ -52,7 +64,10 @@ in {
     rebootWindow = mkOption {
       type = types.nullOr (types.attrsOf types.str);
       default = null;
-      example = { lower = "01:00"; upper = "05:00"; };
+      example = {
+        lower = "01:00";
+        upper = "05:00";
+      };
       description = "Time window during which reboots are allowed";
     };
 
@@ -78,7 +93,10 @@ in {
     };
 
     operation = mkOption {
-      type = types.enum [ "switch" "boot" ];
+      type = types.enum [
+        "switch"
+        "boot"
+      ];
       default = "switch";
       description = "Whether to switch immediately or prepare for next boot";
     };
@@ -99,7 +117,7 @@ in {
         # Don't write lock file when using remote flakes
         flags = [
           "--no-write-lock-file"
-          "-L"  # Print build logs
+          "-L" # Print build logs
         ];
       };
     }
@@ -119,7 +137,9 @@ in {
 
       # Configure SSH for root to use the deploy key
       systemd.services.nixos-upgrade.serviceConfig.Environment = [
-        "GIT_SSH_COMMAND=ssh -i ${config.sops.secrets.${cfg.sshKeySecret}.path} -o StrictHostKeyChecking=accept-new"
+        "GIT_SSH_COMMAND=ssh -i ${
+          config.sops.secrets.${cfg.sshKeySecret}.path
+        } -o StrictHostKeyChecking=accept-new"
       ];
     })
 
@@ -133,7 +153,7 @@ in {
     # Add helpful packages
     {
       environment.systemPackages = with pkgs; [
-        git  # Needed for flake operations
+        git # Needed for flake operations
       ];
     }
   ]);

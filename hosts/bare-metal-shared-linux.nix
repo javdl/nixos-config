@@ -1,15 +1,23 @@
-{ config, pkgs, lib, currentSystem, currentSystemName,... }:
+{
+  config,
+  pkgs,
+  lib,
+  currentSystem,
+  currentSystemName,
+  ...
+}:
 
 let
-#  my-python-packages = ps: with ps; [
-#    poetry
-#    pip
-#    pandas
-#    requests
-    # other python packages
-#  ];
+  #  my-python-packages = ps: with ps; [
+  #    poetry
+  #    pip
+  #    pandas
+  #    requests
+  # other python packages
+  #  ];
 
-in {
+in
+{
 
   imports = [
     ../modules/specialization/plasma.nix
@@ -25,12 +33,12 @@ in {
   environment.sessionVariables.NIXOS_OZONE_WL = "1";
 
   # OBS virtual camera
-#  boot.extraModulePackages = with config.boot.kernelPackages; [
-#    v4l2loopback
-#  ];
-#  boot.extraModprobeConfig = ''
-#    options v4l2loopback devices=1 video_nr=1 card_label="OBS Cam" exclusive_caps=1
-#  '';
+  #  boot.extraModulePackages = with config.boot.kernelPackages; [
+  #    v4l2loopback
+  #  ];
+  #  boot.extraModprobeConfig = ''
+  #    options v4l2loopback devices=1 video_nr=1 card_label="OBS Cam" exclusive_caps=1
+  #  '';
   security.polkit.enable = true;
 
   # Thunderbolt. Devices might need to be enrolled:
@@ -70,7 +78,11 @@ in {
 
   # Enable virtualisation support
   virtualisation.libvirtd.enable = true;
-  users.extraUsers.joost.extraGroups = [ "audio" "libvirtd" "docker" ];
+  users.extraUsers.joost.extraGroups = [
+    "audio"
+    "libvirtd"
+    "docker"
+  ];
 
   # The global useDHCP flag is deprecated, therefore explicitly set to false here.
   # Per-interface useDHCP will be mandatory in the future, so this generated config
@@ -100,7 +112,6 @@ in {
   services.resolved.enable = true;
   # Per Enabling HTTPS in the Tailscale documentation, run the following:
   # sudo tailscale cert ${MACHINE_NAME}.${TAILNET_NAME} # = full domain from tailscale web ui
-
 
   # Manage fonts. We pull these from a secret directory since most of these
   # fonts require a purchase.
@@ -157,58 +168,61 @@ in {
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget
-  environment.systemPackages = with pkgs; [
+  environment.systemPackages =
+    with pkgs;
+    [
 
-    aichat
-    code-cursor
-    fabric-ai
-    #local.files-to-prompt
-    # lmstudio # broken in nixpkgs
-    #local.magic-cli
-    mods # pipe command output to a question
-    openai-whisper
-    pandoc # Test html -> markdown
-    #local.repopack # Testing
-    shell-gpt # $ sgpt ...
-    tgpt # $ tgpt question
+      aichat
+      code-cursor
+      fabric-ai
+      #local.files-to-prompt
+      # lmstudio # broken in nixpkgs
+      #local.magic-cli
+      mods # pipe command output to a question
+      openai-whisper
+      pandoc # Test html -> markdown
+      #local.repopack # Testing
+      shell-gpt # $ sgpt ...
+      tgpt # $ tgpt question
 
-    code-server # since vs code remote ssh doesnt work, use an alternative
+      code-server # since vs code remote ssh doesnt work, use an alternative
 
-    brave
-    gnumake
-    ghostty
-    # gimp
-    nautilus
-    killall
-    python3 # was python311; py3.11 pip pulls sphinx, which dropped 3.11 in nixpkgs 26.05
-    python3Packages.pip
-    # python3.withPackages my-python-packages
-    # python3Packages.pip
-    rxvt-unicode-unwrapped
-    #spotify
-    #thunderbird
-    vlc
-    # vscode-fhs
-    # vscodium-fhs
-    xclip
+      brave
+      gnumake
+      ghostty
+      # gimp
+      nautilus
+      killall
+      python3 # was python311; py3.11 pip pulls sphinx, which dropped 3.11 in nixpkgs 26.05
+      python3Packages.pip
+      # python3.withPackages my-python-packages
+      # python3Packages.pip
+      rxvt-unicode-unwrapped
+      #spotify
+      #thunderbird
+      vlc
+      # vscode-fhs
+      # vscodium-fhs
+      xclip
 
-    argc
-    jq
+      argc
+      jq
 
-    # For hypervisors that support auto-resizing, this script forces it.
-    # I've noticed not everyone listens to the udev events so this is a hack.
-    (writeShellScriptBin "xrandr-auto" ''
-      xrandr --output Virtual-1 --auto
-    '')
-  ] ++ lib.optionals (currentSystemName == "vm-aarch64") [
-    # This is needed for the vmware user tools clipboard to work.
-    # You can test if you don't need this by deleting this and seeing
-    # if the clipboard sill works.
-    gtkmm3
-  ];
+      # For hypervisors that support auto-resizing, this script forces it.
+      # I've noticed not everyone listens to the udev events so this is a hack.
+      (writeShellScriptBin "xrandr-auto" ''
+        xrandr --output Virtual-1 --auto
+      '')
+    ]
+    ++ lib.optionals (currentSystemName == "vm-aarch64") [
+      # This is needed for the vmware user tools clipboard to work.
+      # You can test if you don't need this by deleting this and seeing
+      # if the clipboard sill works.
+      gtkmm3
+    ];
 
   # Our default non-specialised desktop environment.
-  services.xserver = lib.mkIf (config.specialisation != {}) {
+  services.xserver = lib.mkIf (config.specialisation != { }) {
     enable = true;
     xkb.layout = "us";
     desktopManager.gnome.enable = true;

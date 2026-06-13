@@ -6,7 +6,8 @@
 #   - users/joost/home-manager-server.nix -> systemd.user.{service,timer}.chezmoi-memory-sync (loom)
 #
 # Both schedule it every 5 minutes. Body is identical across platforms.
-pkgs: pkgs.writeShellScript "chezmoi-memory-sync" ''
+pkgs:
+pkgs.writeShellScript "chezmoi-memory-sync" ''
   set -u
 
   # systemd user services start with a minimal PATH that lacks chezmoi/jj/grep.

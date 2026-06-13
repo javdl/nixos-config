@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 # CI disk cleanup: Docker pruning, journal vacuum, tmp cleanup, tool cache cleanup,
 # runner work dir cleanup, pnpm/npm cache cleanup
@@ -6,8 +11,14 @@
 
 let
   cfg = config.services.ciDiskCleanup;
-  inherit (lib) mkEnableOption mkOption types mkIf;
-in {
+  inherit (lib)
+    mkEnableOption
+    mkOption
+    types
+    mkIf
+    ;
+in
+{
   options.services.ciDiskCleanup = {
     enable = mkEnableOption "CI disk cleanup (Docker, journal, tmp)";
 
@@ -75,7 +86,11 @@ in {
     virtualisation.docker.autoPrune = {
       enable = true;
       dates = "daily";
-      flags = [ "--all" "--filter" "until=24h" ];
+      flags = [
+        "--all"
+        "--filter"
+        "until=24h"
+      ];
     };
 
     # Prune build cache older than 7 days (keeps recent layer cache for faster builds)
@@ -109,7 +124,11 @@ in {
     # Self-hosted runners persist data between jobs — this prevents unbounded growth
     systemd.services.ci-runner-work-cleanup = {
       description = "Clean stale GitHub Actions runner work directories";
-      path = with pkgs; [ coreutils findutils gawk ];
+      path = with pkgs; [
+        coreutils
+        findutils
+        gawk
+      ];
       script = ''
         set -euo pipefail
         RUNNER_DIR="${cfg.runnerWorkDir}"
@@ -187,7 +206,12 @@ in {
     systemd.services.ci-disk-monitor = {
       description = "CI disk space monitor and emergency cleanup";
       after = [ "docker.service" ];
-      path = with pkgs; [ coreutils gawk docker nix ];
+      path = with pkgs; [
+        coreutils
+        gawk
+        docker
+        nix
+      ];
       script = ''
         set -euo pipefail
         THRESHOLD=${toString cfg.diskThresholdGB}

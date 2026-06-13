@@ -1,6 +1,12 @@
 # Hardware configuration for Hetzner server (jacksonator)
 # Uses disk labels set during bootstrap partitioning
-{ config, lib, pkgs, modulesPath, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  modulesPath,
+  ...
+}:
 
 {
   imports = [
@@ -18,7 +24,10 @@
     "sr_mod"
   ];
   boot.initrd.kernelModules = [ ];
-  boot.kernelModules = [ "kvm-intel" "kvm-amd" ];
+  boot.kernelModules = [
+    "kvm-intel"
+    "kvm-amd"
+  ];
   boot.extraModulePackages = [ ];
 
   # Filesystem configuration using labels (set during bootstrap0)

@@ -1,17 +1,22 @@
-{ config, lib, pkgs, modulesPath, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  modulesPath,
+  ...
+}:
 
 {
-  imports =
-    [    ];
+  imports = [ ];
 
-# Enable OpenGL
+  # Enable OpenGL
   hardware.opengl = {
     enable = true;
     #driSupport32Bit = true;
   };
 
   # Load nvidia driver for Xorg and Wayland
-  services.xserver.videoDrivers = ["nvidia"]; # Does not work with Sway, even when the main monitor is connected to iGPU. Works only when using Radeon IGPU as main monitor with Gnome + Wayland + obsidian/vscode/electron apps (nvidia card can be used with driver as accellerator for AI)
+  services.xserver.videoDrivers = [ "nvidia" ]; # Does not work with Sway, even when the main monitor is connected to iGPU. Works only when using Radeon IGPU as main monitor with Gnome + Wayland + obsidian/vscode/electron apps (nvidia card can be used with driver as accellerator for AI)
   # services.xserver.videoDrivers = ["nouveau"]; # this works with gnome + wayland and Sway + wayland
 
   # Wayland and NVidia do not combine well. (example: Electron apps like VS code / codium wont work)
@@ -46,7 +51,7 @@
     open = true;
 
     # Enable the Nvidia settings menu,
-	# accessible via `nvidia-settings`.
+    # accessible via `nvidia-settings`.
     nvidiaSettings = true;
 
     # Optionally, you may need to select the appropriate driver version for your specific GPU.

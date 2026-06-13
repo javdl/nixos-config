@@ -1,14 +1,29 @@
-{ isWSL, inputs, pkgs, lib, isDarwin, isLinux }:
+{
+  isWSL,
+  inputs,
+  pkgs,
+  lib,
+  isDarwin,
+  isLinux,
+}:
 
 let
   # For our MANPAGER env var
   # https://github.com/sharkdp/bat/issues/1145
-  manpager = (pkgs.writeShellScriptBin "manpager" (if isDarwin then ''
-    sh -c 'col -bx | bat -l man -p'
-    '' else ''
-    cat "$1" | col -bx | bat --language man --style plain
-  ''));
-in {
+  manpager = (
+    pkgs.writeShellScriptBin "manpager" (
+      if isDarwin then
+        ''
+          sh -c 'col -bx | bat -l man -p'
+        ''
+      else
+        ''
+          cat "$1" | col -bx | bat --language man --style plain
+        ''
+    )
+  );
+in
+{
   # Common shell aliases for both users
   shellAliases = {
     # Jujutsu aliases
@@ -58,12 +73,18 @@ in {
     voice-status = "~/.claude/VoiceServer/status.sh";
     voice-test = "curl -s -X POST http://localhost:8888/notify -H 'Content-Type: application/json' -d '{\"message\":\"Voice system online\"}'";
     voice-health = "curl -s http://localhost:8888/health | jq";
-  } // (if isLinux then {
-    # Two decades of using a Mac has made this such a strong memory
-    # that I'm just going to keep it consistent.
-    pbcopy = "xclip";
-    pbpaste = "xclip -o";
-  } else {});
+  }
+  // (
+    if isLinux then
+      {
+        # Two decades of using a Mac has made this such a strong memory
+        # that I'm just going to keep it consistent.
+        pbcopy = "xclip";
+        pbpaste = "xclip -o";
+      }
+    else
+      { }
+  );
 
   # Expose the manpager for use in home-manager configs
   manpager = manpager;
@@ -98,7 +119,7 @@ in {
         "$HOME/code/go/src/github.com/javdl"
       ];
 
-      exact = ["$HOME/.envrc"];
+      exact = [ "$HOME/.envrc" ];
     };
   };
 
@@ -106,7 +127,7 @@ in {
   ntmShellInit = {
     zsh = ''eval "$(ntm shell zsh)"'';
     bash = ''eval "$(ntm shell bash)"'';
-    fish = ''ntm shell fish | source'';
+    fish = "ntm shell fish | source";
   };
 
   # Common Gnome settings

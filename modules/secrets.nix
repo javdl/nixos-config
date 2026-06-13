@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 # SOPS secrets management module
 # Uses SSH host key for decryption - no separate age key needed
@@ -23,5 +28,8 @@
   sops.age.generateKey = false;
 
   # Add sops CLI tool for managing secrets
-  environment.systemPackages = [ pkgs.sops pkgs.ssh-to-age ];
+  environment.systemPackages = [
+    pkgs.sops
+    pkgs.ssh-to-age
+  ];
 }

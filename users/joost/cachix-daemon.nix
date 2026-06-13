@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 # Per-user Cachix push daemon for joost's personal cache.
 #
@@ -26,7 +31,14 @@ let
   cachix = "${pkgs.cachix}/bin/cachix";
   # --no-remote-stop: lifecycle is owned by the service manager; it stops the
   # daemon with SIGTERM, on which cachix flushes its queue gracefully.
-  runArgs = [ "daemon" "run" "--no-remote-stop" "--socket" cp.socket cp.cache ];
+  runArgs = [
+    "daemon"
+    "run"
+    "--no-remote-stop"
+    "--socket"
+    cp.socket
+    cp.cache
+  ];
 in
 {
   systemd.user.services.cachix-daemon = lib.mkIf isLinux {

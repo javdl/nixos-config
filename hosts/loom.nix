@@ -1,4 +1,10 @@
-{ config, pkgs, lib, inputs, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  inputs,
+  ...
+}:
 
 # Hetzner dedicated server: loom-32gb-nbg1-1
 # IP: 91.99.204.187 / 2a01:4f8:c0c:d0e8::/64
@@ -121,10 +127,12 @@
 
   # Networking - dual stack (IPv4 via DHCP + static IPv6)
   networking.useDHCP = true;
-  networking.interfaces.enp1s0.ipv6.addresses = [{
-    address = "2a01:4f8:c0c:d0e8::1";
-    prefixLength = 64;
-  }];
+  networking.interfaces.enp1s0.ipv6.addresses = [
+    {
+      address = "2a01:4f8:c0c:d0e8::1";
+      prefixLength = 64;
+    }
+  ];
   networking.defaultGateway6 = {
     address = "fe80::1";
     interface = "enp1s0";

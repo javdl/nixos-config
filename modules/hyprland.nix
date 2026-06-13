@@ -6,13 +6,6 @@
   # environment.sessionVariables.NIXOS_OZONE_WL = "1";
 }
 
-
-
-
-
-
-
-
 # # Flake
 # # Currently needs --impure making the rebuild:
 # # sudo NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nixos-rebuild switch --impure --flake ".#j7"

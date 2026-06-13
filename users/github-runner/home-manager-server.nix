@@ -1,6 +1,11 @@
 { isWSL, inputs, ... }:
 
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   isDarwin = pkgs.stdenv.isDarwin;
@@ -8,9 +13,17 @@ let
 
   # Import shared configuration
   shared = import ../shared-home-manager.nix {
-    inherit isWSL inputs pkgs lib isDarwin isLinux;
+    inherit
+      isWSL
+      inputs
+      pkgs
+      lib
+      isDarwin
+      isLinux
+      ;
   };
-in {
+in
+{
   # Home-manager state version
   home.stateVersion = "25.11";
 
@@ -42,8 +55,11 @@ in {
 
   programs.bash = {
     enable = true;
-    shellOptions = [];
-    historyControl = [ "ignoredups" "ignorespace" ];
+    shellOptions = [ ];
+    historyControl = [
+      "ignoredups"
+      "ignorespace"
+    ];
     initExtra = ''
       ${shared.ntmShellInit.bash}
     '';

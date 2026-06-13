@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 # Security audit module with auditd
 #
@@ -11,13 +16,23 @@
 
 let
   cfg = config.services.securityAudit;
-  inherit (lib) mkEnableOption mkOption types mkIf;
-in {
+  inherit (lib)
+    mkEnableOption
+    mkOption
+    types
+    mkIf
+    ;
+in
+{
   options.services.securityAudit = {
     enable = mkEnableOption "security auditing with auditd";
 
     failureMode = mkOption {
-      type = types.enum [ "silent" "printk" "panic" ];
+      type = types.enum [
+        "silent"
+        "printk"
+        "panic"
+      ];
       default = "printk";
       description = "How to handle audit failures (silent, printk, or panic)";
     };
@@ -43,103 +58,110 @@ in {
 
   config = lib.mkMerge [
     (mkIf cfg.enable {
-    # Enable the audit daemon
-    security.auditd.enable = true;
+      # Enable the audit daemon
+      security.auditd.enable = true;
 
-    # Configure auditd log rotation
-    environment.etc."audit/auditd.conf".text = ''
-      log_file = ${cfg.logFile}
-      log_format = ENRICHED
-      freq = 50
-      num_logs = ${toString cfg.numLogs}
-      max_log_file = ${toString cfg.maxLogFile}
-      max_log_file_action = ROTATE
-      space_left = 100
-      space_left_action = SYSLOG
-      admin_space_left = 50
-      admin_space_left_action = SUSPEND
-      disk_full_action = SUSPEND
-      disk_error_action = SUSPEND
-    '';
+      # Configure auditd log rotation
+      environment.etc."audit/auditd.conf".text = ''
+        log_file = ${cfg.logFile}
+        log_format = ENRICHED
+        freq = 50
+        num_logs = ${toString cfg.numLogs}
+        max_log_file = ${toString cfg.maxLogFile}
+        max_log_file_action = ROTATE
+        space_left = 100
+        space_left_action = SYSLOG
+        admin_space_left = 50
+        admin_space_left_action = SUSPEND
+        disk_full_action = SUSPEND
+        disk_error_action = SUSPEND
+      '';
 
-    # Enable audit at boot (kernel parameter)
-    security.audit = {
-      enable = true;
-      failureMode = cfg.failureMode;
+      # Enable audit at boot (kernel parameter)
+      security.audit = {
+        enable = true;
+        failureMode = cfg.failureMode;
 
-      rules = [
-        # Delete all existing rules
-        "-D"
+        rules = [
+          # Delete all existing rules
+          "-D"
 
-        # Set buffer size for busy systems
-        "-b 8192"
+          # Set buffer size for busy systems
+          "-b 8192"
 
-        # Failure mode (0=silent, 1=printk, 2=panic)
-        "-f ${if cfg.failureMode == "silent" then "0" else if cfg.failureMode == "printk" then "1" else "2"}"
+          # Failure mode (0=silent, 1=printk, 2=panic)
+          "-f ${
+            if cfg.failureMode == "silent" then
+              "0"
+            else if cfg.failureMode == "printk" then
+              "1"
+            else
+              "2"
+          }"
 
-        # Monitor sensitive files
-        "-w /etc/passwd -p wa -k identity"
-        "-w /etc/group -p wa -k identity"
-        "-w /etc/shadow -p wa -k identity"
-        "-w /etc/gshadow -p wa -k identity"
-        "-w /etc/sudoers -p wa -k sudoers"
-        "-w /etc/sudoers.d/ -p wa -k sudoers"
+          # Monitor sensitive files
+          "-w /etc/passwd -p wa -k identity"
+          "-w /etc/group -p wa -k identity"
+          "-w /etc/shadow -p wa -k identity"
+          "-w /etc/gshadow -p wa -k identity"
+          "-w /etc/sudoers -p wa -k sudoers"
+          "-w /etc/sudoers.d/ -p wa -k sudoers"
 
-        # Monitor SSH configuration and keys
-        "-w /etc/ssh/ -p wa -k sshd_config"
-        "-w /root/.ssh/ -p wa -k ssh_keys"
+          # Monitor SSH configuration and keys
+          "-w /etc/ssh/ -p wa -k sshd_config"
+          "-w /root/.ssh/ -p wa -k ssh_keys"
 
-        # Monitor network configuration
-        "-w /etc/hosts -p wa -k network_config"
-        "-w /etc/hostname -p wa -k network_config"
-        "-w /etc/resolv.conf -p wa -k network_config"
+          # Monitor network configuration
+          "-w /etc/hosts -p wa -k network_config"
+          "-w /etc/hostname -p wa -k network_config"
+          "-w /etc/resolv.conf -p wa -k network_config"
 
-        # Monitor time changes
-        "-a always,exit -F arch=b64 -S adjtimex -S settimeofday -k time_change"
-        "-a always,exit -F arch=b32 -S adjtimex -S settimeofday -S stime -k time_change"
-        "-a always,exit -F arch=b64 -S clock_settime -k time_change"
-        "-a always,exit -F arch=b32 -S clock_settime -k time_change"
-        "-w /etc/localtime -p wa -k time_change"
+          # Monitor time changes
+          "-a always,exit -F arch=b64 -S adjtimex -S settimeofday -k time_change"
+          "-a always,exit -F arch=b32 -S adjtimex -S settimeofday -S stime -k time_change"
+          "-a always,exit -F arch=b64 -S clock_settime -k time_change"
+          "-a always,exit -F arch=b32 -S clock_settime -k time_change"
+          "-w /etc/localtime -p wa -k time_change"
 
-        # Monitor kernel module loading/unloading (syscalls only, NixOS has no /sbin)
-        "-a always,exit -F arch=b64 -S init_module -S delete_module -S finit_module -k modules"
-        "-a always,exit -F arch=b32 -S init_module -S delete_module -S finit_module -k modules"
+          # Monitor kernel module loading/unloading (syscalls only, NixOS has no /sbin)
+          "-a always,exit -F arch=b64 -S init_module -S delete_module -S finit_module -k modules"
+          "-a always,exit -F arch=b32 -S init_module -S delete_module -S finit_module -k modules"
 
-        # Monitor mount operations
-        "-a always,exit -F arch=b64 -S mount -S umount2 -k mounts"
-        "-a always,exit -F arch=b32 -S mount -S umount -S umount2 -k mounts"
+          # Monitor mount operations
+          "-a always,exit -F arch=b64 -S mount -S umount2 -k mounts"
+          "-a always,exit -F arch=b32 -S mount -S umount -S umount2 -k mounts"
 
-        # Monitor privileged commands (NixOS wrapper paths)
-        "-a always,exit -F path=/run/wrappers/bin/sudo -F perm=x -k privileged_sudo"
-        "-a always,exit -F path=/run/wrappers/bin/su -F perm=x -k privileged_su"
+          # Monitor privileged commands (NixOS wrapper paths)
+          "-a always,exit -F path=/run/wrappers/bin/sudo -F perm=x -k privileged_sudo"
+          "-a always,exit -F path=/run/wrappers/bin/su -F perm=x -k privileged_su"
 
-        # Monitor login/logout events
-        "-w /var/log/lastlog -p wa -k logins"
-        "-w /var/log/wtmp -p wa -k logins"
-        "-w /var/log/btmp -p wa -k logins"
+          # Monitor login/logout events
+          "-w /var/log/lastlog -p wa -k logins"
+          "-w /var/log/wtmp -p wa -k logins"
+          "-w /var/log/btmp -p wa -k logins"
 
-        # Monitor cron jobs
-        "-w /etc/cron.d/ -p wa -k cron"
-        "-w /etc/crontab -p wa -k cron"
+          # Monitor cron jobs
+          "-w /etc/cron.d/ -p wa -k cron"
+          "-w /etc/crontab -p wa -k cron"
 
-        # Monitor PAM configuration
-        "-w /etc/pam.d/ -p wa -k pam"
-        "-w /etc/security/ -p wa -k pam"
+          # Monitor PAM configuration
+          "-w /etc/pam.d/ -p wa -k pam"
+          "-w /etc/security/ -p wa -k pam"
 
-        # Monitor systemd service changes
-        "-w /etc/systemd/ -p wa -k systemd"
+          # Monitor systemd service changes
+          "-w /etc/systemd/ -p wa -k systemd"
+        ];
+      };
+
+      # Add ausearch and aureport tools
+      environment.systemPackages = with pkgs; [
+        audit # Provides ausearch, aureport, auditctl
       ];
-    };
-
-    # Add ausearch and aureport tools
-    environment.systemPackages = with pkgs; [
-      audit  # Provides ausearch, aureport, auditctl
-    ];
-  })
+    })
     (mkIf (!cfg.enable) {
-    # Explicitly disable auditd when module is imported but not enabled
-    security.auditd.enable = false;
-    security.audit.enable = false;
-  })
+      # Explicitly disable auditd when module is imported but not enabled
+      security.auditd.enable = false;
+      security.audit.enable = false;
+    })
   ];
 }

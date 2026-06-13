@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 with lib;
 
@@ -83,7 +88,7 @@ in
           # Linting tools
           rumdl
           yamllint
-          libxml2  # provides xmllint
+          libxml2 # provides xmllint
 
           # Development tools
           jq
@@ -155,7 +160,7 @@ in
 
       extra = mkOption {
         type = types.listOf types.package;
-        default = [];
+        default = [ ];
         description = "Additional packages to install";
       };
 

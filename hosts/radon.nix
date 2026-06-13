@@ -9,18 +9,17 @@
   system.primaryUser = "joost";
 
   # Don't let nix-darwin manage nix configuration since we use Determinate
-  nix.settings = {};
+  nix.settings = { };
 
   # Prevent nix-darwin from managing nix.conf
   environment.etc."nix/nix.conf".enable = false;
 
-  imports =
-    [
-      ./mac-shared.nix
-      ../modules/darwin-auto-update.nix
-      ../modules/darwin-nix-gc.nix
-      ../modules/darwin-tailscaled.nix
-    ];
+  imports = [
+    ./mac-shared.nix
+    ../modules/darwin-auto-update.nix
+    ../modules/darwin-nix-gc.nix
+    ../modules/darwin-tailscaled.nix
+  ];
 
   # Stay current: rebuild from the GitHub flake daily (launchd equivalent of
   # the colleague Linux servers' services.nixosAutoUpdate at 04:00).

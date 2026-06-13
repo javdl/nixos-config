@@ -1,11 +1,18 @@
 { isWSL, inputs, ... }:
 
-{ config, lib, pkgs, osConfig, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  osConfig,
+  ...
+}:
 
 let
   isDarwin = pkgs.stdenv.isDarwin;
   isLinux = pkgs.stdenv.isLinux;
-in {
+in
+{
   imports = [ ./cachix-daemon.nix ]; # auto-push locally-built paths to javdl-nixos-config cachix
 
   # Home-manager state version
@@ -54,8 +61,11 @@ in {
 
   programs.bash = {
     enable = true;
-    shellOptions = [];
-    historyControl = [ "ignoredups" "ignorespace" ];
+    shellOptions = [ ];
+    historyControl = [
+      "ignoredups"
+      "ignorespace"
+    ];
     initExtra = ''
       _update_ssh_agent() {
         local sock best=""

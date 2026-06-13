@@ -7,7 +7,7 @@
 { lib, ... }: {
   disko.devices.disk.main = {
     type = "disk";
-    device = lib.mkDefault "/dev/sda";  # Hetzner Cloud CPX uses /dev/sda
+    device = lib.mkDefault "/dev/sda"; # Hetzner Cloud CPX uses /dev/sda
     content = {
       type = "gpt";
       partitions = {
