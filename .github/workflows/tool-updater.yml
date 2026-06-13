@@ -1,0 +1,69 @@
+name: Overlay 🛠️ Tool Updater ✨
+
+# Weekly: bump the pinned versions of the pre-built CLI tools in lib/overlays.nix
+# (codex, beads_rust, ntm, dcg, cass, ubs, gemini-cli, ...) to their latest upstream
+# releases, recompute every hash, and open a PR. Mirrors the flake lock-updater.
+
+on:
+  schedule:
+    # Mondays at 14:07 UTC (just after the flake.lock updater)
+    - cron: "7 14 * * 1"
+  workflow_dispatch:
+
+# Don't let two updater runs race on the same branch.
+concurrency:
+  group: overlay-tool-updater
+  cancel-in-progress: true
+
+jobs:
+  update-tools:
+    name: Update overlay tool versions
+    runs-on: ubuntu-22.04
+    timeout-minutes: 65
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+
+      # Claude needs nix-prefetch-url / nix hash convert / nix build to recompute
+      # and verify hashes.
+      - uses: DeterminateSystems/nix-installer-action@main
+        with:
+          determinate: true
+      - uses: DeterminateSystems/flakehub-cache-action@main
+
+      - name: Update overlay tool versions with Claude Code
+        uses: ./.github/actions/claude-code-action
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          prompt_file: .github/prompts/update-overlay-tools.md
+          allowed_tools: "Bash,Edit,Read,Write,Grep,Glob"
+          timeout_minutes: "55"
+          # Write outside the repo so the summary is not committed into the PR.
+          output_file: /tmp/claude-summary.md
+
+      - name: Ensure a PR body exists
+        if: always()
+        run: |
+          test -s /tmp/claude-summary.md || \
+            printf 'Automated weekly update of pinned tool versions in `lib/overlays.nix`.\n' \
+            > /tmp/claude-summary.md
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          # PAT (not GITHUB_TOKEN) so the PR's CI checks actually run.
+          token: ${{ secrets.GH_TOKEN_FOR_UPDATES }}
+          branch: automated/overlay-tool-updates
+          delete-branch: true
+          # Only ever commit the overlay file — never the action's stray
+          # output.txt / output.json scratch files.
+          add-paths: lib/overlays.nix
+          commit-message: "chore: update overlay tool versions"
+          title: "chore: update overlay tool versions"
+          body-path: /tmp/claude-summary.md
+          labels: |
+            dependencies
+            automated
