@@ -126,8 +126,10 @@
     in
     {
       # `nix fmt` — formats this repo's own Nix sources only. Skips vendored trees
-      # (mcp_agent_mail, skills, .claude worktrees) and the dead all-comment
-      # modules/programs.nix, which is not valid standalone Nix.
+      # (mcp_agent_mail, skills, .claude worktrees), the dead all-comment
+      # modules/programs.nix (not valid standalone Nix) and truncated
+      # users/music/autostart.nix, and the machine-generated lib/overlays.nix
+      # (rewritten wholesale by the tool-updater automation — not hand-formatted).
       formatter = forAllSystems (
         system:
         let
@@ -146,6 +148,7 @@
             find flake.nix lib modules hosts users -name '*.nix' \
               ! -name programs.nix \
               ! -path '*/music/autostart.nix' \
+              ! -name overlays.nix \
               -print0 | xargs -0 nixfmt
           '';
         }
@@ -193,6 +196,7 @@
                 if ! find flake.nix lib modules hosts users -name '*.nix' \
                   ! -name programs.nix \
                   ! -path '*/music/autostart.nix' \
+                  ! -name overlays.nix \
                   -print0 | xargs -0 nixfmt --check; then
                   echo "Nix files are not formatted. Run 'nix fmt' to fix." >&2
                   exit 1
