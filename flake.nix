@@ -334,6 +334,8 @@
         };
         modules = [
           ./users/githubrunner/home-manager.nix
+          # mise (dev tool / runtime version manager) on every machine
+          ({ pkgs, ... }: { home.packages = [ pkgs.mise ]; })
         ];
       };
 
@@ -373,6 +375,7 @@
                 playerctl # Media player control (MPRIS)
                 localsend # Local file sharing (LAN)
                 inxi # System information tool
+                mise # Dev tool / runtime version manager
                 # Wayland tools managed by Omarchy: hyprland, waybar, mako, etc.
               ];
 
@@ -407,10 +410,13 @@
               isWSL = false;
               inherit inputs;
             })
-            ({ lib, ... }: {
+            ({ lib, pkgs, ... }: {
               nixpkgs.config.allowUnfree = true;
               home.username = "joost";
               home.homeDirectory = "/home/joost";
+
+              # mise (dev tool / runtime version manager) on every machine
+              home.packages = [ pkgs.mise ];
 
               # Protect Omarchy-managed directories
               home.file.".config/omarchy".enable = false;
