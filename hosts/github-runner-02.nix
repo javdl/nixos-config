@@ -267,6 +267,15 @@
       # runner-owned, so `rm` only needs write-on-parent (no sudo).
       find /var/lib/github-runner-work -type d -name ".lighthouseci" -exec rm -rf {} + 2>/dev/null || true
 
+      # Visual-regression writes diff PNGs from a root container into the
+      # workspace. Those land in root-owned subdirs the non-root runner user
+      # cannot delete, so they break the next job's checkout (EACCES on
+      # unlink). Clear them with a throwaway root container.
+      if command -v docker >/dev/null 2>&1; then
+        docker run --rm -v /var/lib/github-runner-work:/w busybox \
+          find /w -type d -name '__diff_output__' -prune -exec rm -rf {} + 2>/dev/null || true
+      fi
+
       # Tmpfs pressure: clear runtime caches first (they re-download on use)
       if [ "$TMPFS_PCT" -ge 80 ]; then
         echo "Tmpfs /run pressure — clearing _actions/_temp caches"
