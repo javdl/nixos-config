@@ -275,6 +275,12 @@
         server = true;
       };
 
+      nixosConfigurations.github-runner-04 = mkSystem "github-runner-04" {
+        system = "x86_64-linux";
+        user = "github-runner";
+        server = true;
+      };
+
       nixosConfigurations.loom = mkSystem "loom" {
         system = "x86_64-linux";
         user = "joost";

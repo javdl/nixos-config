@@ -84,8 +84,9 @@ Dedicated self-hosted runner for the `fuww` GitHub organization:
 |------------------|----------------------|-----------------------|------------------|------------------------------------------|
 | github-runner-02 | `github-runner-02`   | `#github-runner-02`   | CPX62 (cloud)    | `users/github-runner/home-manager-server.nix` |
 | github-runner-03 | `github-runner-03`   | `#github-runner-03`   | EX63 (dedicated) | `users/github-runner/home-manager-server.nix` |
+| github-runner-04 | `github-runner-04`   | `#github-runner-04`   | EX63 (dedicated, 178.63.233.19) | `users/github-runner/home-manager-server.nix` |
 
-The runners use `modules/github-actions-runner.nix` for CI packages (Docker, languages, build tools, browsers, cloud CLIs) and `services.github-runners` for runner registration. Tokens are SOPS-encrypted in `secrets/github-runner-{01,02,03}.yaml`. See `docs/github-runner-hetzner-setup.md` for full setup/scaling guide.
+The runners use `modules/github-actions-runner.nix` for CI packages (Docker, languages, build tools, browsers, cloud CLIs) and `services.github-runners` for runner registration. Tokens are SOPS-encrypted in `secrets/github-runner-{01,02,03,04}.yaml`. See `docs/github-runner-hetzner-setup.md` for full setup/scaling guide.
 
 **Cloud (CPX/CCX) vs dedicated (EX) hardware:** runner-01 and runner-02 are Hetzner Cloud VMs and import `modules/hetzner-cloud-hardware.nix` + `modules/disko-hetzner-cloud.nix` (qemu-guest profile, single `/dev/sda`). runner-03 is bare-metal EX63 and imports `modules/hetzner-dedicated-hardware.nix` + `modules/disko-hetzner-dedicated.nix` (no qemu-guest, NVMe initrd, `/dev/nvme0n1`). The second NVMe (`/dev/nvme1n1`) is intentionally left unmanaged so a future host can mount it at `/var/lib/github-runner-work` without rebuilding the root layout.
 
