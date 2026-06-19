@@ -188,6 +188,21 @@ in
     # Enable git-lfs globally so `git lfs` subcommand works in runner jobs
     programs.git.lfs.enable = true;
 
+    # Normalize runner checkout file permissions.
+    # The upstream services.github-runners module defaults each runner unit to
+    # UMask=0066, so actions/checkout writes files 0600 (owner-only). Docker
+    # `COPY` preserves those modes, baking owner-only files into images whose
+    # runtime user is non-root — which then hit "permission denied" at runtime
+    # (this broke ALL product-database-feeds jobs, OPS-2326). 0022 matches the
+    # GitHub-hosted runner default (files 0644, dirs 0755) and applies to every
+    # runner defined on the host.
+    systemd.services = mapAttrs' (
+      name: _:
+      nameValuePair "github-runner-${name}" {
+        serviceConfig.UMask = mkForce "0022";
+      }
+    ) config.services.github-runners;
+
     # Clean stale /tmp directories (self-hosted runners persist across jobs)
     systemd.tmpfiles.rules = [
       "d /tmp 1777 root root 2d"
