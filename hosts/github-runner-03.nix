@@ -307,11 +307,16 @@
   };
 
   # Long-lived runners sharing 1 registration token at first start.
-  # i9-9900K = 8 cores / 16 threads, so 16 runner slots maps 1:1 with HT lanes.
+  # i9-9900K = 8 cores / 16 threads. Slots capped at 8 (not 16): CI builds are
+  # memory-bound, not thread-bound — 16 parallel cc1plus/Next.js builds exhausted
+  # 64GB and triggered global OOM that killed runner workers ("lost communication
+  # with the server"). 8 slots ≈ 8GB/slot. The self-hosted-16-cores label still
+  # advertises the 16 hardware threads (20+ fuww workflows target it), so it stays
+  # pinned regardless of slot count.
   # See github-runner-02.nix for full design rationale (ephemeral=false, workDir off tmpfs).
   systemd.tmpfiles.rules =
     let
-      runnerCount = 16;
+      runnerCount = 8;
     in
     lib.genList (
       i: "d /var/lib/github-runner-work/fuww-runner-${toString (i + 1)} 0700 github-runner users -"
@@ -319,7 +324,7 @@
 
   services.github-runners =
     let
-      runnerCount = 16;
+      runnerCount = 8;
     in
     lib.listToAttrs (
       lib.genList (
@@ -339,7 +344,7 @@
             "hetzner"
             "nixos"
             "ex63"
-            "self-hosted-${toString runnerCount}-cores"
+            "self-hosted-16-cores"
           ];
           user = "github-runner";
           extraPackages = config.services.github-actions-runner.packages.forRunner;
