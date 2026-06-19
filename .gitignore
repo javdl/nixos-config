@@ -4,6 +4,7 @@ iso/nixos.iso
 .aider*
 .env
 .qodo
+.direnv/
 .claude/worktrees/
 .claude/scheduled_tasks.lock
 backup.tar.gz
