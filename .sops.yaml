@@ -19,11 +19,9 @@ keys:
   - &joostclaw age17n047nq8vclhr2gja7fe8z9uv8pug49r6k6c27cxd92jgnmups2qcdte99
   - &github-runner-02 age1payjujelqgvgpkpapl0cske00waj5vn6xtrz2rr9ag8gt8rphyls9d2dz4
   - &github-runner-03 age1g8sf3amu7jy4qhmdyzygw7uuhq9rlejq8kt0mst24t935fh2054sqwfty4
-  # github-runner-04: placeholder = loom's age key until the EX63 (178.63.233.19)
-  # is provisioned. After provisioning, derive the host's real age key
-  # (`ssh-keyscan 178.63.233.19 | grep ed25519 | ssh-to-age`), replace the value
-  # below, then `sops updatekeys secrets/github-runner-04.yaml`.
-  - &github-runner-04 age1p26cwwyu2v4jexue6z7krrua9skqv0p3aj4ad3su4m7varky3dwqk0zphj
+  # github-runner-04: EX63 dedicated (178.63.233.19). Real host age key,
+  # derived post-provision via `ssh-keyscan 178.63.233.19 | grep ed25519 | ssh-to-age`.
+  - &github-runner-04 age1w95v8uh8gkzcptzde64nu2d0q4ujyfmn3y75dsuyy7mnt9uerersscpke0
   - &loom age1p26cwwyu2v4jexue6z7krrua9skqv0p3aj4ad3su4m7varky3dwqk0zphj
   # hermes-fu: placeholder. Replace with the real age recipient (derived from
   # /etc/ssh/ssh_host_ed25519_key.pub via `ssh-to-age`) after provisioning the VM.
