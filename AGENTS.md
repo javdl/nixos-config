@@ -217,6 +217,18 @@ ssh root@<ip> "nixos-rebuild switch --flake /nix-config#<hostname>"
 
 </details>
 
+### Agent Dev Boxes (rondo)
+
+Boxes that run autonomous coding agents (currently [rondo](https://github.com/sandsower/rondo) — a Claude Code agent that polls Linear and works issues in isolated git-worktree workspaces).
+
+| Server        | Host Config        | Flake Target          | Instance        | User Config         |
+|---------------|--------------------|-----------------------|-----------------|---------------------|
+| agent-jay-01  | `agent-jay-01`     | `#agent-jay-01`       | CCX33 (reused github-runner-01, TS 100.78.158.57) | `users/agent-jay/` |
+
+Built for reuse: `modules/agent-dev-box.nix` holds the common host config and `users/agent-lib/home-manager.nix` the shared (git-identity-parameterized) home-manager profile, so host and per-agent files are thin. **To add another machine for an agent, or a new agent user, see `docs/agent-dev-box-setup.md`.**
+
+rondo runs in the **deps + manual run** model: NixOS provides the dev box (+ Docker + `mise`); the agent operator installs the runtime via `mise`, runs `claude` /login (OAuth), exports `LINEAR_API_KEY`, and launches rondo by hand. No rondo secrets live in the repo.
+
 ## Architecture
 
 ### Core Structure
