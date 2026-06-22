@@ -35,16 +35,11 @@
   # Auto-update from this host's flake target (daily at 04:00, see the module)
   services.nixosAutoUpdate.flake = "github:javdl/nixos-config#agent-jay-01";
 
-  # Repo updater — keep the repos rondo works on fresh under the agent's home
-  services.repoUpdater = {
-    enable = true;
-    user = "agent-jay";
-    projectsDir = "/home/agent-jay/code";
-    timerInterval = "6h";
-    repos = [
-      "fuww/api"
-    ];
-  };
+  # NOTE: repoUpdater is intentionally NOT enabled here. Its root-run service
+  # creates ~/.config/ru before home-manager populates the user's XDG dir, which
+  # leaves ~/.config root-owned and blocks home-manager from writing
+  # ~/.config/git/config etc. rondo clones each issue's repo into its own
+  # workspace, so the human-oriented repo sync isn't needed on an agent box.
 
   # This value determines the NixOS release first installed; do not change it.
   system.stateVersion = "25.05";
