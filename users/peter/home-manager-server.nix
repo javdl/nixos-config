@@ -179,14 +179,6 @@ in
     fi
   '';
 
-  # programs.git manages ~/.config/git/config as a read-only store symlink, so
-  # `git config --global ...` fails to lock it. Git writes --global to
-  # ~/.gitconfig when it exists, and reads it after (overriding) the XDG file —
-  # so a writable ~/.gitconfig lets Peter override the declarative defaults.
-  home.activation.mutableGitconfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    [ -e "$HOME/.gitconfig" ] || $DRY_RUN_CMD touch "$HOME/.gitconfig"
-  '';
-
   #---------------------------------------------------------------------
   # Programs
   #---------------------------------------------------------------------
