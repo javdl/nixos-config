@@ -73,9 +73,11 @@ The runtime + checkout live in the agent's home (deps+manual model), not in Nix.
 Run as `agent-jay` (`sudo -iu agent-jay`):
 
 ```bash
-# 1. Clone + build rondo, install its pinned runtime (elixir/erlang/node/claude) via mise
+# 1. Clone + build rondo. The runtime (erlang OTP 28 + elixir 1.19.5, node) comes
+#    from nixpkgs in the agent profile — NOT mise: mise compiles erlang from source
+#    (kerl) which fails on NixOS (no ncurses/openssl in /usr). Build with plain mix.
 mkdir -p ~/git && git clone https://github.com/sandsower/rondo.git ~/git/rondo
-cd ~/git/rondo/elixir && mise trust && mise install && mise exec -- mix setup && mise exec -- mix build
+cd ~/git/rondo/elixir && mix setup && mix build
 
 # 2. beislid action-policy stub (rondo calls `beislid`; the stub always allows)
 #    — install to ~/.local/bin/beislid (see the script in this repo's history / Peter's setup)

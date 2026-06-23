@@ -147,8 +147,11 @@ in
       uv
       rustup
       cargo-generate
-      elixir
-      erlang
+      # Beam runtime pinned to what rondo requires (erlang OTP 28 + elixir 1.19.5).
+      # nixpkgs provides these directly, avoiding mise's source-compile of erlang
+      # which fails on NixOS (kerl can't find ncurses/openssl in /usr).
+      beam.interpreters.erlang_28
+      beam.packages.erlang_28.elixir_1_19
       pre-commit
       zed-editor # Remote dev server for local Zed connections via SSH
 

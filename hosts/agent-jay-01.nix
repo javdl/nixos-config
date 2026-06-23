@@ -99,10 +99,11 @@
       EnvironmentFile = config.sops.templates."rondo.env".path;
       Environment = [
         "HOME=/home/agent-jay"
-        # ~/.local/bin for the beislid policy stub + claude; mise shims for the runtime.
-        "PATH=/home/agent-jay/.local/bin:/home/agent-jay/.local/share/mise/shims:/etc/profiles/per-user/agent-jay/bin:/run/current-system/sw/bin"
+        # Runtime comes from the nixpkgs beam in agent-jay's profile (not mise).
+        # ~/.local/bin: beislid policy stub + claude (native installer).
+        "PATH=/home/agent-jay/.local/bin:/etc/profiles/per-user/agent-jay/bin:/run/current-system/sw/bin"
       ];
-      ExecStart = "${pkgs.mise}/bin/mise exec -- ./bin/rondo --i-understand-that-this-will-be-running-without-the-usual-guardrails --port 5000 /home/agent-jay/git/api/WORKFLOW.md";
+      ExecStart = "/home/agent-jay/git/rondo/elixir/bin/rondo --i-understand-that-this-will-be-running-without-the-usual-guardrails --port 5000 /home/agent-jay/git/api/WORKFLOW.md";
       Restart = "on-failure";
       RestartSec = 15;
     };
