@@ -23,6 +23,9 @@ keys:
   # derived post-provision via `ssh-keyscan 178.63.233.19 | grep ed25519 | ssh-to-age`.
   - &github-runner-04 age1w95v8uh8gkzcptzde64nu2d0q4ujyfmn3y75dsuyy7mnt9uerersscpke0
   - &loom age1p26cwwyu2v4jexue6z7krrua9skqv0p3aj4ad3su4m7varky3dwqk0zphj
+  # agent-jay-01: reused github-runner-01 box. Derived from its SSH host key via
+  # `ssh-keyscan 100.78.158.57 | grep ed25519 | ssh-to-age`.
+  - &agent-jay-01 age1k77q70qv8h6kp7n8pw92mcyww62xkmwps50mknmzdjwn6s29wu2s3gav4w
   # hermes-fu: placeholder. Replace with the real age recipient (derived from
   # /etc/ssh/ssh_host_ed25519_key.pub via `ssh-to-age`) after provisioning the VM.
   # Until then, secrets/hermes-fu.yaml cannot be encrypted (creation rule below
@@ -60,6 +63,14 @@ creation_rules:
   - path_regex: secrets/loom\.yaml$
     key_groups:
       - age:
+          - *loom
+
+  # agent-jay-01 secrets (rondo LINEAR_API_KEY). Encrypted to the host key (so
+  # the box decrypts at runtime) and loom (so it can be re-edited from loom).
+  - path_regex: secrets/agent-jay-01\.yaml$
+    key_groups:
+      - age:
+          - *agent-jay-01
           - *loom
 
   # hermes-fu secrets (FashionUnited company-wide hermes-agent env)

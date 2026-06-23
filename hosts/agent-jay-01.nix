@@ -35,6 +35,34 @@
   # Auto-update from this host's flake target (daily at 04:00, see the module)
   services.nixosAutoUpdate.flake = "github:javdl/nixos-config#agent-jay-01";
 
+  # Peter operates this agent box. He logs in as himself (peter@) and uses
+  # `sudo -iu agent-jay` for agent ops (claude /login, rondo). Tailscale SSH also
+  # needs "peter" in the tailnet ACL ssh-rule users; see docs/agent-dev-box-setup.md.
+  users.users.peter = {
+    isNormalUser = true;
+    home = "/home/peter";
+    extraGroups = [
+      "docker"
+      "wheel"
+    ];
+    shell = pkgs.zsh;
+    hashedPassword = "!"; # SSH-key login only; passwordless sudo via wheel
+    openssh.authorizedKeys.keys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE3Ygpk7EQsrYKsE4wUAUdvuuRbWeDU5evzX5Cc07JtD peterpal@fu098"
+    ];
+  };
+
+  # rondo's Linear API key, SOPS-encrypted (secrets/agent-jay-01.yaml), decrypted
+  # at runtime via the box's SSH host key. Lands at /run/secrets/linear_api_key
+  # owned by agent-jay; the rondo systemd service will read it (WORKFLOW.md uses
+  # $LINEAR_API_KEY).
+  sops.defaultSopsFile = ../secrets/agent-jay-01.yaml;
+  sops.secrets.linear_api_key = {
+    owner = "agent-jay";
+    group = "users";
+    mode = "0400";
+  };
+
   # NOTE: repoUpdater is intentionally NOT enabled here. Its root-run service
   # creates ~/.config/ru before home-manager populates the user's XDG dir, which
   # leaves ~/.config root-owned and blocks home-manager from writing
