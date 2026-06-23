@@ -230,6 +230,13 @@
       "--accept-routes"
       "--accept-dns=false"
       "--advertise-exit-node"
+      # Self-declare as a devbox so the tailnet's devbox grants/ssh rules apply
+      # (agent mesh, group:it/devbox-users access as autogroup:nonroot). Only
+      # takes effect at first auth, so the provisioning authkey must be
+      # authorized for tag:devboxes (tag owners: group:it, group:management).
+      # autoconnect only runs `tailscale up` when logged out, so this never
+      # re-tags an already-running node.
+      "--advertise-tags=tag:devboxes"
     ];
   };
 

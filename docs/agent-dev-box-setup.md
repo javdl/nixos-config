@@ -71,6 +71,18 @@ cd ~/git/rondo && ./start_rondo.sh   # or ./bin/rondo --port 5000 <repo>/WORKFLO
 The target repo's CI gates (e.g. `mix ecto.migrate`) bring up their own service
 deps via Docker, which is enabled on the box.
 
+## Tailscale tag
+
+Agent boxes must be **`tag:devboxes`** so the tailnet's devbox grants/ssh rules
+apply (agent mesh, and `group:it`/`group:devbox-users` SSH access as
+`autogroup:nonroot`). `modules/agent-dev-box.nix` self-declares it via
+`--advertise-tags=tag:devboxes`, which only takes effect at first auth — so the
+**provisioning authkey must be authorized for `tag:devboxes`** (tag owners:
+`group:it`, `group:management`). A box reused from another tag (e.g. agent-jay-01
+came from `tag:github-runner`) must be retagged once in the admin console
+(Machines → host → Edit ACL tags); the self-tag then keeps fresh provisions
+correct.
+
 ## Operator access (Tailscale SSH)
 
 These boxes are reachable only over **Tailscale SSH** (public port 22 is firewalled
