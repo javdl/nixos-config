@@ -22,14 +22,14 @@
       "wheel"
     ];
     shell = pkgs.zsh;
-    # Locked until a real password hash is set (SSH-key login only for now).
-    # Generate with: mkpasswd -m sha-512
+    # Password-login disabled; SSH-key login only (admin `joost` can also
+    # `sudo -iu agent-jay`). Set a hash with `mkpasswd -m sha-512` if console
+    # login is ever needed.
     hashedPassword = "!";
     openssh.authorizedKeys.keys = [
-      # TODO: paste agent jay's SSH public key(s) so they can log in directly.
-      # Until then, admin user `joost` (from modules/agent-dev-box.nix) can reach
-      # the box and `sudo -iu agent-jay`.
-      # Format: "ssh-ed25519 AAAA... comment"
+      # Generated keypair for agent jay (private half held by the operator).
+      # Fingerprint: SHA256:hDJ1Zn6sn/CRgv36uLHom3irMNKqqz+Ph5jh2cOQd1I
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIphfnisYvIVqlAvLqjGkIKe1OO5mgCvdmgYTyKkW2Rh agent-jay@agent-jay-01"
     ];
   };
 }
