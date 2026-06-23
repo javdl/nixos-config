@@ -71,6 +71,33 @@ cd ~/git/rondo && ./start_rondo.sh   # or ./bin/rondo --port 5000 <repo>/WORKFLO
 The target repo's CI gates (e.g. `mix ecto.migrate`) bring up their own service
 deps via Docker, which is enabled on the box.
 
+## Operator access (Tailscale SSH)
+
+These boxes are reachable only over **Tailscale SSH** (public port 22 is firewalled
+upstream). Tailscale SSH authorizes by the **tailnet ACL `ssh` block**, *not* by
+`authorized_keys` — the local account you land on must be listed in the rule's
+`users`, and your device must match `src`. The agent account (`agent-jay`) is a
+service account run by the rondo systemd unit; humans operate it via their own
+login + `sudo -iu agent-jay`.
+
+To let an operator (e.g. Peter) in, the tailnet ACL needs a rule like:
+
+```json
+{
+  "action": "accept",
+  "src":    ["tag:devboxes", "peterpal@your-tailnet"],
+  "dst":    ["tag:devboxes"],
+  "users":  ["joost", "root", "peter", "agent-jay"]
+}
+```
+
+- `users` must include the local account being used (`peter` for `peter@`,
+  `agent-jay` for direct `jay@`/`agent-jay@`).
+- `src` must include the operator's device. Tagged devboxes (e.g. peterbot) are
+  already covered; a personal laptop must be added explicitly.
+- The corresponding local user must exist on the host (joost is in
+  `modules/agent-dev-box.nix`; per-operator users are added in the host file).
+
 ## The agent-jay-01 box
 
 Reuses the decommissioned `github-runner-01` Hetzner CCX33 (8 vCPU / 30 GB /
