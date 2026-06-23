@@ -1153,8 +1153,10 @@ in
     secureSocket = false;
 
     extraConfig = ''
-      # Run shell as login shell to source Nix profiles (needed for gt/claude in spawned sessions)
-      set-option -g default-command "$SHELL -l"
+      # Run zsh as login shell to source Nix profiles (needed for gt/claude in spawned sessions).
+      # Explicit zsh (not $SHELL) so tmux launched from fish/nushell still gets zsh.
+      set-option -g default-command "${pkgs.zsh}/bin/zsh -l"
+      set-option -g default-shell "${pkgs.zsh}/bin/zsh"
 
       set -ga terminal-overrides ",*256col*:Tc"
 
