@@ -63,6 +63,51 @@
     mode = "0400";
   };
 
+  # Render an EnvironmentFile (KEY=VALUE) for the rondo service from the secret.
+  sops.templates."rondo.env" = {
+    content = "LINEAR_API_KEY=${config.sops.placeholder.linear_api_key}\n";
+    owner = "agent-jay";
+    group = "users";
+    mode = "0400";
+  };
+
+  # rondo as a managed service (runner-style): replicates Peter's working
+  # invocation (./bin/rondo … --port 5000 ~/git/api/WORKFLOW.md) but takes
+  # LINEAR_API_KEY from SOPS. The agent runtime (elixir/erlang/node/claude) is
+  # provided by mise from the rondo checkout's mise config; Claude Code auth is a
+  # one-time `claude` /login as agent-jay (OAuth, persists in ~/.claude).
+  #
+  # ConditionPathExists keeps the unit dormant until the operator has cloned and
+  # built rondo (deps+manual model) — so it never crash-loops before bring-up.
+  # See docs/agent-dev-box-setup.md for the one-time setup.
+  systemd.services.rondo = {
+    description = "Rondo autonomous Claude Code agent (Linear tracker)";
+    after = [
+      "network-online.target"
+      "sops-install-secrets.service"
+    ];
+    wants = [ "network-online.target" ];
+    wantedBy = [ "multi-user.target" ];
+    unitConfig.ConditionPathExists = [
+      "/home/agent-jay/git/rondo/elixir/bin/rondo"
+      "/home/agent-jay/git/api/WORKFLOW.md"
+    ];
+    serviceConfig = {
+      User = "agent-jay";
+      Group = "users";
+      WorkingDirectory = "/home/agent-jay/git/rondo/elixir";
+      EnvironmentFile = config.sops.templates."rondo.env".path;
+      Environment = [
+        "HOME=/home/agent-jay"
+        # ~/.local/bin for the beislid policy stub + claude; mise shims for the runtime.
+        "PATH=/home/agent-jay/.local/bin:/home/agent-jay/.local/share/mise/shims:/etc/profiles/per-user/agent-jay/bin:/run/current-system/sw/bin"
+      ];
+      ExecStart = "${pkgs.mise}/bin/mise exec -- ./bin/rondo --i-understand-that-this-will-be-running-without-the-usual-guardrails --port 5000 /home/agent-jay/git/api/WORKFLOW.md";
+      Restart = "on-failure";
+      RestartSec = 15;
+    };
+  };
+
   # NOTE: repoUpdater is intentionally NOT enabled here. Its root-run service
   # creates ~/.config/ru before home-manager populates the user's XDG dir, which
   # leaves ~/.config root-owned and blocks home-manager from writing

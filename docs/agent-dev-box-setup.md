@@ -54,22 +54,49 @@ Example: agent `bob` with `agent-bob-01`.
 4. Create `hosts/agent-bob-01.nix` (+ hardware) and the `flake.nix` entry with
    `user = "agent-bob"`.
 
-## Per-operator rondo setup (on the box, as the agent user)
+## rondo systemd service
+
+`hosts/agent-jay-01.nix` defines a `rondo` systemd unit that runs the agent
+unattended (runner-style): `User=agent-jay`, runtime via `mise`, `Restart=on-failure`,
+`LINEAR_API_KEY` injected from SOPS (`sops.templates."rondo.env"` →
+`/run/secrets/rendered/rondo.env`). It replicates the operator's working command:
+`mise exec -- ./bin/rondo --i-understand-… --port 5000 ~/git/api/WORKFLOW.md`.
+
+The unit is **guarded** by `ConditionPathExists` on both `~/git/rondo/elixir/bin/rondo`
+and `~/git/api/WORKFLOW.md`, so it stays dormant (no crash-loop) until the one-time
+bring-up below is done. After bring-up: `sudo systemctl start rondo`,
+`journalctl -u rondo -f`.
+
+## One-time bring-up (on the box, as the agent user)
+
+The runtime + checkout live in the agent's home (deps+manual model), not in Nix.
+Run as `agent-jay` (`sudo -iu agent-jay`):
 
 ```bash
-# 1. Runtime via mise (elixir/erlang/node/claude-code/gh)
-cd ~/git/rondo/elixir && mise trust && mise install
+# 1. Clone + build rondo, install its pinned runtime (elixir/erlang/node/claude) via mise
+mkdir -p ~/git && git clone https://github.com/sandsower/rondo.git ~/git/rondo
+cd ~/git/rondo/elixir && mise trust && mise install && mise exec -- mix setup && mise exec -- mix build
 
-# 2. Authenticate Claude Code once (OAuth — persists in ~/.claude/.credentials.json)
-claude         # then /login
+# 2. beislid action-policy stub (rondo calls `beislid`; the stub always allows)
+#    — install to ~/.local/bin/beislid (see the script in this repo's history / Peter's setup)
 
-# 3. Linear key + clone + run (see rondo README / WORKFLOW.md)
-export LINEAR_API_KEY=lin_api_...
-cd ~/git/rondo && ./start_rondo.sh   # or ./bin/rondo --port 5000 <repo>/WORKFLOW.md
+# 3. Claude Code auth — one-time, INTERACTIVE (browser device-code):
+claude          # then /login   (persists in ~/.claude/.credentials.json)
+#    Optionally keep multiple Max logins warm and rotate with `caam`
+#    (installed): `caam backup claude <profile>` per account, then `caam` to switch.
+
+# 4. GitHub access for agent-jay (rondo clones each issue's repo via SSH):
+#    add a machine/deploy SSH key to ~/.ssh + register it on GitHub, then clone the
+#    tracker's target repo + its WORKFLOW.md, e.g. ~/git/api/WORKFLOW.md.
+
+# 5. (Optional) Linear MCP for the Claude sessions rondo spawns:
+#    rondo already serves a client-side `linear_graphql` tool from $LINEAR_API_KEY;
+#    add the Linear MCP server only if richer Linear ops are needed.
 ```
 
 The target repo's CI gates (e.g. `mix ecto.migrate`) bring up their own service
-deps via Docker, which is enabled on the box.
+deps via Docker, which is enabled on the box. Once steps 1–4 are done the
+`ConditionPathExists` guards pass and `systemctl start rondo` runs it under systemd.
 
 ## Tailscale tag
 
