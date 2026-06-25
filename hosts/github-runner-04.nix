@@ -313,16 +313,18 @@
   };
 
   # Long-lived runners sharing 1 registration token at first start.
-  # i9-9900K = 8 cores / 16 threads. Slots capped at 8 (not 16): CI builds are
-  # memory-bound, not thread-bound — 16 parallel cc1plus/Next.js builds exhausted
-  # 64GB and triggered global OOM that killed runner workers ("lost communication
-  # with the server"). 8 slots ≈ 8GB/slot. The self-hosted-16-cores label still
-  # advertises the 16 hardware threads (20+ fuww workflows target it), so it stays
-  # pinned regardless of slot count.
+  # i9-9900K = 8 cores / 16 threads, 64GB. Slots capped at 6 (was 8): 8 heavy CI
+  # jobs saturated all 8 physical cores with zero headroom and starved the Nx Cloud
+  # heartbeat process past its 30s deadline, aborting the whole run group ("Nx Cloud
+  # heartbeat process failed to report its status in time"). Earlier 16-slot attempts
+  # OOM-killed workers outright. 6 slots ≈ 0.75 jobs/core + ~10GB/job — matches
+  # runner-02's stable density and leaves cores free for the heartbeat. The
+  # self-hosted-16-cores label still advertises the 16 hardware threads (20+ fuww
+  # workflows target it), so it stays pinned regardless of slot count.
   # See github-runner-02.nix for full design rationale (ephemeral=false, workDir off tmpfs).
   systemd.tmpfiles.rules =
     let
-      runnerCount = 8;
+      runnerCount = 6;
     in
     lib.genList (
       i: "d /var/lib/github-runner-work/fuww-runner-${toString (i + 1)} 0700 github-runner users -"
@@ -330,7 +332,7 @@
 
   services.github-runners =
     let
-      runnerCount = 8;
+      runnerCount = 6;
     in
     lib.listToAttrs (
       lib.genList (
