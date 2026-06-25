@@ -10,6 +10,9 @@ Dedicated NixOS servers running as org-level self-hosted runners for `fuww`:
 |------------------|----------|--------------|--------|
 | github-runner-02 | CPX62 (16 shared vCPUs, 32GB RAM) | disko + nixos-anywhere | Active |
 | github-runner-03 | EX63 (dedicated, bare metal) | disko + nixos-anywhere | Active |
+| github-runner-04 | EX63 (dedicated, bare metal, 178.63.233.19) | disko + nixos-anywhere | Active |
+| github-runner-05 | EX63 (dedicated, bare metal, 144.76.86.24) | disko + nixos-anywhere | Active |
+| github-runner-06 | EX63 (dedicated, bare metal, 136.243.104.36) | disko + nixos-anywhere | Active |
 
 > `github-runner-01` (CCX33) was decommissioned on 2026-05-21 and its config
 > removed on 2026-06-11. See [github-runner-decommission.md](github-runner-decommission.md).

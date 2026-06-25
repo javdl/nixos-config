@@ -281,6 +281,18 @@
         server = true;
       };
 
+      nixosConfigurations.github-runner-05 = mkSystem "github-runner-05" {
+        system = "x86_64-linux";
+        user = "github-runner";
+        server = true;
+      };
+
+      nixosConfigurations.github-runner-06 = mkSystem "github-runner-06" {
+        system = "x86_64-linux";
+        user = "github-runner";
+        server = true;
+      };
+
       # Agent dev box running rondo (autonomous Claude Code agent). Reuses the
       # decommissioned github-runner-01 box. See modules/agent-dev-box.nix and
       # users/agent-jay/ — both designed to scale to more jay machines and new
