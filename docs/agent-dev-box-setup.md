@@ -139,6 +139,30 @@ To let an operator (e.g. Peter) in, the tailnet ACL needs a rule like:
 - The corresponding local user must exist on the host (joost is in
   `modules/agent-dev-box.nix`; per-operator users are added in the host file).
 
+**Connecting** (once the ACL grants you): connect from a device that authenticates
+as your *user* identity (e.g. a personal laptop), not a tagged devbox (those only
+match the `joost`/`root` tag→tag rule):
+
+```bash
+ssh peter@agent-jay-01          # then: sudo -iu agent-jay   (operate the agent account)
+ssh agent-jay@agent-jay-01      # or land on the agent account directly
+```
+
+Group `group:it`/`group:devbox-users` members already match the devbox `check`
+rule (`autogroup:nonroot`), so they can land as `peter` or `agent-jay` after a
+one-time browser re-auth.
+
+## MCP servers
+
+agent-jay's Claude config (`~/.claude.json`, user scope) has both servers wired
+headless (no interactive OAuth):
+- **linear** → `https://mcp.linear.app/mcp`, `Authorization: Bearer $LINEAR_API_KEY`
+- **github** → `https://api.githubcopilot.com/mcp/`, `Authorization: Bearer <PAT>`
+
+Add/re-add with `claude mcp add --scope user --transport http <name> <url> --header "Authorization: Bearer <token>"`.
+Note: if **caam** swaps `~/.claude`, re-check the servers survive the switch. The
+`gh` CLI needs a PAT with `repo` + `read:org` (the MCP itself does not).
+
 ## The agent-jay-01 box
 
 Reuses the decommissioned `github-runner-01` Hetzner CCX33 (8 vCPU / 30 GB /

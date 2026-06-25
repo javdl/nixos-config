@@ -112,7 +112,8 @@
         root: ~/git/api-worktrees
       hooks:
         after_create: |
-          git clone --depth 1 https://github.com/fuww/api .
+          export GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=accept-new"
+          git clone --depth 1 git@github.com:fuww/api.git .
           git submodule update --init
           mise trust && mise install
           # Activate mise for this non-interactive shell (rc files are not sourced here).
