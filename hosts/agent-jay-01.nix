@@ -52,34 +52,115 @@
     ];
   };
 
-  # rondo's Linear API key, SOPS-encrypted (secrets/agent-jay-01.yaml), decrypted
-  # at runtime via the box's SSH host key. Lands at /run/secrets/linear_api_key
-  # owned by agent-jay; the rondo systemd service will read it (WORKFLOW.md uses
-  # $LINEAR_API_KEY).
+  # rondo secrets, SOPS-encrypted (secrets/agent-jay-01.yaml), decrypted at runtime
+  # via the box's SSH host key, owned by agent-jay:
+  #   - linear_api_key: rondo's Linear tracker key (WORKFLOW.md uses $LINEAR_API_KEY)
+  #   - github_token:   PAT for `gh` + the GitHub MCP, and for cloning fuww/api over
+  #                     HTTPS in the workspace after_create hook.
   sops.defaultSopsFile = ../secrets/agent-jay-01.yaml;
   sops.secrets.linear_api_key = {
     owner = "agent-jay";
     group = "users";
     mode = "0400";
   };
-
-  # Render an EnvironmentFile (KEY=VALUE) for the rondo service from the secret.
-  sops.templates."rondo.env" = {
-    content = "LINEAR_API_KEY=${config.sops.placeholder.linear_api_key}\n";
+  sops.secrets.github_token = {
     owner = "agent-jay";
     group = "users";
     mode = "0400";
   };
 
-  # rondo as a managed service (runner-style): replicates Peter's working
-  # invocation (./bin/rondo … --port 5000 ~/git/api/WORKFLOW.md) but takes
-  # LINEAR_API_KEY from SOPS. The agent runtime (elixir/erlang/node/claude) is
-  # provided by mise from the rondo checkout's mise config; Claude Code auth is a
-  # one-time `claude` /login as agent-jay (OAuth, persists in ~/.claude).
+  # Render an EnvironmentFile (KEY=VALUE) for the rondo service from the secrets.
+  # GH_TOKEN authenticates `gh`/git HTTPS; GITHUB_TOKEN is what the GitHub MCP reads.
+  sops.templates."rondo.env" = {
+    content = ''
+      LINEAR_API_KEY=${config.sops.placeholder.linear_api_key}
+      GH_TOKEN=${config.sops.placeholder.github_token}
+      GITHUB_TOKEN=${config.sops.placeholder.github_token}
+    '';
+    owner = "agent-jay";
+    group = "users";
+    mode = "0400";
+  };
+
+  # rondo's WORKFLOW, declarative (mirrors Peter's working api profile). Lives in
+  # /etc so it's not tangled with a git checkout; the service points here. It uses
+  # $LINEAR_API_KEY (from the service env), so no secret is embedded.
+  environment.etc."rondo/WORKFLOW.md" = {
+    mode = "0444";
+    text = ''
+      ---
+      tracker:
+        kind: linear
+        api_key: "$LINEAR_API_KEY"
+        project_slug: "api-improvements-85cfc7553a54"
+        label_filter:
+          - AI-ready
+        active_states:
+          - Todo
+          - In Progress
+          - Merging
+          - Rework
+        terminal_states:
+          - Closed
+          - Cancelled
+          - Canceled
+          - Duplicate
+          - Done
+      polling:
+        interval_ms: 60000
+      workspace:
+        root: ~/git/api-worktrees
+      hooks:
+        after_create: |
+          git clone --depth 1 https://github.com/fuww/api .
+          git submodule update --init
+          mise trust && mise install
+          # Activate mise for this non-interactive shell (rc files are not sourced here).
+          if [ -n "$ZSH_VERSION" ]; then mise_shell=zsh; else mise_shell=bash; fi
+          eval "$(mise activate "$mise_shell" --shims)"
+          mise run setup
+        before_remove: |
+          docker compose down
+      gates:
+        - name: elixir-ci
+          command: |
+            if [ -n "$ZSH_VERSION" ]; then mise_shell=zsh; else mise_shell=bash; fi
+            eval "$(mise activate "$mise_shell" --shims)" &&
+            MIX_ENV=test mix ecto.migrate &&
+            mix format --check-formatted &&
+            mix credo &&
+            mix espec
+          timeout_ms: 1200000
+      agent:
+        adapter: claude_code
+        max_concurrent_agents: 1
+        max_turns: 20
+      claude:
+        command: claude
+        permission_mode: bypassPermissions
+        dangerously_skip_permissions: true
+        max_turns: 50
+        output_format: stream-json
+      pi:
+        command: pi
+        turn_timeout_ms: 3600000
+        stall_timeout_ms: 300000
+      process_provider:
+        kind: native
+        required: false
+      ---
+    '';
+  };
+
+  # rondo as a managed service (runner-style): runs the prebuilt escript directly
+  # on the nixpkgs beam (no mise), with LINEAR_API_KEY / GH tokens from SOPS and
+  # the declarative /etc/rondo/WORKFLOW.md.
   #
-  # ConditionPathExists keeps the unit dormant until the operator has cloned and
-  # built rondo (deps+manual model) — so it never crash-loops before bring-up.
-  # See docs/agent-dev-box-setup.md for the one-time setup.
+  # ConditionPathExists keeps the unit dormant until bring-up is complete:
+  #   - bin/rondo built, and
+  #   - ~/.claude/.credentials.json present (a Claude login via caam — see docs).
+  # The WORKFLOW is always present (declarative), so it's not a gate.
+  # This avoids crash-looping before the agent is logged in.
   systemd.services.rondo = {
     description = "Rondo autonomous Claude Code agent (Linear tracker)";
     after = [
@@ -90,7 +171,7 @@
     wantedBy = [ "multi-user.target" ];
     unitConfig.ConditionPathExists = [
       "/home/agent-jay/git/rondo/elixir/bin/rondo"
-      "/home/agent-jay/git/api/WORKFLOW.md"
+      "/home/agent-jay/.claude/.credentials.json"
     ];
     serviceConfig = {
       User = "agent-jay";
@@ -103,7 +184,7 @@
         # ~/.local/bin: beislid policy stub + claude (native installer).
         "PATH=/home/agent-jay/.local/bin:/etc/profiles/per-user/agent-jay/bin:/run/current-system/sw/bin"
       ];
-      ExecStart = "/home/agent-jay/git/rondo/elixir/bin/rondo --i-understand-that-this-will-be-running-without-the-usual-guardrails --port 5000 /home/agent-jay/git/api/WORKFLOW.md";
+      ExecStart = "/home/agent-jay/git/rondo/elixir/bin/rondo --i-understand-that-this-will-be-running-without-the-usual-guardrails --port 5000 /etc/rondo/WORKFLOW.md";
       Restart = "on-failure";
       RestartSec = 15;
     };
