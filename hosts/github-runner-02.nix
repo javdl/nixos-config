@@ -315,12 +315,13 @@
     '';
   };
 
-  # 6 long-lived runners sharing 1 registration token at first start.
-  # Slots capped at 6 (not 16 vCPUs): CI builds are memory-bound — too many
+  # 4 long-lived runners sharing 1 registration token at first start.
+  # Slots capped at 4 (not 16 vCPUs): CI builds are memory-bound — too many
   # parallel builds exhaust the 32GB and trigger global OOM that kills runner
-  # workers ("lost communication with the server"). 6 slots ≈ 5GB/slot. The
-  # self-hosted-16-cores label still advertises the 16 hardware vCPUs (20+ fuww
-  # workflows target it), so it stays hardcoded at 16 below regardless of count.
+  # workers ("lost communication with the server"). 4 slots ≈ 8GB/slot.
+  # The self-hosted-16-cores label was removed here so fuww workflows that pin
+  # to it no longer schedule onto this 4-slot box (it stays on the EX63
+  # runners 03/04/05/06).
   # ephemeral = false: runners persist credentials in /var/lib/github-runner/.runner
   # after first registration and do NOT need the SOPS token on subsequent restarts
   # (unconfigure.sh takes the diff_config path and skips re-registration unless
@@ -336,7 +337,7 @@
   # is created by ci-disk-cleanup; the children are pre-created here.
   systemd.tmpfiles.rules = lib.genList (
     i: "d /var/lib/github-runner-work/fuww-runner-${toString (i + 1)} 0700 github-runner users -"
-  ) 6;
+  ) 4;
 
   services.github-runners = lib.listToAttrs (
     lib.genList (
@@ -356,7 +357,6 @@
           "hetzner"
           "nixos"
           "cpx62"
-          "self-hosted-16-cores"
         ];
         user = "github-runner";
         extraPackages = config.services.github-actions-runner.packages.forRunner;
@@ -372,7 +372,7 @@
           FORCE_JAVASCRIPT_ACTIONS_TO_NODE24 = "true";
         };
       }
-    ) 6
+    ) 4
   );
 
   # This value determines the NixOS release
