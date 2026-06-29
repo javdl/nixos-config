@@ -423,6 +423,12 @@ in
         plugin = resurrect;
         extraConfig = ''
           set -g @resurrect-capture-pane-contents 'on'
+          # Relaunch claude (with its args) in restored panes, not just a bare
+          # shell. "~" matches the saved command line by prefix, so e.g.
+          # `claude --dangerously-skip-permissions` is re-run. pane_current_command
+          # reports "claude" (verified on loom), so ~claude matches; resurrect only
+          # records full command lines for processes in this list.
+          set -g @resurrect-processes '"~claude"'
         '';
       }
       {
