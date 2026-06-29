@@ -412,6 +412,27 @@ in
     shortcut = "b";
     secureSocket = false;
     mouse = true;
+    # Persist window/pane layout so a dead tmux server doesn't lose the session.
+    # loom connects over Tailscale SSH (hosts/loom.nix "--ssh"), so a tmux server
+    # started from an ssh login lives in tailscaled.service's cgroup and is killed
+    # whenever a nixos switch restarts tailscaled. continuum auto-saves every 15
+    # min and auto-restores on the next server start (also covers reboot/OOM).
+    # continuum must load last; resurrect first.
+    plugins = with pkgs.tmuxPlugins; [
+      {
+        plugin = resurrect;
+        extraConfig = ''
+          set -g @resurrect-capture-pane-contents 'on'
+        '';
+      }
+      {
+        plugin = continuum;
+        extraConfig = ''
+          set -g @continuum-restore 'on'
+          set -g @continuum-save-interval '15'
+        '';
+      }
+    ];
     extraConfig = ''
       set -ga terminal-overrides ",*256col*:Tc"
       set -g status-bg black
@@ -769,6 +790,31 @@ in
       Persistent = false; # rolling cadence, no catch-up after suspend
     };
     Install.WantedBy = [ "timers.target" ];
+  };
+
+  # Keep the tmux server alive across tailscaled restarts. Because loom uses
+  # Tailscale SSH, a tmux server started from an ssh login lives in
+  # tailscaled.service's cgroup and dies when a nixos switch restarts tailscaled.
+  # Running it under the (linger-protected) user manager keeps the server in
+  # user@1000.service instead, so only ssh *clients* die on a tailscaled restart
+  # — `tmux attach` reconnects to the surviving server. continuum
+  # (@continuum-restore) repopulates the layout after a reboot/OOM.
+  # Shares the default socket (/tmp/tmux-1000/default), so an interactive
+  # `tmux attach -t loom` finds this server.
+  systemd.user.services.tmux = lib.mkIf (isLinux && currentSystemName == "loom") {
+    Unit = {
+      Description = "Persistent tmux server (under user manager, not tailscaled)";
+    };
+    Service = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      # has-session guard: idempotent and headless-safe. `new-session -A` would
+      # try to *attach* (needs a TTY) when the session exists and fail with
+      # "open terminal failed: not a terminal" in this no-TTY service context.
+      ExecStart = "${pkgs.bash}/bin/bash -c '${pkgs.tmux}/bin/tmux has-session -t loom 2>/dev/null || ${pkgs.tmux}/bin/tmux new-session -d -s loom'";
+      ExecStop = "${pkgs.tmux}/bin/tmux kill-server";
+    };
+    Install.WantedBy = [ "default.target" ];
   };
 
   # Hermes Agent: replaced by upstream `services.hermes-agent` system module
