@@ -1308,26 +1308,26 @@
 
           # codex - OpenAI coding agent CLI (pre-built binary from npm)
           codex = let
-            codexVersion = "0.139.0";
+            codexVersion = "0.142.5";
             codexSources = {
               "x86_64-linux" = {
                 url = "https://registry.npmjs.org/@openai/codex/-/codex-${codexVersion}-linux-x64.tgz";
-                hash = "sha256-+BO39k/esntNvU5EyaEuri8DR831bbUspGE0kmtlfxI=";
+                hash = "sha256-oD4xFssJCa67Az45zUAYs6Ha+dSJYxk5thY/+pB63kc=";
                 vendorDir = "x86_64-unknown-linux-musl";
               };
               "aarch64-linux" = {
                 url = "https://registry.npmjs.org/@openai/codex/-/codex-${codexVersion}-linux-arm64.tgz";
-                hash = "sha256-YZVnfkulHyKpobXw4qAaJVpCpXVbdAEjzmj1MO0t08o=";
+                hash = "sha256-fsy6iZbom0h/6lKPTDe/UPDAoviSg2Z+aydKXnGbDUY=";
                 vendorDir = "aarch64-unknown-linux-musl";
               };
               "x86_64-darwin" = {
                 url = "https://registry.npmjs.org/@openai/codex/-/codex-${codexVersion}-darwin-x64.tgz";
-                hash = "sha256-twMFprAxE+SOc9N6FlMSPTDSDRKH7OvR7LdZk8Iup4w=";
+                hash = "sha256-8+8J7T5fMUCIghAQmnJeBQKSKzTaGKndAMVYHVAV1Pk=";
                 vendorDir = "x86_64-apple-darwin";
               };
               "aarch64-darwin" = {
                 url = "https://registry.npmjs.org/@openai/codex/-/codex-${codexVersion}-darwin-arm64.tgz";
-                hash = "sha256-74/Ddmw5MLUsqV5U7lSGVp4kMn1xvBDnlvrTrOSSD6s=";
+                hash = "sha256-UfjbUXuToIbovKehCMrIGjE6buvPszNsoQW65J8Rd2w=";
                 vendorDir = "aarch64-apple-darwin";
               };
             };
