@@ -313,19 +313,18 @@
   };
 
   # Long-lived runners sharing 1 registration token at first start.
-  # Intel Core Ultra 7 265 = 8 cores / 16 threads, 64GB. Slots capped at 4 (was 8, then 6): heavy
-  # CI jobs saturated all 8 physical cores with zero headroom and starved the Nx Cloud
-  # heartbeat process past its 30s deadline, aborting the whole run group ("Nx Cloud
-  # heartbeat process failed to report its status in time"). Earlier 16-slot attempts
-  # OOM-killed workers outright. 4 slots ≈ 0.5 jobs/core + ~10GB/job — leaves ample
-  # cores free for the heartbeat. The self-hosted-16-cores label (targeted by 20+
-  # fuww workflows) now lives ONLY on the dedicated fuww-runner-16cores slot below,
-  # so at most one heavy job runs at a time with the whole machine; the 4 general
-  # slots serve everything else.
+  # Intel Core Ultra 7 265 = 8 cores / 16 threads, 64GB. Slots set to 6 (was 8, then 6, then
+  # 4, now back to 6): heavy CI jobs once saturated all 8 physical cores with zero headroom
+  # and starved the Nx Cloud heartbeat process past its 30s deadline, aborting the whole run
+  # group ("Nx Cloud heartbeat process failed to report its status in time"), and earlier
+  # 16-slot attempts OOM-killed workers outright. Those heavy jobs now run ONLY on the
+  # dedicated fuww-runner-16cores slot below (sole holder of the self-hosted-16-cores label,
+  # targeted by 20+ fuww workflows), one at a time with the whole machine — so the 6 general
+  # slots only serve lighter jobs and can safely exceed the old 4-slot heartbeat cap.
   # See github-runner-02.nix for full design rationale (ephemeral=false, workDir off tmpfs).
   systemd.tmpfiles.rules =
     let
-      runnerCount = 4;
+      runnerCount = 6;
     in
     lib.genList (
       i: "d /var/lib/github-runner-work/fuww-runner-${toString (i + 1)} 0700 github-runner users -"
@@ -334,7 +333,7 @@
 
   services.github-runners =
     let
-      runnerCount = 4;
+      runnerCount = 6;
       common = {
         enable = true;
         ephemeral = false;
