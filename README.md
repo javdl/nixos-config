@@ -728,14 +728,3 @@ Tools from [Jeffrey Emanuel](https://github.com/Dicklesworthstone) included in t
 | xf | `xf` | [xf](https://github.com/Dicklesworthstone/xf) | Cross-format file converter |
 
 Run `ntm deps -v` to check the health status of all tools.
-
-## Ralph loops with beads
-
-```bash
-./loop.sh                      # Default build mode
-./loop.sh plan -n 5            # Plan mode, 5 iterations
-./loop.sh -i --no-push         # Interactive, no git push
-./loop.sh resume               # Resume last session
-./loop.sh list                 # Show sessions
-./loop.sh report               # Generate markdown report
-```
