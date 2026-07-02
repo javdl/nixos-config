@@ -6,7 +6,7 @@
 }:
 
 # Hetzner dedicated GitHub Actions runner for fuww org (github-runner-03)
-# EX63 dedicated server (Intel i9-9900K, 64GB RAM, 2x 512GB NVMe).
+# EX63 dedicated server (Intel Core Ultra 7 265, 64GB RAM DDR5 ECC, 2x 1TB NVMe).
 #
 # Provisioning (from a machine with the j8 SSH key, since rescue mode only
 # accepts the j8 mac studio key registered at order time):
@@ -307,14 +307,15 @@
   };
 
   # Long-lived runners sharing 1 registration token at first start.
-  # i9-9900K = 8 cores / 16 threads, 64GB. Slots capped at 4 (was 8, then 6): heavy
+  # Intel Core Ultra 7 265 = 8 cores / 16 threads, 64GB. Slots capped at 4 (was 8, then 6): heavy
   # CI jobs saturated all 8 physical cores with zero headroom and starved the Nx Cloud
   # heartbeat process past its 30s deadline, aborting the whole run group ("Nx Cloud
   # heartbeat process failed to report its status in time"). Earlier 16-slot attempts
   # OOM-killed workers outright. 4 slots ≈ 0.5 jobs/core + ~10GB/job — leaves ample
-  # cores free for the heartbeat. The self-hosted-16-cores label still advertises the
-  # 16 hardware threads (20+ fuww workflows target it), so it stays pinned regardless
-  # of slot count.
+  # cores free for the heartbeat. The self-hosted-16-cores label (targeted by 20+
+  # fuww workflows) now lives ONLY on the dedicated fuww-runner-16cores slot below,
+  # so at most one heavy job runs at a time with the whole machine; the 4 general
+  # slots serve everything else.
   # See github-runner-02.nix for full design rationale (ephemeral=false, workDir off tmpfs).
   systemd.tmpfiles.rules =
     let
@@ -322,11 +323,32 @@
     in
     lib.genList (
       i: "d /var/lib/github-runner-work/fuww-runner-${toString (i + 1)} 0700 github-runner users -"
-    ) runnerCount;
+    ) runnerCount
+    ++ [ "d /var/lib/github-runner-work/fuww-runner-16cores 0700 github-runner users -" ];
 
   services.github-runners =
     let
       runnerCount = 4;
+      common = {
+        enable = true;
+        ephemeral = false;
+        replace = true;
+        tokenFile = config.sops.secrets.github-runner-token.path;
+        url = "https://github.com/fuww";
+        user = "github-runner";
+        extraPackages = config.services.github-actions-runner.packages.forRunner;
+        extraEnvironment = {
+          DOCKER_HOST = "unix:///var/run/docker.sock";
+          ACTIONS_RUNNER_HOOK_JOB_STARTED = "/etc/github-runner-pre-job.sh";
+          # nixpkgs 26.05 ships github-runner with ONLY the node24 externals
+          # (Node 20 is EOL and was dropped upstream). Node 20 JS actions
+          # (actions/checkout@v4, actions/upload-artifact@v4, ...) would try to
+          # exec the missing lib/externals/node20/bin/node and fail with
+          # "No such file or directory". Force them onto the bundled node24,
+          # which GitHub makes the default on 2026-06-16 anyway.
+          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24 = "true";
+        };
+      };
     in
     lib.listToAttrs (
       lib.genList (
@@ -334,36 +356,35 @@
         let
           idx = i + 1;
         in
-        lib.nameValuePair "fuww-runner-${toString idx}" {
-          enable = true;
-          ephemeral = false;
-          replace = true;
-          name = "github-runner-03-${toString idx}";
-          tokenFile = config.sops.secrets.github-runner-token.path;
-          url = "https://github.com/fuww";
-          workDir = "/var/lib/github-runner-work/fuww-runner-${toString idx}";
-          extraLabels = [
-            "hetzner"
-            "nixos"
-            "ex63"
-            "self-hosted-16-cores"
-          ];
-          user = "github-runner";
-          extraPackages = config.services.github-actions-runner.packages.forRunner;
-          extraEnvironment = {
-            DOCKER_HOST = "unix:///var/run/docker.sock";
-            ACTIONS_RUNNER_HOOK_JOB_STARTED = "/etc/github-runner-pre-job.sh";
-            # nixpkgs 26.05 ships github-runner with ONLY the node24 externals
-            # (Node 20 is EOL and was dropped upstream). Node 20 JS actions
-            # (actions/checkout@v4, actions/upload-artifact@v4, ...) would try to
-            # exec the missing lib/externals/node20/bin/node and fail with
-            # "No such file or directory". Force them onto the bundled node24,
-            # which GitHub makes the default on 2026-06-16 anyway.
-            FORCE_JAVASCRIPT_ACTIONS_TO_NODE24 = "true";
-          };
-        }
+        lib.nameValuePair "fuww-runner-${toString idx}" (
+          common
+          // {
+            name = "github-runner-03-${toString idx}";
+            workDir = "/var/lib/github-runner-work/fuww-runner-${toString idx}";
+            extraLabels = [
+              "hetzner"
+              "nixos"
+              "ex63"
+            ];
+          }
+        )
       ) runnerCount
-    );
+    )
+    // {
+      # Dedicated slot for heavy jobs: sole holder of self-hosted-16-cores on
+      # this host, so one heavy job gets the whole machine to itself instead of
+      # four of them contending for 8 physical cores.
+      fuww-runner-16cores = common // {
+        name = "github-runner-03-16cores";
+        workDir = "/var/lib/github-runner-work/fuww-runner-16cores";
+        extraLabels = [
+          "hetzner"
+          "nixos"
+          "ex63"
+          "self-hosted-16-cores"
+        ];
+      };
+    };
 
   # This value determines the NixOS release
   system.stateVersion = "25.05";
