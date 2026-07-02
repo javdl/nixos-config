@@ -845,6 +845,21 @@ in
 
       # JetBrains Toolbox
       export PATH="$PATH:$HOME/Library/Application Support/JetBrains/Toolbox/scripts"
+
+      # Obsidian CLI (https://obsidian.md/help/cli) — requires Obsidian >= 1.12.7.
+      # Guarded: only adds to PATH if a real obsidian binary exists at a known
+      # location, so this is a no-op until Obsidian is upgraded / CLI registered.
+      for _obsidian_cli in \
+        "$HOME/.local/bin/obsidian" \
+        "/usr/local/bin/obsidian" \
+        "/Applications/Obsidian.app/Contents/Resources/obsidian" \
+        "/Applications/Obsidian.app/Contents/MacOS/obsidian-cli"; do
+        if [ -x "$_obsidian_cli" ]; then
+          export PATH="$(dirname "$_obsidian_cli"):$PATH"
+          break
+        fi
+      done
+      unset _obsidian_cli
     '';
 
     initContent = ''
