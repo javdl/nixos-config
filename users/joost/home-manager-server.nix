@@ -213,6 +213,12 @@ in
       '')
     ];
 
+  # Project checkout roots for repoUpdater (ru) and the `fu` tmux session —
+  # both assume these exist before anything has cloned into them.
+  home.activation.createCodeDirs = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    $DRY_RUN_CMD mkdir -p "$HOME/code/fuww" "$HOME/code/javdl"
+  '';
+
   # Install/update Vercel CLI via npm (removed from nixpkgs)
   home.activation.installVercel = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     if ! command -v vercel &>/dev/null; then
