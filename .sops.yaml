@@ -25,9 +25,6 @@ keys:
   # github-runner-05: EX63 dedicated (144.76.86.24). Real host age key,
   # derived post-provision via `ssh-keyscan 144.76.86.24 | grep ed25519 | ssh-to-age`.
   - &github-runner-05 age1e84ektqlhe2y53v5rklrd0e08ez744alcq4n9uujjy5ffzzdydhsdrj7cj
-  # github-runner-06: EX63 dedicated (136.243.104.36). Real host age key,
-  # derived post-provision via `ssh-keyscan 136.243.104.36 | grep ed25519 | ssh-to-age`.
-  - &github-runner-06 age1lczx2scanv58kytyk6smc2w3le4pq9rxvuw7hqs8ptmg3q6qkd2q9mtjce
   - &loom age1p26cwwyu2v4jexue6z7krrua9skqv0p3aj4ad3su4m7varky3dwqk0zphj
   # bali: loom's replacement on the repurposed github-runner-06 box
   # (136.243.104.36). Real host age key, derived post-provision via
@@ -76,12 +73,6 @@ creation_rules:
       - age:
           - *github-runner-05
 
-  # github-runner-06 secrets (GitHub runner token) — EX63 dedicated server.
-  # anchor is loom's placeholder key until the host is provisioned + re-keyed.
-  - path_regex: secrets/github-runner-06\.yaml$
-    key_groups:
-      - age:
-          - *github-runner-06
 
   # loom secrets (hermes-agent env)
   - path_regex: secrets/loom\.yaml$
@@ -97,12 +88,12 @@ creation_rules:
           - *bali
 
   # agent-jay-01 secrets (rondo LINEAR_API_KEY). Encrypted to the host key (so
-  # the box decrypts at runtime) and loom (so it can be re-edited from loom).
+  # the box decrypts at runtime) and bali (so it can be re-edited from there).
   - path_regex: secrets/agent-jay-01\.yaml$
     key_groups:
       - age:
           - *agent-jay-01
-          - *loom
+          - *bali
 
   # hermes-fu secrets (FashionUnited company-wide hermes-agent env)
   # NOTE: anchor &hermes-fu is a placeholder until the VM is provisioned.

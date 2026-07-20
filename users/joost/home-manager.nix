@@ -1081,6 +1081,7 @@ in
       };
 
       "argon" = sshTailscaleHost "100.106.10.12";
+      "bali" = sshTailscaleHost "100.113.194.113";
       "j8" = sshTailscaleHost "100.99.236.94";
       "j9" = sshBuriHokiHost "j9";
       "loom" = sshTailscaleHost "100.123.226.58";

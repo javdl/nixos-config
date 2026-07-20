@@ -15,6 +15,11 @@
 #   3. After reboot: make hetzner/bootstrap NIXADDR=91.99.204.187 NIXNAME=loom
 #   4. Connect: ssh loom (uses ~/.ssh config)
 
+let
+  # Cutover 2026-07-20: hermes moved to bali (hosts/bali.nix). Keep this false —
+  # both gateways share tokens, so running both double-answers every platform.
+  enableHermes = false;
+in
 {
   imports = [
     ./hardware/loom.nix
@@ -33,7 +38,7 @@
   # Hermes Agent — personal AI gateway. See Plans/migrate-hermes-to-nix-module.md.
   # State: /var/lib/hermes/.hermes (mode 2770, hermes:hermes, hardcoded by upstream).
   # Secrets: secrets/loom.yaml -> sops -> hermes-env (dotenv, concatenated raw).
-  sops.secrets."hermes-env" = {
+  sops.secrets."hermes-env" = lib.mkIf enableHermes {
     sopsFile = ../secrets/loom.yaml;
     format = "yaml";
     key = "hermes-env";
@@ -41,7 +46,7 @@
     mode = "0400";
   };
 
-  services.hermes-agent = {
+  services.hermes-agent = lib.mkIf enableHermes {
     enable = true;
     addToSystemPackages = true;
     environmentFiles = [ config.sops.secrets."hermes-env".path ];
@@ -60,7 +65,7 @@
   };
 
   # joost shares HERMES_HOME with the service (state dir is mode 2770 hermes:hermes).
-  users.users.joost.extraGroups = [ "hermes" ];
+  users.users.joost.extraGroups = lib.optionals enableHermes [ "hermes" ];
 
   # Latest kernel for best hardware support
   boot.kernelPackages = pkgs.linuxPackages_latest;

@@ -23,10 +23,10 @@
 #   3. make hetzner/tailscale-auth NIXADDR=<donor-ip> TAILSCALE_AUTHKEY=tskey-auth-xxx
 
 let
-  # Hermes cutover switch: flip to true (and disable hermes on loom) when loom
-  # retires. Running both gateways with the same tokens double-answers
-  # Telegram/Discord/Slack. secrets/bali.yaml already carries hermes-env.
-  enableHermes = false;
+  # Hermes lives here since the 2026-07-20 cutover (loom's is gated off in
+  # hosts/loom.nix). Running both gateways with the same tokens double-answers
+  # Telegram/Discord/Slack — never enable both.
+  enableHermes = true;
 in
 {
   imports = [
