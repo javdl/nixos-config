@@ -44,6 +44,11 @@ in
     inputs.hermes-agent.nixosModules.default
   ];
 
+  # EX63 NVMe enumeration is not stable across boots — the first provision
+  # landed on the old disk via duplicate partlabels after a name swap. Pin the
+  # root disk by EUI; the second Micron (…455571) stays unmanaged.
+  disko.devices.disk.main.device = lib.mkForce "/dev/disk/by-id/nvme-eui.000000000000000100a07525514551f9";
+
   # Hermes Agent — personal AI gateway (see hosts/loom.nix, the current holder).
   # Gated as a whole: with the module disabled the hermes user doesn't exist,
   # so an ungated sops secret with owner "hermes" would fail activation.
