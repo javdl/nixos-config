@@ -77,16 +77,18 @@ Dedicated self-hosted runner for the `fuww` GitHub organization:
 
 ### bali (loom replacement)
 
-`bali` (EX63 dedicated, 136.243.104.36, ex-github-runner-06) is loom's replacement:
-a clone of `hosts/loom.nix` on `hetzner-dedicated-hardware` + `disko-hetzner-dedicated`,
-with the root disk pinned by NVMe EUI (enumeration on this box is unstable across boots).
-Loom stays up until cutover. Hermes-agent on bali is gated behind `enableHermes = false`
-in `hosts/bali.nix` — flip it AND disable hermes on loom at cutover, never run both
-(same tokens double-answer Telegram/Discord/Slack). Headless agent access:
+`bali` (EX63 dedicated, 136.243.104.36, Tailscale 100.113.194.113, ex-github-runner-06)
+is loom's replacement: a clone of `hosts/loom.nix` on `hetzner-dedicated-hardware` +
+`disko-hetzner-dedicated`, root disk pinned by NVMe EUI (enumeration on this box is
+unstable across boots). **Cutover completed 2026-07-20**: hermes-agent now runs on bali
+(state migrated from loom); loom's hermes is gated off via `enableHermes = false` in
+`hosts/loom.nix` — never enable both, the shared tokens double-answer every platform.
+bali also took over loom's role as the SOPS bootstrap/editing key (agent-jay-01.yaml is
+encrypted to agent-jay-01 + bali). Headless agent access:
 `ssh -i ~/.ssh/id_ed25519_nopass joost@136.243.104.36` (key authorized per-host in
-`hosts/bali.nix`). The stale `hosts/github-runner-06.nix` + flake entry + secrets file
-and the dead runner registrations in the fuww org can be removed at cutover
-(see `docs/github-runner-decommission.md`).
+`hosts/bali.nix`). Loom (91.99.204.187) is passive and pending decommission — cancel at
+Hetzner when comfortable, then remove `hosts/loom.nix`, its flake entry, sops anchor,
+and `secrets/loom.yaml`.
 
 The runners use `modules/github-actions-runner.nix` for CI packages (Docker, languages, build tools, browsers, cloud CLIs) and `services.github-runners` for runner registration. Tokens are SOPS-encrypted in `secrets/github-runner-{01,02,03,04,05,06}.yaml`. See `docs/github-runner-hetzner-setup.md` for full setup/scaling guide.
 
