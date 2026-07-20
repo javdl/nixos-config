@@ -73,7 +73,20 @@ Dedicated self-hosted runner for the `fuww` GitHub organization:
 | github-runner-03 | `github-runner-03`   | `#github-runner-03`   | EX63 (dedicated) | `users/github-runner/home-manager-server.nix` |
 | github-runner-04 | `github-runner-04`   | `#github-runner-04`   | EX63 (dedicated, 178.63.233.19) | `users/github-runner/home-manager-server.nix` |
 | github-runner-05 | `github-runner-05`   | `#github-runner-05`   | EX63 (dedicated, 144.76.86.24)  | `users/github-runner/home-manager-server.nix` |
-| github-runner-06 | `github-runner-06`   | `#github-runner-06`   | EX63 (dedicated, 136.243.104.36) | `users/github-runner/home-manager-server.nix` |
+| ~~github-runner-06~~ | `github-runner-06`   | `#github-runner-06`   | EX63 (dedicated, 136.243.104.36) | **DECOMMISSIONED 2026-07-20** — box repurposed as `bali` |
+
+### bali (loom replacement)
+
+`bali` (EX63 dedicated, 136.243.104.36, ex-github-runner-06) is loom's replacement:
+a clone of `hosts/loom.nix` on `hetzner-dedicated-hardware` + `disko-hetzner-dedicated`,
+with the root disk pinned by NVMe EUI (enumeration on this box is unstable across boots).
+Loom stays up until cutover. Hermes-agent on bali is gated behind `enableHermes = false`
+in `hosts/bali.nix` — flip it AND disable hermes on loom at cutover, never run both
+(same tokens double-answer Telegram/Discord/Slack). Headless agent access:
+`ssh -i ~/.ssh/id_ed25519_nopass joost@136.243.104.36` (key authorized per-host in
+`hosts/bali.nix`). The stale `hosts/github-runner-06.nix` + flake entry + secrets file
+and the dead runner registrations in the fuww org can be removed at cutover
+(see `docs/github-runner-decommission.md`).
 
 The runners use `modules/github-actions-runner.nix` for CI packages (Docker, languages, build tools, browsers, cloud CLIs) and `services.github-runners` for runner registration. Tokens are SOPS-encrypted in `secrets/github-runner-{01,02,03,04,05,06}.yaml`. See `docs/github-runner-hetzner-setup.md` for full setup/scaling guide.
 
