@@ -81,6 +81,13 @@ in
   # On loom this was enabled imperatively via loginctl; here it's declarative.
   users.users.joost.linger = true;
 
+  # Agent ops from loom: joost's personal key (users/joost/nixos.nix "loom")
+  # is passphrase-locked, so headless Claude Code sessions on loom use this
+  # key instead — the same one every runner host carried for provisioning.
+  users.users.joost.openssh.authorizedKeys.keys = [
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEfx6qICt/nunP+X3Wv8Y6hhZtGo0AZreAp3QOThy0SD loom-agent-nopass"
+  ];
+
   # Latest kernel for best hardware support
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
