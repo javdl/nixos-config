@@ -17,10 +17,15 @@
 # locally-built paths are pushed, and uploads happen asynchronously so they
 # never block a build.
 #
-# Auth: cachix reads the token from ~/.config/cachix/cachix.dhall, rendered from
-# Bitwarden by chezmoi (dot_config/cachix/private_cachix.dhall.tmpl). The token
-# is never in the Nix store. Until that file exists (e.g. Bitwarden was locked
-# at `chezmoi apply`) the daemon exits and the service retries.
+# Auth: cachix reads the token from ~/.config/cachix/cachix.dhall. The token is
+# never in the Nix store. NOTE (2026-07-20): the chezmoi template this comment
+# originally pointed at (dot_config/cachix/private_cachix.dhall.tmpl) never
+# landed in the dotfiles repo — no machine has the file, so the daemon can't
+# start anywhere. Provision the token per machine with `cachix authtoken <tok>`
+# (from https://app.cachix.org/personal-auth-tokens), or add that template to
+# dotfiles. Until the file exists the service skips via ExecCondition (clean
+# "condition failed", no restart loop) and the matching .path unit starts the
+# daemon automatically the moment the file appears.
 #
 # The cache's public key + substituter (the pull side) live in modules/cachix.nix.
 
@@ -48,12 +53,21 @@ in
     };
     Service = {
       Type = "simple";
+      # Skipped-by-condition is not a failure, so Restart never fires while the
+      # token is missing.
+      ExecCondition = "${pkgs.coreutils}/bin/test -f %h/.config/cachix/cachix.dhall";
       ExecStart = "${cachix} ${lib.concatStringsSep " " runArgs}";
       Restart = "on-failure";
       RestartSec = 30;
       # Give the daemon time to flush its queue on stop.
       TimeoutStopSec = 120;
     };
+    Install.WantedBy = [ "default.target" ];
+  };
+
+  systemd.user.paths.cachix-daemon = lib.mkIf isLinux {
+    Unit.Description = "Start cachix-daemon once its auth token is provisioned";
+    Path.PathExists = "%h/.config/cachix/cachix.dhall";
     Install.WantedBy = [ "default.target" ];
   };
 
