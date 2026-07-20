@@ -825,7 +825,13 @@ in
   # (@continuum-restore) repopulates the layout after a reboot/OOM.
   # Shares the default socket (/tmp/tmux-1000/default), so an interactive
   # `tmux attach -t <hostname>` finds this server.
-  systemd.user.services.tmux =
+  #
+  # Named tmux-server, NOT tmux: tmux-continuum's automatic-start handler owns
+  # the literal path ~/.config/systemd/user/tmux.service and, with
+  # @continuum-boot unset, disables/removes any unit found there every time the
+  # tmux server starts — which silently deleted this unit minutes after every
+  # home-manager activation (observed on both loom and bali).
+  systemd.user.services.tmux-server =
     lib.mkIf
       (
         isLinux
