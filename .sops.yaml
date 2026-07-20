@@ -29,6 +29,12 @@ keys:
   # derived post-provision via `ssh-keyscan 136.243.104.36 | grep ed25519 | ssh-to-age`.
   - &github-runner-06 age1lczx2scanv58kytyk6smc2w3le4pq9rxvuw7hqs8ptmg3q6qkd2q9mtjce
   - &loom age1p26cwwyu2v4jexue6z7krrua9skqv0p3aj4ad3su4m7varky3dwqk0zphj
+  # bali: loom's replacement on a repurposed EX63 runner. Bootstrap value is
+  # loom's key (secrets/bali.yaml is a copy of secrets/loom.yaml); replace
+  # with the donor box's real key post-provision via
+  # `ssh-keyscan <donor-ip> | grep ed25519 | ssh-to-age`, then
+  # `sops updatekeys secrets/bali.yaml` (run on loom, which can decrypt).
+  - &bali age1p26cwwyu2v4jexue6z7krrua9skqv0p3aj4ad3su4m7varky3dwqk0zphj
   # agent-jay-01: reused github-runner-01 box. Derived from its SSH host key via
   # `ssh-keyscan 100.78.158.57 | grep ed25519 | ssh-to-age`.
   - &agent-jay-01 age1k77q70qv8h6kp7n8pw92mcyww62xkmwps50mknmzdjwn6s29wu2s3gav4w
@@ -84,6 +90,13 @@ creation_rules:
     key_groups:
       - age:
           - *loom
+
+  # bali secrets (hermes-env, copied from loom). Anchor is loom's key
+  # until the donor box is provisioned + re-keyed.
+  - path_regex: secrets/bali\.yaml$
+    key_groups:
+      - age:
+          - *bali
 
   # agent-jay-01 secrets (rondo LINEAR_API_KEY). Encrypted to the host key (so
   # the box decrypts at runtime) and loom (so it can be re-edited from loom).

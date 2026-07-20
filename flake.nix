@@ -309,6 +309,15 @@
         server = true;
       };
 
+      # loom's replacement on a repurposed EX63 runner box (donor: one of
+      # github-runner-03..06). Loom stays up until bali is verified;
+      # hermes stays disabled on bali until cutover (hosts/bali.nix).
+      nixosConfigurations.bali = mkSystem "bali" {
+        system = "x86_64-linux";
+        user = "joost";
+        server = true;
+      };
+
       # FashionUnited company-wide hermes-agent host.
       # Clone of loom's hermes-agent setup; see Plans/check-the-plan-for-misty-turtle.md.
       nixosConfigurations.hermes-fu = mkSystem "hermes-fu" {

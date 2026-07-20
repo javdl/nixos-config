@@ -771,32 +771,50 @@ in
   #   systemctl --user daemon-reload
   #   systemctl --user enable --now chezmoi-memory-sync.timer
   #   systemctl --user list-timers chezmoi-memory-sync.timer
-  systemd.user.services.chezmoi-memory-sync = lib.mkIf (isLinux && currentSystemName == "loom") {
-    Unit = {
-      Description = "Auto-sync ~/.claude/MEMORY to chezmoi git remote";
-      Documentation = [ "https://github.com/javdl/nixos-config/blob/main/lib/chezmoi-memory-sync.nix" ];
-      After = [ "network-online.target" ];
-      Wants = [ "network-online.target" ];
-    };
-    Service = {
-      Type = "oneshot";
-      ExecStart = "${chezmoiMemorySync}";
-      # journalctl --user -u chezmoi-memory-sync -n 30 to inspect output.
-    };
-  };
+  systemd.user.services.chezmoi-memory-sync =
+    lib.mkIf
+      (
+        isLinux
+        && builtins.elem currentSystemName [
+          "loom"
+          "bali"
+        ]
+      )
+      {
+        Unit = {
+          Description = "Auto-sync ~/.claude/MEMORY to chezmoi git remote";
+          Documentation = [ "https://github.com/javdl/nixos-config/blob/main/lib/chezmoi-memory-sync.nix" ];
+          After = [ "network-online.target" ];
+          Wants = [ "network-online.target" ];
+        };
+        Service = {
+          Type = "oneshot";
+          ExecStart = "${chezmoiMemorySync}";
+          # journalctl --user -u chezmoi-memory-sync -n 30 to inspect output.
+        };
+      };
 
-  systemd.user.timers.chezmoi-memory-sync = lib.mkIf (isLinux && currentSystemName == "loom") {
-    Unit = {
-      Description = "Run chezmoi-memory-sync every 5 minutes";
-    };
-    Timer = {
-      OnBootSec = "2min"; # don't fight first-boot home-manager activation
-      OnUnitActiveSec = "5min"; # match Darwin's StartInterval = 300
-      AccuracySec = "30s"; # tighter than systemd default for predictable cadence
-      Persistent = false; # rolling cadence, no catch-up after suspend
-    };
-    Install.WantedBy = [ "timers.target" ];
-  };
+  systemd.user.timers.chezmoi-memory-sync =
+    lib.mkIf
+      (
+        isLinux
+        && builtins.elem currentSystemName [
+          "loom"
+          "bali"
+        ]
+      )
+      {
+        Unit = {
+          Description = "Run chezmoi-memory-sync every 5 minutes";
+        };
+        Timer = {
+          OnBootSec = "2min"; # don't fight first-boot home-manager activation
+          OnUnitActiveSec = "5min"; # match Darwin's StartInterval = 300
+          AccuracySec = "30s"; # tighter than systemd default for predictable cadence
+          Persistent = false; # rolling cadence, no catch-up after suspend
+        };
+        Install.WantedBy = [ "timers.target" ];
+      };
 
   # Keep the tmux server alive across tailscaled restarts. Because loom uses
   # Tailscale SSH, a tmux server started from an ssh login lives in
@@ -806,22 +824,31 @@ in
   # — `tmux attach` reconnects to the surviving server. continuum
   # (@continuum-restore) repopulates the layout after a reboot/OOM.
   # Shares the default socket (/tmp/tmux-1000/default), so an interactive
-  # `tmux attach -t loom` finds this server.
-  systemd.user.services.tmux = lib.mkIf (isLinux && currentSystemName == "loom") {
-    Unit = {
-      Description = "Persistent tmux server (under user manager, not tailscaled)";
-    };
-    Service = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-      # has-session guard: idempotent and headless-safe. `new-session -A` would
-      # try to *attach* (needs a TTY) when the session exists and fail with
-      # "open terminal failed: not a terminal" in this no-TTY service context.
-      ExecStart = "${pkgs.bash}/bin/bash -c '${pkgs.tmux}/bin/tmux has-session -t loom 2>/dev/null || ${pkgs.tmux}/bin/tmux new-session -d -s loom'";
-      ExecStop = "${pkgs.tmux}/bin/tmux kill-server";
-    };
-    Install.WantedBy = [ "default.target" ];
-  };
+  # `tmux attach -t <hostname>` finds this server.
+  systemd.user.services.tmux =
+    lib.mkIf
+      (
+        isLinux
+        && builtins.elem currentSystemName [
+          "loom"
+          "bali"
+        ]
+      )
+      {
+        Unit = {
+          Description = "Persistent tmux server (under user manager, not tailscaled)";
+        };
+        Service = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+          # has-session guard: idempotent and headless-safe. `new-session -A` would
+          # try to *attach* (needs a TTY) when the session exists and fail with
+          # "open terminal failed: not a terminal" in this no-TTY service context.
+          ExecStart = "${pkgs.bash}/bin/bash -c '${pkgs.tmux}/bin/tmux has-session -t ${currentSystemName} 2>/dev/null || ${pkgs.tmux}/bin/tmux new-session -d -s ${currentSystemName}'";
+          ExecStop = "${pkgs.tmux}/bin/tmux kill-server";
+        };
+        Install.WantedBy = [ "default.target" ];
+      };
 
   # Hermes Agent: replaced by upstream `services.hermes-agent` system module
   # in hosts/loom.nix. See Plans/migrate-hermes-to-nix-module.md.
