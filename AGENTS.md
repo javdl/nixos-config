@@ -84,9 +84,10 @@ unstable across boots). **Cutover completed 2026-07-20**: hermes-agent now runs 
 (state migrated from loom); loom's hermes is gated off via `enableHermes = false` in
 `hosts/loom.nix` — never enable both, the shared tokens double-answer every platform.
 bali also took over loom's role as the SOPS bootstrap/editing key (agent-jay-01.yaml is
-encrypted to agent-jay-01 + bali). Headless agent access:
-`ssh -i ~/.ssh/id_ed25519_nopass joost@136.243.104.36` (key authorized per-host in
-`hosts/bali.nix`). Loom (91.99.204.187) is passive and pending decommission — cancel at
+encrypted to agent-jay-01 + bali). **SSH is tailnet-only** (public 22/2222 closed;
+recovery = Hetzner Robot rescue): `ssh bali` (chezmoi ssh config alias) or headless
+`ssh -i ~/.ssh/id_ed25519_nopass joost@100.113.194.113`; port 2222 allows password
+auth for key-less apps (Codex). Loom (91.99.204.187) is passive and pending decommission — cancel at
 Hetzner when comfortable, then remove `hosts/loom.nix`, its flake entry, sops anchor,
 and `secrets/loom.yaml`.
 
