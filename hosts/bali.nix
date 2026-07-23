@@ -165,14 +165,29 @@ in
   networking.firewall.enable = true;
   networking.firewall.allowedTCPPorts = [ 22 ];
 
-  # SSH daemon - key-only auth for security
+  # SSH daemon - key-only auth for security. Port 2222 additionally allows
+  # password auth for clients that can't do keys or Tailscale SSH (Codex app);
+  # it is NOT in allowedTCPPorts, so it's reachable only via the trusted
+  # tailscale0 interface — never from the public internet. Port 22 over the
+  # tailnet is intercepted by Tailscale SSH anyway; 2222 passes through to sshd.
   services.openssh = {
     enable = true;
+    ports = [
+      22
+      2222
+    ];
+    # openFirewall would expose every listed port publicly; we open 22 ourselves.
+    openFirewall = false;
     settings = {
       PasswordAuthentication = false;
       PermitRootLogin = "prohibit-password";
       KbdInteractiveAuthentication = false;
     };
+    extraConfig = ''
+      Match LocalPort 2222
+        PasswordAuthentication yes
+        KbdInteractiveAuthentication yes
+    '';
   };
 
   # Don't require password for sudo (convenient for remote dev)
