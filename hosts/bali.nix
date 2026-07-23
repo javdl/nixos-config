@@ -161,15 +161,16 @@ in
   # this config works unchanged on whichever runner box is the donor.
   networking.useDHCP = true;
 
-  # Firewall - base config (Tailscale settings added below)
+  # Firewall - base config (Tailscale settings added below).
+  # No public ports: SSH is tailnet-only (via the trusted tailscale0
+  # interface). Recovery path if tailscale breaks: Hetzner Robot rescue.
   networking.firewall.enable = true;
-  networking.firewall.allowedTCPPorts = [ 22 ];
+  networking.firewall.allowedTCPPorts = [ ];
 
-  # SSH daemon - key-only auth for security. Port 2222 additionally allows
-  # password auth for clients that can't do keys or Tailscale SSH (Codex app);
-  # it is NOT in allowedTCPPorts, so it's reachable only via the trusted
-  # tailscale0 interface — never from the public internet. Port 22 over the
-  # tailnet is intercepted by Tailscale SSH anyway; 2222 passes through to sshd.
+  # SSH daemon - key-only auth, tailnet-only (no port is publicly open).
+  # Port 2222 additionally allows password auth for clients that can't do
+  # keys or Tailscale SSH (Codex app). Port 22 over the tailnet is
+  # intercepted by Tailscale SSH anyway; 2222 passes through to sshd.
   services.openssh = {
     enable = true;
     ports = [
