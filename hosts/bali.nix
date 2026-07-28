@@ -149,7 +149,12 @@ in
   services.repoUpdater = {
     enable = true;
     user = "joost";
-    projectsDir = "/home/joost/code";
+    # rch (Remote Compilation Helper) hardcodes its canonical project root to
+    # /data/projects, so repos live there and ~/code is a symlink → /data/projects
+    # (see tmpfiles below). Keeps the ~/code path working while letting builds
+    # offload to the runner workers. Upstream tracking:
+    # github.com/Dicklesworthstone/remote_compilation_helper/issues/38
+    projectsDir = "/data/projects";
     timerInterval = "6h";
     repos = [
       "fuww/developer"
@@ -367,11 +372,22 @@ in
 
   # Per-runner work dirs, owned by the runner account (off tmpfs, like the
   # fuww hosts, so large checkouts don't exhaust /run).
-  systemd.tmpfiles.rules = lib.mkIf enableRunners (
-    lib.genList (
-      i: "d /var/lib/github-runner-work/javdl-runner-${toString (i + 1)} 0700 github-runner users -"
-    ) javdlRunnerCount
-  );
+  systemd.tmpfiles.rules =
+    lib.optionals enableRunners (
+      lib.genList (
+        i: "d /var/lib/github-runner-work/javdl-runner-${toString (i + 1)} 0700 github-runner users -"
+      ) javdlRunnerCount
+    )
+    ++ [
+      # rch (Remote Compilation Helper) canonical project root. Repos live in
+      # /data/projects and ~/code is a symlink → /data/projects, so builds run
+      # from ~/code (realpath resolves under /data/projects) offload to the
+      # runner workers. /dp is rch's short alias for the root. Keep repoUpdater
+      # projectsDir = /data/projects so it never recreates ~/code as a real dir.
+      "d /data/projects 0755 joost users -"
+      "L+ /dp - - - - /data/projects"
+      "L /home/joost/code - - - - /data/projects"
+    ];
 
   services.github-runners = lib.mkIf enableRunners (
     let
