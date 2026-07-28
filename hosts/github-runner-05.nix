@@ -35,6 +35,7 @@
     ../modules/disko-hetzner-dedicated.nix
     ../modules/github-actions-runner.nix
     ../modules/javdl-runners.nix
+    ../modules/rch-worker.nix
     ../modules/cachix.nix
     ../modules/secrets.nix
     ../modules/automatic-nix-gc.nix
@@ -399,6 +400,10 @@
     namePrefix = "github-runner-05-javdl";
     tokenSopsFile = ../secrets/github-runner-05.yaml;
   };
+
+  # rch remote-compilation worker: native rch-wkr + /data/projects (durable,
+  # replaces the imperative nix-copy + gcroot + sudo mkdir setup).
+  services.rchWorker.enable = true;
 
   # This value determines the NixOS release
   system.stateVersion = "25.05";
