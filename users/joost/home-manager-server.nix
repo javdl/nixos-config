@@ -279,6 +279,12 @@ in
     if [ -d "$CHEZMOI_SOURCE" ]; then
       echo "Syncing dotfiles from chezmoi repo..."
       $DRY_RUN_CMD env PATH="${pkgs.bitwarden-cli}/bin:${pkgs.git}/bin:$PATH" ${pkgs.chezmoi}/bin/chezmoi update || echo "chezmoi apply incomplete (unlock Bitwarden, then re-run rebuild)."
+      # `chezmoi update` renders ALL templates up front and aborts its apply on
+      # the first Bitwarden-backed one when the vault is locked (headless hosts),
+      # which leaves PAI (~/.claude: hooks, skills, settings.json) unmanaged. That
+      # subtree has no bw templates, so apply it explicitly — it always succeeds
+      # and keeps PAI in sync regardless of Bitwarden state.
+      $DRY_RUN_CMD env PATH="${pkgs.git}/bin:$PATH" ${pkgs.chezmoi}/bin/chezmoi apply "$HOME/.claude" || echo "chezmoi apply ~/.claude failed."
     fi
   '';
 
