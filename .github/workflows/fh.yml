@@ -24,3 +24,8 @@ jobs:
       contents: "read"
     with:
       visibility: public
+      # Diagnostic (2026-07-28): the x86_64-linux leg dies mid-evaluation with
+      # "runner has received a shutdown signal" and no error of its own, which
+      # then cancels the other two legs and hides whether they'd have passed.
+      # Let every leg run to completion so the failure is attributable.
+      fail-fast: false
