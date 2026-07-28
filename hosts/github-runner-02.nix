@@ -18,6 +18,7 @@
     ../modules/hetzner-cloud-hardware.nix
     ../modules/disko-hetzner-cloud.nix
     ../modules/github-actions-runner.nix
+    ../modules/javdl-runners.nix
     ../modules/cachix.nix
     ../modules/secrets.nix
     ../modules/automatic-nix-gc.nix
@@ -374,6 +375,14 @@
       }
     ) 4
   );
+
+  # Personal javdl/joost runners (2), alongside the fuww org runners above.
+  # Token lives under key github-runner-javdl-token in the host secrets file.
+  services.javdlRunners = {
+    enable = true;
+    namePrefix = "github-runner-02-javdl";
+    tokenSopsFile = ../secrets/github-runner-02.yaml;
+  };
 
   # This value determines the NixOS release
   system.stateVersion = "25.05";
