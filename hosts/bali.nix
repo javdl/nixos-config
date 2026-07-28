@@ -371,6 +371,20 @@ in
     owner = "root";
   };
 
+  # Same, for javdl/nixos-config. This repo's own CI needs a runner with real
+  # memory: evaluating every flake output peaks at ~31.6 GB RSS, which OOM-kills
+  # the 16 GB GitHub-hosted runners (measured 2026-07-28). bali has 62 GB.
+  # Fresh token from
+  # https://github.com/javdl/nixos-config/settings/actions/runners/new
+  # under key `github-runner-nixos-config-token` in secrets/bali.yaml.
+  sops.secrets.github-runner-nixos-config-token = lib.mkIf enableRunners {
+    sopsFile = ../secrets/bali.yaml;
+    format = "yaml";
+    key = "github-runner-nixos-config-token";
+    mode = "0400";
+    owner = "root";
+  };
+
   # Per-runner work dirs, owned by the runner account (off tmpfs, like the
   # fuww hosts, so large checkouts don't exhaust /run).
   systemd.tmpfiles.rules =
@@ -378,6 +392,7 @@ in
       lib.genList (
         i: "d /var/lib/github-runner-work/javdl-runner-${toString (i + 1)} 0700 github-runner users -"
       ) javdlRunnerCount
+      ++ [ "d /var/lib/github-runner-work/nixos-config 0700 github-runner users -" ]
     )
     ++ [
       # rch (Remote Compilation Helper) canonical project root. Repos live in
@@ -429,6 +444,18 @@ in
         )
       ) javdlRunnerCount
     )
+    // {
+      # Dedicated runner for this repo. fh.yml's runner-map sends the
+      # x86_64-linux leg to the "nixos-config" label so it lands here rather
+      # than on a 16 GB GitHub-hosted runner.
+      nixos-config = common // {
+        name = "bali-nixos-config";
+        url = "https://github.com/javdl/nixos-config";
+        tokenFile = config.sops.secrets.github-runner-nixos-config-token.path;
+        workDir = "/var/lib/github-runner-work/nixos-config";
+        extraLabels = common.extraLabels ++ [ "nixos-config" ];
+      };
+    }
   );
 
   # This value determines the NixOS release
