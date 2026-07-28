@@ -2,7 +2,13 @@
 # Reuses the github-runner-01 box (Hetzner CCX33). Disk labels were set during
 # the original bootstrap partitioning, so this layout is hostname-independent —
 # renaming the host does not change the mounts.
-{ config, lib, pkgs, modulesPath, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  modulesPath,
+  ...
+}:
 
 {
   imports = [
@@ -20,7 +26,10 @@
     "sr_mod"
   ];
   boot.initrd.kernelModules = [ ];
-  boot.kernelModules = [ "kvm-intel" "kvm-amd" ];
+  boot.kernelModules = [
+    "kvm-intel"
+    "kvm-amd"
+  ];
   boot.extraModulePackages = [ ];
 
   # Filesystem configuration using labels (set during bootstrap0)

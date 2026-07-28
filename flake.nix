@@ -98,6 +98,20 @@
         "aarch64-darwin"
       ];
 
+      # Hosts excluded from the checks.eval-hosts gate because they do not evaluate
+      # today. Keep this list empty; every entry is a tracked break, not a waiver.
+      #
+      # vm-aarch64 / vm-aarch64-utm — 13 tools in lib/overlays.nix publish no
+      # aarch64-linux binary and `throw "Unsupported system: aarch64-linux"`, which
+      # aborts evaluation of any aarch64-linux host pulling the default package set.
+      # Fix by making those overlay entries null on unsupported systems (the repo
+      # already guards consumers with `lib.optional (pkgs.X != null)`), or by
+      # retiring these two VM hosts.
+      knownBrokenHosts = [
+        "vm-aarch64"
+        "vm-aarch64-utm"
+      ];
+
       # nixpkgs with our overlays applied, used only for the tooling outputs below.
       pkgsFor =
         system:
@@ -174,7 +188,8 @@
         }
       );
 
-      # `nix flake check` — format gate over the repo's own Nix sources. Lints
+      # `nix flake check` — format gate over the repo's own Nix sources, plus an
+      # evaluation gate over every host (see eval-hosts below). Lints
       # (statix/deadnix) live in the devShell but are kept out of checks for now to
       # avoid blocking on pre-existing legacy findings.
       checks = forAllSystems (
@@ -202,6 +217,37 @@
                   exit 1
                 fi
                 touch $out
+              '';
+        }
+        // nixpkgs.lib.optionalAttrs (system == "x86_64-linux") {
+          # Every host must still *evaluate*. 15 hosts run services.nixosAutoUpdate
+          # against `main`, so an unevaluatable config reaches the fleet at 4 AM
+          # without this gate. Referencing each toplevel's .drvPath forces a full
+          # module-system evaluation; the context is discarded so the check itself
+          # never builds a system. Linux-only: CI has no other runner, and the
+          # evaluation is identical wherever it runs.
+          eval-hosts =
+            let
+              inherit (nixpkgs) lib;
+              line =
+                kind: name: drv:
+                "${kind}/${name} ${builtins.unsafeDiscardStringContext drv}";
+              nixosLines = lib.mapAttrsToList (
+                name: cfg: line "nixos" name cfg.config.system.build.toplevel.drvPath
+              ) (removeAttrs self.nixosConfigurations knownBrokenHosts);
+              darwinLines = lib.mapAttrsToList (
+                name: cfg: line "darwin" name cfg.config.system.build.toplevel.drvPath
+              ) self.darwinConfigurations;
+              homeLines = lib.mapAttrsToList (
+                name: cfg: line "home" name cfg.activationPackage.drvPath
+              ) self.homeConfigurations;
+            in
+            pkgs.runCommandLocal "check-eval-hosts"
+              {
+                evaluated = lib.concatStringsSep "\n" (nixosLines ++ darwinLines ++ homeLines);
+              }
+              ''
+                printf '%s\n' "$evaluated" > $out
               '';
         }
       );
@@ -435,6 +481,7 @@
             (import ./users/joost/home-manager.nix {
               isWSL = false;
               inherit inputs;
+              currentSystemName = "omarchy";
             })
             ({ lib, pkgs, ... }: {
               nixpkgs.config.allowUnfree = true;
