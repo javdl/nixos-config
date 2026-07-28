@@ -69,7 +69,7 @@ Dedicated self-hosted runner for the `fuww` GitHub organization:
 
 | Server           | Host Config          | Flake Target          | Instance         | User Config                              |
 |------------------|----------------------|-----------------------|------------------|------------------------------------------|
-| github-runner-02 | `github-runner-02`   | `#github-runner-02`   | CPX62 (cloud)    | `users/github-runner/home-manager-server.nix` |
+| ~~github-runner-02~~ | `github-runner-02`   | `#github-runner-02`   | CPX62 (cloud)    | **DECOMMISSIONED 2026-07-28** — cloud VM deleted; fleet is dedicated-EX63 only |
 | github-runner-03 | `github-runner-03`   | `#github-runner-03`   | EX63 (dedicated) | `users/github-runner/home-manager-server.nix` |
 | github-runner-04 | `github-runner-04`   | `#github-runner-04`   | EX63 (dedicated, 178.63.233.19) | `users/github-runner/home-manager-server.nix` |
 | github-runner-05 | `github-runner-05`   | `#github-runner-05`   | EX63 (dedicated, 144.76.86.24)  | `users/github-runner/home-manager-server.nix` |
@@ -91,9 +91,9 @@ auth for key-less apps (Codex). Loom (91.99.204.187) is passive and pending deco
 Hetzner when comfortable, then remove `hosts/loom.nix`, its flake entry, sops anchor,
 and `secrets/loom.yaml`.
 
-The runners use `modules/github-actions-runner.nix` for CI packages (Docker, languages, build tools, browsers, cloud CLIs) and `services.github-runners` for runner registration. Tokens are SOPS-encrypted in `secrets/github-runner-{01,02,03,04,05,06}.yaml`. See `docs/github-runner-hetzner-setup.md` for full setup/scaling guide.
+The runners use `modules/github-actions-runner.nix` for CI packages (Docker, languages, build tools, browsers, cloud CLIs) and `services.github-runners` for runner registration. Tokens are SOPS-encrypted in `secrets/github-runner-{01,03,04,05,06}.yaml`. See `docs/github-runner-hetzner-setup.md` for full setup/scaling guide.
 
-**Cloud (CPX/CCX) vs dedicated (EX) hardware:** runner-01 and runner-02 are Hetzner Cloud VMs and import `modules/hetzner-cloud-hardware.nix` + `modules/disko-hetzner-cloud.nix` (qemu-guest profile, single `/dev/sda`). runner-03 is bare-metal EX63 and imports `modules/hetzner-dedicated-hardware.nix` + `modules/disko-hetzner-dedicated.nix` (no qemu-guest, NVMe initrd, `/dev/nvme0n1`). The second NVMe (`/dev/nvme1n1`) is intentionally left unmanaged so a future host can mount it at `/var/lib/github-runner-work` without rebuilding the root layout.
+**Cloud (CPX/CCX) vs dedicated (EX) hardware:** runner-01 is a Hetzner Cloud VM and imports `modules/hetzner-cloud-hardware.nix` + `modules/disko-hetzner-cloud.nix` (qemu-guest profile, single `/dev/sda`). runner-03 is bare-metal EX63 and imports `modules/hetzner-dedicated-hardware.nix` + `modules/disko-hetzner-dedicated.nix` (no qemu-guest, NVMe initrd, `/dev/nvme0n1`). The second NVMe (`/dev/nvme1n1`) is intentionally left unmanaged so a future host can mount it at `/var/lib/github-runner-work` without rebuilding the root layout.
 
 **EX63 provisioning notes:**
 - **SSH access**: rescue mode only ships the SSH key registered at order time (e.g. `j8 mac studio`). Run `make hetzner/provision NIXADDR=<ip> NIXNAME=github-runner-03` from a machine that holds the matching private key, or add an extra pubkey to rescue via Hetzner Robot first.
@@ -115,7 +115,7 @@ The runners use `modules/github-actions-runner.nix` for CI packages (Docker, lan
 
 **SSH after provisioning:** Root SSH has no authorized keys — always SSH as `joost@<ip>` and use `sudo`. Run `ssh-keygen -R <ip>` first since the host key changes.
 
-To scale: copy `hosts/github-runner-02.nix`, change hostname/runner name/sops path/instance label, reuse `users/github-runner/`, add flake.nix + `.sops.yaml` entries. New runners use disko + nixos-anywhere (no rescue mode).
+To scale: copy `hosts/github-runner-03.nix`, change hostname/runner name/sops path/instance label, reuse `users/github-runner/`, add flake.nix + `.sops.yaml` entries. New runners use disko + nixos-anywhere (no rescue mode).
 
 **Deployment:** All colleague machines have `nixosAutoUpdate` pulling from `github:javdl/nixos-config#<hostname>` at 4 AM daily. To deploy changes:
 1. Edit the relevant `users/<name>/home-manager-server.nix` or `hosts/<hostname>.nix`

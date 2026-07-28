@@ -17,7 +17,6 @@ keys:
   # Host keys (derived from SSH host keys using ssh-to-age)
   # Run: ssh-to-age -i /etc/ssh/ssh_host_ed25519_key.pub
   - &joostclaw age17n047nq8vclhr2gja7fe8z9uv8pug49r6k6c27cxd92jgnmups2qcdte99
-  - &github-runner-02 age1payjujelqgvgpkpapl0cske00waj5vn6xtrz2rr9ag8gt8rphyls9d2dz4
   - &github-runner-03 age1g8sf3amu7jy4qhmdyzygw7uuhq9rlejq8kt0mst24t935fh2054sqwfty4
   # github-runner-04: EX63 dedicated (178.63.233.19). Real host age key,
   # derived post-provision via `ssh-keyscan 178.63.233.19 | grep ed25519 | ssh-to-age`.
@@ -45,13 +44,6 @@ creation_rules:
     key_groups:
       - age:
           - *joostclaw
-
-  # github-runner-02 secrets (GitHub runner token)
-  - path_regex: secrets/github-runner-02\.yaml$
-    key_groups:
-      - age:
-          - *github-runner-02
-          # - *admin_joost  # Uncomment after adding admin key
 
   # github-runner-03 secrets (GitHub runner token) — EX63 dedicated server.
   - path_regex: secrets/github-runner-03\.yaml$
