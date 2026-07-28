@@ -169,9 +169,18 @@ vm/copy:
 
 # run the nixos-rebuild switch command. This does NOT copy files so you
 # have to run vm/copy before.
+#
+# Runs under systemd-run rather than directly on the SSH command pipe: the
+# switch restarts sshd, which kills the SSH session, and switch-to-configuration
+# (Rust) panics with exit 101 the next time it writes to the now-broken stdout.
+# That aborts the switch *before* it starts the units it already stopped. See
+# the hetzner/switch target for the full explanation.
 vm/switch:
 	ssh $(SSH_OPTIONS) -p$(NIXPORT) $(NIXUSER)@$(NIXADDR) " \
-		sudo NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nixos-rebuild switch --flake \"/nix-config#${NIXNAME}\" \
+		sudo systemd-run --collect --wait --service-type=exec --unit=nixos-deploy \
+			--setenv=PATH=/run/wrappers/bin:/run/current-system/sw/bin \
+			--setenv=NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 \
+			nixos-rebuild switch --flake \"/nix-config#${NIXNAME}\" \
 	"
 
 # =============================================================================
@@ -269,9 +278,27 @@ hetzner/copy:
 		$(MAKEFILE_DIR)/ $(NIXUSER)@$(NIXADDR):/nix-config
 
 # Apply NixOS configuration on Hetzner
+#
+# The switch runs as a transient systemd unit instead of directly on the SSH
+# command pipe. Why: a switch that changes sshd restarts it, which drops the SSH
+# session. switch-to-configuration in 26.05 is `switch-to-configuration-ng`, a
+# Rust binary, and Rust's println! panics when stdout is a broken pipe — exiting
+# 101. The switch stops changed units first and starts them last, so the panic
+# leaves every stopped unit down (observed 2026-07-28: all 9 GitHub runners on
+# runner-03/04/05 stopped and never restarted; docker only survived because
+# docker.socket is socket-activated).
+#
+# systemd-run detaches stdout to the journal, so nothing breaks when ssh dies,
+# and the switch completes server-side even if the connection drops. --wait
+# blocks and propagates the real exit code; --collect self-cleans the unit so a
+# failed run can't wedge the next one with "unit was already loaded".
+# Build output goes to the journal: journalctl -u nixos-deploy (add -f to follow).
 hetzner/switch:
 	ssh $(HETZNER_SSH_OPTIONS) -p$(NIXPORT) $(NIXUSER)@$(NIXADDR) " \
-		sudo NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nixos-rebuild switch --flake \"/nix-config#$(NIXNAME)\" \
+		sudo systemd-run --collect --wait --service-type=exec --unit=nixos-deploy \
+			--setenv=PATH=/run/wrappers/bin:/run/current-system/sw/bin \
+			--setenv=NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 \
+			nixos-rebuild switch --flake \"/nix-config#$(NIXNAME)\" \
 	"
 
 # Copy secrets (SSH keys, GPG) to Hetzner
