@@ -72,9 +72,12 @@ Approve by ID (e.g. "do A1, A3, B1"). Batches are suggested groupings, not requi
     idiom or it will reintroduce the throws.
   - **(b) Retire `vm-aarch64` / `vm-aarch64-utm`** if the Apple-Silicon VMs are no longer
     used. Minutes, but it removes two hosts.
-- **Status:** excluded from the new `checks.eval-hosts` gate via `knownBrokenHosts` in
-  `flake.nix`, with the reasoning inline, so the break is tracked rather than silent.
-- **Effort:** (a) 1–2 h, (b) minutes.
+- **RESOLVED 2026-07-28 via (b).** Both hosts retired: `hosts/vm-aarch64{,-utm}.nix`,
+  `hosts/hardware/vm-aarch64{,-utm}.nix`, both `flake.nix` entries, the two dead
+  `lib.optionals (currentSystemName == "vm-aarch64")` gtkmm3 branches in
+  `hosts/vm-shared.nix` and `hosts/bare-metal-shared-linux.nix` (plus the parameter each
+  left unused), and the README's Apple-Silicon VM instructions. `knownBrokenHosts` is now
+  empty and `nix flake check` reports **all checks passed** for the first time.
 
 ---
 

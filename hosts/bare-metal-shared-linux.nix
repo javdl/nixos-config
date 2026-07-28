@@ -3,7 +3,6 @@
   pkgs,
   lib,
   currentSystem,
-  currentSystemName,
   ...
 }:
 
@@ -168,58 +167,52 @@ in
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget
-  environment.systemPackages =
-    with pkgs;
-    [
+  environment.systemPackages = with pkgs; [
 
-      aichat
-      code-cursor
-      fabric-ai
-      #local.files-to-prompt
-      # lmstudio # broken in nixpkgs
-      #local.magic-cli
-      mods # pipe command output to a question
-      openai-whisper
-      pandoc # Test html -> markdown
-      #local.repopack # Testing
-      shell-gpt # $ sgpt ...
-      tgpt # $ tgpt question
+    aichat
+    code-cursor
+    fabric-ai
+    #local.files-to-prompt
+    # lmstudio # broken in nixpkgs
+    #local.magic-cli
+    mods # pipe command output to a question
+    openai-whisper
+    pandoc # Test html -> markdown
+    #local.repopack # Testing
+    shell-gpt # $ sgpt ...
+    tgpt # $ tgpt question
 
-      code-server # since vs code remote ssh doesnt work, use an alternative
+    code-server # since vs code remote ssh doesnt work, use an alternative
 
-      brave
-      gnumake
-      ghostty
-      # gimp
-      nautilus
-      killall
-      python3 # was python311; py3.11 pip pulls sphinx, which dropped 3.11 in nixpkgs 26.05
-      python3Packages.pip
-      # python3.withPackages my-python-packages
-      # python3Packages.pip
-      rxvt-unicode-unwrapped
-      #spotify
-      #thunderbird
-      vlc
-      # vscode-fhs
-      # vscodium-fhs
-      xclip
+    brave
+    gnumake
+    ghostty
+    # gimp
+    nautilus
+    killall
+    python3 # was python311; py3.11 pip pulls sphinx, which dropped 3.11 in nixpkgs 26.05
+    python3Packages.pip
+    # python3.withPackages my-python-packages
+    # python3Packages.pip
+    rxvt-unicode-unwrapped
+    #spotify
+    #thunderbird
+    vlc
+    # vscode-fhs
+    # vscodium-fhs
+    xclip
 
-      argc
-      jq
+    argc
+    jq
 
-      # For hypervisors that support auto-resizing, this script forces it.
-      # I've noticed not everyone listens to the udev events so this is a hack.
-      (writeShellScriptBin "xrandr-auto" ''
-        xrandr --output Virtual-1 --auto
-      '')
-    ]
-    ++ lib.optionals (currentSystemName == "vm-aarch64") [
-      # This is needed for the vmware user tools clipboard to work.
-      # You can test if you don't need this by deleting this and seeing
-      # if the clipboard sill works.
-      gtkmm3
-    ];
+    # For hypervisors that support auto-resizing, this script forces it.
+    # I've noticed not everyone listens to the udev events so this is a hack.
+    (writeShellScriptBin "xrandr-auto" ''
+      xrandr --output Virtual-1 --auto
+    '')
+  ];
+  # The vm-aarch64 branch that added gtkmm3 (vmware user-tools clipboard) went
+  # with that host on 2026-07-28 — the condition could no longer be true.
 
   # Our default non-specialised desktop environment.
   services.xserver = lib.mkIf (config.specialisation != { }) {

@@ -148,8 +148,8 @@ Video: <https://www.youtube.com/watch?v=ubDMLoWz76U>
 
 **Note:** This setup guide will cover VMware Fusion because that is the
 hypervisor I use day to day. The configurations in this repository also
-work with UTM (see `vm-aarch64-utm`) and Parallels (see `vm-aarch64-prl`) but
-I'm not using that full time so they may break from time to time. I've also
+also worked with UTM and Parallels, but those aarch64 VM hosts were retired on
+2026-07-28 — only the x86_64 `vm-intel` host ships today. I've also
 successfully set up this environment on Windows with VMware Workstation and
 Hyper-V.
 
@@ -202,13 +202,13 @@ ARM-based processor (M1, etc.), you must change `NIXNAME` so that the ARM-based
 configuration is used:
 
 ```
-export NIXNAME=vm-aarch64
+export NIXNAME=vm-intel
 ```
 
-**Other Hypervisors:** If you are using Parallels, use `vm-aarch64-prl`.
-If you are using UTM, use `vm-aarch64-utm`. Note that the environments aren't
-_exactly_ equivalent between hypervisors but they're very close and they
-all work.
+**Apple Silicon / other hypervisors:** the `vm-aarch64`, `vm-aarch64-utm` and
+`vm-aarch64-prl` hosts were retired on 2026-07-28 — several tools in
+`lib/overlays.nix` publish no aarch64-linux binary, so those configurations no
+longer evaluated. `vm-intel` is the remaining VM host.
 
 Perform the initial bootstrap. This will install NixOS on the VM disk image
 but will not setup any other configurations yet. This prepares the VM for

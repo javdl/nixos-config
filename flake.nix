@@ -100,17 +100,8 @@
 
       # Hosts excluded from the checks.eval-hosts gate because they do not evaluate
       # today. Keep this list empty; every entry is a tracked break, not a waiver.
-      #
-      # vm-aarch64 / vm-aarch64-utm — 13 tools in lib/overlays.nix publish no
-      # aarch64-linux binary and `throw "Unsupported system: aarch64-linux"`, which
-      # aborts evaluation of any aarch64-linux host pulling the default package set.
-      # Fix by making those overlay entries null on unsupported systems (the repo
-      # already guards consumers with `lib.optional (pkgs.X != null)`), or by
-      # retiring these two VM hosts.
-      knownBrokenHosts = [
-        "vm-aarch64"
-        "vm-aarch64-utm"
-      ];
+      # Empty since 2026-07-28, when the two aarch64-linux VM hosts were retired.
+      knownBrokenHosts = [ ];
 
       # nixpkgs with our overlays applied, used only for the tooling outputs below.
       pkgsFor =
@@ -252,17 +243,9 @@
         }
       );
 
-      nixosConfigurations.vm-aarch64 = mkSystem "vm-aarch64" {
-        system = "aarch64-linux";
-        user = "joost";
-      };
-
-      # vm-aarch64-prl removed — hosts/vm-aarch64-prl.nix does not exist
-
-      nixosConfigurations.vm-aarch64-utm = mkSystem "vm-aarch64-utm" rec {
-        system = "aarch64-linux";
-        user = "joost";
-      };
+      # vm-aarch64, vm-aarch64-utm and vm-aarch64-prl retired 2026-07-28. The
+      # Apple-Silicon NixOS VMs were unused and no longer evaluated: 13 tools in
+      # lib/overlays.nix ship no aarch64-linux binary. vm-intel remains.
 
       nixosConfigurations.vm-intel = mkSystem "vm-intel" rec {
         system = "x86_64-linux";

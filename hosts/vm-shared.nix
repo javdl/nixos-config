@@ -3,7 +3,6 @@
   pkgs,
   lib,
   currentSystem,
-  currentSystemName,
   ...
 }:
 
@@ -116,27 +115,21 @@ in
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget
-  environment.systemPackages =
-    with pkgs;
-    [
-      gnumake
-      killall
-      rxvt-unicode-unwrapped
-      xclip
-      zed-editor
+  environment.systemPackages = with pkgs; [
+    gnumake
+    killall
+    rxvt-unicode-unwrapped
+    xclip
+    zed-editor
 
-      # For hypervisors that support auto-resizing, this script forces it.
-      # I've noticed not everyone listens to the udev events so this is a hack.
-      (writeShellScriptBin "xrandr-auto" ''
-        xrandr --output Virtual-1 --auto
-      '')
-    ]
-    ++ lib.optionals (currentSystemName == "vm-aarch64") [
-      # This is needed for the vmware user tools clipboard to work.
-      # You can test if you don't need this by deleting this and seeing
-      # if the clipboard sill works.
-      gtkmm3
-    ];
+    # For hypervisors that support auto-resizing, this script forces it.
+    # I've noticed not everyone listens to the udev events so this is a hack.
+    (writeShellScriptBin "xrandr-auto" ''
+      xrandr --output Virtual-1 --auto
+    '')
+  ];
+  # The vm-aarch64 branch that added gtkmm3 (vmware user-tools clipboard) went
+  # with that host on 2026-07-28 — the condition could no longer be true.
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
