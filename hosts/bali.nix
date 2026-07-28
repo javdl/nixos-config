@@ -27,6 +27,15 @@ let
   # hosts/loom.nix). Running both gateways with the same tokens double-answers
   # Telegram/Discord/Slack — never enable both.
   enableHermes = true;
+
+  # Personal (javdl/joost) GitHub Actions runners. Gated like enableHermes so a
+  # config push never breaks bali's 04:00 auto-update before the SOPS token
+  # exists: keep false until `github-runner-javdl-token` is in secrets/bali.yaml,
+  # then flip to true. Personal accounts have no org-level runner scope, so these
+  # are repo-scoped (url = github.com/javdl/joost) — unrelated to the fuww org
+  # runners on github-runner-02..05.
+  enableRunners = true;
+  javdlRunnerCount = 2;
 in
 {
   imports = [
@@ -41,6 +50,7 @@ in
     ../modules/podman.nix
     ../modules/repo-updater.nix
     ../modules/ghostty-terminfo.nix
+    ../modules/github-actions-runner.nix
     inputs.hermes-agent.nixosModules.default
   ];
 
@@ -144,6 +154,8 @@ in
     repos = [
       "fuww/developer"
       "Dicklesworthstone/agent_flywheel_clawdbot_skills_and_integrations"
+      # Cloned on all joost machines (loom, joostclaw too) → code/javdl/joost.
+      "javdl/joost"
     ];
   };
 
@@ -324,6 +336,83 @@ in
     trustedInterfaces = [ "tailscale0" ];
     allowedUDPPorts = [ config.services.tailscale.port ];
   };
+
+  # ── Personal GitHub Actions runners (javdl/joost) ──────────────────────────
+  # Two repo-scoped self-hosted runners for the private repo javdl/joost. See
+  # the enableRunners note at the top of this file for the gating rationale.
+  # The CI toolchain (git/gh/docker/languages/browsers/…) comes from
+  # modules/github-actions-runner.nix, shared with the fuww runner hosts.
+  services.github-actions-runner.enable = enableRunners;
+
+  # bali is user="joost", so mkSystem does NOT load users/github-runner/nixos.nix
+  # (that file only loads on hosts whose mkSystem user is "github-runner"). Define
+  # the runner's unprivileged service account here. No password: the runner is
+  # driven by systemd, never logged into.
+  users.users.github-runner = lib.mkIf enableRunners {
+    isNormalUser = true;
+    home = "/home/github-runner";
+    extraGroups = [ "docker" ];
+  };
+
+  # Repo-level runner registration token. Get a fresh one (expires in 1h,
+  # single-use) from https://github.com/javdl/joost/settings/actions/runners/new
+  # and store it under key `github-runner-javdl-token` in secrets/bali.yaml.
+  sops.secrets.github-runner-javdl-token = lib.mkIf enableRunners {
+    sopsFile = ../secrets/bali.yaml;
+    format = "yaml";
+    key = "github-runner-javdl-token";
+    mode = "0400";
+    owner = "root";
+  };
+
+  # Per-runner work dirs, owned by the runner account (off tmpfs, like the
+  # fuww hosts, so large checkouts don't exhaust /run).
+  systemd.tmpfiles.rules = lib.mkIf enableRunners (
+    lib.genList (
+      i: "d /var/lib/github-runner-work/javdl-runner-${toString (i + 1)} 0700 github-runner users -"
+    ) javdlRunnerCount
+  );
+
+  services.github-runners = lib.mkIf enableRunners (
+    let
+      common = {
+        enable = true;
+        ephemeral = false;
+        replace = true;
+        tokenFile = config.sops.secrets.github-runner-javdl-token.path;
+        url = "https://github.com/javdl/joost";
+        user = "github-runner";
+        extraPackages = config.services.github-actions-runner.packages.forRunner;
+        extraLabels = [
+          "nixos"
+          "hetzner"
+          "javdl"
+        ];
+        extraEnvironment = {
+          DOCKER_HOST = "unix:///var/run/docker.sock";
+          # nixpkgs github-runner ships only the node24 externals (Node 20 is
+          # EOL/dropped); force JS actions (checkout@v4, upload-artifact@v4, …)
+          # onto node24 so they don't exec a missing node20 binary.
+          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24 = "true";
+        };
+      };
+    in
+    lib.listToAttrs (
+      lib.genList (
+        i:
+        let
+          idx = i + 1;
+        in
+        lib.nameValuePair "javdl-runner-${toString idx}" (
+          common
+          // {
+            name = "bali-javdl-${toString idx}";
+            workDir = "/var/lib/github-runner-work/javdl-runner-${toString idx}";
+          }
+        )
+      ) javdlRunnerCount
+    )
+  );
 
   # This value determines the NixOS release
   system.stateVersion = "25.05";

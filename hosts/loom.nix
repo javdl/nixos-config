@@ -117,6 +117,8 @@ in
     repos = [
       "fuww/developer"
       "Dicklesworthstone/agent_flywheel_clawdbot_skills_and_integrations"
+      # Cloned on all joost machines (bali, joostclaw too) → code/javdl/joost.
+      "javdl/joost"
     ];
   };
 

@@ -78,6 +78,8 @@
     timerInterval = "6h";
     repos = [
       "fuww/developer"
+      # Cloned on all joost machines (bali, loom too) → code/javdl/joost.
+      "javdl/joost"
     ];
   };
 
