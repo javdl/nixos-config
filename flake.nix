@@ -335,8 +335,6 @@
 
       nixosConfigurations.jeevanator = mkServer "jeevanator" "jeevan";
 
-      nixosConfigurations.lennardroid = mkServer "lennardroid" "lennard";
-
       # All aarch64-darwin workstations share one definition (see mkDarwin).
       darwinConfigurations = nixpkgs.lib.genAttrs [
         "fu129"

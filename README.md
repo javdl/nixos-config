@@ -390,7 +390,6 @@ Colleague development servers (Hetzner CPX32, Nuremberg):
 | Desmond   | desmondroid    | `#desmondroid`   | `users/desmond/home-manager-server.nix` |
 | Jackson   | jacksonator    | `#jacksonator`   | `users/jackson/home-manager-server.nix` |
 | Jeevan    | jeevanator     | `#jeevanator`    | `users/jeevan/home-manager-server.nix`  |
-| Lennard   | lennardroid    | `#lennardroid`   | `users/lennard/home-manager-server.nix` |
 | Peter     | peterbot       | `#peterbot`      | `users/peter/home-manager-server.nix`   |
 | Rajesh    | rajbot         | `#rajbot`        | `users/rajesh/home-manager-server.nix`  |
 
@@ -402,8 +401,9 @@ Dedicated self-hosted GitHub Actions runner for the `fuww` organization:
 
 | Server             | Hostname           | Flake Target           | Instance | Purpose |
 |--------------------|--------------------|------------------------|----------|---------|
-| github-runner-02   | github-runner-02   | `#github-runner-02`    | CPX62    | GitHub Actions runner for fuww org |
 | github-runner-03   | github-runner-03   | `#github-runner-03`    | EX63     | GitHub Actions runner for fuww org |
+| github-runner-04   | github-runner-04   | `#github-runner-04`    | EX63     | GitHub Actions runner for fuww org |
+| github-runner-05   | github-runner-05   | `#github-runner-05`    | EX63     | GitHub Actions runner for fuww org |
 
 Each runner includes the full CI package set (Docker, languages, build tools, browsers, cloud CLIs) via the `github-actions-runner` module. Runner tokens are **org-level registration tokens** (NOT PATs — get from GitHub Settings > Actions > Runners > New), SOPS-encrypted in `secrets/`. Tokens expire in 1 hour and are single-use per registration. See [docs/github-runner-hetzner-setup.md](docs/github-runner-hetzner-setup.md) for the full setup guide, including the SOPS chicken-and-egg workaround for new servers and token lifecycle details.
 
