@@ -394,11 +394,8 @@
 
   # Personal javdl/joost runners (2), alongside the fuww org runners above.
   # Token lives under key github-runner-javdl-token in the host secrets file.
-  # GATED OFF: this box was unreachable (Tailscale + public 22 both timed out) on
-  # 2026-07-28, so its javdl token couldn't be inserted. Flip to true after
-  # putting github-runner-javdl-token in secrets/github-runner-04.yaml on the host.
   services.javdlRunners = {
-    enable = false;
+    enable = true;
     namePrefix = "github-runner-04-javdl";
     tokenSopsFile = ../secrets/github-runner-04.yaml;
   };
