@@ -356,6 +356,43 @@ The file is therefore a chezmoi template: `~/.local/share/chezmoi/dot_claude/set
 ### chezmoi auto-sync races with manual pushes
 A background hook auto-syncs `~/.claude/MEMORY` (and observably `~/.claude/settings.json`) to `~/.local/share/chezmoi` every ~5 min and `jj git push`es to `javdl/dotfiles`. Manual pushes regularly hit "stale info" rejections. Standard recovery: `jj git fetch && jj rebase -d main@origin && jj bookmark set main -r @ && jj git push`. Plan for one or two rebase cycles; it's not a bug.
 
+### `chezmoi apply` aborts when Bitwarden is locked — fall back to a scoped apply
+chezmoi renders **all** templates up front, so one unrenderable template aborts the entire apply. Exactly two source templates call `bitwarden`:
+
+| Source template | Target |
+|---|---|
+| `dot_claude-code-router/config.json.tmpl` | `~/.claude-code-router/config.json` |
+| `private_dot_env.tmpl` | `~/.env` |
+
+With the vault locked (`bw` prints `You are not logged in`) both fail, and everything else — including `~/.claude` (PAI hooks, skills, `settings.json`) — silently stays unmanaged. Servers hit the same trap; `d20712c` fixed it for them by re-applying `~/.claude` explicitly after `chezmoi update`.
+
+**Always fall back to a Bitwarden-free scoped apply rather than leaving the sync half-done — and tell the user you did so, since the two secret-backed files are skipped:**
+```bash
+chezmoi managed --path-style=absolute \
+  | awk -F/ 'NF==4' \
+  | grep -vxE "$HOME/(\.claude-code-router|\.env)" \
+  | xargs chezmoi apply
+```
+Gotchas, all verified the hard way:
+- **Pipe through `xargs`.** zsh does not word-split unquoted parameters, so `chezmoi apply $targets` passes one newline-joined argument and dies with `... : not managed`.
+- **`-x/--exclude` takes entry *types*, not paths.** Scoping by target path is the only way to skip specific files.
+- **`awk -F/ 'NF==4'`** trims the managed list to top-level entries under `$HOME` (`/home/joost/.claude` → 4 fields), keeping the arg list short while still covering everything.
+- **Expect a prompt.** chezmoi asks before overwriting files changed since it last wrote them (typically `~/.claude/MEMORY/STATE/*`); without a TTY it fails with `could not open a new TTY`. Only reach for `--force` after confirming that destination drift is disposable — live `~/.claude/settings.json` regularly runs *ahead* of the chezmoi source.
+- To get the two skipped files too: `bw unlock`, export `BW_SESSION`, then re-run a full `chezmoi apply`.
+
+### zoxide "detected a possible configuration issue" on every Claude Code command
+Cosmetic, and **not** a real init-order problem — do not reshuffle `.zshrc`. The check lives in the generated init script, not the binary:
+```zsh
+__zoxide_doctor() {
+    [[ ${_ZO_DOCTOR:-1} -ne 0 ]] || return 0
+    [[ ${chpwd_functions[(Ie)__zoxide_hook]:-} -eq 0 ]] || return 0   # hook present → silent
+    ...
+}
+```
+`--cmd cd` makes `cd` a zoxide function that calls `__zoxide_doctor`. Claude Code's shell snapshot (`~/.claude/shell-snapshots/snapshot-zsh-*.sh`) restores functions and aliases but **not** the `chpwd_functions` array, so inside the tool shell `chpwd_functions` is empty and every `cd` warns. Real shells are fine — verified `chpwd_functions=(_direnv_hook __zoxide_hook)` in an interactive zsh, and direnv *prepends* rather than clobbers.
+
+Fix: `_ZO_DOCTOR = "0"` in `home.sessionVariables` — set in `users/shared-home-manager.nix` (desktop/`music` profiles) and repeated in `users/joost/home-manager-server.nix`, which does **not** consume `shared.sessionVariables`. Grep for `shared.sessionVariables` before assuming a shared value reaches a server profile.
+
 ### Editing `lib/overlays.nix` — audit siblings before removing
 Many overlay blocks are paired infrastructure (e.g., `ironclaw` + `openclaw` were both AI-assistant gateways with matching modules `modules/ironclaw-oci.nix` and `modules/openclaw-oci.nix`, both wired into `hosts/joostclaw.nix`). Before removing a package, grep for related names in the same files and surface them: "I see X is configured alongside Y — should that go too?"
 

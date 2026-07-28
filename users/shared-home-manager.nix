@@ -101,6 +101,12 @@ in
     # PAI (Personal AI Infrastructure)
     PAI_DIR = "$HOME/.claude";
     PAI_CONFIG_DIR = "$HOME/.config/PAI";
+
+    # Silence zoxide's init-order diagnostic. It misfires in Claude Code's shell
+    # snapshots: the snapshot restores zoxide's `cd` function but not the
+    # chpwd_functions array, so __zoxide_doctor sees no hook and warns on every
+    # cd. Real shells register it fine — see AGENTS.md (Common Issues).
+    _ZO_DOCTOR = "0";
   };
 
   # Common fish plugins - removed with niv

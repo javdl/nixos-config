@@ -53,6 +53,11 @@ in
 
     # Default GCP project — read by gemini CLI, gcloud client libs (ADC), terraform-google, etc.
     GOOGLE_CLOUD_PROJECT = "kubernetes-164514";
+
+    # Silence zoxide's init-order diagnostic — false positive in Claude Code's
+    # shell snapshots. This profile does not consume shared.sessionVariables,
+    # so it is repeated here. See AGENTS.md (Common Issues).
+    _ZO_DOCTOR = "0";
   };
 
   # Cargo-installed binaries (caut, etc.)
