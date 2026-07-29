@@ -38,7 +38,11 @@ in
   # Fixed SSH_AUTH_SOCK path — symlink updated by shell init on each new shell.
   # Because SSH resolves symlinks on every operation, updating the target
   # fixes all shells (including already-running zellij panes).
-  home.sessionVariables = {
+  # Merge the fleet-wide defaults (locale, EDITOR/PAGER/MANPAGER, PAI_DIR,
+  # _ZO_DOCTOR) rather than starting from scratch — server profiles used to skip
+  # shared.sessionVariables entirely, so anything added there silently never
+  # reached them. See AGENTS.md.
+  home.sessionVariables = shared.sessionVariables // {
     SSH_AUTH_SOCK = "$HOME/.ssh/ssh_auth_sock";
   };
 

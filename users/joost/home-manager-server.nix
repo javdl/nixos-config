@@ -48,16 +48,14 @@ in
   # Fixed SSH_AUTH_SOCK path — symlink updated by shell init on each new shell.
   # Because SSH resolves symlinks on every operation, updating the target
   # fixes all shells (including already-running zellij panes).
-  home.sessionVariables = {
+  # Fleet-wide defaults (locale, EDITOR/PAGER/MANPAGER, PAI_DIR, _ZO_DOCTOR)
+  # merged in — this profile used to start from scratch, which is why
+  # _ZO_DOCTOR had to be duplicated here. It now comes from the shared set.
+  home.sessionVariables = shared.sessionVariables // {
     SSH_AUTH_SOCK = "$HOME/.ssh/ssh_auth_sock";
 
     # Default GCP project — read by gemini CLI, gcloud client libs (ADC), terraform-google, etc.
     GOOGLE_CLOUD_PROJECT = "kubernetes-164514";
-
-    # Silence zoxide's init-order diagnostic — false positive in Claude Code's
-    # shell snapshots. This profile does not consume shared.sessionVariables,
-    # so it is repeated here. See AGENTS.md (Common Issues).
-    _ZO_DOCTOR = "0";
   };
 
   # Cargo-installed binaries (caut, etc.)

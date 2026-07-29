@@ -27,6 +27,12 @@ in
   # Home-manager state version
   home.stateVersion = "25.11";
 
+  # Fleet-wide defaults (locale, EDITOR/PAGER/MANPAGER, _ZO_DOCTOR). This
+  # profile previously had no sessionVariables at all, so it silently missed
+  # everything added to users/shared-home-manager.nix. Nothing here overrides,
+  # so it is a plain assignment rather than a merge.
+  home.sessionVariables = shared.sessionVariables;
+
   xdg.enable = true;
 
   #---------------------------------------------------------------------
