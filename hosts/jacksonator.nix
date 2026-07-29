@@ -194,6 +194,11 @@
   # Use zsh as default shell
   programs.zsh.enable = true;
   users.users.jackson.shell = lib.mkForce pkgs.zsh;
+  # The user manager must outlive logins: the persistent tmux service
+  # (users/jackson/home-manager-server.nix) runs under it, and jacksonator
+  # uses Tailscale SSH, so an interactive-login tmux server would otherwise
+  # die whenever a switch restarts tailscaled/sshd (see 2026-07-28 incident).
+  users.users.jackson.linger = true;
 
   # Run dynamically linked binaries (AppImages, prebuilt tools) without patchelf
   programs.nix-ld.enable = true;
