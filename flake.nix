@@ -128,6 +128,56 @@
           user = "joost";
           darwin = true;
         };
+
+      # Standalone home-manager for Arch/Omarchy boxes (non-NixOS Linux). j9 and
+      # the generic "omarchy" profile were byte-identical apart from the hostname
+      # threaded into users/joost/home-manager.nix and the extra CLI packages
+      # layered on top — which is how "omarchy" came to be missing
+      # currentSystemName and stopped evaluating. One definition, no drift.
+      mkOmarchyHome =
+        {
+          hostName,
+          extraPackages,
+        }:
+        let
+          pkgs = import nixpkgs {
+            system = "x86_64-linux";
+            overlays = overlays;
+            config.allowUnfree = true;
+          };
+        in
+        home-manager.lib.homeManagerConfiguration {
+          inherit pkgs;
+          extraSpecialArgs = {
+            inherit inputs;
+          };
+          modules = [
+            (import ./users/joost/home-manager.nix {
+              isWSL = false;
+              inherit inputs;
+              currentSystemName = hostName;
+            })
+            (
+              { lib, pkgs, ... }:
+              {
+                nixpkgs.config.allowUnfree = true;
+                home.username = "joost";
+                home.homeDirectory = "/home/joost";
+
+                home.packages = extraPackages pkgs;
+
+                # Protect Omarchy-managed directories
+                home.file.".config/omarchy".enable = false;
+                home.file.".config/hypr".enable = false;
+                home.file.".config/alacritty".enable = false;
+                home.file.".config/btop/themes".enable = false;
+
+                # Disable nixpkgs module's <nixpkgs> lookup for pure evaluation
+                _module.args.pkgsPath = lib.mkForce nixpkgs;
+              }
+            )
+          ];
+        };
     in
     {
       # `nix fmt` — formats this repo's own Nix sources only. Skips vendored trees
@@ -381,14 +431,18 @@
         "crescendo"
       ] mkDarwin;
 
-      # Home Manager configuration for GitHub runner on Ubuntu
+      # Home Manager configuration for a GitHub runner on Ubuntu (standalone HM,
+      # not NixOS). Its profile lives in users/ubuntu-runner/ — deliberately not
+      # users/github-runner/, which is the NixOS runner hosts' user. The attribute
+      # name and the `githubrunner` account name are unchanged: both are external
+      # contracts (the account exists on that box).
       homeConfigurations."githubrunner" = home-manager.lib.homeManagerConfiguration {
         pkgs = import nixpkgs {
           system = "x86_64-linux";
           overlays = overlays;
         };
         modules = [
-          ./users/githubrunner/home-manager.nix
+          ./users/ubuntu-runner/home-manager.nix
           # mise (dev tool / runtime version manager) on every machine
           ({ pkgs, ... }: { home.packages = [ pkgs.mise ]; })
         ];
@@ -397,93 +451,27 @@
       # Home Manager configuration for j9 (standalone, non-NixOS Linux - Arch/Omarchy)
       # Omarchy package lists: ~/.local/share/omarchy/install/omarchy-{base,other}.packages
       # Wayland/Hyprland tools are managed by Omarchy via pacman, not Nix
-      homeConfigurations."j9" =
-        let
-          pkgs = import nixpkgs {
-            system = "x86_64-linux";
-            overlays = overlays;
-            config.allowUnfree = true;
-          };
-        in
-        home-manager.lib.homeManagerConfiguration {
-          inherit pkgs;
-          extraSpecialArgs = {
-            inherit inputs;
-          };
-          modules = [
-            (import ./users/joost/home-manager.nix {
-              isWSL = false;
-              inherit inputs;
-              currentSystemName = "j9";
-            })
-            ({ lib, pkgs, ... }: {
-              nixpkgs.config.allowUnfree = true;
-              home.username = "joost";
-              home.homeDirectory = "/home/joost";
-
-              # Additional packages from Omarchy that complement the Nix setup
-              # These are CLI tools that work alongside Omarchy without conflicting
-              home.packages = with pkgs; [
-                gum # Terminal UI toolkit for shell scripts
-                tldr # Simplified man pages
-                mpv # Media player
-                playerctl # Media player control (MPRIS)
-                localsend # Local file sharing (LAN)
-                inxi # System information tool
-                mise # Dev tool / runtime version manager
-                # Wayland tools managed by Omarchy: hyprland, waybar, mako, etc.
-              ];
-
-              # Protect Omarchy-managed directories
-              home.file.".config/omarchy".enable = false;
-              home.file.".config/hypr".enable = false;
-              home.file.".config/alacritty".enable = false;
-              home.file.".config/btop/themes".enable = false;
-
-              # Disable nixpkgs module's <nixpkgs> lookup for pure evaluation
-              _module.args.pkgsPath = lib.mkForce nixpkgs;
-            })
+      homeConfigurations."j9" = mkOmarchyHome {
+        hostName = "j9";
+        # CLI tools that complement Omarchy without conflicting with it. Wayland
+        # tools (hyprland, waybar, mako, …) stay pacman-managed — see AGENTS.md.
+        extraPackages =
+          pkgs: with pkgs; [
+            gum # Terminal UI toolkit for shell scripts
+            tldr # Simplified man pages
+            mpv # Media player
+            playerctl # Media player control (MPRIS)
+            localsend # Local file sharing (LAN)
+            inxi # System information tool
+            mise # Dev tool / runtime version manager
           ];
-        };
+      };
 
-      # Home Manager configuration for Omarchy (standalone, non-NixOS Linux)
-      homeConfigurations."omarchy" =
-        let
-          pkgs = import nixpkgs {
-            system = "x86_64-linux";
-            overlays = overlays;
-            config.allowUnfree = true;
-          };
-        in
-        home-manager.lib.homeManagerConfiguration {
-          inherit pkgs;
-          extraSpecialArgs = {
-            inherit inputs;
-          };
-          modules = [
-            (import ./users/joost/home-manager.nix {
-              isWSL = false;
-              inherit inputs;
-              currentSystemName = "omarchy";
-            })
-            ({ lib, pkgs, ... }: {
-              nixpkgs.config.allowUnfree = true;
-              home.username = "joost";
-              home.homeDirectory = "/home/joost";
-
-              # mise (dev tool / runtime version manager) on every machine
-              home.packages = [ pkgs.mise ];
-
-              # Protect Omarchy-managed directories
-              home.file.".config/omarchy".enable = false;
-              home.file.".config/hypr".enable = false;
-              home.file.".config/alacritty".enable = false;
-              home.file.".config/btop/themes".enable = false;
-
-              # Disable nixpkgs module's <nixpkgs> lookup for pure evaluation
-              _module.args.pkgsPath = lib.mkForce nixpkgs;
-            })
-          ];
-        };
+      # Generic Omarchy profile (standalone, non-NixOS Linux)
+      homeConfigurations."omarchy" = mkOmarchyHome {
+        hostName = "omarchy";
+        # mise (dev tool / runtime version manager) on every machine
+        extraPackages = pkgs: [ pkgs.mise ];
+      };
     };
 }
