@@ -83,6 +83,13 @@ Approve by ID (e.g. "do A1, A3, B1"). Batches are suggested groupings, not requi
 
 ## Batch B — Duplication that is actively causing bugs (P1)
 
+> **STATUS 2026-07-29 — B1, B2, B3, B5, B6 are DONE and pushed.** Every refactor was
+> verified by diffing the evaluated `drvPath` of all 36 configurations against a
+> pre-change baseline (`nix build .#checks.x86_64-linux.eval-hosts`), so "no behaviour
+> change" is proven rather than asserted. B2 intentionally changed 12 hosts and nothing
+> else. **B4 is not done — see its entry for why and for the ready-to-run plan.**
+
+
 ### B1. Five colleague profiles are ~99% identical
 - **Evidence:** `users/{desmond,jackson,jeevan,peter,rajesh}/home-manager-server.nix` are
   **634 lines each**. `diff` against desmond: jackson **6** differing lines, jeevan **6**,
@@ -117,6 +124,79 @@ Approve by ID (e.g. "do A1, A3, B1"). Batches are suggested groupings, not requi
 - **Action:** carried over from the June audit (2.2) — split to `overlays/<tool>.nix` with a
   thin aggregator, so per-tool bumps are small diffs and the generated-file exclusion shrinks.
 - **Effort:** 1-2 days, background project.
+
+**NOT DONE 2026-07-29 — deliberately, and here is the plan so it can be picked up cold.**
+
+The load-bearing fact, which was not known when this item was written: the "tool-updater
+automation" flake.nix credits with rewriting this file is `skills/update-overlays/SKILL.md`,
+a Claude Code skill. It does **targeted `Edit` string replacements** (one for
+`<name>Version`, one per platform hash) against the hardcoded path
+`/home/joost/nixos-config/lib/overlays.nix` — it never does a whole-file write. So a split
+will **not** be clobbered on the next run. But the skill hardcodes that path in ~10 places,
+and its short aliases do not match either the Nix attribute or an obvious filename. Miss one
+and a future tool bump edits the wrong place.
+
+Why it was left: unlike B1/B2/B3/B5/B6, this one cannot be proven safe by drvPath equality.
+The Nix half can (and must) be, but the half that actually breaks — a skill silently
+mis-locating a package months from now — has no such check. It is also the only B item whose
+payoff is readability rather than a fixed bug.
+
+Structure, verified: one overlay `(final: prev: let <sources> in { <packages> })`, 36
+top-level attrs (29 extractable tools + 7 trivial `pkgs-unstable` passthroughs: lmstudio, gh,
+nushell, google-cloud-sdk, direnv, pipx, github-runner; plus `caut = null`). `pkgs-unstable`
+is imported **once** at line 9 — any split must keep it that way or every per-tool file
+instantiates its own nixpkgs, and whole-flake evaluation already peaks at 31.6 GB.
+
+Suggested shape, which preserves the single instantiation:
+```nix
+# lib/overlays.nix
+{ inputs }:
+[
+  (final: prev:
+    let
+      pkgs-unstable = import inputs.nixpkgs-unstable { ... };   # still once
+      tool = path: import path { inherit prev pkgs-unstable; };
+    in
+    {
+      grepai = tool ../overlays/grepai.nix;
+      # ...
+    })
+]
+```
+
+The alias map is the risky part; derived mechanically from the let-block headers:
+
+| let-block prefix | attribute | suggested file |
+|---|---|---|
+| `grepai` | grepai | overlays/grepai.nix |
+| `bv` | beads-viewer | overlays/beads-viewer.nix |
+| `cass` | cass | overlays/cass.nix |
+| `slb` | slb | overlays/slb.nix |
+| `csctf` | csctf | overlays/csctf.nix |
+| `brenner` | brenner | overlays/brenner.nix |
+| `toon` | toon | overlays/toon.nix |
+| `ms` | meta-skill | overlays/meta-skill.nix |
+| `gws` | gws | overlays/gws.nix |
+| `br` | beads-rust | overlays/beads-rust.nix |
+| `ntm` | ntm | overlays/ntm.nix |
+| `dcg` | destructive-command-guard | overlays/destructive-command-guard.nix |
+| `caam` | caam | overlays/caam.nix |
+| `agentBrowser` | agent-browser | overlays/agent-browser.nix |
+| `pi` | pi-agent | overlays/pi-agent.nix |
+| `xf` | xf | overlays/xf.nix |
+| `mcpAgentMail` | mcp-agent-mail | overlays/mcp-agent-mail.nix |
+| `casr` | cross-agent-session-resumer | overlays/cross-agent-session-resumer.nix |
+| `s2p` | s2p | overlays/s2p.nix |
+| `pt` | process-triage | overlays/process-triage.nix |
+| `rch` | remote-compilation-helper | overlays/remote-compilation-helper.nix |
+
+(ubs, cass-memory, codex, gemini-cli, cco, giil and repo-updater declare their versions inline
+in the attrs block rather than the let block — extract them the same way, they just have no
+let segment.)
+
+Acceptance: all 36 drvPaths unchanged, **and** `skills/update-overlays/SKILL.md` updated in
+the same commit with a File column added to its scope table so the alias→filename mapping is
+explicit rather than guessed.
 
 ### B5. ~25 near-identical config blocks in `flake.nix`
 - Carried over from June audit 2.3, unchanged. `flake.nix` is 459 lines, most of it
