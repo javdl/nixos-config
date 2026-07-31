@@ -1,23 +1,31 @@
 name: Claude Issue Triage
-description: "Automatically triage GitHub issues using Claude Code"
 
 on:
   issues:
     types: [opened]
+  workflow_dispatch:
 
 jobs:
   triage-issue:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
     permissions:
       contents: read
       issues: write
     steps:
+      - name: Skip when Anthropic API key is unavailable
+        if: ${{ env.ANTHROPIC_API_KEY == '' }}
+        run: echo "::notice::Skipping issue triage because ANTHROPIC_API_KEY is not configured."
+
       - name: Checkout repository
-        uses: actions/checkout@v4
+        if: ${{ env.ANTHROPIC_API_KEY != '' }}
+        uses: actions/checkout@v7.0.1
 
       - name: Run Claude Issue Triage
+        if: ${{ env.ANTHROPIC_API_KEY != '' }}
         uses: ./.github/actions/claude-issue-triage-action
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          anthropic_api_key: ${{ env.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
