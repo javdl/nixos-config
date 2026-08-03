@@ -190,7 +190,6 @@ in
     taps = [
       "dicklesworthstone/tap"
       "steipete/tap"
-      "workos/tap"
     ];
     brews = [
       "dicklesworthstone/tap/bv" # beads_viewer - view BAML beads files
@@ -204,7 +203,6 @@ in
       "protobuf"
       "tailscale"
       "vercel-cli"
-      "workos/tap/workos-cli"
     ];
     casks = withoutServerCasks (
       (
