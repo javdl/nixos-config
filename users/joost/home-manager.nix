@@ -74,6 +74,17 @@ let
     identitiesOnly = true;
   };
 
+  # A VM on the FashionUnited team account. Deliberately a dotless alias rather
+  # than a "<vm>.exe.xyz" pattern: ssh keeps the first value it obtains for an
+  # option, but Nix renders attrset keys alphabetically, so "*.exe.xyz" would
+  # sort ahead of any "fu-….exe.xyz" block and win. An alias cannot collide with
+  # that wildcard, so the identity holds regardless of ordering.
+  exeWorkVm = name: {
+    hostname = "${name}.exe.xyz";
+    identityFile = "~/.ssh/exe-work.pub";
+    identitiesOnly = true;
+  };
+
   gdk = pkgs.google-cloud-sdk.withExtraComponents (
     with pkgs.google-cloud-sdk.components;
     [
@@ -1111,11 +1122,12 @@ in
       "exe" = exeHost "exe";
       "exe-work" = exeHost "exe-work";
 
-      # VM shells default to the personal account, which owns every VM today.
-      # FashionUnited team VMs need the work key instead; list them explicitly
-      # ahead of this wildcard, since ssh takes the first value it obtains for
-      # an option:
-      #   "fu-developer.exe.xyz" = exeVm "exe-work";
+      # FashionUnited team VMs, reached by alias so the wildcard below cannot
+      # shadow their identity: `ssh fu-developer`, `ssh fu-handbook`.
+      "fu-developer" = exeWorkVm "fu-developer";
+      "fu-handbook" = exeWorkVm "fu-handbook";
+
+      # Every other VM shell belongs to the personal account.
       "*.exe.xyz" = exeVm "exe";
 
       "argon" = sshTailscaleHost "100.106.10.12";
