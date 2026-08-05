@@ -54,6 +54,15 @@ let
 
   sshBuriHokiHost = host: sshTailscaleHost "${host}.buri-hoki.ts.net";
 
+  # One exe.dev account per alias; `name` is both the Host alias and the
+  # basename of the public key installed into ~/.ssh by home.file below.
+  exeHost = name: {
+    hostname = "exe.dev";
+    user = "root";
+    identityFile = "~/.ssh/${name}.pub";
+    identitiesOnly = true;
+  };
+
   gdk = pkgs.google-cloud-sdk.withExtraComponents (
     with pkgs.google-cloud-sdk.components;
     [
@@ -461,6 +470,10 @@ in
     ".config/zellij/layouts/fun.kdl".source = ./zellij-fun.kdl;
     ".config/zellij/layouts/frontend.kdl".source = ../zellij-frontend-fuww.kdl;
     ".config/zellij/layouts/backend.kdl".source = ../zellij-backend-fuww.kdl;
+    # Public halves of the Bitwarden-held exe.dev keys, used purely as
+    # identity selectors for the `exe` / `exe-work` SSH aliases.
+    ".ssh/exe.pub".source = ./ssh/exe.pub;
+    ".ssh/exe-work.pub".source = ./ssh/exe-work.pub;
     ".gdbinit".source = ./gdbinit;
     ".inputrc".source = ./inputrc;
     ".gitignore".text = ''
@@ -1079,6 +1092,13 @@ in
         identityFile = "~/.ssh/id_ed25519_hetzner_work";
         identitiesOnly = true;
       };
+
+      # exe.dev accounts. Private keys live in Bitwarden and are served by its
+      # SSH agent (identityAgent in the "*" block); identityFile points at the
+      # *public* key so identitiesOnly can pick exactly one identity out of the
+      # agent instead of offering all of them.
+      "exe" = exeHost "exe";
+      "exe-work" = exeHost "exe-work";
 
       "argon" = sshTailscaleHost "100.106.10.12";
       "bali" = sshTailscaleHost "100.113.194.113";
