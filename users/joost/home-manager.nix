@@ -63,6 +63,17 @@ let
     identitiesOnly = true;
   };
 
+  # VM shells (<vm>.exe.xyz), as opposed to the exe.dev control plane above.
+  # Without an explicit identity these match only "*" and offer every key in the
+  # Bitwarden agent; exe.dev then switches the account's "current" key to
+  # whichever one happens to authenticate, so `whoami` and `ls` start reporting a
+  # different account than you meant to use. No `user`: exe.dev routes VM shells
+  # regardless of username.
+  exeVm = name: {
+    identityFile = "~/.ssh/${name}.pub";
+    identitiesOnly = true;
+  };
+
   gdk = pkgs.google-cloud-sdk.withExtraComponents (
     with pkgs.google-cloud-sdk.components;
     [
@@ -1099,6 +1110,13 @@ in
       # agent instead of offering all of them.
       "exe" = exeHost "exe";
       "exe-work" = exeHost "exe-work";
+
+      # VM shells default to the personal account, which owns every VM today.
+      # FashionUnited team VMs need the work key instead; list them explicitly
+      # ahead of this wildcard, since ssh takes the first value it obtains for
+      # an option:
+      #   "fu-developer.exe.xyz" = exeVm "exe-work";
+      "*.exe.xyz" = exeVm "exe";
 
       "argon" = sshTailscaleHost "100.106.10.12";
       "bali" = sshTailscaleHost "100.113.194.113";
