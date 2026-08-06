@@ -182,7 +182,7 @@
     in
     {
       # `nix fmt` — formats this repo's own Nix sources only. Skips vendored trees
-      # (mcp_agent_mail, skills, .claude worktrees), the dead all-comment
+      # (skills, .claude worktrees), the dead all-comment
       # modules/programs.nix (not valid standalone Nix) and truncated
       # users/music/autostart.nix, and the machine-generated lib/overlays.nix
       # (rewritten wholesale by the tool-updater automation — not hand-formatted).
