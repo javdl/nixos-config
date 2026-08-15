@@ -56,19 +56,19 @@
           bvSource = bvSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for bv: ${prev.stdenv.hostPlatform.system}");
 
           # cass - coding agent session search
-          cassVersion = "0.6.22";
+          cassVersion = "0.6.24";
           cassSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/coding_agent_session_search/releases/download/v${cassVersion}/cass-linux-amd64.tar.gz";
-              sha256 = "0rgz1x0rpynig0nxyfzjiq2y87nyhlz1r33a89zkrdbj3xdli5w0";
+              sha256 = "yirxwvl9p56m9qkavnr8jkzpa16yi033q27x3q3vkpd5cp2kq6y0";
             };
             "aarch64-linux" = {
               url = "https://github.com/Dicklesworthstone/coding_agent_session_search/releases/download/v${cassVersion}/cass-linux-arm64.tar.gz";
-              sha256 = "0ardvp76ay543aqn7p8zc8lgirb1i30ni9r1c189v56afd0pa9lq";
+              sha256 = "jk7rqfbvjq9s1swjb72gbn35i2kkxa1dvag3kjdafplbc0shcni1";
             };
             "aarch64-darwin" = {
               url = "https://github.com/Dicklesworthstone/coding_agent_session_search/releases/download/v${cassVersion}/cass-darwin-arm64.tar.gz";
-              sha256 = "13yj9jzglinyc14id6ilw3dfdjfp8chxiw08nfg0vdlngg3sa8qj";
+              sha256 = "6cyrr1748l8h4i6s81bdwilgprj3xgb6hnb80ah5c19ny3cfy251";
             };
           };
           cassSource = cassSources.${prev.stdenv.hostPlatform.system} or null;
