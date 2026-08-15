@@ -34,23 +34,23 @@
           grepaiSource = grepaiSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for grepai: ${prev.stdenv.hostPlatform.system}");
 
           # beads_viewer (bv) - TUI for beads issue tracking
-          bvVersion = "0.18.0";
+          bvVersion = "0.19.0";
           bvSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/beads_viewer/releases/download/v${bvVersion}/bv_linux_amd64.tar.gz";
-              sha256 = "0ici1qkb3q5jngqqwlhjx2dnd3jdibp2j0yg0ygxpi0c72f41pxq";
+              sha256 = "57848im4c39w22dagxg5cvnjraiggr10qqx82naa9nyaiscj6rz0";
             };
             "aarch64-linux" = {
               url = "https://github.com/Dicklesworthstone/beads_viewer/releases/download/v${bvVersion}/bv_linux_arm64.tar.gz";
-              sha256 = "0dwmkgfhnzb6w4vqrlwr5ws95gc83akywzcmhqcky3cayxj4hwym";
+              sha256 = "xmsw4j08wd8xmvx3v6ns2cnbsgsi9xvfkb7hixvd1iqk6k86h8f0";
             };
             "x86_64-darwin" = {
               url = "https://github.com/Dicklesworthstone/beads_viewer/releases/download/v${bvVersion}/bv_darwin_amd64.tar.gz";
-              sha256 = "0yg766712igrf907zb4ybmplmgphldzcd0vcg5zwcksblylkx8y1";
+              sha256 = "8yd7cjbrdhx8xq066ph3igdw6iwxyb4n38rn382fal9az63kghx1";
             };
             "aarch64-darwin" = {
               url = "https://github.com/Dicklesworthstone/beads_viewer/releases/download/v${bvVersion}/bv_darwin_arm64.tar.gz";
-              sha256 = "107v5z0h5yyv7y4da9jyh5ih6wl4zj4l9w6zwjgxv0p3kfd678pb";
+              sha256 = "dx1x7a1lxg1nf3xmym7bnhmfh6gvlnlwnsd4n0991ppkgkha5l11";
             };
           };
           bvSource = bvSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for bv: ${prev.stdenv.hostPlatform.system}");
