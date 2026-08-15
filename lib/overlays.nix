@@ -358,11 +358,11 @@
           mcpAgentMailSource = mcpAgentMailSources.${prev.stdenv.hostPlatform.system} or null;
 
           # casr - cross agent session resumer
-          casrVersion = "0.2.3";
+          casrVersion = "0.3.0";
           casrSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/cross_agent_session_resumer/releases/download/v${casrVersion}/casr-x86_64-unknown-linux-musl.tar.xz";
-              sha256 = "22c17f5ce2cb0ca12f98a32eae513c93b879bb9fdac4b5dd4e4861dc1a230d28";
+              sha256 = "d6699d83bb8327fd427413dd235417101abd475b17b4ad4a54856bc566cc690f";
             };
           };
           casrSource = casrSources.${prev.stdenv.hostPlatform.system} or null;
