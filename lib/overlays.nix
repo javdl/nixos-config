@@ -330,15 +330,15 @@
           piSource = piSources.${prev.stdenv.hostPlatform.system} or null;
 
           # xf - cross-format file converter
-          xfVersion = "0.3.2";
+          xfVersion = "0.4.0";
           xfSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/xf/releases/download/v${xfVersion}/xf-x86_64-unknown-linux-gnu.tar.gz";
-              sha256 = "2f6820fb391ba36ff0c1920eff965a4db22040fbe353f05d071002a876fa507a";
+              sha256 = "57102158a243ee61c7779ac4881f01572b074a2b8a129f2b282602481763df52";
             };
             "aarch64-darwin" = {
               url = "https://github.com/Dicklesworthstone/xf/releases/download/v${xfVersion}/xf-aarch64-apple-darwin.tar.gz";
-              sha256 = "f3a6527091e0906b58e8b1b11fd5a2632293d22fcce1c50facb661aea3c9e697";
+              sha256 = "2c717e9554148205118917aeac57c5cae912d93ddb76ff756617c5f194420f5c";
             };
           };
           xfSource = xfSources.${prev.stdenv.hostPlatform.system} or null;
