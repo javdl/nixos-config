@@ -316,15 +316,15 @@
           agentBrowserSource = agentBrowserSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for agent-browser: ${prev.stdenv.hostPlatform.system}");
 
           # pi - prompt injection detection agent (Rust)
-          piVersion = "0.1.22";
+          piVersion = "0.1.23";
           piSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/pi_agent_rust/releases/download/v${piVersion}/pi-linux-amd64.tar.xz";
-              sha256 = "08h7cydcxw6sk7ianbmwifhwwyhzlgrr6w7vcx2f8qbi3fldbpf6";
+              sha256 = "q9v2vasz6kbadjq6bkmaf8jnlaj0zn4j74n4mb43xixh3i4lswy1";
             };
             "aarch64-darwin" = {
               url = "https://github.com/Dicklesworthstone/pi_agent_rust/releases/download/v${piVersion}/pi-darwin-arm64.tar.xz";
-              sha256 = "0iv9124csc1zjwqdxis4s4vpbd6zcgy4x5acr739fzd3yfhjzm4z";
+              sha256 = "b6r4fcjdvvxgmlmzs6w761k71y0bbgk02xv9xn0amm6qj4hsx2q0";
             };
           };
           piSource = piSources.${prev.stdenv.hostPlatform.system} or null;
