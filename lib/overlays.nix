@@ -344,15 +344,15 @@
           xfSource = xfSources.${prev.stdenv.hostPlatform.system} or null;
 
           # mcp-agent-mail - Rust replacement for Python mcp_agent_mail
-          mcpAgentMailVersion = "0.3.24";
+          mcpAgentMailVersion = "0.3.27";
           mcpAgentMailSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/mcp_agent_mail_rust/releases/download/v${mcpAgentMailVersion}/mcp-agent-mail-x86_64-unknown-linux-gnu.tar.xz";
-              sha256 = "1603lkry6a4bz38qkd3xhyd6fjm0qjjvd74brmfgghyw8nmh8xpl";
+              sha256 = "1f5rvwb6c5125k6gzvxbp4kqxbygl1q9qzbfnh65l3322f4v81d0";
             };
             "aarch64-darwin" = {
               url = "https://github.com/Dicklesworthstone/mcp_agent_mail_rust/releases/download/v${mcpAgentMailVersion}/mcp-agent-mail-aarch64-apple-darwin.tar.xz";
-              sha256 = "0m78vdmdsl308vdg0cs8wfaf3bnvfxzy6d5dpxflk2z2byh11abs";
+              sha256 = "vvn0mqysm0rxy9xlcj3kawba5bfhrfr8f245y7m7697awxi97zg0";
             };
           };
           mcpAgentMailSource = mcpAgentMailSources.${prev.stdenv.hostPlatform.system} or null;
