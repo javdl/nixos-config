@@ -206,23 +206,23 @@
           gwsSource = gwsSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for gws: ${prev.stdenv.hostPlatform.system}");
 
           # beads_rust (br) - fast Rust port of beads issue tracker
-          brVersion = "0.2.16";
+          brVersion = "0.3.2";
           brSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/beads_rust/releases/download/v${brVersion}/br-${brVersion}-linux_amd64.tar.gz";
-              sha256 = "1c0j8ph52pymhli4f40r2rpvcpq6l2rf9n300jrcznjn1cs2vqly";
+              sha256 = "67zc57wf9p4j47h86mpw3ff20il0i87f7gaacc707hbaf404j321";
             };
             "aarch64-linux" = {
               url = "https://github.com/Dicklesworthstone/beads_rust/releases/download/v${brVersion}/br-${brVersion}-linux_arm64.tar.gz";
-              sha256 = "0lfch2p45cky01fakcrx2kwg6wl1lf1kwiqpwq0grsl3slqdrdc4";
+              sha256 = "mjrdh7qb2mdcplwm5fhn3zs4b90q1fdyj7dqzyvcpf36lyxfdpd1";
             };
             "x86_64-darwin" = {
               url = "https://github.com/Dicklesworthstone/beads_rust/releases/download/v${brVersion}/br-${brVersion}-darwin_amd64.tar.gz";
-              sha256 = "06a2qm2f1bx7151cv82446klxvndlw7wxpb93rkqvk6wg7rfnm5i";
+              sha256 = "d7svxxrcaxj1hdsgp73z45l8pndmr4q42wqyddybslcgql96cmc0";
             };
             "aarch64-darwin" = {
               url = "https://github.com/Dicklesworthstone/beads_rust/releases/download/v${brVersion}/br-${brVersion}-darwin_arm64.tar.gz";
-              sha256 = "109b9h6wbhq2zz42v81fhj2nnwjfh0fyps1mbvhkf1smis7d7hj3";
+              sha256 = "w1qs52c4y6zpc13mhmbl1k6wqmhi1z0agxkxj8qsg6hz0pshad00";
             };
           };
           brSource = brSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for br: ${prev.stdenv.hostPlatform.system}");
