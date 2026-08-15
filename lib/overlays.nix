@@ -228,23 +228,23 @@
           brSource = brSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for br: ${prev.stdenv.hostPlatform.system}");
 
           # ntm - Named Tmux Manager for AI coding agent coordination
-          ntmVersion = "1.20.0";
+          ntmVersion = "1.24.0";
           ntmSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/ntm/releases/download/v${ntmVersion}/ntm_${ntmVersion}_linux_amd64.tar.gz";
-              sha256 = "18vd9d9n8yi0xsh6xrlc5703f36f1n09gf0khznmnyxic9ydiwjz";
+              sha256 = "pnsq2zxqgbmf2jb34j7gwfqcb10w71lp67dmjpfmvp9p3zmbvv61";
             };
             "aarch64-linux" = {
               url = "https://github.com/Dicklesworthstone/ntm/releases/download/v${ntmVersion}/ntm_${ntmVersion}_linux_arm64.tar.gz";
-              sha256 = "08svygg91krz80lwqy44igxvlvm469lc6p6yk7khgw1n6q9ymcgv";
+              sha256 = "fawppypbkqb67qz39y96jvy5sfdcsq5cz23dz9k7svzrfhrrn2w1";
             };
             "x86_64-darwin" = {
               url = "https://github.com/Dicklesworthstone/ntm/releases/download/v${ntmVersion}/ntm_${ntmVersion}_darwin_amd64.tar.gz";
-              sha256 = "1ld9j6jnlyabmbl51kcbdk4bw8bsji4f46zi74wkirxsnxffy8qc";
+              sha256 = "3vmnqjib473mdgf9h1z0c4i6502mkdl4rcf5wrga5bw5x2m9jw51";
             };
             "aarch64-darwin" = {
               url = "https://github.com/Dicklesworthstone/ntm/releases/download/v${ntmVersion}/ntm_${ntmVersion}_darwin_arm64.tar.gz";
-              sha256 = "07gsacm4003dp75fddj6a294w5f2vp6fs72mqkydac4mmbp8l6cv";
+              sha256 = "x86q4i96289np9gycyzlmdq3n896gc2zbb3wjmhmgw3ba4mimwx0";
             };
           };
           ntmSource = ntmSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for ntm: ${prev.stdenv.hostPlatform.system}");
