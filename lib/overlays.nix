@@ -250,23 +250,23 @@
           ntmSource = ntmSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for ntm: ${prev.stdenv.hostPlatform.system}");
 
           # dcg - destructive command guard
-          dcgVersion = "0.6.7";
+          dcgVersion = "0.11.0";
           dcgSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/destructive_command_guard/releases/download/v${dcgVersion}/dcg-x86_64-unknown-linux-musl.tar.xz";
-              sha256 = "6d90754b7170bdeb63375fd7d20e7dc330c56b8f1018fc45ccbbd5cccc1ca183";
+              sha256 = "b768ce6d6786abd6580758f460711417f368c081e52be1423ce106b55d15d464";
             };
             "aarch64-linux" = {
               url = "https://github.com/Dicklesworthstone/destructive_command_guard/releases/download/v${dcgVersion}/dcg-aarch64-unknown-linux-gnu.tar.xz";
-              sha256 = "9d9edb541a03c0497e4472e5ca61747d476357ced077db452bb4811cee5cb77e";
+              sha256 = "5c8fa399866bef2de6e0ac813968d7c1db07663fdcf90d6a9444089e96ae7997";
             };
             "x86_64-darwin" = {
               url = "https://github.com/Dicklesworthstone/destructive_command_guard/releases/download/v${dcgVersion}/dcg-x86_64-apple-darwin.tar.xz";
-              sha256 = "4818359e58d21872160ed569884ed641935d5f74228bad30cd1faa4d43c11584";
+              sha256 = "eac5ec25fc82f03d3958d45fe52f59ffed44ac98af207d0e612b3441f9983300";
             };
             "aarch64-darwin" = {
               url = "https://github.com/Dicklesworthstone/destructive_command_guard/releases/download/v${dcgVersion}/dcg-aarch64-apple-darwin.tar.xz";
-              sha256 = "dccfd90dbd77a75464784ae90be10e4356cf01856708ca8506ecb56da7e75e7f";
+              sha256 = "b79de4eca8f1c033440ffbb1e65d6ba7fc07034da0b606c93043d4bce200658c";
             };
           };
           dcgSource = dcgSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for dcg: ${prev.stdenv.hostPlatform.system}");
