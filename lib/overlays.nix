@@ -162,19 +162,19 @@
           toonSource = toonSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for toon: ${prev.stdenv.hostPlatform.system}");
 
           # ms - Meta Skill manager with Thompson sampling optimization
-          msVersion = "0.1.5";
+          msVersion = "0.2.0";
           msSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/meta_skill/releases/download/v${msVersion}/ms-${msVersion}-x86_64-unknown-linux-gnu.tar.gz";
-              sha256 = "bc9ae8eb0a4dbd1270827f216d8c7cf09ae39a5f364d2e4242db84e457fe134a";
+              sha256 = "f3089281d12737676b5ef84df327acf570953f68185bd61451eddd38acc63046";
             };
             "aarch64-linux" = {
               url = "https://github.com/Dicklesworthstone/meta_skill/releases/download/v${msVersion}/ms-${msVersion}-aarch64-unknown-linux-gnu.tar.gz";
-              sha256 = "53b5ae6d51db531514fe5117236890b3016663690887c73cda4621850c47709b";
+              sha256 = "007b137ab7805009fa956eee8eff28a2f39041a30d4ebb0532ed3ff036bc0d2f";
             };
             "aarch64-darwin" = {
               url = "https://github.com/Dicklesworthstone/meta_skill/releases/download/v${msVersion}/ms-${msVersion}-aarch64-apple-darwin.tar.gz";
-              sha256 = "afb22c7f361ec00db82ac096ce0205a473127c97de76ab4fa0f032aa25d89d7a";
+              sha256 = "53985546cbfdef75b339064796327af02988d2b22a54288836546659a20d1eef";
             };
           };
           msSource = msSources.${prev.stdenv.hostPlatform.system} or null;
