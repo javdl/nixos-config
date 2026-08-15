@@ -74,23 +74,23 @@
           cassSource = cassSources.${prev.stdenv.hostPlatform.system} or null;
 
           # slb - Shannon Language Benchmark for LLM evaluation
-          slbVersion = "0.3.1";
+          slbVersion = "0.4.0";
           slbSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/slb/releases/download/v${slbVersion}/slb_${slbVersion}_linux_amd64.tar.gz";
-              sha256 = "0b9c489fe025d77c8e0d6b992b2cd94d46e74a2a294e480c57274df5d634027b";
+              sha256 = "d46a5e3005f30575b0cadc02915dea9070c39d20b8dd4747a80eaddd316ee95c";
             };
             "aarch64-linux" = {
               url = "https://github.com/Dicklesworthstone/slb/releases/download/v${slbVersion}/slb_${slbVersion}_linux_arm64.tar.gz";
-              sha256 = "88f3ec9cb5fa03431b13ed840423c7d0946ca32b4a3dcc0edd5a0f934419917d";
+              sha256 = "b4d14f2f32f90fcfe167431c9135ff1df3084134db8bca1288b7718bd653645f";
             };
             "x86_64-darwin" = {
               url = "https://github.com/Dicklesworthstone/slb/releases/download/v${slbVersion}/slb_${slbVersion}_darwin_amd64.tar.gz";
-              sha256 = "c8c2d745a95d702b65c6ae42fe8f8c56633ce2585857fe635af9a8a3e6ae9109";
+              sha256 = "da70f60c5fc153a23f809179c77346ce414593ebc8bfec85d3382b89a7a19ab5";
             };
             "aarch64-darwin" = {
               url = "https://github.com/Dicklesworthstone/slb/releases/download/v${slbVersion}/slb_${slbVersion}_darwin_arm64.tar.gz";
-              sha256 = "185bef18d345f406692430929860edbfc092a9e9406b868471eed2365e438bc6";
+              sha256 = "65f50cee8d60a6e8ed4e73915387733f326810fe500d8866ec9d76f5f79219de";
             };
           };
           slbSource = slbSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for slb: ${prev.stdenv.hostPlatform.system}");
