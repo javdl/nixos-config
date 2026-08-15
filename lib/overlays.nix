@@ -400,11 +400,11 @@
           ptSource = ptSources.${prev.stdenv.hostPlatform.system} or null;
 
           # rch - remote compilation helper
-          rchVersion = "1.0.52";
+          rchVersion = "1.0.56";
           rchSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/remote_compilation_helper/releases/download/v${rchVersion}/rch-v${rchVersion}-x86_64-unknown-linux-gnu.tar.gz";
-              sha256 = "0nyjasiddrjzm4x64j06179hlpa7c83y0nphw5xaxp2gdz92gi0s";
+              sha256 = "6nqaw6gsbazl1sn1rya7i0z2fxhgyl8361cwa8f7ix73gmmram40";
             };
           };
           rchSource = rchSources.${prev.stdenv.hostPlatform.system} or null;
