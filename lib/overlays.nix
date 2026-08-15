@@ -272,23 +272,23 @@
           dcgSource = dcgSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for dcg: ${prev.stdenv.hostPlatform.system}");
 
           # caam - coding agent account manager (instant auth switching)
-          caamVersion = "0.1.12";
+          caamVersion = "0.1.13";
           caamSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/coding_agent_account_manager/releases/download/v${caamVersion}/caam_${caamVersion}_linux_amd64.tar.gz";
-              sha256 = "06fc9f8342151f032875e5a80609be4a54b518cfec4660826076d26ad2a2aba1";
+              sha256 = "179c028ed9785964aba268468df7d827800785a7b73dfc520c8bfe0df3c0a772";
             };
             "aarch64-linux" = {
               url = "https://github.com/Dicklesworthstone/coding_agent_account_manager/releases/download/v${caamVersion}/caam_${caamVersion}_linux_arm64.tar.gz";
-              sha256 = "ed46e20190bb0073fbc729ae085e4d6ab1e30ccce5b6b694b72c51eb70e4fcef";
+              sha256 = "5f2dde28312b2c43002754b7ffeba9231e0dc37a2396bdc67efa1bd80d2db5ce";
             };
             "x86_64-darwin" = {
               url = "https://github.com/Dicklesworthstone/coding_agent_account_manager/releases/download/v${caamVersion}/caam_${caamVersion}_darwin_amd64.tar.gz";
-              sha256 = "4427dd9e44181a24ae18e5939b9581cc5f394b406d181edaae4efbd09b4d47db";
+              sha256 = "33c6f183e93f1c8178aba3288d8358ad5ec9cffeb7d994383e633cfac6be5630";
             };
             "aarch64-darwin" = {
               url = "https://github.com/Dicklesworthstone/coding_agent_account_manager/releases/download/v${caamVersion}/caam_${caamVersion}_darwin_arm64.tar.gz";
-              sha256 = "2e8cb397c7d32007dbb3fa6844560c8b7ce6b09811535d948cb0abcc1490342b";
+              sha256 = "3bfa5705a181d282394aa16f11bff387dbdab85b629d031ddc84973760cc01aa";
             };
           };
           caamSource = caamSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for caam: ${prev.stdenv.hostPlatform.system}");
