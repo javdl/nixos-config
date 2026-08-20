@@ -52,9 +52,9 @@ We use [Bitfocus Companion](https://bitfocus.io/companion) to send keystrokes fo
    Change `"key"` to whatever string you want typed. The password is the MD5 hash of an empty string (default). If you set a password in VICREO Listener, MD5 hash that password instead.
 5. Companion configs are stored in `users/joost/companion/` in this repo
 
-> **Note:** The dedicated VICREO - Listener module (`vicreo-hotkey`) has no compatible build for macOS aarch64, so we use the Generic TCP/UDP approach instead — it's what that module does under the hood anyway. Works identically on macOS and Linux. Nix paths are exposed to GUI apps via a LaunchAgent in `mac-shared.nix`.
+> **Note:** The dedicated VICREO - Listener module (`vicreo-hotkey`) has no compatible build for macOS aarch64, so we use the Generic TCP/UDP approach instead. It's what that module does under the hood anyway. Works identically on macOS and Linux. Nix paths are exposed to GUI apps via a LaunchAgent in `mac-shared.nix`.
 
-> **Note:** Bitfocus Companion requires Node.js to be installed or accessible in the environment. Without it, certain modules (e.g. Generic - TCP/UDP) will show "no version available" even though a compatible version exists. On NixOS/nix-darwin systems, ensure Companion can access the Nix-managed Node.js — either by installing Node globally or by exposing the Nix environment to the application.
+> **Note:** Bitfocus Companion requires Node.js to be installed or accessible in the environment. Without it, certain modules (e.g. Generic - TCP/UDP) will show "no version available" even though a compatible version exists. On NixOS/nix-darwin systems, ensure Companion can access the Nix-managed Node.js: either by installing Node globally or by exposing the Nix environment to the application.
 
 > **Tip:** For button icons (PNG), [Flaticon](https://www.flaticon.com/search?word=github) has a large library of free icons you can use.
 
@@ -79,7 +79,7 @@ To use Bitwarden as your SSH agent on macOS:
 The `SSH_AUTH_SOCK` environment variable is already configured in the Nix config for all shells (zsh, bash, fish, nushell).
 
 #### Known Issues
-App Store macOS version has socket bugs—use DMG/brew install instead. 
+App Store macOS version has socket bugs. Use DMG/brew install instead. 
 
 ## How I Work
 
@@ -94,8 +94,6 @@ iMessage. I like the Apple hardware, and I particularly like that my hardware
 always Just Works with excellent performance, battery life, and service.
 However, I prefer the Linux environment for almost all my dev work. I find
 that modern computers are plenty fast enough for the best of both worlds.
-
-Here is what it ends up looking like:
 
 ![Screenshot](https://raw.githubusercontent.com/javdl/nixos-config/main/.github/images/screenshot.png)
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fjavdl%2Fnixos-config.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fjavdl%2Fnixos-config?ref=badge_shield)
@@ -148,7 +146,7 @@ Video: <https://www.youtube.com/watch?v=ubDMLoWz76U>
 **Note:** This setup guide will cover VMware Fusion because that is the
 hypervisor I use day to day. The configurations in this repository also
 also worked with UTM and Parallels, but those aarch64 VM hosts were retired on
-2026-07-28 — only the x86_64 `vm-intel` host ships today. I've also
+2026-07-28. Only the x86_64 `vm-intel` host ships today. I've also
 successfully set up this environment on Windows with VMware Workstation and
 Hyper-V.
 
@@ -205,7 +203,7 @@ export NIXNAME=vm-intel
 ```
 
 **Apple Silicon / other hypervisors:** the `vm-aarch64`, `vm-aarch64-utm` and
-`vm-aarch64-prl` hosts were retired on 2026-07-28 — several tools in
+`vm-aarch64-prl` hosts were retired on 2026-07-28. Several tools in
 `lib/overlays.nix` publish no aarch64-linux binary, so those configurations no
 longer evaluated. `vm-intel` is the remaining VM host.
 
@@ -404,11 +402,11 @@ Dedicated self-hosted GitHub Actions runner for the `fuww` organization:
 | github-runner-04   | github-runner-04   | `#github-runner-04`    | EX63     | GitHub Actions runner for fuww org |
 | github-runner-05   | github-runner-05   | `#github-runner-05`    | EX63     | GitHub Actions runner for fuww org |
 
-Each runner includes the full CI package set (Docker, languages, build tools, browsers, cloud CLIs) via the `github-actions-runner` module. Runner tokens are **org-level registration tokens** (NOT PATs — get from GitHub Settings > Actions > Runners > New), SOPS-encrypted in `secrets/`. Tokens expire in 1 hour and are single-use per registration. See [docs/github-runner-hetzner-setup.md](docs/github-runner-hetzner-setup.md) for the full setup guide, including the SOPS chicken-and-egg workaround for new servers and token lifecycle details.
+Each runner includes the full CI package set (Docker, languages, build tools, browsers, cloud CLIs) via the `github-actions-runner` module. Runner tokens are **org-level registration tokens** (NOT PATs: get from GitHub Settings > Actions > Runners > New), SOPS-encrypted in `secrets/`. Tokens expire in 1 hour and are single-use per registration. See [docs/github-runner-hetzner-setup.md](docs/github-runner-hetzner-setup.md) for the full setup guide, including the SOPS chicken-and-egg workaround for new servers and token lifecycle details.
 
 ### Making changes to your own server
 
-You can customise your dev server by editing your config and rebuilding. Here's how (using Jackson / `jacksonator` as an example — substitute your own name and hostname):
+You can customise your dev server by editing your config and rebuilding. The steps below use Jackson / `jacksonator` as an example; substitute your own name and hostname.
 
 **1. Clone the repo on your server:**
 
@@ -432,7 +430,7 @@ Common things you might want to change:
 - **Shell aliases**: add aliases in the zsh or bash configuration section
 - **Tmux settings**: change prefix key, mouse mode, etc. under `programs.tmux`
 
-The host-level config (networking, system services, etc.) is in `hosts/jacksonator.nix` — you probably don't need to touch this.
+The host-level config (networking, system services, etc.) is in `hosts/jacksonator.nix`. You probably don't need to touch this.
 
 **3. Apply your changes:**
 

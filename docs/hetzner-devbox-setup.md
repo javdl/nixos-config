@@ -350,7 +350,7 @@ The server also has automatic updates configured (`services.nixosAutoUpdate`) th
 - Use `nixos-rebuild boot` + `reboot` instead to avoid this
 
 ### UEFI Shell instead of NixOS
-- Server has no OS installed yet — needs full bootstrap from rescue mode
+- Server has no OS installed yet. It needs full bootstrap from rescue mode
 - Follow Phase 1 (Bootstrap0) from the beginning
 
 ### Nix flake evaluation errors about unsupported file types
@@ -362,7 +362,7 @@ The server also has automatic updates configured (`services.nixosAutoUpdate`) th
 - Check auth key is saved: `cat /etc/tailscale/authkey`
 - Check Tailscale service: `systemctl status tailscaled`
 - Restart Tailscale: `systemctl restart tailscaled`
-- Auth key may have expired — generate a new one
+- Auth key may have expired. Generate a new one
 
 ## Server Inventory
 

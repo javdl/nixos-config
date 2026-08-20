@@ -3,10 +3,10 @@
 ## Operating Principles (applied throughout this file)
 
 1. **Audit consumers before changing a config value.** If a field is interpolated (`${X}/...`), grep every file that consumes it and confirm the consumer handles your new value's shape (no unexpanded tildes, no unexpanded env vars).
-2. **Model the system before acting in it.** Auto-syncs, hooks, schedules, and races are documented in this file and in dotfiles — read them first. Don't get surprised by behavior the docs already explained.
+2. **Model the system before acting in it.** Auto-syncs, hooks, schedules, and races are documented in this file and in dotfiles. Read them first. Don't get surprised by behavior the docs already explained.
 3. **Expand scope to paired infrastructure.** Before removing X, grep for siblings (X→Y same prefix/suffix, same module-directory pattern, same purpose comment). Surface them: "should Y go too?"
 4. **Investigate before asking.** Read the upstream README/source/`--help` before drafting a plan or presenting a question menu. The answer is often two grep calls away.
-5. **Verify after every change.** Execute the runtime path of what changed — not just "the edit applied". For configs, trigger the consumer. For binaries, run `--version` *and* a representative subcommand.
+5. **Verify after every change.** Execute the runtime path of what changed, not just "the edit applied". For configs, trigger the consumer. For binaries, run `--version` *and* a representative subcommand.
 6. **Don't blindly stage Plans/.** Auto-generated plan-mode files (`Plans/now-*.md`) are gitignored; descriptive plan docs commit normally. Check names before `git add Plans/`.
 
 
@@ -60,7 +60,7 @@ Each colleague has a dedicated NixOS server config with auto-update enabled:
 | Desmond   | `desmondroid`   | `#desmondroid`   | `users/desmond/home-manager-server.nix` |
 | Jackson   | `jacksonator`   | `#jacksonator`   | `users/jackson/home-manager-server.nix` |
 | Jeevan    | `jeevanator`    | `#jeevanator`    | `users/jeevan/home-manager-server.nix`  |
-| ~~Lennard~~ | ~~`lennardroid`~~ | —              | **DECOMMISSIONED 2026-07-28** — server gone; `hosts/lennardroid.nix`, `hosts/hardware/lennardroid.nix` and `users/lennard/` deleted |
+| ~~Lennard~~ | ~~`lennardroid`~~ | N/A            | **DECOMMISSIONED 2026-07-28**: server gone; `hosts/lennardroid.nix`, `hosts/hardware/lennardroid.nix` and `users/lennard/` deleted |
 | Peter     | `peterbot`      | `#peterbot`      | `users/peter/home-manager-server.nix`   |
 | Rajesh    | `rajbot`        | `#rajbot`        | `users/rajesh/home-manager-server.nix`  |
 
@@ -69,11 +69,11 @@ Dedicated self-hosted runner for the `fuww` GitHub organization:
 
 | Server           | Host Config          | Flake Target          | Instance         | User Config                              |
 |------------------|----------------------|-----------------------|------------------|------------------------------------------|
-| ~~github-runner-02~~ | `github-runner-02`   | `#github-runner-02`   | CPX62 (cloud)    | **DECOMMISSIONED 2026-07-28** — cloud VM deleted; fleet is dedicated-EX63 only |
+| ~~github-runner-02~~ | `github-runner-02`   | `#github-runner-02`   | CPX62 (cloud)    | **DECOMMISSIONED 2026-07-28**: cloud VM deleted; fleet is dedicated-EX63 only |
 | github-runner-03 | `github-runner-03`   | `#github-runner-03`   | EX63 (dedicated) | `users/github-runner/home-manager-server.nix` |
 | github-runner-04 | `github-runner-04`   | `#github-runner-04`   | EX63 (dedicated, 178.63.233.19) | `users/github-runner/home-manager-server.nix` |
 | github-runner-05 | `github-runner-05`   | `#github-runner-05`   | EX63 (dedicated, 144.76.86.24)  | `users/github-runner/home-manager-server.nix` |
-| ~~github-runner-06~~ | `github-runner-06`   | `#github-runner-06`   | EX63 (dedicated, 136.243.104.36) | **DECOMMISSIONED 2026-07-20** — box repurposed as `bali` |
+| ~~github-runner-06~~ | `github-runner-06`   | `#github-runner-06`   | EX63 (dedicated, 136.243.104.36) | **DECOMMISSIONED 2026-07-20**: box repurposed as `bali` |
 
 ### bali (loom replacement)
 
@@ -82,12 +82,12 @@ is loom's replacement: a clone of `hosts/loom.nix` on `hetzner-dedicated-hardwar
 `disko-hetzner-dedicated`, root disk pinned by NVMe EUI (enumeration on this box is
 unstable across boots). **Cutover completed 2026-07-20**: hermes-agent now runs on bali
 (state migrated from loom); loom's hermes is gated off via `enableHermes = false` in
-`hosts/loom.nix` — never enable both, the shared tokens double-answer every platform.
+`hosts/loom.nix`. Never enable both; the shared tokens double-answer every platform.
 bali also took over loom's role as the SOPS bootstrap/editing key (agent-jay-01.yaml is
 encrypted to agent-jay-01 + bali). **SSH is tailnet-only** (public 22/2222 closed;
 recovery = Hetzner Robot rescue): `ssh bali` (chezmoi ssh config alias) or headless
 `ssh -i ~/.ssh/id_ed25519_nopass joost@100.113.194.113`; port 2222 allows password
-auth for key-less apps (Codex). Loom (91.99.204.187) is passive and pending decommission — cancel at
+auth for key-less apps (Codex). Loom (91.99.204.187) is passive and pending decommission. Cancel at
 Hetzner when comfortable, then remove `hosts/loom.nix`, its flake entry, sops anchor,
 and `secrets/loom.yaml`.
 
@@ -113,13 +113,13 @@ The runners use `modules/github-actions-runner.nix` for CI packages (Docker, lan
 
 **SOPS chicken-and-egg for new runners:** New servers don't have SSH host keys until provisioned, but the NixOS build needs an encrypted secrets file. Solution: temporarily use a known age key (e.g., loom's) in `.sops.yaml`, encrypt secrets, provision, then re-key with the server's real age key after provisioning.
 
-**SSH after provisioning:** Root SSH has no authorized keys — always SSH as `joost@<ip>` and use `sudo`. Run `ssh-keygen -R <ip>` first since the host key changes.
+**SSH after provisioning:** Root SSH has no authorized keys. Always SSH as `joost@<ip>` and use `sudo`. Run `ssh-keygen -R <ip>` first since the host key changes.
 
 To scale: copy `hosts/github-runner-03.nix`, change hostname/runner name/sops path/instance label, reuse `users/github-runner/`, add flake.nix + `.sops.yaml` entries. New runners use disko + nixos-anywhere (no rescue mode).
 
 **Deployment:** All colleague machines have `nixosAutoUpdate` pulling from `github:javdl/nixos-config#<hostname>` at 4 AM daily. To deploy changes:
 1. Edit the relevant `users/<name>/home-manager-server.nix` or `hosts/<hostname>.nix`
-2. Commit and push to `main` — machines auto-update on next scheduled check
+2. Commit and push to `main`; machines auto-update on next scheduled check
 
 **Immediate deployment** (if you can't wait for auto-update):
 - `make hetzner/copy NIXADDR=<ip> NIXUSER=<user>` then `make hetzner/switch NIXADDR=<ip> NIXNAME=<hostname>`
@@ -139,7 +139,7 @@ Pick a robot-themed hostname (pattern: `<name>` + `-roid`/`-ator`/`-bot`). Creat
 | `users/<name>/nixos.nix` | `users.users.<name>` block (username, home dir, SSH keys, hashedPassword) |
 | `users/<name>/home-manager-server.nix` | `programs.git` (userName, userEmail, github.user) |
 
-New hosts no longer need a separate `hosts/hardware/<hostname>.nix` — they import the shared `modules/hetzner-cloud-hardware.nix` and `modules/disko-hetzner-cloud.nix` modules directly.
+New hosts no longer need a separate `hosts/hardware/<hostname>.nix`. They import the shared `modules/hetzner-cloud-hardware.nix` and `modules/disko-hetzner-cloud.nix` modules directly.
 
 Then add to `flake.nix`:
 ```nix
@@ -162,11 +162,11 @@ TODOs to fill in later: SSH public key, `hashedPassword` (generate with `mkpassw
 make hetzner/provision NIXADDR=<ip> NIXNAME=<hostname>
 ```
 
-This will SSH into the server, kexec into a NixOS installer, partition the disk with disko, install NixOS with the full flake config, and reboot — all in one command.
+One command does all of it: SSH into the server, kexec into a NixOS installer, partition the disk with disko, install NixOS with the full flake config, and reboot.
 
 Expected warnings after first boot:
-- `repo-updater` fails (gh not authenticated yet) — normal
-- `tailscaled-autoconnect` fails (no auth key yet) — normal
+- `repo-updater` fails (gh not authenticated yet), which is normal
+- `tailscaled-autoconnect` fails (no auth key yet), which is normal
 
 **Step 3: Post-provisioning**
 
@@ -207,7 +207,7 @@ Key gotchas for non-interactive (Claude Code) SSH:
 - Use `expect` with `-o PreferredAuthentications=password` (agent has too many keys, hangs)
 - Use `parted -s` (not `parted`) to avoid interactive confirmation prompts
 - Use `mkfs.ext4 -F` to force without confirmation
-- The Determinate Nix installer does NOT include `nixos-generate-config` or `nixos-install` — you MUST install `nixos-install-tools` via `nix-env` first
+- The Determinate Nix installer does NOT include `nixos-generate-config` or `nixos-install`. You MUST install `nixos-install-tools` via `nix-env` first
 - After sourcing nix-daemon.sh, start the daemon manually: `/nix/var/nix/profiles/default/bin/nix-daemon &`
 
 After bootstrap0, apply full config:
@@ -224,7 +224,7 @@ ssh root@<ip> "nixos-rebuild switch --flake /nix-config#<hostname>"
 
 ### Agent Dev Boxes (rondo)
 
-Boxes that run autonomous coding agents (currently [rondo](https://github.com/sandsower/rondo) — a Claude Code agent that polls Linear and works issues in isolated git-worktree workspaces).
+Boxes that run autonomous coding agents (currently [rondo](https://github.com/sandsower/rondo), a Claude Code agent that polls Linear and works issues in isolated git-worktree workspaces).
 
 | Server        | Host Config        | Flake Target          | Instance        | User Config         |
 |---------------|--------------------|-----------------------|-----------------|---------------------|
@@ -270,21 +270,21 @@ The repository uses a modular architecture with clear separation of concerns:
 
 The `j9` host is an Arch Linux machine running **Omarchy** (Arch + Hyprland). It uses standalone home-manager via `homeConfigurations."j9"` in flake.nix.
 
-**DO NOT add these packages to the j9 Nix config** — they are managed by Omarchy via pacman:
+**DO NOT add these packages to the j9 Nix config.** They are managed by Omarchy via pacman:
 - Wayland/Hyprland stack: `hyprland`, `hypridle`, `hyprlock`, `waybar`, `mako`, `swaybg`, `swayosd`
 - Screenshot tools: `grim`, `slurp`, `satty`
 - Desktop apps: `ghostty`, `alacritty`, `obsidian`, `1password`, `spotify`
 - System: PipeWire, SDDM, NVIDIA drivers, fonts (ttf-cascadia-mono-nerd, etc.)
 
 **Omarchy package lists** (authoritative source):
-- `~/.local/share/omarchy/install/omarchy-base.packages` — 147 core packages
-- `~/.local/share/omarchy/install/omarchy-other.packages` — 56 additional packages
+- `~/.local/share/omarchy/install/omarchy-base.packages`: 147 core packages
+- `~/.local/share/omarchy/install/omarchy-other.packages`: 56 additional packages
 
 **Protected directories** (home-manager won't touch these):
-- `~/.config/omarchy` — Omarchy branding/themes
-- `~/.config/hypr` — Hyprland configuration
-- `~/.config/alacritty` — Alacritty terminal config
-- `~/.config/btop/themes` — btop themes
+- `~/.config/omarchy`: Omarchy branding/themes
+- `~/.config/hypr`: Hyprland configuration
+- `~/.config/alacritty`: Alacritty terminal config
+- `~/.config/btop/themes`: btop themes
 
 Only add CLI tools that complement Omarchy without conflicting (e.g., `gum`, `tldr`, `mpv`, `playerctl`).
 
@@ -319,9 +319,9 @@ rustup = inputs.nixpkgs-unstable.legacyPackages.${prev.stdenv.hostPlatform.syste
 ## Overlay Packaging Patterns
 
 The flake.nix overlay uses three patterns for third-party tools:
-1. **Pre-built binary from GitHub releases** (preferred) — `fetchurl` + copy binary (beads, ntm, dcg, caam, etc.)
-2. **Pre-built binary from npm registry** — `fetchurl` of platform-specific npm tarball (codex)
-3. **Build from source** (last resort) — `buildRustPackage` or `overrideAttrs` (cass, gemini-cli)
+1. **Pre-built binary from GitHub releases** (preferred): `fetchurl` + copy binary (beads, ntm, dcg, caam, etc.)
+2. **Pre-built binary from npm registry**: `fetchurl` of platform-specific npm tarball (codex)
+3. **Build from source** (last resort): `buildRustPackage` or `overrideAttrs` (cass, gemini-cli)
 
 Prefer pre-built binaries. Building from source is slow and fragile with hash pinning.
 
@@ -348,15 +348,15 @@ Run: `sudo nix-store --verify --check-contents --repair`
 ### macOS Sequoia Issues
 If nixbld users missing, run the migration script from NixOS/nix repository
 
-### `~/.claude/settings.json` — hooks need absolute paths
+### `~/.claude/settings.json`: hooks need absolute paths
 Claude Code performs **literal env-var substitution** on hook commands like `"${PAI_DIR}/hooks/SecurityValidator.hook.ts"`. It does **not** tilde-expand the result. If `PAI_DIR` contains `~/`, hooks silently fail to exec.
 
-The file is therefore a chezmoi template: `~/.local/share/chezmoi/dot_claude/settings.json.tmpl`. All home-rooted env vars use `{{ .chezmoi.homeDir }}` (renders to `/home/joost/...` on Linux, `/Users/joost/...` on macOS). Never put tildes or hardcoded `/home/joost` in the source — edit the `.tmpl`. If a chezmoi auto-sync from another machine reintroduces tildes, revert it.
+The file is therefore a chezmoi template: `~/.local/share/chezmoi/dot_claude/settings.json.tmpl`. All home-rooted env vars use `{{ .chezmoi.homeDir }}` (renders to `/home/joost/...` on Linux, `/Users/joost/...` on macOS). Never put tildes or hardcoded `/home/joost` in the source; edit the `.tmpl` instead. If a chezmoi auto-sync from another machine reintroduces tildes, revert it.
 
 ### chezmoi auto-sync races with manual pushes
 A background hook auto-syncs `~/.claude/MEMORY` (and observably `~/.claude/settings.json`) to `~/.local/share/chezmoi` every ~5 min and `jj git push`es to `javdl/dotfiles`. Manual pushes regularly hit "stale info" rejections. Standard recovery: `jj git fetch && jj rebase -d main@origin && jj bookmark set main -r @ && jj git push`. Plan for one or two rebase cycles; it's not a bug.
 
-### `chezmoi apply` aborts when Bitwarden is locked — fall back to a scoped apply
+### `chezmoi apply` aborts when Bitwarden is locked: fall back to a scoped apply
 chezmoi renders **all** templates up front, so one unrenderable template aborts the entire apply. Exactly two source templates call `bitwarden`:
 
 | Source template | Target |
@@ -364,9 +364,9 @@ chezmoi renders **all** templates up front, so one unrenderable template aborts 
 | `dot_claude-code-router/config.json.tmpl` | `~/.claude-code-router/config.json` |
 | `private_dot_env.tmpl` | `~/.env` |
 
-With the vault locked (`bw` prints `You are not logged in`) both fail, and everything else — including `~/.claude` (PAI hooks, skills, `settings.json`) — silently stays unmanaged. Servers hit the same trap; `d20712c` fixed it for them by re-applying `~/.claude` explicitly after `chezmoi update`.
+With the vault locked (`bw` prints `You are not logged in`) both fail, and everything else, including `~/.claude` (PAI hooks, skills, `settings.json`), silently stays unmanaged. Servers hit the same trap; `d20712c` fixed it for them by re-applying `~/.claude` explicitly after `chezmoi update`.
 
-**Always fall back to a Bitwarden-free scoped apply rather than leaving the sync half-done — and tell the user you did so, since the two secret-backed files are skipped:**
+**Always fall back to a Bitwarden-free scoped apply rather than leaving the sync half-done, and tell the user you did so, since the two secret-backed files are skipped:**
 ```bash
 chezmoi managed --path-style=absolute \
   | awk -F/ 'NF==4' \
@@ -377,11 +377,11 @@ Gotchas, all verified the hard way:
 - **Pipe through `xargs`.** zsh does not word-split unquoted parameters, so `chezmoi apply $targets` passes one newline-joined argument and dies with `... : not managed`.
 - **`-x/--exclude` takes entry *types*, not paths.** Scoping by target path is the only way to skip specific files.
 - **`awk -F/ 'NF==4'`** trims the managed list to top-level entries under `$HOME` (`/home/joost/.claude` → 4 fields), keeping the arg list short while still covering everything.
-- **Expect a prompt.** chezmoi asks before overwriting files changed since it last wrote them (typically `~/.claude/MEMORY/STATE/*`); without a TTY it fails with `could not open a new TTY`. Only reach for `--force` after confirming that destination drift is disposable — live `~/.claude/settings.json` regularly runs *ahead* of the chezmoi source.
+- **Expect a prompt.** chezmoi asks before overwriting files changed since it last wrote them (typically `~/.claude/MEMORY/STATE/*`); without a TTY it fails with `could not open a new TTY`. Only reach for `--force` after confirming that destination drift is disposable. Live `~/.claude/settings.json` regularly runs *ahead* of the chezmoi source.
 - To get the two skipped files too: `bw unlock`, export `BW_SESSION`, then re-run a full `chezmoi apply`.
 
 ### zoxide "detected a possible configuration issue" on every Claude Code command
-Cosmetic, and **not** a real init-order problem — do not reshuffle `.zshrc`. The check lives in the generated init script, not the binary:
+Cosmetic, and **not** a real init-order problem. Do not reshuffle `.zshrc`. The check lives in the generated init script, not the binary:
 ```zsh
 __zoxide_doctor() {
     [[ ${_ZO_DOCTOR:-1} -ne 0 ]] || return 0
@@ -389,12 +389,12 @@ __zoxide_doctor() {
     ...
 }
 ```
-`--cmd cd` makes `cd` a zoxide function that calls `__zoxide_doctor`. Claude Code's shell snapshot (`~/.claude/shell-snapshots/snapshot-zsh-*.sh`) restores functions and aliases but **not** the `chpwd_functions` array, so inside the tool shell `chpwd_functions` is empty and every `cd` warns. Real shells are fine — verified `chpwd_functions=(_direnv_hook __zoxide_hook)` in an interactive zsh, and direnv *prepends* rather than clobbers.
+`--cmd cd` makes `cd` a zoxide function that calls `__zoxide_doctor`. Claude Code's shell snapshot (`~/.claude/shell-snapshots/snapshot-zsh-*.sh`) restores functions and aliases but **not** the `chpwd_functions` array, so inside the tool shell `chpwd_functions` is empty and every `cd` warns. Real shells are fine: verified `chpwd_functions=(_direnv_hook __zoxide_hook)` in an interactive zsh, and direnv *prepends* rather than clobbers.
 
-Fix: `_ZO_DOCTOR = "0"` in `home.sessionVariables` — set in `users/shared-home-manager.nix` (desktop/`music` profiles) and repeated in `users/joost/home-manager-server.nix`, which does **not** consume `shared.sessionVariables`. Grep for `shared.sessionVariables` before assuming a shared value reaches a server profile.
+Fix: `_ZO_DOCTOR = "0"` in `home.sessionVariables`, set in `users/shared-home-manager.nix` (desktop/`music` profiles) and repeated in `users/joost/home-manager-server.nix`, which does **not** consume `shared.sessionVariables`. Grep for `shared.sessionVariables` before assuming a shared value reaches a server profile.
 
-### Editing `lib/overlays.nix` — audit siblings before removing
-Many overlay blocks are paired infrastructure (e.g., `ironclaw` + `openclaw` were both AI-assistant gateways with matching modules `modules/ironclaw-oci.nix` and `modules/openclaw-oci.nix`, both wired into `hosts/joostclaw.nix`). Before removing a package, grep for related names in the same files and surface them: "I see X is configured alongside Y — should that go too?"
+### Editing `lib/overlays.nix`: audit siblings before removing
+Many overlay blocks are paired infrastructure (e.g., `ironclaw` + `openclaw` were both AI-assistant gateways with matching modules `modules/ironclaw-oci.nix` and `modules/openclaw-oci.nix`, both wired into `hosts/joostclaw.nix`). Before removing a package, grep for related names in the same files and surface them: "I see X is configured alongside Y, should that go too?"
 
 ### Loom uses `home-manager-server.nix`, not `home-manager.nix`
 `loom` is `server = true` in `flake.nix`, so `lib/mksystem.nix` loads `users/joost/home-manager-server.nix` for it. Edits to `users/joost/home-manager.nix` have **no effect on loom**. Confirm which file a host uses before adding home-manager config for it:
@@ -406,10 +406,10 @@ nix-instantiate --eval --strict -E '
 
 ### Plans/ directory hygiene
 `Plans/` holds two kinds of files:
-- **Auto-generated plan-mode scratchpads** with names like `Plans/now-<slug>.md` — session-internal, gitignored (see `.gitignore`).
-- **Intentional plan docs** with descriptive names — `Plans/add-hermes-agent.md`, `Plans/simplify-build-from-source-overlays.md` — commit normally.
+- **Auto-generated plan-mode scratchpads** with names like `Plans/now-<slug>.md`: session-internal, gitignored (see `.gitignore`).
+- **Intentional plan docs** with descriptive names, such as `Plans/add-hermes-agent.md` and `Plans/simplify-build-from-source-overlays.md`, commit normally.
 
-When staging changes, do not blindly `git add Plans/` — check the names first.
+When staging changes, do not blindly `git add Plans/`. Check the names first.
 
 ## Important Files
 
@@ -450,18 +450,18 @@ All dev servers include the following AI agent tooling. Run `ntm deps -v` to che
 
 | Tool | Command | What it does |
 |------|---------|-------------|
-| ntm | `ntm` | Named Tmux Manager — spawn, coordinate, and monitor AI agents across tmux panes |
+| ntm | `ntm` | Named Tmux Manager: spawn, coordinate, and monitor AI agents across tmux panes |
 | bd/br | `bd` / `br` | Beads issue tracker (bd = alias for br, the fast Rust port) |
-| bv | `bv` | Beads Viewer TUI — kanban board, DAG visualization, PageRank prioritization |
+| bv | `bv` | Beads Viewer TUI: kanban board, DAG visualization, PageRank prioritization |
 | caam | `caam` | Instant auth switching for AI coding subscriptions (Claude Max, GPT Pro, Gemini Ultra) |
 | cass | `cass` | Index and search AI coding agent session history across all tools |
-| cm | `cm` | CASS Memory — procedural cross-agent persistent memory system |
+| cm | `cm` | CASS Memory: procedural cross-agent persistent memory system |
 | caut | `caut` | Track and monitor LLM provider usage across AI coding agents (cargo nightly install) |
-| dcg | `dcg` | Destructive Command Guard — blocks dangerous git/shell commands from AI agents |
-| ubs | `ubs` | Ultimate Bug Scanner — static analysis catching 1000+ bug patterns |
+| dcg | `dcg` | Destructive Command Guard: blocks dangerous git/shell commands from AI agents |
+| ubs | `ubs` | Ultimate Bug Scanner: static analysis catching 1000+ bug patterns |
 | grepai | `grepai` | Semantic code search for AI coding assistants |
-| am | `am` | Agent Mail — MCP HTTP server for async multi-agent coordination (systemd service) |
-| ru | `ru` | Repo Updater — parallel GitHub repo clone/pull sync |
+| am | `am` | Agent Mail: MCP HTTP server for async multi-agent coordination (systemd service) |
+| ru | `ru` | Repo Updater: parallel GitHub repo clone/pull sync |
 
 ### Installation notes
 
@@ -499,8 +499,8 @@ companion-sync import          # Guides you through importing into Companion
 
 **Important:**
 - Always export before pushing chezmoi changes if you edited Companion
-- The `.companionconfig` format is version-aware — importing across minor version bumps (e.g., 4.1 → 4.2) works fine
-- `machid` (machine identifier) is NOT synced — each machine keeps its own
+- The `.companionconfig` format is version-aware, so importing across minor version bumps (e.g., 4.1 → 4.2) works fine
+- `machid` (machine identifier) is NOT synced. Each machine keeps its own
 - Connection secrets (passwords, API keys) ARE included in the export by default
 
 ## Related Tools
