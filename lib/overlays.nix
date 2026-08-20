@@ -33,6 +33,30 @@
           };
           grepaiSource = grepaiSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for grepai: ${prev.stdenv.hostPlatform.system}");
 
+          # grok - xAI Grok Build CLI (coding agent harness + TUI)
+          # Bare static-PIE binary; runs on NixOS with no patchelf needed (verified).
+          # Version endpoint: https://x.ai/cli/stable
+          grokVersion = "1.0.5";
+          grokSources = {
+            "x86_64-linux" = {
+              url = "https://x.ai/cli/grok-${grokVersion}-linux-x86_64";
+              sha256 = "0f3jczmc89m970f3wp5ah11j0347d9kz9fxd0ihqz7l1w5279a4v";
+            };
+            "aarch64-linux" = {
+              url = "https://x.ai/cli/grok-${grokVersion}-linux-aarch64";
+              sha256 = "1wgwbzf7az2wdz2s5bn9sjnqfdycgbsm3924kyq7yj9mgiyyc7qw";
+            };
+            "x86_64-darwin" = {
+              url = "https://x.ai/cli/grok-${grokVersion}-macos-x86_64";
+              sha256 = "0q4fa9vmr4dlsp7idy5f8jdggy4acfn68zx602x7aw8nqriv1jr1";
+            };
+            "aarch64-darwin" = {
+              url = "https://x.ai/cli/grok-${grokVersion}-macos-aarch64";
+              sha256 = "11ig7cdcm7ijqhib42isid3wpbisaj8naa5dps7plhmmzc27zyix";
+            };
+          };
+          grokSource = grokSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for grok: ${prev.stdenv.hostPlatform.system}");
+
           # beads_viewer (bv) - TUI for beads issue tracking
           bvVersion = "0.18.0";
           bvSources = {
@@ -440,6 +464,36 @@
               platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
             };
           };
+          # grok-build - xAI Grok Build CLI
+          # Overrides the nixpkgs package, which lags badly: nixos-26.05 ships
+          # 0.2.93 and nixpkgs-unstable 1.0.0, against 1.0.5 upstream (2026-08-20).
+          # Drop this block once nixpkgs catches up.
+          grok-build = prev.stdenv.mkDerivation {
+            pname = "grok-build";
+            version = grokVersion;
+
+            src = prev.fetchurl {
+              url = grokSource.url;
+              sha256 = grokSource.sha256;
+            };
+
+            dontUnpack = true;
+
+            installPhase = ''
+              mkdir -p $out/bin
+              cp $src $out/bin/grok
+              chmod +x $out/bin/grok
+            '';
+
+            meta = with prev.lib; {
+              description = "xAI Grok Build CLI - coding agent harness and TUI";
+              homepage = "https://github.com/xai-org/grok-build";
+              license = licenses.asl20;
+              mainProgram = "grok";
+              platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+            };
+          };
+
           # bv - beads viewer TUI for issue tracking
           beads-viewer = prev.stdenv.mkDerivation {
             pname = "beads-viewer";

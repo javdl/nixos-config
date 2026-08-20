@@ -207,6 +207,7 @@ in
       codex
       destructive-command-guard # Safety hook for AI agents (dcg command)
       grepai # Semantic code search for AI coding assistants
+      grok-build # xAI Grok Build CLI (grok command; overlay pins 1.0.5)
       gws # Google Workspace CLI
       ntm # Named Tmux Manager for AI agent coordination
       repo-updater # GitHub repo sync tool (ru command)

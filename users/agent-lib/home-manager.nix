@@ -121,6 +121,7 @@ in
       gemini-cli
       cco # Sandbox wrapper for Claude Code (bubblewrap)
       grepai # Semantic code search for AI coding assistants
+      grok-build # xAI Grok Build CLI (grok command; overlay pins 1.0.5)
       gws # Google Workspace CLI
       ntm # Named Tmux Manager for AI agent coordination
       opencode
