@@ -890,8 +890,11 @@ in
   home.file.".config/zellij/layouts/devops.kdl".source = ../zellij-monitor-runners.kdl;
 
   # Claude Code statusline (Rose Pine themed)
+  # Translated from users/joost/starship.toml so the status line matches the
+  # shell prompt. Kept joost-local rather than using the shared
+  # ../claude-statusline.sh, which the agent/colleague profiles still use.
   home.file.".claude/statusline-command.sh" = {
-    source = ../claude-statusline.sh;
+    source = ./claude-statusline.sh;
     executable = true;
   };
 
