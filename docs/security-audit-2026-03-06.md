@@ -1,7 +1,7 @@
 # Security Audit Report: nixos-config
 
 **Date:** 2026-03-06
-**Scope:** Full project audit — all host configs, user configs, modules, secrets, supply chain, and deployment
+**Scope:** Full project audit: all host configs, user configs, modules, secrets, supply chain, and deployment
 **Team:** 4 specialized auditors (hosts/firewall, users/privileges, secrets/supply-chain, services/runners) + 7 false-positive filter agents
 **Methodology:** Each domain audited independently, findings deduplicated, then filtered through parallel false-positive verification agents. Only findings with confidence >= 8/10 after FP filtering are included.
 
@@ -80,7 +80,7 @@ Before the individual findings, note the most dangerous attack chain spanning mu
 * **Severity:** MEDIUM | **Confidence:** 9/10 | **Priority:** P2
 * **Files:** `hosts/loom.nix:244`, all Hetzner colleague hosts, `hosts/github-runner-01.nix`, `hosts/github-runner-02.nix`
 * **Description:** Every Hetzner server sets `networking.firewall.trustedInterfaces = [ "tailscale0" ]`, bypassing the NixOS firewall entirely for all Tailscale traffic. Any service on any port is accessible to any tailnet device.
-* **Exploit Scenario:** A compromised runner (via Finding 1) uses `tailscale status` to discover all hosts, then accesses every listening port on every server — databases, debug ports, development servers — without firewall filtering.
+* **Exploit Scenario:** A compromised runner (via Finding 1) uses `tailscale status` to discover all hosts, then accesses every listening port on every server, including databases, debug ports, and development servers, without firewall filtering.
 * **Recommendation:** Replace `trustedInterfaces` with explicit port allowlisting for Tailscale traffic. Use Tailscale ACLs to segment runners from colleague servers.
 
 ---
@@ -130,7 +130,7 @@ Before the individual findings, note the most dangerous attack chain spanning mu
 * **Severity:** MEDIUM | **Confidence:** 8/10 | **Priority:** P3
 * **File:** `modules/github-actions-runner.nix:112-114`
 * **Description:** Runner hosts have `strace`, `tcpdump`, `nmap`, and `netcat-openbsd` installed system-wide, providing a ready-made post-exploitation toolkit.
-* **Exploit Scenario:** After gaining root via Finding 1, attacker uses `nmap` for tailnet reconnaissance, `tcpdump` for credential sniffing, and `netcat` for reverse shells — no downloads needed.
+* **Exploit Scenario:** After gaining root via Finding 1, attacker uses `nmap` for tailnet reconnaissance, `tcpdump` for credential sniffing, and `netcat` for reverse shells. No downloads needed.
 * **Recommendation:** Remove `nmap`, `netcat-openbsd`, `strace`, `tcpdump` from default runner packages. Install on-demand via `nix-shell` if specific workflows need them.
 
 ---
@@ -141,9 +141,9 @@ Before the individual findings, note the most dangerous attack chain spanning mu
 |---------|:--------:|----------------|
 | Same password hash across all hosts | 2/10 | SSH password auth disabled on affected Hetzner hosts; not exploitable via SSH |
 | Unsigned pre-built binaries with hash pinning | 3/10 | SHA-256 hashes pinned at build time provide integrity; design choice |
-| No admin recovery key in SOPS | — | Operational risk, not exploitable |
-| Placeholder passwords for colleagues | — | Invalid hash format, cannot authenticate |
-| Nix trusted-users includes regular user | — | Standard single-developer practice |
+| No admin recovery key in SOPS | N/A | Operational risk, not exploitable |
+| Placeholder passwords for colleagues | N/A | Invalid hash format, cannot authenticate |
+| Nix trusted-users includes regular user | N/A | Standard single-developer practice |
 | Ollama/Open-WebUI exposure | 7/10 | Desktop workstation, conditional on Tailscale |
 
 ---

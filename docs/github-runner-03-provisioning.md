@@ -1,4 +1,4 @@
-# github-runner-03 (Hetzner EX63) — Provisioning Runbook
+# github-runner-03 (Hetzner EX63): Provisioning Runbook
 
 Step-by-step to bring `github-runner-03` from a fresh Hetzner rescue boot
 to a registered self-hosted runner for the `fuww` org.
@@ -13,7 +13,7 @@ Server facts:
 The matching NixOS config (`hosts/github-runner-03.nix`) and modules
 (`modules/hetzner-dedicated-hardware.nix`, `modules/disko-hetzner-dedicated.nix`)
 are already on `main`. The `secrets/github-runner-03.yaml` is encrypted to
-loom's age key as a chicken-and-egg placeholder — re-keyed in step 4.
+loom's age key as a chicken-and-egg placeholder. It is re-keyed in step 4.
 
 ---
 
@@ -81,7 +81,7 @@ Verify reachability after reboot:
 ssh -o StrictHostKeyChecking=no joost@5.9.61.40 'sudo systemctl status sops-nix --no-pager | head -10'
 ```
 
-(SSH host key changes on reboot — clear with `ssh-keygen -R 5.9.61.40` if needed.)
+(SSH host key changes on reboot; clear with `ssh-keygen -R 5.9.61.40` if needed.)
 
 ## 4. Re-key SOPS to the server's real age key
 
