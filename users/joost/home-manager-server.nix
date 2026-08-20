@@ -106,6 +106,7 @@ in
       caam # Instant auth switching for AI coding subscriptions
       claude-code-router
       codex
+      bubblewrap # bwrap on PATH: Codex's Linux sandbox (cco only bundles it privately)
       gemini-cli
       destructive-command-guard # Safety hook for AI agents (dcg command)
       cco # Sandbox wrapper for Claude Code (bubblewrap)
