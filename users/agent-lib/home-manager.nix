@@ -190,6 +190,30 @@ in
     if ! $HOME/.rustup/toolchains/stable-*/bin/cargo --version &>/dev/null 2>&1; then
       $DRY_RUN_CMD ${pkgs.rustup}/bin/rustup default stable
     fi
+
+    # Repair the toolchain's linker shim. nixpkgs' rustup rewrites each
+    # toolchain's gcc-ld/ld.lld into a two-line shim that calls ld-wrapper.sh
+    # by ABSOLUTE store path. That shim lives under ~/.rustup, outside the
+    # store, so a rustup rebuild (new hash) plus a GC of the old path leaves it
+    # dangling and every Rust link fails with "cannot find 'ld'".
+    #
+    # The cargo --version guard above cannot detect this: cargo runs fine, it
+    # just cannot link. So the breakage is silent until something builds.
+    # Re-point the shims at the current rustup on every activation; a no-op
+    # when they are already correct.
+    wrapper="${pkgs.rustup}/nix-support/ld-wrapper.sh"
+    for shim in $HOME/.rustup/toolchains/*/lib/rustlib/*/bin/gcc-ld/ld.lld; do
+      [ -e "$shim" ] || continue
+      # Already correct: nothing to do. Checked first so a healthy toolchain is
+      # a true no-op rather than a rewrite of the file to itself.
+      ${pkgs.gnugrep}/bin/grep -qF "$wrapper" "$shim" && continue
+      # Not a rustup-patched shim at all -- an unpatched toolchain ships the
+      # real ELF ld.lld at this path. Leave binaries alone.
+      ${pkgs.gnugrep}/bin/grep -qE "/nix/store/[a-z0-9]{32}-rustup-[^/]*/nix-support/ld-wrapper\.sh" "$shim" || continue
+      $DRY_RUN_CMD ${pkgs.gnused}/bin/sed -i -E \
+        "s#/nix/store/[a-z0-9]{32}-rustup-[^/]*/nix-support/ld-wrapper\.sh#$wrapper#" \
+        "$shim"
+    done
   '';
 
   # Install caut (coding agent usage tracker) via cargo nightly
