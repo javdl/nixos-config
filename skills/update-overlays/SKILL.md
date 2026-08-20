@@ -44,7 +44,8 @@ All packages defined in `/home/joost/nixos-config/lib/overlays.nix` that follow 
 | dcg | gh-release | Dicklesworthstone/destructive_command_guard |
 | caam | gh-release | Dicklesworthstone/coding_agent_account_manager |
 | agent-browser | gh-release | vercel-labs/agent-browser |
-| pi | gh-release | Dicklesworthstone/pi_agent_rust |
+| pi-agent (`pi-rs`) | gh-release | Dicklesworthstone/pi_agent_rust |
+| oh-my-pi (`omp`) | gh-release (bare binary) | can1357/oh-my-pi |
 | xf | gh-release | Dicklesworthstone/xf |
 | mcp-agent-mail | gh-release | Dicklesworthstone/mcp_agent_mail_rust |
 | casr | gh-release | Dicklesworthstone/cross_agent_session_resumer |
@@ -54,6 +55,12 @@ All packages defined in `/home/joost/nixos-config/lib/overlays.nix` that follow 
 | ru | gh-release (bare binary) | Dicklesworthstone/repo_updater |
 | codex | npm | @openai/codex |
 | gemini-cli | gh-release (JS bundle) | google-gemini/gemini-cli |
+
+## Not overlay-pinned — bumped via flake.lock instead
+
+`pi-coding-agent` (upstream TypeScript `pi`) is aliased from `pkgs-unstable`, not
+fetched by URL. It has no `<name>Version`; it moves when `flake.lock` moves
+(`make update` / the lock-updater workflow). If asked to bump it, say so.
 
 ## Out of scope — refuse with message
 
@@ -194,6 +201,7 @@ Some packages use distinct URL shapes across platforms — re-use the *existing*
 - `grepai`: `grepai_${version}_linux_amd64.tar.gz`
 - `cass`: `cass-linux-amd64.tar.gz` (no version in filename)
 - `csctf`: `csctf-linux-x64` (bare binary, no .tar)
+- `oh-my-pi`: `omp-linux-x64`, `omp-linux-arm64`, `omp-darwin-arm64`, `omp-darwin-x64` (bare binaries, hex sha256)
 - `codex`: `codex-${version}-linux-x64.tgz` (npm registry)
 - `ubs` modules: `https://raw.githubusercontent.com/.../v${version}/modules/<file>` (out of scope, but noted)
 

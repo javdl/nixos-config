@@ -721,9 +721,16 @@ Tools from [Jeffrey Emanuel](https://github.com/Dicklesworthstone) included in t
 | grepai | `grepai` | [grepai](https://github.com/yoanbernabeu/grepai) | Semantic code search CLI for AI coding assistants |
 | mcp_agent_mail_rust | `mcp-agent-mail`, `am` | [mcp_agent_mail_rust](https://github.com/Dicklesworthstone/mcp_agent_mail_rust) | MCP server for multi-agent coordination (Rust, replaces Python version) |
 | ntm | `ntm` | [ntm](https://github.com/Dicklesworthstone/ntm) | Named Tmux Manager: spawn and coordinate AI agents across tmux panes |
-| pi_agent_rust | `pi` | [pi_agent_rust](https://github.com/Dicklesworthstone/pi_agent_rust) | Prompt injection detection agent |
+| pi_agent_rust | `pi-rs` | [pi_agent_rust](https://github.com/Dicklesworthstone/pi_agent_rust) | Rust port of the pi coding agent (`pi` is the upstream TypeScript one, see below) |
 | repo_updater | `ru` | [repo_updater](https://github.com/Dicklesworthstone/repo_updater) | CLI for keeping GitHub repos in sync with parallel clone/pull |
 | ubs | `ubs` | [ultimate_bug_scanner](https://github.com/Dicklesworthstone/ultimate_bug_scanner) | Static analysis catching 1000+ bug patterns across languages |
 | xf | `xf` | [xf](https://github.com/Dicklesworthstone/xf) | Cross-format file converter |
 
 Run `ntm deps -v` to check the health status of all tools.
+
+### Other coding agents
+
+| Tool | Command | Source | Packaged via |
+|------|---------|--------|--------------|
+| pi | `pi` | [badlogic/pi-mono](https://github.com/badlogic/pi-mono) | `pi-coding-agent` from nixpkgs-unstable (bumped with `flake.lock`) |
+| Oh My Pi | `omp` | [can1357/oh-my-pi](https://github.com/can1357/oh-my-pi) / [omp.sh](https://omp.sh) | Overlay, prebuilt release binary (`update-overlays` skill) |
