@@ -237,10 +237,17 @@ in
     # just cannot link. So the breakage is silent until something builds.
     # Re-point the shims at the current rustup on every activation; a no-op
     # when they are already correct.
+    wrapper="${pkgs.rustup}/nix-support/ld-wrapper.sh"
     for shim in $HOME/.rustup/toolchains/*/lib/rustlib/*/bin/gcc-ld/ld.lld; do
       [ -e "$shim" ] || continue
+      # Already correct: nothing to do. Checked first so a healthy toolchain is
+      # a true no-op rather than a rewrite of the file to itself.
+      ${pkgs.gnugrep}/bin/grep -qF "$wrapper" "$shim" && continue
+      # Not a rustup-patched shim at all -- an unpatched toolchain ships the
+      # real ELF ld.lld at this path. Leave binaries alone.
+      ${pkgs.gnugrep}/bin/grep -qE "/nix/store/[a-z0-9]{32}-rustup-[^/]*/nix-support/ld-wrapper\.sh" "$shim" || continue
       $DRY_RUN_CMD ${pkgs.gnused}/bin/sed -i -E \
-        "s#/nix/store/[a-z0-9]{32}-rustup-[^/]*/nix-support/ld-wrapper\.sh#${pkgs.rustup}/nix-support/ld-wrapper.sh#" \
+        "s#/nix/store/[a-z0-9]{32}-rustup-[^/]*/nix-support/ld-wrapper\.sh#$wrapper#" \
         "$shim"
     done
   '';
