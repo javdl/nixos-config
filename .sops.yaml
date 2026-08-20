@@ -24,7 +24,6 @@ keys:
   # github-runner-05: EX63 dedicated (144.76.86.24). Real host age key,
   # derived post-provision via `ssh-keyscan 144.76.86.24 | grep ed25519 | ssh-to-age`.
   - &github-runner-05 age1e84ektqlhe2y53v5rklrd0e08ez744alcq4n9uujjy5ffzzdydhsdrj7cj
-  - &loom age1p26cwwyu2v4jexue6z7krrua9skqv0p3aj4ad3su4m7varky3dwqk0zphj
   # bali: loom's replacement on the repurposed github-runner-06 box
   # (136.243.104.36). Real host age key, derived post-provision via
   # `ssh-keyscan 136.243.104.36 | grep ed25519 | ssh-to-age`.
@@ -66,14 +65,7 @@ creation_rules:
           - *github-runner-05
 
 
-  # loom secrets (hermes-agent env)
-  - path_regex: secrets/loom\.yaml$
-    key_groups:
-      - age:
-          - *loom
-
-  # bali secrets (hermes-env, copied from loom). Anchor is loom's key
-  # until the donor box is provisioned + re-keyed.
+  # bali secrets (hermes-env, originally migrated from loom)
   - path_regex: secrets/bali\.yaml$
     key_groups:
       - age:

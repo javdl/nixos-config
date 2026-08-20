@@ -34,63 +34,63 @@
           grepaiSource = grepaiSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for grepai: ${prev.stdenv.hostPlatform.system}");
 
           # beads_viewer (bv) - TUI for beads issue tracking
-          bvVersion = "0.18.0";
+          bvVersion = "0.20.0";
           bvSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/beads_viewer/releases/download/v${bvVersion}/bv_linux_amd64.tar.gz";
-              sha256 = "0ici1qkb3q5jngqqwlhjx2dnd3jdibp2j0yg0ygxpi0c72f41pxq";
+              sha256 = "0cjvx94g48z7qhwqqmyyhji7fad2f9dj4cx7kln1pkydnp3gxhfq";
             };
             "aarch64-linux" = {
               url = "https://github.com/Dicklesworthstone/beads_viewer/releases/download/v${bvVersion}/bv_linux_arm64.tar.gz";
-              sha256 = "0dwmkgfhnzb6w4vqrlwr5ws95gc83akywzcmhqcky3cayxj4hwym";
+              sha256 = "041w9g821j25sbr9bsnrawjfh17k5kpp09ici2jvkw2188hmwl2k";
             };
             "x86_64-darwin" = {
               url = "https://github.com/Dicklesworthstone/beads_viewer/releases/download/v${bvVersion}/bv_darwin_amd64.tar.gz";
-              sha256 = "0yg766712igrf907zb4ybmplmgphldzcd0vcg5zwcksblylkx8y1";
+              sha256 = "0a3a5pys7bq6mgfrdq5f9x1d55kayb2kxy2sdab87hr4dihalgqx";
             };
             "aarch64-darwin" = {
               url = "https://github.com/Dicklesworthstone/beads_viewer/releases/download/v${bvVersion}/bv_darwin_arm64.tar.gz";
-              sha256 = "107v5z0h5yyv7y4da9jyh5ih6wl4zj4l9w6zwjgxv0p3kfd678pb";
+              sha256 = "1q01jrmdmvpanfmxwwj124g7s88z717vjpd3k23gn4g5gvigls7l";
             };
           };
           bvSource = bvSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for bv: ${prev.stdenv.hostPlatform.system}");
 
           # cass - coding agent session search
-          cassVersion = "0.6.22";
+          cassVersion = "0.6.25";
           cassSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/coding_agent_session_search/releases/download/v${cassVersion}/cass-linux-amd64.tar.gz";
-              sha256 = "0rgz1x0rpynig0nxyfzjiq2y87nyhlz1r33a89zkrdbj3xdli5w0";
+              sha256 = "1m7cl92nsmrm7f3il7pn4lw5kbcam4sf8lnn6lhkxvvky2043i29";
             };
             "aarch64-linux" = {
               url = "https://github.com/Dicklesworthstone/coding_agent_session_search/releases/download/v${cassVersion}/cass-linux-arm64.tar.gz";
-              sha256 = "0ardvp76ay543aqn7p8zc8lgirb1i30ni9r1c189v56afd0pa9lq";
+              sha256 = "0y3x3dksky4x2kir5725gchclpqk5s29qp04gf8x56hpcr4467np";
             };
             "aarch64-darwin" = {
               url = "https://github.com/Dicklesworthstone/coding_agent_session_search/releases/download/v${cassVersion}/cass-darwin-arm64.tar.gz";
-              sha256 = "13yj9jzglinyc14id6ilw3dfdjfp8chxiw08nfg0vdlngg3sa8qj";
+              sha256 = "0qyr7plp0qvhlyc94y730x0zx2arw05l6x58j9n8lk87sif8y8s9";
             };
           };
           cassSource = cassSources.${prev.stdenv.hostPlatform.system} or null;
 
           # slb - Shannon Language Benchmark for LLM evaluation
-          slbVersion = "0.3.1";
+          slbVersion = "0.4.0";
           slbSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/slb/releases/download/v${slbVersion}/slb_${slbVersion}_linux_amd64.tar.gz";
-              sha256 = "0b9c489fe025d77c8e0d6b992b2cd94d46e74a2a294e480c57274df5d634027b";
+              sha256 = "d46a5e3005f30575b0cadc02915dea9070c39d20b8dd4747a80eaddd316ee95c";
             };
             "aarch64-linux" = {
               url = "https://github.com/Dicklesworthstone/slb/releases/download/v${slbVersion}/slb_${slbVersion}_linux_arm64.tar.gz";
-              sha256 = "88f3ec9cb5fa03431b13ed840423c7d0946ca32b4a3dcc0edd5a0f934419917d";
+              sha256 = "b4d14f2f32f90fcfe167431c9135ff1df3084134db8bca1288b7718bd653645f";
             };
             "x86_64-darwin" = {
               url = "https://github.com/Dicklesworthstone/slb/releases/download/v${slbVersion}/slb_${slbVersion}_darwin_amd64.tar.gz";
-              sha256 = "c8c2d745a95d702b65c6ae42fe8f8c56633ce2585857fe635af9a8a3e6ae9109";
+              sha256 = "da70f60c5fc153a23f809179c77346ce414593ebc8bfec85d3382b89a7a19ab5";
             };
             "aarch64-darwin" = {
               url = "https://github.com/Dicklesworthstone/slb/releases/download/v${slbVersion}/slb_${slbVersion}_darwin_arm64.tar.gz";
-              sha256 = "185bef18d345f406692430929860edbfc092a9e9406b868471eed2365e438bc6";
+              sha256 = "65f50cee8d60a6e8ed4e73915387733f326810fe500d8866ec9d76f5f79219de";
             };
           };
           slbSource = slbSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for slb: ${prev.stdenv.hostPlatform.system}");
@@ -118,23 +118,23 @@
           csctfSource = csctfSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for csctf: ${prev.stdenv.hostPlatform.system}");
 
           # brenner - Sydney Brenner research platform CLI
-          brennerVersion = "0.4.0";
+          brennerVersion = "0.4.1";
           brennerSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/brenner_bot/releases/download/v${brennerVersion}/brenner-linux-x64";
-              sha256 = "2c5a5f01987c30933228d4b62c80e2d20ad872af60bd83604daa6b370e1f8ca3";
+              sha256 = "ca831e88e7572479db587ea9464ab85fd57bcf30aa6898a4792a51cbf85a5f47";
             };
             "aarch64-linux" = {
               url = "https://github.com/Dicklesworthstone/brenner_bot/releases/download/v${brennerVersion}/brenner-linux-arm64";
-              sha256 = "70595c1a82961db9fa4defe5675b01bbe0e0cc0875e8e33f4f02bb8273e64caa";
+              sha256 = "b97f5d92613b7e065e6dc5b2517a00c64976ac9a3829a7804dca07f4af9938a6";
             };
             "x86_64-darwin" = {
               url = "https://github.com/Dicklesworthstone/brenner_bot/releases/download/v${brennerVersion}/brenner-darwin-x64";
-              sha256 = "8c00ef0dd923389a8870c58514af54c5ff771c056c81106938627428ce71b501";
+              sha256 = "6c0549d41cd9fa7a109ba8f0aa136e93a2d04de1f9225c292dd7010d053f7e4f";
             };
             "aarch64-darwin" = {
               url = "https://github.com/Dicklesworthstone/brenner_bot/releases/download/v${brennerVersion}/brenner-darwin-arm64";
-              sha256 = "1cf5e88d600c488999d341cb8e5a256d54127739de1c7ea6d12853dc9442b916";
+              sha256 = "eb26b67d1354a22512dd9139d22723a3023648ff314b12674527f8a10460bec9";
             };
           };
           brennerSource = brennerSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for brenner: ${prev.stdenv.hostPlatform.system}");
@@ -206,163 +206,185 @@
           gwsSource = gwsSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for gws: ${prev.stdenv.hostPlatform.system}");
 
           # beads_rust (br) - fast Rust port of beads issue tracker
-          brVersion = "0.2.16";
+          brVersion = "0.3.2";
           brSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/beads_rust/releases/download/v${brVersion}/br-${brVersion}-linux_amd64.tar.gz";
-              sha256 = "1c0j8ph52pymhli4f40r2rpvcpq6l2rf9n300jrcznjn1cs2vqly";
+              sha256 = "123j404fabh707ccaag7f78i0li02ff3wpm68h74j4p9fw75cz76";
             };
             "aarch64-linux" = {
               url = "https://github.com/Dicklesworthstone/beads_rust/releases/download/v${brVersion}/br-${brVersion}-linux_arm64.tar.gz";
-              sha256 = "0lfch2p45cky01fakcrx2kwg6wl1lf1kwiqpwq0grsl3slqdrdc4";
+              sha256 = "1dpdfxyl63fpcvyzqd7jydf1q09b4sz3nhf5mwlpcdm2bq7hdrjm";
             };
             "x86_64-darwin" = {
               url = "https://github.com/Dicklesworthstone/beads_rust/releases/download/v${brVersion}/br-${brVersion}-darwin_amd64.tar.gz";
-              sha256 = "06a2qm2f1bx7151cv82446klxvndlw7wxpb93rkqvk6wg7rfnm5i";
+              sha256 = "0cmc69lqgclsbyddyqw24q4rmdnp8l54z37pgsdh1jxacrxxvs7d";
             };
             "aarch64-darwin" = {
               url = "https://github.com/Dicklesworthstone/beads_rust/releases/download/v${brVersion}/br-${brVersion}-darwin_arm64.tar.gz";
-              sha256 = "109b9h6wbhq2zz42v81fhj2nnwjfh0fyps1mbvhkf1smis7d7hj3";
+              sha256 = "00dahsp0zh6gsq8jxkxga0z1ihmqw6k1lbmhm31cpz6y4c25sq1w";
             };
           };
           brSource = brSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for br: ${prev.stdenv.hostPlatform.system}");
 
           # ntm - Named Tmux Manager for AI coding agent coordination
-          ntmVersion = "1.20.0";
+          ntmVersion = "1.29.3";
           ntmSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/ntm/releases/download/v${ntmVersion}/ntm_${ntmVersion}_linux_amd64.tar.gz";
-              sha256 = "18vd9d9n8yi0xsh6xrlc5703f36f1n09gf0khznmnyxic9ydiwjz";
+              sha256 = "0d2ykz2k0dvr9yfy5aizyzqqfc56xhdqhsld6wn5z5v9bsli0v5d";
             };
             "aarch64-linux" = {
               url = "https://github.com/Dicklesworthstone/ntm/releases/download/v${ntmVersion}/ntm_${ntmVersion}_linux_arm64.tar.gz";
-              sha256 = "08svygg91krz80lwqy44igxvlvm469lc6p6yk7khgw1n6q9ymcgv";
+              sha256 = "03nigfwwwynl3wnifxcrqgadi78x3qqxxb05wiqghrrbf128h544";
             };
             "x86_64-darwin" = {
               url = "https://github.com/Dicklesworthstone/ntm/releases/download/v${ntmVersion}/ntm_${ntmVersion}_darwin_amd64.tar.gz";
-              sha256 = "1ld9j6jnlyabmbl51kcbdk4bw8bsji4f46zi74wkirxsnxffy8qc";
+              sha256 = "012slq8r4qwbp6acmpmz8lrb6rnbsd6hynv6vwkydr00k26ml5fs";
             };
             "aarch64-darwin" = {
               url = "https://github.com/Dicklesworthstone/ntm/releases/download/v${ntmVersion}/ntm_${ntmVersion}_darwin_arm64.tar.gz";
-              sha256 = "07gsacm4003dp75fddj6a294w5f2vp6fs72mqkydac4mmbp8l6cv";
+              sha256 = "1i80gvzp3jscmindx3i3230pxib7zyhqlahcfnrdrz4zj0z0mib1";
             };
           };
           ntmSource = ntmSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for ntm: ${prev.stdenv.hostPlatform.system}");
 
           # dcg - destructive command guard
-          dcgVersion = "0.6.7";
+          dcgVersion = "0.11.1";
           dcgSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/destructive_command_guard/releases/download/v${dcgVersion}/dcg-x86_64-unknown-linux-musl.tar.xz";
-              sha256 = "6d90754b7170bdeb63375fd7d20e7dc330c56b8f1018fc45ccbbd5cccc1ca183";
+              sha256 = "a56fd772b31badbe5836efe407bb4719e46ee2a6320a7ecec21504867436b2db";
             };
             "aarch64-linux" = {
               url = "https://github.com/Dicklesworthstone/destructive_command_guard/releases/download/v${dcgVersion}/dcg-aarch64-unknown-linux-gnu.tar.xz";
-              sha256 = "9d9edb541a03c0497e4472e5ca61747d476357ced077db452bb4811cee5cb77e";
+              sha256 = "9917fc9a9872844ebcb12ab1a5e7a3b4899c6396f66150a63fd5199c81479bea";
             };
             "x86_64-darwin" = {
               url = "https://github.com/Dicklesworthstone/destructive_command_guard/releases/download/v${dcgVersion}/dcg-x86_64-apple-darwin.tar.xz";
-              sha256 = "4818359e58d21872160ed569884ed641935d5f74228bad30cd1faa4d43c11584";
+              sha256 = "0a9bde67e7825a8a0c7e2ddcd30424efc868f67b14c6e373e084599103ecfdbc";
             };
             "aarch64-darwin" = {
               url = "https://github.com/Dicklesworthstone/destructive_command_guard/releases/download/v${dcgVersion}/dcg-aarch64-apple-darwin.tar.xz";
-              sha256 = "dccfd90dbd77a75464784ae90be10e4356cf01856708ca8506ecb56da7e75e7f";
+              sha256 = "397152e113aa051506097819f7d0eb5643417b31b18033d832c696814bf89526";
             };
           };
           dcgSource = dcgSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for dcg: ${prev.stdenv.hostPlatform.system}");
 
           # caam - coding agent account manager (instant auth switching)
-          caamVersion = "0.1.12";
+          caamVersion = "0.1.16";
           caamSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/coding_agent_account_manager/releases/download/v${caamVersion}/caam_${caamVersion}_linux_amd64.tar.gz";
-              sha256 = "06fc9f8342151f032875e5a80609be4a54b518cfec4660826076d26ad2a2aba1";
+              sha256 = "31cce532da6170c713178f438d29107eb459a2f251b4cfcd7554bf2d52169057";
             };
             "aarch64-linux" = {
               url = "https://github.com/Dicklesworthstone/coding_agent_account_manager/releases/download/v${caamVersion}/caam_${caamVersion}_linux_arm64.tar.gz";
-              sha256 = "ed46e20190bb0073fbc729ae085e4d6ab1e30ccce5b6b694b72c51eb70e4fcef";
+              sha256 = "9f28acb5266dcd2cbb00e2a97409699f526f2e91bf8601cf7f778e94651b4bed";
             };
             "x86_64-darwin" = {
               url = "https://github.com/Dicklesworthstone/coding_agent_account_manager/releases/download/v${caamVersion}/caam_${caamVersion}_darwin_amd64.tar.gz";
-              sha256 = "4427dd9e44181a24ae18e5939b9581cc5f394b406d181edaae4efbd09b4d47db";
+              sha256 = "d30b9e4d12c3247380fd5f603dd97386296368a56822c8e6eea9acc38b26634e";
             };
             "aarch64-darwin" = {
               url = "https://github.com/Dicklesworthstone/coding_agent_account_manager/releases/download/v${caamVersion}/caam_${caamVersion}_darwin_arm64.tar.gz";
-              sha256 = "2e8cb397c7d32007dbb3fa6844560c8b7ce6b09811535d948cb0abcc1490342b";
+              sha256 = "5eb00eee2a035b13f2db782327cec2072727c3d558a546c7e3a75574df991e8e";
             };
           };
           caamSource = caamSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for caam: ${prev.stdenv.hostPlatform.system}");
 
           # agent-browser - browser automation CLI for AI agents
-          agentBrowserVersion = "0.33.0";
+          agentBrowserVersion = "0.34.0";
           agentBrowserSources = {
             "x86_64-linux" = {
               url = "https://github.com/vercel-labs/agent-browser/releases/download/v${agentBrowserVersion}/agent-browser-linux-x64";
-              sha256 = "12p0s6ms2h67p3lg16y3kmhb6103kz2pg50g2zj5nc0dipmqazdp";
+              sha256 = "12cpj28lwcrc2a892nikw57pbiv1nbmi9yfjbima00v0imfxzsk9";
             };
             "aarch64-linux" = {
               url = "https://github.com/vercel-labs/agent-browser/releases/download/v${agentBrowserVersion}/agent-browser-linux-arm64";
-              sha256 = "0r4jvbd657fhwlr9jdn4r756hpgiyhbr8ql9q0ls8idbfs6j6yzs";
+              sha256 = "1j6pqfms5bb4giv39kx1ia5jbf5pxxdvdjr470mib6i65mybyw6a";
             };
             "x86_64-darwin" = {
               url = "https://github.com/vercel-labs/agent-browser/releases/download/v${agentBrowserVersion}/agent-browser-darwin-x64";
-              sha256 = "1a3v7v2i60di2153swyk04h70bpsrpmpb19sfs22dg06b2b678dz";
+              sha256 = "1rq1250yx2ibcc1cd684i9b7n6n621sq964afr5a94bpwvwwklys";
             };
             "aarch64-darwin" = {
               url = "https://github.com/vercel-labs/agent-browser/releases/download/v${agentBrowserVersion}/agent-browser-darwin-arm64";
-              sha256 = "1sc0bc219nm5j7w3qgyp6iphpk0wqih6rps28vsch5lq5v270ayi";
+              sha256 = "173winf89b6mpcaff7ddh8vfjqdp34lv2wdmsawrlvmqdalsg06n";
             };
           };
           agentBrowserSource = agentBrowserSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for agent-browser: ${prev.stdenv.hostPlatform.system}");
 
           # pi - prompt injection detection agent (Rust)
-          piVersion = "0.1.22";
+          piVersion = "0.1.23";
           piSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/pi_agent_rust/releases/download/v${piVersion}/pi-linux-amd64.tar.xz";
-              sha256 = "08h7cydcxw6sk7ianbmwifhwwyhzlgrr6w7vcx2f8qbi3fldbpf6";
+              sha256 = "1ywsl4i3hxix34bm4n47j4nz0jalnj8famkb6qjdabk6zsav2v9q";
             };
             "aarch64-darwin" = {
               url = "https://github.com/Dicklesworthstone/pi_agent_rust/releases/download/v${piVersion}/pi-darwin-arm64.tar.xz";
-              sha256 = "0iv9124csc1zjwqdxis4s4vpbd6zcgy4x5acr739fzd3yfhjzm4z";
+              sha256 = "0q2xsh4jq6mma0nx9vx20kgbb0y17k167w6szmlmgxvvdjcf4r6b";
             };
           };
           piSource = piSources.${prev.stdenv.hostPlatform.system} or null;
 
+          # oh-my-pi (omp) - coding agent fork of pi with LSP/DAP/subagents (omp.sh)
+          ompVersion = "17.4.0";
+          ompSources = {
+            "x86_64-linux" = {
+              url = "https://github.com/can1357/oh-my-pi/releases/download/v${ompVersion}/omp-linux-x64";
+              sha256 = "6d5431c69fd6db9771abd51ac76df8820fd718ae33ac654a805fd7fb44b685c7";
+            };
+            "aarch64-linux" = {
+              url = "https://github.com/can1357/oh-my-pi/releases/download/v${ompVersion}/omp-linux-arm64";
+              sha256 = "b5b054cca197651d3dd0b7fae0bf6fe0d2cd653e8cbedb623d26faced404aee6";
+            };
+            "aarch64-darwin" = {
+              url = "https://github.com/can1357/oh-my-pi/releases/download/v${ompVersion}/omp-darwin-arm64";
+              sha256 = "861ac3d7a76499dbc36e6ec8769b58b61a962daac2b4775ce545474d9030e6ba";
+            };
+            "x86_64-darwin" = {
+              url = "https://github.com/can1357/oh-my-pi/releases/download/v${ompVersion}/omp-darwin-x64";
+              sha256 = "1efd3695430dfddd824e431f9b968bde151a1880ea9d9b5870e3631d58d4d927";
+            };
+          };
+          ompSource = ompSources.${prev.stdenv.hostPlatform.system} or null;
+
           # xf - cross-format file converter
-          xfVersion = "0.3.2";
+          xfVersion = "0.4.1";
           xfSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/xf/releases/download/v${xfVersion}/xf-x86_64-unknown-linux-gnu.tar.gz";
-              sha256 = "2f6820fb391ba36ff0c1920eff965a4db22040fbe353f05d071002a876fa507a";
+              sha256 = "3855142061320cf8669ad0ad698b4762e2002f8fadde6befa717f0eede336e63";
             };
             "aarch64-darwin" = {
               url = "https://github.com/Dicklesworthstone/xf/releases/download/v${xfVersion}/xf-aarch64-apple-darwin.tar.gz";
-              sha256 = "f3a6527091e0906b58e8b1b11fd5a2632293d22fcce1c50facb661aea3c9e697";
+              sha256 = "68b9c59fe03ea180ae64e26d076d615e9a462c8d27430f8e0a1d010c74199ebc";
             };
           };
           xfSource = xfSources.${prev.stdenv.hostPlatform.system} or null;
 
           # mcp-agent-mail - Rust replacement for Python mcp_agent_mail
-          mcpAgentMailVersion = "0.3.24";
+          mcpAgentMailVersion = "0.3.29";
           mcpAgentMailSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/mcp_agent_mail_rust/releases/download/v${mcpAgentMailVersion}/mcp-agent-mail-x86_64-unknown-linux-gnu.tar.xz";
-              sha256 = "1603lkry6a4bz38qkd3xhyd6fjm0qjjvd74brmfgghyw8nmh8xpl";
+              sha256 = "0ys9pyxlvkz6x5cbxznp81zxy933dxbalrprrhqy0g4yih9n7k7m";
             };
             "aarch64-darwin" = {
               url = "https://github.com/Dicklesworthstone/mcp_agent_mail_rust/releases/download/v${mcpAgentMailVersion}/mcp-agent-mail-aarch64-apple-darwin.tar.xz";
-              sha256 = "0m78vdmdsl308vdg0cs8wfaf3bnvfxzy6d5dpxflk2z2byh11abs";
+              sha256 = "1i83mv1fmbq844cld5nn824nysg1pki60b1nh7spwbhwd5yp7y81";
             };
           };
           mcpAgentMailSource = mcpAgentMailSources.${prev.stdenv.hostPlatform.system} or null;
 
           # casr - cross agent session resumer
-          casrVersion = "0.2.3";
+          casrVersion = "0.3.1";
           casrSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/cross_agent_session_resumer/releases/download/v${casrVersion}/casr-x86_64-unknown-linux-musl.tar.xz";
-              sha256 = "22c17f5ce2cb0ca12f98a32eae513c93b879bb9fdac4b5dd4e4861dc1a230d28";
+              sha256 = "c4cde811105b0350df8a9c120eb3fa57933eebacc9c6a45b6ecc7853673f2ae3";
             };
           };
           casrSource = casrSources.${prev.stdenv.hostPlatform.system} or null;
@@ -400,11 +422,11 @@
           ptSource = ptSources.${prev.stdenv.hostPlatform.system} or null;
 
           # rch - remote compilation helper
-          rchVersion = "1.0.52";
+          rchVersion = "1.0.57";
           rchSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/remote_compilation_helper/releases/download/v${rchVersion}/rch-v${rchVersion}-x86_64-unknown-linux-gnu.tar.gz";
-              sha256 = "0nyjasiddrjzm4x64j06179hlpa7c83y0nphw5xaxp2gdz92gi0s";
+              sha256 = "17b0sw1kn6inii93fzd1x0yqqggdp400waad9ffw0a35p2rshl3w";
             };
           };
           rchSource = rchSources.${prev.stdenv.hostPlatform.system} or null;
@@ -1082,13 +1104,51 @@
               # 0.1.18+ tarballs extract to a versioned subdir (pi-<ver>-<triple>/pi)
               cp pi-*/pi $out/bin/pi
               chmod +x $out/bin/pi
+              # Stable name that never collides with the upstream TypeScript `pi`
+              ln -s pi $out/bin/pi-rs
             '';
 
             meta = with prev.lib; {
-              description = "Prompt injection detection agent";
+              description = "Rust port of the pi coding agent (pi-rs; `pi` yields to pi-coding-agent)";
               homepage = "https://github.com/Dicklesworthstone/pi_agent_rust";
               license = licenses.mit;
               platforms = [ "x86_64-linux" "aarch64-darwin" ];
+              # pi-coding-agent (upstream) owns bin/pi; this port stays reachable as pi-rs
+              priority = 10;
+            };
+          } else null;
+
+          # pi - upstream TypeScript coding agent (badlogic/pi-mono), tracked on unstable
+          pi-coding-agent = pkgs-unstable.pi-coding-agent;
+
+          # oh-my-pi (omp) - pi fork with LSP, DAP, subagents, plan mode (https://omp.sh)
+          oh-my-pi = if ompSource != null then prev.stdenv.mkDerivation {
+            pname = "oh-my-pi";
+            version = ompVersion;
+
+            src = prev.fetchurl {
+              url = ompSource.url;
+              sha256 = ompSource.sha256;
+            };
+
+            dontUnpack = true;
+            dontStrip = true; # bun-compiled single binary; strip would corrupt the embedded bundle
+
+            nativeBuildInputs = prev.lib.optionals prev.stdenv.isLinux [ prev.autoPatchelfHook ];
+            buildInputs = prev.lib.optionals prev.stdenv.isLinux [ prev.stdenv.cc.cc.lib ];
+
+            installPhase = ''
+              mkdir -p $out/bin
+              cp $src $out/bin/omp
+              chmod +x $out/bin/omp
+            '';
+
+            meta = with prev.lib; {
+              description = "Oh My Pi - terminal coding agent with LSP/DAP, subagents and plan mode";
+              homepage = "https://omp.sh";
+              license = licenses.mit;
+              mainProgram = "omp";
+              platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
             };
           } else null;
 
@@ -1317,26 +1377,26 @@
 
           # codex - OpenAI coding agent CLI (pre-built binary from npm)
           codex = let
-            codexVersion = "0.146.0";
+            codexVersion = "0.148.0";
             codexSources = {
               "x86_64-linux" = {
                 url = "https://registry.npmjs.org/@openai/codex/-/codex-${codexVersion}-linux-x64.tgz";
-                hash = "sha256-kaMlZay3/vXTAClFdwkqEhUDQG40zn6ZKvi98ZmLZfs=";
+                hash = "sha256-UvG49c9m/ndtK9XmijLvaIS35Gb9gGFL+IWARt+pAS8=";
                 vendorDir = "x86_64-unknown-linux-musl";
               };
               "aarch64-linux" = {
                 url = "https://registry.npmjs.org/@openai/codex/-/codex-${codexVersion}-linux-arm64.tgz";
-                hash = "sha256-3uCPctcoGJ2axnI1bGcE506MgujHJf64oPvRtuBRZyQ=";
+                hash = "sha256-/rpGPzH4zaWJGS1dMzk1nFs1vBNm42kJpi1OSIpoIuU=";
                 vendorDir = "aarch64-unknown-linux-musl";
               };
               "x86_64-darwin" = {
                 url = "https://registry.npmjs.org/@openai/codex/-/codex-${codexVersion}-darwin-x64.tgz";
-                hash = "sha256-mV9XMf6poL8opk1qiz5c4PCcEQtUwRHckTgQkE08nGw=";
+                hash = "sha256-WY8kK8TCnV4NQ7xpPfj1m8I6TJaL0dmPx/ALl6k7JRU=";
                 vendorDir = "x86_64-apple-darwin";
               };
               "aarch64-darwin" = {
                 url = "https://registry.npmjs.org/@openai/codex/-/codex-${codexVersion}-darwin-arm64.tgz";
-                hash = "sha256-J57DRgxbgGjaqypPW88FdIMwOzWV9KJK3mzrTQJnSTU=";
+                hash = "sha256-sgNXgXsbEdq3pmlrBRllqq1DEaaQ8rrH2HZ4qSqovq0=";
                 vendorDir = "aarch64-apple-darwin";
               };
             };
@@ -1380,11 +1440,11 @@
           # gemini-cli - Google Gemini coding agent CLI (pre-built JS bundle)
           gemini-cli = prev.stdenv.mkDerivation {
             pname = "gemini-cli";
-            version = "0.52.0";
+            version = "0.56.0";
 
             src = prev.fetchzip {
-              url = "https://github.com/google-gemini/gemini-cli/releases/download/v0.52.0/gemini-cli-bundle.zip";
-              hash = "sha256-WNRF40lxUsvP/lhrGP5qtUctuy9sdUy4sc6yWdrpeSI=";
+              url = "https://github.com/google-gemini/gemini-cli/releases/download/v0.56.0/gemini-cli-bundle.zip";
+              hash = "sha256-uftyJehZ/pDVxq+tC4XNKtLuuHO1RE33LVWpMUU+l8o=";
               stripRoot = false;
             };
 

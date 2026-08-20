@@ -4,7 +4,7 @@ description: >
   Bump third-party packages in lib/overlays.nix (codex, the Dicklesworthstone
   Rust CLIs, grepai, gemini-cli, agent-browser, gws, ...) to their latest
   upstream version, refresh sha256 hashes for every platform, and validate
-  with `make test NIXNAME=loom`. Use when the user says "update overlays",
+  with `make test NIXNAME=bali`. Use when the user says "update overlays",
   "update overlay packages", "bump codex", "update <pkg> to latest", "refresh
   tool versions", "update dicklesworthstone tools", "update all the AI tools",
   or "check for new versions of our git tools". Skip ubs, cm, cco — those are
@@ -44,7 +44,8 @@ All packages defined in `/home/joost/nixos-config/lib/overlays.nix` that follow 
 | dcg | gh-release | Dicklesworthstone/destructive_command_guard |
 | caam | gh-release | Dicklesworthstone/coding_agent_account_manager |
 | agent-browser | gh-release | vercel-labs/agent-browser |
-| pi | gh-release | Dicklesworthstone/pi_agent_rust |
+| pi-agent (`pi-rs`) | gh-release | Dicklesworthstone/pi_agent_rust |
+| oh-my-pi (`omp`) | gh-release (bare binary) | can1357/oh-my-pi |
 | xf | gh-release | Dicklesworthstone/xf |
 | mcp-agent-mail | gh-release | Dicklesworthstone/mcp_agent_mail_rust |
 | casr | gh-release | Dicklesworthstone/cross_agent_session_resumer |
@@ -54,6 +55,12 @@ All packages defined in `/home/joost/nixos-config/lib/overlays.nix` that follow 
 | ru | gh-release (bare binary) | Dicklesworthstone/repo_updater |
 | codex | npm | @openai/codex |
 | gemini-cli | gh-release (JS bundle) | google-gemini/gemini-cli |
+
+## Not overlay-pinned — bumped via flake.lock instead
+
+`pi-coding-agent` (upstream TypeScript `pi`) is aliased from `pkgs-unstable`, not
+fetched by URL. It has no `<name>Version`; it moves when `flake.lock` moves
+(`make update` / the lock-updater workflow). If asked to bump it, say so.
 
 ## Out of scope — refuse with message
 
@@ -140,10 +147,10 @@ Tip: when matching `<name>Version`, include enough surrounding context so the ma
 After **all** target packages are edited, run a single validation:
 
 ```bash
-make test NIXNAME=loom
+make test NIXNAME=bali
 ```
 
-This builds `nixosConfigurations.loom` which pulls every overlay package on x86_64-linux. It will not exercise darwin/aarch64 builds, but those use the same fetchurl pattern — if the URL is valid and the hash matches what `nix-prefetch-url` returned, the build will succeed.
+**Run this on bali** (or replace with `nix build --no-link .#nixosConfigurations.bali.config.system.build.toplevel` elsewhere): on NixOS, `make test` is `nixos-rebuild test`, which *activates* the named host's config on the current machine until reboot. `nixosConfigurations.bali` pulls every overlay package on x86_64-linux. It will not exercise darwin/aarch64 builds, but those use the same fetchurl pattern — if the URL is valid and the hash matches what `nix-prefetch-url` returned, the build will succeed.
 
 If `make test` fails:
 - Surface the error to the user.
@@ -194,6 +201,7 @@ Some packages use distinct URL shapes across platforms — re-use the *existing*
 - `grepai`: `grepai_${version}_linux_amd64.tar.gz`
 - `cass`: `cass-linux-amd64.tar.gz` (no version in filename)
 - `csctf`: `csctf-linux-x64` (bare binary, no .tar)
+- `oh-my-pi`: `omp-linux-x64`, `omp-linux-arm64`, `omp-darwin-arm64`, `omp-darwin-x64` (bare binaries, hex sha256)
 - `codex`: `codex-${version}-linux-x64.tgz` (npm registry)
 - `ubs` modules: `https://raw.githubusercontent.com/.../v${version}/modules/<file>` (out of scope, but noted)
 
@@ -202,7 +210,7 @@ If upstream changes the asset naming between releases, the URL check in step 3.1
 ## Examples
 
 **User:** "update codex to latest"
-→ Fetch npm latest, compare to current `codexVersion`, refresh 4 SRI hashes, edit, run `make test NIXNAME=loom`, report.
+→ Fetch npm latest, compare to current `codexVersion`, refresh 4 SRI hashes, edit, run `make test NIXNAME=bali`, report.
 
 **User:** "update overlays"
 → Walk every in-scope package above, refresh anything stale, single `make test` at the end.

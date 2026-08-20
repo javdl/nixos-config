@@ -125,6 +125,8 @@ in
     ]
     ++ (lib.optional (pkgs.giil != null) pkgs.giil)
     ++ (lib.optional (pkgs.pi-agent != null) pkgs.pi-agent)
+    ++ [ pkgs.pi-coding-agent ] # upstream `pi`
+    ++ (lib.optional (pkgs.oh-my-pi != null) pkgs.oh-my-pi) # `omp`
     ++ (lib.optional (pkgs.xf != null) pkgs.xf)
     ++ (lib.optional (pkgs.mcp-agent-mail != null) pkgs.mcp-agent-mail)
     ++ (lib.optional (pkgs.cross-agent-session-resumer != null) pkgs.cross-agent-session-resumer)
@@ -778,8 +780,8 @@ in
   # the chezmoi source and push via jj. Script body shared via
   # lib/chezmoi-memory-sync.nix so both platforms stay in lockstep.
   #
-  # Gated on loom for now. Linger is already enabled on loom (hosts/loom.nix
-  # via users.users.joost.linger = true → confirmed in this session's eval),
+  # Gated on bali. Linger is enabled there (hosts/bali.nix via
+  # users.users.joost.linger = true),
   # so the timer fires even when no interactive session is open.
   #
   # To enable after the next switch:
@@ -791,7 +793,6 @@ in
       (
         isLinux
         && builtins.elem currentSystemName [
-          "loom"
           "bali"
         ]
       )
@@ -814,7 +815,6 @@ in
       (
         isLinux
         && builtins.elem currentSystemName [
-          "loom"
           "bali"
         ]
       )
@@ -851,7 +851,6 @@ in
       (
         isLinux
         && builtins.elem currentSystemName [
-          "loom"
           "bali"
         ]
       )
