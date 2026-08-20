@@ -329,6 +329,28 @@
           };
           piSource = piSources.${prev.stdenv.hostPlatform.system} or null;
 
+          # oh-my-pi (omp) - coding agent fork of pi with LSP/DAP/subagents (omp.sh)
+          ompVersion = "17.3.8";
+          ompSources = {
+            "x86_64-linux" = {
+              url = "https://github.com/can1357/oh-my-pi/releases/download/v${ompVersion}/omp-linux-x64";
+              sha256 = "efdb54f0054e80afe1c05c09f43d5ced09ce8ec8b75c3fb6b0ca5ce4805b383f";
+            };
+            "aarch64-linux" = {
+              url = "https://github.com/can1357/oh-my-pi/releases/download/v${ompVersion}/omp-linux-arm64";
+              sha256 = "5d97dba8068c9c3b19bc2949567798e0a839dec5f11c458b4c642bfe0f4d14a0";
+            };
+            "aarch64-darwin" = {
+              url = "https://github.com/can1357/oh-my-pi/releases/download/v${ompVersion}/omp-darwin-arm64";
+              sha256 = "84705a1ca833f59afccca2db7aff559e09cb74902e7a5aaf87077a88f3c84b84";
+            };
+            "x86_64-darwin" = {
+              url = "https://github.com/can1357/oh-my-pi/releases/download/v${ompVersion}/omp-darwin-x64";
+              sha256 = "8ea335917741cdd6f5a4a671cd4c6238dfdd27b9a303e9ed357c442877768d6c";
+            };
+          };
+          ompSource = ompSources.${prev.stdenv.hostPlatform.system} or null;
+
           # xf - cross-format file converter
           xfVersion = "0.3.2";
           xfSources = {
@@ -1082,13 +1104,51 @@
               # 0.1.18+ tarballs extract to a versioned subdir (pi-<ver>-<triple>/pi)
               cp pi-*/pi $out/bin/pi
               chmod +x $out/bin/pi
+              # Stable name that never collides with the upstream TypeScript `pi`
+              ln -s pi $out/bin/pi-rs
             '';
 
             meta = with prev.lib; {
-              description = "Prompt injection detection agent";
+              description = "Rust port of the pi coding agent (pi-rs; `pi` yields to pi-coding-agent)";
               homepage = "https://github.com/Dicklesworthstone/pi_agent_rust";
               license = licenses.mit;
               platforms = [ "x86_64-linux" "aarch64-darwin" ];
+              # pi-coding-agent (upstream) owns bin/pi; this port stays reachable as pi-rs
+              priority = 10;
+            };
+          } else null;
+
+          # pi - upstream TypeScript coding agent (badlogic/pi-mono), tracked on unstable
+          pi-coding-agent = pkgs-unstable.pi-coding-agent;
+
+          # oh-my-pi (omp) - pi fork with LSP, DAP, subagents, plan mode (https://omp.sh)
+          oh-my-pi = if ompSource != null then prev.stdenv.mkDerivation {
+            pname = "oh-my-pi";
+            version = ompVersion;
+
+            src = prev.fetchurl {
+              url = ompSource.url;
+              sha256 = ompSource.sha256;
+            };
+
+            dontUnpack = true;
+            dontStrip = true; # bun-compiled single binary; strip would corrupt the embedded bundle
+
+            nativeBuildInputs = prev.lib.optionals prev.stdenv.isLinux [ prev.autoPatchelfHook ];
+            buildInputs = prev.lib.optionals prev.stdenv.isLinux [ prev.stdenv.cc.cc.lib ];
+
+            installPhase = ''
+              mkdir -p $out/bin
+              cp $src $out/bin/omp
+              chmod +x $out/bin/omp
+            '';
+
+            meta = with prev.lib; {
+              description = "Oh My Pi - terminal coding agent with LSP/DAP, subagents and plan mode";
+              homepage = "https://omp.sh";
+              license = licenses.mit;
+              mainProgram = "omp";
+              platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
             };
           } else null;
 

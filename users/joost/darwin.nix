@@ -34,6 +34,7 @@ let
     # Essential tools
     "codexbar" # steipete/tap - Codex menu bar app
     "companion" # Bitfocus companion, Streamdeck extension and emulation software
+    "cursor" # Cursor IDE
     "google-drive"
     "insync"
     "istat-menus"
@@ -75,6 +76,7 @@ let
     "codex-app" # OpenAI Codex desktop app
     "codexbar" # steipete/tap - Codex menu bar app
     "companion" # Bitfocus companion, Streamdeck extension and emulation software
+    "cursor" # Cursor IDE
     "datagrip"
     "dataspell"
     "dbeaver-community" # dbeaver-bin doesnt work on MacOS?

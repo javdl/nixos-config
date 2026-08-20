@@ -222,6 +222,8 @@ in
     ]
     ++ (lib.optional (pkgs.giil != null) pkgs.giil)
     ++ (lib.optional (pkgs.pi-agent != null) pkgs.pi-agent)
+    ++ [ pkgs.pi-coding-agent ] # upstream `pi`
+    ++ (lib.optional (pkgs.oh-my-pi != null) pkgs.oh-my-pi) # `omp`
     ++ (lib.optional (pkgs.xf != null) pkgs.xf)
     ++ (lib.optional (pkgs.mcp-agent-mail != null) pkgs.mcp-agent-mail)
     ++ (lib.optional (pkgs.cross-agent-session-resumer != null) pkgs.cross-agent-session-resumer)
@@ -335,6 +337,7 @@ in
     ])
     ++ (lib.optionals (isLinux && !isWSL) [
       bubblewrap
+      code-cursor # Cursor IDE (macOS gets the homebrew cask instead)
       chromium
       firefox-devedition
       # brave
