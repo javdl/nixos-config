@@ -889,9 +889,11 @@ in
   home.file.".config/zellij/layouts/backend.kdl".source = ../zellij-backend-fuww.kdl;
   home.file.".config/zellij/layouts/devops.kdl".source = ../zellij-monitor-runners.kdl;
 
-  # Claude Code statusline (Rose Pine themed)
+  # Claude Code statusline (Rose Pine themed), translated from ./starship.toml.
+  # Kept in sync with the desktop profile in ./home-manager.nix; the agent and
+  # colleague profiles still use the older shared ../claude-statusline.sh.
   home.file.".claude/statusline-command.sh" = {
-    source = ../claude-statusline.sh;
+    source = ./statusline-command.sh;
     executable = true;
   };
 

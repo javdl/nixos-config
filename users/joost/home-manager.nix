@@ -498,6 +498,11 @@ in
     ".ssh/exe-work.pub".source = ./ssh/exe-work.pub;
     ".gdbinit".source = ./gdbinit;
     ".inputrc".source = ./inputrc;
+    # Claude Code status line, translated from ./starship.toml.
+    ".claude/statusline-command.sh" = {
+      source = ./statusline-command.sh;
+      executable = true;
+    };
     ".gitignore".text = ''
       # macOS
       .DS_Store
