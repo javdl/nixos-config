@@ -4,7 +4,7 @@ description: >
   Bump third-party packages in lib/overlays.nix (codex, the Dicklesworthstone
   Rust CLIs, grepai, gemini-cli, agent-browser, gws, ...) to their latest
   upstream version, refresh sha256 hashes for every platform, and validate
-  with `make test NIXNAME=loom`. Use when the user says "update overlays",
+  with `make test NIXNAME=bali`. Use when the user says "update overlays",
   "update overlay packages", "bump codex", "update <pkg> to latest", "refresh
   tool versions", "update dicklesworthstone tools", "update all the AI tools",
   or "check for new versions of our git tools". Skip ubs, cm, cco — those are
@@ -147,10 +147,10 @@ Tip: when matching `<name>Version`, include enough surrounding context so the ma
 After **all** target packages are edited, run a single validation:
 
 ```bash
-make test NIXNAME=loom
+make test NIXNAME=bali
 ```
 
-This builds `nixosConfigurations.loom` which pulls every overlay package on x86_64-linux. It will not exercise darwin/aarch64 builds, but those use the same fetchurl pattern — if the URL is valid and the hash matches what `nix-prefetch-url` returned, the build will succeed.
+**Run this on bali** (or replace with `nix build --no-link .#nixosConfigurations.bali.config.system.build.toplevel` elsewhere): on NixOS, `make test` is `nixos-rebuild test`, which *activates* the named host's config on the current machine until reboot. `nixosConfigurations.bali` pulls every overlay package on x86_64-linux. It will not exercise darwin/aarch64 builds, but those use the same fetchurl pattern — if the URL is valid and the hash matches what `nix-prefetch-url` returned, the build will succeed.
 
 If `make test` fails:
 - Surface the error to the user.
@@ -210,7 +210,7 @@ If upstream changes the asset naming between releases, the URL check in step 3.1
 ## Examples
 
 **User:** "update codex to latest"
-→ Fetch npm latest, compare to current `codexVersion`, refresh 4 SRI hashes, edit, run `make test NIXNAME=loom`, report.
+→ Fetch npm latest, compare to current `codexVersion`, refresh 4 SRI hashes, edit, run `make test NIXNAME=bali`, report.
 
 **User:** "update overlays"
 → Walk every in-scope package above, refresh anything stale, single `make test` at the end.

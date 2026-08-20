@@ -780,8 +780,8 @@ in
   # the chezmoi source and push via jj. Script body shared via
   # lib/chezmoi-memory-sync.nix so both platforms stay in lockstep.
   #
-  # Gated on loom for now. Linger is already enabled on loom (hosts/loom.nix
-  # via users.users.joost.linger = true → confirmed in this session's eval),
+  # Gated on bali. Linger is enabled there (hosts/bali.nix via
+  # users.users.joost.linger = true),
   # so the timer fires even when no interactive session is open.
   #
   # To enable after the next switch:
@@ -793,7 +793,6 @@ in
       (
         isLinux
         && builtins.elem currentSystemName [
-          "loom"
           "bali"
         ]
       )
@@ -816,7 +815,6 @@ in
       (
         isLinux
         && builtins.elem currentSystemName [
-          "loom"
           "bali"
         ]
       )
@@ -853,7 +851,6 @@ in
       (
         isLinux
         && builtins.elem currentSystemName [
-          "loom"
           "bali"
         ]
       )

@@ -75,21 +75,18 @@ Dedicated self-hosted runner for the `fuww` GitHub organization:
 | github-runner-05 | `github-runner-05`   | `#github-runner-05`   | EX63 (dedicated, 144.76.86.24)  | `users/github-runner/home-manager-server.nix` |
 | ~~github-runner-06~~ | `github-runner-06`   | `#github-runner-06`   | EX63 (dedicated, 136.243.104.36) | **DECOMMISSIONED 2026-07-20** — box repurposed as `bali` |
 
-### bali (loom replacement)
+### bali
 
 `bali` (EX63 dedicated, 136.243.104.36, Tailscale 100.113.194.113, ex-github-runner-06)
-is loom's replacement: a clone of `hosts/loom.nix` on `hetzner-dedicated-hardware` +
+is loom's replacement (loom **decommissioned 2026-08-20**; `hosts/loom.nix`, its flake entry, sops anchor and `secrets/loom.yaml` removed): built on `hetzner-dedicated-hardware` +
 `disko-hetzner-dedicated`, root disk pinned by NVMe EUI (enumeration on this box is
 unstable across boots). **Cutover completed 2026-07-20**: hermes-agent now runs on bali
-(state migrated from loom); loom's hermes is gated off via `enableHermes = false` in
-`hosts/loom.nix` — never enable both, the shared tokens double-answer every platform.
+(state migrated from loom). Never run a second hermes with the same tokens — it double-answers every platform.
 bali also took over loom's role as the SOPS bootstrap/editing key (agent-jay-01.yaml is
 encrypted to agent-jay-01 + bali). **SSH is tailnet-only** (public 22/2222 closed;
 recovery = Hetzner Robot rescue): `ssh bali` (chezmoi ssh config alias) or headless
 `ssh -i ~/.ssh/id_ed25519_nopass joost@100.113.194.113`; port 2222 allows password
-auth for key-less apps (Codex). Loom (91.99.204.187) is passive and pending decommission — cancel at
-Hetzner when comfortable, then remove `hosts/loom.nix`, its flake entry, sops anchor,
-and `secrets/loom.yaml`.
+auth for key-less apps (Codex).
 
 The runners use `modules/github-actions-runner.nix` for CI packages (Docker, languages, build tools, browsers, cloud CLIs) and `services.github-runners` for runner registration. Tokens are SOPS-encrypted in `secrets/github-runner-{01,03,04,05,06}.yaml`. See `docs/github-runner-hetzner-setup.md` for full setup/scaling guide.
 
@@ -326,14 +323,14 @@ The flake.nix overlay uses three patterns for third-party tools:
 Prefer pre-built binaries. Building from source is slow and fragile with hash pinning.
 
 ### Testing Overlay Changes
-Overlays are internal to the flake (not exposed as outputs). You cannot test individual overlays with `nix build .#<pkg>`. Use `make test NIXNAME=loom` to validate overlay changes.
+Overlays are internal to the flake (not exposed as outputs). You cannot test individual overlays with `nix build .#<pkg>`. Use `make test NIXNAME=bali` to validate overlay changes (note: on NixOS `make test` = `nixos-rebuild test`, which activates that host's config on the current machine until reboot — run it on bali, or use `nix build .#nixosConfigurations.bali.config.system.build.toplevel` elsewhere).
 
 ### Nix Hash Gotcha
 `nix-prefetch-url --unpack` gives a DIFFERENT hash than `fetchurl`. If using `fetchurl` + manual `tar xzf` in unpackPhase, use `nix-prefetch-url` WITHOUT `--unpack` to get the correct hash.
 
 ## Common Issues
 
-### bd broken on loom
+### bd broken on bali
 `bd` has a broken libicu dependency (`libicui18n.so.74`). Use `br` (beads_rust) instead for all beads operations.
 
 ### Nix Command Not Found
@@ -396,8 +393,8 @@ Fix: `_ZO_DOCTOR = "0"` in `home.sessionVariables` — set in `users/shared-home
 ### Editing `lib/overlays.nix` — audit siblings before removing
 Many overlay blocks are paired infrastructure (e.g., `ironclaw` + `openclaw` were both AI-assistant gateways with matching modules `modules/ironclaw-oci.nix` and `modules/openclaw-oci.nix`, both wired into `hosts/joostclaw.nix`). Before removing a package, grep for related names in the same files and surface them: "I see X is configured alongside Y — should that go too?"
 
-### Loom uses `home-manager-server.nix`, not `home-manager.nix`
-`loom` is `server = true` in `flake.nix`, so `lib/mksystem.nix` loads `users/joost/home-manager-server.nix` for it. Edits to `users/joost/home-manager.nix` have **no effect on loom**. Confirm which file a host uses before adding home-manager config for it:
+### bali uses `home-manager-server.nix`, not `home-manager.nix`
+`bali` is `server = true` in `flake.nix`, so `lib/mksystem.nix` loads `users/joost/home-manager-server.nix` for it. Edits to `users/joost/home-manager.nix` have **no effect on bali**. Confirm which file a host uses before adding home-manager config for it:
 ```bash
 nix-instantiate --eval --strict -E '
   let f = builtins.getFlake (toString ./.);

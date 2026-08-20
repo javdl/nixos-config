@@ -356,11 +356,8 @@
       # agent users.
       nixosConfigurations.agent-jay-01 = mkServer "agent-jay-01" "agent-jay";
 
-      nixosConfigurations.loom = mkServer "loom" "joost";
-
-      # loom's replacement on a repurposed EX63 runner box (donor: one of
-      # github-runner-03..06). Loom stays up until bali is verified;
-      # hermes stays disabled on bali until cutover (hosts/bali.nix).
+      # loom (Hetzner CPX32, 91.99.204.187) decommissioned 2026-08-20; bali is its
+      # replacement on a repurposed EX63 runner box and now hosts hermes-agent.
       nixosConfigurations.bali = mkServer "bali" "joost";
 
       # FashionUnited company-wide hermes-agent host.
