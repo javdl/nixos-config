@@ -460,6 +460,7 @@ All dev servers include the following AI agent tooling. Run `ntm deps -v` to che
 | dcg | `dcg` | Destructive Command Guard: blocks dangerous git/shell commands from AI agents |
 | ubs | `ubs` | Ultimate Bug Scanner: static analysis catching 1000+ bug patterns |
 | grepai | `grepai` | Semantic code search for AI coding assistants |
+| herdr | `herdr` | Terminal workspace manager/multiplexer with first-class AI-agent awareness |
 | am | `am` | Agent Mail: MCP HTTP server for async multi-agent coordination (systemd service) |
 | ru | `ru` | Repo Updater: parallel GitHub repo clone/pull sync |
 

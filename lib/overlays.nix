@@ -57,6 +57,30 @@
           };
           grokSource = grokSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for grok: ${prev.stdenv.hostPlatform.system}");
 
+          # herdr - terminal workspace manager / multiplexer for AI coding agents
+          # Bare static-PIE binary (verified `file`: static-pie linked), so it
+          # runs on NixOS without patchelf, same as grok above.
+          herdrVersion = "0.8.2";
+          herdrSources = {
+            "x86_64-linux" = {
+              url = "https://github.com/herdrdev/herdr/releases/download/v${herdrVersion}/herdr-linux-x86_64";
+              sha256 = "1x7cda775xin16wjs63bwc97zdnzn9z1lbpa8fr983299nhm0qcp";
+            };
+            "aarch64-linux" = {
+              url = "https://github.com/herdrdev/herdr/releases/download/v${herdrVersion}/herdr-linux-aarch64";
+              sha256 = "03dlspiz457v5cvsp182l25pypw8mfrb8c7pmqm0sbhwirji0mpm";
+            };
+            "x86_64-darwin" = {
+              url = "https://github.com/herdrdev/herdr/releases/download/v${herdrVersion}/herdr-macos-x86_64";
+              sha256 = "1hg2p0qz3d4xlb7yjvbix31jihq8bhjrs93d0nlpmkchh4n2cl5b";
+            };
+            "aarch64-darwin" = {
+              url = "https://github.com/herdrdev/herdr/releases/download/v${herdrVersion}/herdr-macos-aarch64";
+              sha256 = "0x75d9pwjbw5a0yga9c44lqvmyh0jdam04413z4hkcyq0kaz9m55";
+            };
+          };
+          herdrSource = herdrSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for herdr: ${prev.stdenv.hostPlatform.system}");
+
           # beads_viewer (bv) - TUI for beads issue tracking
           bvVersion = "0.18.0";
           bvSources = {
@@ -490,6 +514,33 @@
               homepage = "https://github.com/xai-org/grok-build";
               license = licenses.asl20;
               mainProgram = "grok";
+              platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+            };
+          };
+
+          # herdr - terminal workspace manager for AI coding agents
+          herdr = prev.stdenv.mkDerivation {
+            pname = "herdr";
+            version = herdrVersion;
+
+            src = prev.fetchurl {
+              url = herdrSource.url;
+              sha256 = herdrSource.sha256;
+            };
+
+            dontUnpack = true;
+
+            installPhase = ''
+              mkdir -p $out/bin
+              cp $src $out/bin/herdr
+              chmod +x $out/bin/herdr
+            '';
+
+            meta = with prev.lib; {
+              description = "Terminal workspace manager and multiplexer for AI coding agents";
+              homepage = "https://github.com/herdrdev/herdr";
+              license = licenses.asl20;
+              mainProgram = "herdr";
               platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
             };
           };
