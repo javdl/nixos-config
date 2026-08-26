@@ -130,11 +130,9 @@
           darwin = true;
         };
 
-      # Standalone home-manager for Arch/Omarchy boxes (non-NixOS Linux). j9 and
-      # the generic "omarchy" profile were byte-identical apart from the hostname
-      # threaded into users/joost/home-manager.nix and the extra CLI packages
-      # layered on top — which is how "omarchy" came to be missing
-      # currentSystemName and stopped evaluating. One definition, no drift.
+      # Standalone Home Manager for Arch/Omarchy boxes (non-NixOS Linux).
+      # Omarchy remains the owner of desktop packages and configuration; this
+      # profile only layers complementary Nix-managed tooling on top.
       mkOmarchyHome =
         {
           hostName,
@@ -155,6 +153,7 @@
           modules = [
             (import ./users/joost/home-manager.nix {
               isWSL = false;
+              isOmarchy = true;
               inherit inputs;
               currentSystemName = hostName;
             })
@@ -167,10 +166,15 @@
 
                 home.packages = extraPackages pkgs;
 
-                # Protect Omarchy-managed directories
+                # Protect Omarchy-managed directories. Program modules that
+                # generate files below these paths are disabled by isOmarchy in
+                # users/joost/home-manager.nix.
                 home.file.".config/omarchy".enable = false;
                 home.file.".config/hypr".enable = false;
                 home.file.".config/alacritty".enable = false;
+                home.file.".config/foot".enable = false;
+                home.file.".config/ghostty".enable = false;
+                home.file.".config/kitty".enable = false;
                 home.file.".config/btop/themes".enable = false;
 
                 # Disable nixpkgs module's <nixpkgs> lookup for pure evaluation
@@ -179,6 +183,11 @@
             )
           ];
         };
+
+      omarchyHome = mkOmarchyHome {
+        hostName = "fu137";
+        extraPackages = pkgs: [ pkgs.playerctl ];
+      };
     in
     {
       # `nix fmt` — formats this repo's own Nix sources only. Skips vendored trees
@@ -335,8 +344,8 @@
         zenpower = true;
       };
 
-      # j9 is Arch Linux (Omarchy) — managed via homeConfigurations."j9" below,
-      # not as a nixosConfiguration.
+      # fu137 also boots Arch Linux (Omarchy). On that OS it is managed through
+      # homeConfigurations."fu137", not this NixOS output.
 
       nixosConfigurations.github-runner = mkSystem "github-runner" {
         system = "x86_64-linux";
@@ -419,30 +428,12 @@
         ];
       };
 
-      # Home Manager configuration for j9 (standalone, non-NixOS Linux - Arch/Omarchy)
-      # Omarchy package lists: ~/.local/share/omarchy/install/omarchy-{base,other}.packages
-      # Wayland/Hyprland tools are managed by Omarchy via pacman, not Nix
-      homeConfigurations."j9" = mkOmarchyHome {
-        hostName = "j9";
-        # CLI tools that complement Omarchy without conflicting with it. Wayland
-        # tools (hyprland, waybar, mako, …) stay pacman-managed — see AGENTS.md.
-        extraPackages =
-          pkgs: with pkgs; [
-            gum # Terminal UI toolkit for shell scripts
-            tldr # Simplified man pages
-            mpv # Media player
-            playerctl # Media player control (MPRIS)
-            localsend # Local file sharing (LAN)
-            inxi # System information tool
-            mise # Dev tool / runtime version manager
-          ];
-      };
-
-      # Generic Omarchy profile (standalone, non-NixOS Linux)
-      homeConfigurations."omarchy" = mkOmarchyHome {
-        hostName = "omarchy";
-        # mise (dev tool / runtime version manager) on every machine
-        extraPackages = pkgs: [ pkgs.mise ];
-      };
+      # Omarchy Quattro package manifests live in /usr/share/omarchy/install.
+      # gum, tldr, mpv, localsend, inxi and mise are Quattro core packages;
+      # playerctl is the only remaining complementary package from the old list.
+      # Current hostname plus compatibility aliases used by older commands.
+      homeConfigurations."fu137" = omarchyHome;
+      homeConfigurations."j9" = omarchyHome;
+      homeConfigurations."omarchy" = omarchyHome;
     };
 }

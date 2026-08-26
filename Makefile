@@ -35,9 +35,9 @@ ifeq ($(UNAME), Darwin)
 else ifeq ($(IS_NIXOS), yes)
 	sudo NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nixos-rebuild switch --flake ".#${NIXNAME}"
 else
-	# For Ubuntu/non-NixOS systems, use home-manager directly
+	# For standalone Home Manager systems (including Arch/Omarchy)
 	@echo "Detected non-NixOS system ($(DISTRO)), using home-manager switch..."
-	nix run home-manager/release-25.11 -- switch -b backup --flake ".#${NIXNAME}"
+	nix run home-manager/release-26.05 -- switch -b backup --flake ".#${NIXNAME}"
 endif
 
 test:
@@ -47,7 +47,7 @@ ifeq ($(UNAME), Darwin)
 else ifeq ($(IS_NIXOS), yes)
 	sudo NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nixos-rebuild test --flake ".#$(NIXNAME)"
 else
-	# For Ubuntu/non-NixOS systems, use home-manager build to test
+	# For standalone Home Manager systems (including Arch/Omarchy)
 	@echo "Detected non-NixOS system ($(DISTRO)), testing home-manager configuration..."
 	nix build ".#homeConfigurations.${NIXNAME}.activationPackage"
 endif

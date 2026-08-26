@@ -1,5 +1,6 @@
 {
   isWSL,
+  isOmarchy ? false,
   inputs,
   currentSystemName,
   ...
@@ -16,6 +17,66 @@ let
   isDarwin = pkgs.stdenv.isDarwin;
   isLinux = pkgs.stdenv.isLinux;
   isMinimal = currentSystemName == "fu146";
+
+  # Omarchy Quattro owns these packages through pacman. A second copy in the
+  # Home Manager profile can shadow the binaries Omarchy updates as a unit.
+  omarchyManagedPackageNames = [
+    "alacritty"
+    "bat"
+    "baobab"
+    "bitwarden-menu"
+    "btop"
+    "chromium"
+    "dbeaver-bin"
+    "discord"
+    "docker"
+    "docker-compose"
+    "eza"
+    "fastfetch"
+    "fd"
+    "ffmpeg"
+    "firefox-devedition"
+    "fzf"
+    "geekbench"
+    "gum"
+    "imagemagick"
+    "inxi"
+    "inkscape"
+    "jq"
+    "kitty"
+    "lazydocker"
+    "lazygit"
+    "localsend"
+    "mise"
+    "mpv"
+    "neovim"
+    "nextcloud-client"
+    "noto-fonts"
+    "noto-fonts-cjk-sans"
+    "noto-fonts-color-emoji"
+    "obsidian"
+    "podman-desktop"
+    "postman"
+    "ripgrep"
+    "rofi"
+    "rpi-imager"
+    "signal-desktop"
+    "slack"
+    "socat"
+    "starship"
+    "tldr"
+    "tailscale-systray"
+    "tmux"
+    "transmission"
+    "vscode"
+    "wl-clipboard"
+    "xfce4-terminal"
+    "zathura-with-plugins"
+    "zoxide"
+  ];
+
+  keepPackage =
+    package: !(isOmarchy && builtins.elem (lib.getName package) omarchyManagedPackageNames);
 
   # Import shared configuration
   shared = import ../shared-home-manager.nix {
@@ -132,7 +193,7 @@ in
   # not a huge list.
   fonts.fontconfig.enable = true;
 
-  home.packages =
+  home.packages = lib.filter keepPackage (
     with pkgs;
     [
       asciinema
@@ -342,7 +403,7 @@ in
       # brave
       rofi
       zathura
-      xfce.xfce4-terminal
+      xfce4-terminal
       libwacom
       libinput
       xclip # X11 clipboard
@@ -360,7 +421,8 @@ in
       tailscale-systray
       # windsurf  # Replaced with VS Code
       baobab # Disk usage, gnome only
-    ]);
+    ])
+  );
 
   #---------------------------------------------------------------------
   # Env vars and dotfiles
@@ -741,7 +803,7 @@ in
       { }
   )
   // (
-    if isLinux then
+    if isLinux && !isOmarchy then
       {
         "ghostty/config".text =
           builtins.replaceStrings [ "command = zsh" ] [ "command = ${pkgs.zsh}/bin/zsh" ]
@@ -789,7 +851,7 @@ in
   #---------------------------------------------------------------------
 
   programs.vscode = {
-    enable = true;
+    enable = !isOmarchy;
     package = pkgs.vscode;
     profiles.default = {
       extensions = with pkgs.vscode-extensions; [
@@ -820,7 +882,7 @@ in
   programs.gpg.enable = !isDarwin;
 
   programs.bash = {
-    enable = true;
+    enable = !isOmarchy;
     shellOptions = [ ];
     historyControl = [
       "ignoredups"
@@ -1052,7 +1114,7 @@ in
   };
 
   programs.git = {
-    enable = true;
+    enable = !isOmarchy;
     signing = {
       key = "ACAFA950";
       signByDefault = true;
@@ -1086,7 +1148,7 @@ in
   };
 
   programs.delta = {
-    enable = true;
+    enable = !isOmarchy;
     enableGitIntegration = true;
     options = {
       line-numbers = true;
@@ -1215,7 +1277,7 @@ in
   # };
 
   programs.tmux = {
-    enable = true;
+    enable = !isOmarchy;
     terminal = "xterm-256color";
     shortcut = "b";
     secureSocket = false;
@@ -1282,7 +1344,7 @@ in
   };
 
   programs.alacritty = {
-    enable = !isWSL;
+    enable = !isWSL && !isOmarchy;
 
     settings = {
       env.TERM = "xterm-256color";
@@ -1396,12 +1458,12 @@ in
   };
 
   programs.kitty = {
-    enable = !isWSL;
+    enable = !isWSL && !isOmarchy;
     extraConfig = builtins.readFile ./kitty;
   };
 
   programs.i3status = {
-    enable = isLinux && !isWSL;
+    enable = isLinux && !isWSL && !isOmarchy;
 
     general = {
       colors = true;
@@ -1418,7 +1480,7 @@ in
   };
 
   programs.neovim = {
-    enable = true;
+    enable = !isOmarchy;
     package = inputs.neovim-nightly-overlay.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
     withPython3 = false;
@@ -1502,7 +1564,7 @@ in
   };
 
   programs.zoxide = {
-    enable = true;
+    enable = !isOmarchy;
     enableBashIntegration = true;
     enableZshIntegration = true;
     enableFishIntegration = true;
@@ -1776,7 +1838,7 @@ in
   };
 
   programs.starship = {
-    enable = true;
+    enable = !isOmarchy;
     enableBashIntegration = true;
     enableZshIntegration = true;
     enableFishIntegration = true;

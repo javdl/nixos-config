@@ -266,27 +266,29 @@ The repository uses a modular architecture with clear separation of concerns:
 - Global overlay: Add to flake.nix overlay section for unstable packages
 - Custom overlay: Create in `overlays/` directory
 
-### Omarchy/j9 Machine (Arch Linux)
+### Omarchy Quattro/fu137 Machine (Arch Linux)
 
-The `j9` host is an Arch Linux machine running **Omarchy** (Arch + Hyprland). It uses standalone home-manager via `homeConfigurations."j9"` in flake.nix.
+`fu137` also boots Arch Linux running **Omarchy Quattro** (Arch + Hyprland). It uses standalone Home Manager via `homeConfigurations."fu137"` in `flake.nix`; `j9` and `omarchy` remain compatibility aliases for old commands.
 
-**DO NOT add these packages to the j9 Nix config.** They are managed by Omarchy via pacman:
-- Wayland/Hyprland stack: `hyprland`, `hypridle`, `hyprlock`, `waybar`, `mako`, `swaybg`, `swayosd`
-- Screenshot tools: `grim`, `slurp`, `satty`
-- Desktop apps: `ghostty`, `alacritty`, `obsidian`, `1password`, `spotify`
+**DO NOT add these packages to the Omarchy Nix config.** They are managed by Omarchy via pacman:
+- Desktop stack: `hyprland`, `quickshell`, `uwsm`, `xdg-desktop-portal-hyprland`
+- Omarchy CLI/core tools: `gum`, `tldr`, `mpv`, `localsend`, `inxi`, `mise-bin`, `tmux`, `starship`
+- Capture tools: `grim`, `slurp`, `gpu-screen-recorder`, `hyprland-preview-share-picker`
+- Desktop apps: `foot`, `ghostty`, `chromium`, `obsidian`
 - System: PipeWire, SDDM, NVIDIA drivers, fonts (ttf-cascadia-mono-nerd, etc.)
 
 **Omarchy package lists** (authoritative source):
-- `~/.local/share/omarchy/install/omarchy-base.packages`: 147 core packages
-- `~/.local/share/omarchy/install/omarchy-other.packages`: 56 additional packages
+- `/usr/share/omarchy/install/omarchy-base.packages`: Quattro core packages
+- `/usr/share/omarchy/install/omarchy-other.packages`: hardware and additional packages
 
-**Protected directories** (home-manager won't touch these):
+**Protected Quattro configuration** (Home Manager won't generate these files):
 - `~/.config/omarchy`: Omarchy branding/themes
 - `~/.config/hypr`: Hyprland configuration
-- `~/.config/alacritty`: Alacritty terminal config
+- `~/.config/alacritty`, `~/.config/foot`, `~/.config/ghostty`, `~/.config/kitty`: terminal configs
 - `~/.config/btop/themes`: btop themes
+- Bash, Git, Neovim, Starship, tmux, zoxide, and terminal program modules are disabled in the Omarchy Home Manager profile so Quattro retains ownership.
 
-Only add CLI tools that complement Omarchy without conflicting (e.g., `gum`, `tldr`, `mpv`, `playerctl`).
+Only add CLI tools that complement Omarchy without conflicting. `playerctl` is the one remaining supplemental package from the pre-Quattro list.
 
 ## Code Style
 

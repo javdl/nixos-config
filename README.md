@@ -690,15 +690,21 @@ For more details on adding new dotfiles, making changes, see the [Chezmoi docume
 
 ## Omarchy
 
-[https://github.com/basecamp/omarchy/discussions/987](https://github.com/basecamp/omarchy/discussions/987)
+The `fu137` Home Manager output is the Nix-managed CLI layer for Omarchy
+Quattro. Omarchy remains responsible for Hyprland, Quickshell, terminals,
+themes, and its core packages through pacman. Its authoritative manifests are
+`/usr/share/omarchy/install/omarchy-{base,other}.packages`.
 
-```bash1
+```bash
 curl -fsSL https://install.determinate.systems/nix | sh -s -- install
 
 determinate-nixd login
 
-NIXNAME=omarchy make switch
+make test NIXNAME=fu137
+make switch NIXNAME=fu137
 ```
+
+The old `j9` and `omarchy` output names remain aliases for compatibility.
 
 ## Dicklesworthstone AI Agent Tooling
 
