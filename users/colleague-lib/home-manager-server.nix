@@ -403,7 +403,7 @@ in
 
       # OSC 52 clipboard: copies in tmux go to the connecting machine's clipboard over SSH
       set -s set-clipboard on
-      set -ga terminal-overrides ",xterm-256color:Ms=\\E]52;c;%p2%s\\7"
+      set -ga terminal-overrides ",xterm*:Ms=\\E]52;c%p1%.0s;%p2%s\\7"
 
       # Propagate SSH agent socket into new tmux sessions
       set -g update-environment "SSH_AUTH_SOCK SSH_CONNECTION DISPLAY"
