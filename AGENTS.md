@@ -401,7 +401,7 @@ read request, not by displaying them.
 
 For GitHub automation, use a dedicated fine-grained PAT limited to the exact
 repository and required read-only permissions. The
-`codex-github-personal-access-token` item, for example, must target only
+`codex-github-personal-access-token-fu` item, for example, must target only
 `fuww/fashionunited` with `Actions: Read-only` and the mandatory
 `Metadata: Read-only`; a classic `repo` PAT is not an acceptable substitute.
 
