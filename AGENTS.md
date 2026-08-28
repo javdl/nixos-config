@@ -358,6 +358,68 @@ The file is therefore a chezmoi template: `~/.local/share/chezmoi/dot_claude/set
 ### chezmoi auto-sync races with manual pushes
 A background hook auto-syncs `~/.claude/MEMORY` (and observably `~/.claude/settings.json`) to `~/.local/share/chezmoi` every ~5 min and `jj git push`es to `javdl/dotfiles`. Manual pushes regularly hit "stale info" rejections. Standard recovery: `jj git fetch && jj rebase -d main@origin && jj bookmark set main -r @ && jj git push`. Plan for one or two rebase cycles; it's not a bug.
 
+### Bitwarden session handoff for agents
+
+`BW_SESSION` is a bearer secret. Never paste it, a vault item password, or a
+PAT into chat, a prompt, a tool argument, shell history, a diff, or logs. When
+an agent needs Bitwarden, the human creates a short-lived, owner-only handoff
+file in a normal terminal:
+
+```bash
+umask 077
+bw unlock --raw > /private/tmp/codex-bw-session
+chmod 600 /private/tmp/codex-bw-session
+```
+
+The agent must verify that the path is a regular, non-symlink file owned by the
+current user with mode `600`, load it without echoing it, and check only the
+vault state:
+
+```bash
+session_file=/private/tmp/codex-bw-session
+test -f "$session_file" && test ! -L "$session_file" && test -O "$session_file"
+mode="$(stat -f '%Lp' "$session_file" 2>/dev/null || stat -c '%a' "$session_file")"
+test "$mode" = 600
+session_value="$(<"$session_file")"
+BW_SESSION="$session_value" bw status | jq -e '.status == "unlocked"' >/dev/null
+```
+
+Use the session only in the same non-echoing command that needs it. Retrieve a
+password into a shell variable and pass it through the child process
+environment, never on the command line:
+
+```bash
+secret_value="$(BW_SESSION="$session_value" bw get password "$item_name")"
+GH_TOKEN="$secret_value" gh api user --jq .login
+```
+
+Never enable `set -x`, run `env`/`printenv`, use `gh auth status --show-token`,
+or emit raw `bw get item` JSON while secrets are loaded. Metadata inspection
+must use a fixed `jq` projection that cannot include login passwords, notes, or
+hidden fields. Validate secrets with boolean/length checks or an authenticated
+read request, not by displaying them.
+
+For GitHub automation, use a dedicated fine-grained PAT limited to the exact
+repository and required read-only permissions. The
+`codex-github-personal-access-token` item, for example, must target only
+`fuww/fashionunited` with `Actions: Read-only` and the mandatory
+`Metadata: Read-only`; a classic `repo` PAT is not an acceptable substitute.
+
+After the operation, unset secret variables, delete the exact handoff file,
+and report the cleanup:
+
+```bash
+unset secret_value session_value BW_SESSION
+rm -- /private/tmp/codex-bw-session
+test ! -e /private/tmp/codex-bw-session
+```
+
+If a session or credential is ever pasted into chat or appears in output,
+treat it as compromised: stop, run `bw lock`, rotate the exposed credential
+when applicable, and create a fresh handoff file. If the vault is locked or
+least privilege cannot be verified, stop rather than falling back to a broader
+credential.
+
 ### `chezmoi apply` aborts when Bitwarden is locked: fall back to a scoped apply
 chezmoi renders **all** templates up front, so one unrenderable template aborts the entire apply. Exactly two source templates call `bitwarden`:
 
