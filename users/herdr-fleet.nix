@@ -221,6 +221,12 @@ lib.mkIf isFleetMachine {
     source = herdrMirrorHosts;
   };
 
+  # Upstream's installer creates this compatibility link and `status` checks
+  # it even though plugin actions run relative to the plugin root.
+  home.file.".local/bin/herdr-mirror" = lib.mkIf controller {
+    source = "${herdrMirror}/bin/herdr-mirror";
+  };
+
   # fu137 is Arch/Omarchy, so its sshd authorization is user-owned rather than
   # a NixOS users.users.* option. This is Bali's existing no-pass fleet key,
   # already used on the runner hosts.
@@ -254,7 +260,9 @@ lib.mkIf isFleetMachine {
   home.activation.herdrAgentIntegrations = lib.mkIf provisionAgentRuntime (
     lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       if [ ! -x "$HOME/.local/bin/claude" ]; then
-        $DRY_RUN_CMD ${pkgs.bash}/bin/bash -c \
+        $DRY_RUN_CMD ${pkgs.coreutils}/bin/env \
+          PATH=${lib.makeBinPath [ pkgs.curl ]}:"$PATH" \
+          ${pkgs.bash}/bin/bash -c \
           "${pkgs.curl}/bin/curl -fsSL https://claude.ai/install.sh | ${pkgs.bash}/bin/bash"
       fi
 

@@ -90,11 +90,14 @@ make switch NIXNAME=fu137
 
 That activation installs Bali's public fleet key in
 `~/.ssh/authorized_keys` and starts the `agents` Herdr user service. Omarchy
-already installs OpenSSH, but its daemon is not enabled by Home Manager. Enable
-it once on fu137:
+already installs OpenSSH, but its daemon is not enabled by Home Manager.
+Enabling it creates a new network listener, so first confirm the intended
+firewall boundary and that port 22 is reachable only from the tailnet. Then,
+after explicit operator approval, enable it once on fu137:
 
 ```bash
 sudo systemctl enable --now sshd
+ss -lnt | rg ':22\\b'
 ```
 
 No `/usr/share/omarchy` files are modified.
