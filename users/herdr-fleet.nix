@@ -17,12 +17,15 @@ let
   isFleetMachine = controller || isFu137 || provisionAgentRuntime;
 
   # Single fleet inventory consumed by both hosts.toml and herdctl. Bali has
-  # Tailscale DNS disabled, so targets use the live stable tailnet IPs.
+  # Tailscale DNS disabled, so tailnet targets use their stable IPs. The
+  # exe.dev worker uses Bali's dotless team-account SSH alias so the personal
+  # `*.exe.xyz` identity cannot win OpenSSH's first-value resolution.
   fleetNodes = [
     {
       name = "runner03";
       role = "regular";
-      ip = "100.126.150.43";
+      user = "joost";
+      target = "100.126.150.43";
       prefix = "r03";
       remoteBin = "/etc/profiles/per-user/joost/bin/herdr";
       alwaysControl = true;
@@ -30,7 +33,8 @@ let
     {
       name = "runner04";
       role = "regular";
-      ip = "100.97.77.46";
+      user = "joost";
+      target = "100.97.77.46";
       prefix = "r04";
       remoteBin = "/etc/profiles/per-user/joost/bin/herdr";
       alwaysControl = true;
@@ -38,7 +42,8 @@ let
     {
       name = "runner05";
       role = "regular";
-      ip = "100.108.96.124";
+      user = "joost";
+      target = "100.108.96.124";
       prefix = "r05";
       remoteBin = "/etc/profiles/per-user/joost/bin/herdr";
       alwaysControl = true;
@@ -46,10 +51,20 @@ let
     {
       name = "gpu";
       role = "gpu";
-      ip = "100.92.74.63";
+      user = "joost";
+      target = "100.92.74.63";
       prefix = "gpu";
       remoteBin = "/home/joost/.nix-profile/bin/herdr";
       alwaysControl = false;
+    }
+    {
+      name = "exedev";
+      role = "dev";
+      user = "exedev";
+      target = "fu-herdr-dev";
+      prefix = "exe";
+      remoteBin = "/home/exedev/.local/bin/herdr";
+      alwaysControl = true;
     }
   ];
 
@@ -110,7 +125,7 @@ let
 
     ${lib.concatMapStringsSep "\n" (node: ''
       [hosts.${node.name}]
-      target = "ssh://joost@${node.ip}"
+      target = "ssh://${node.user}@${node.target}"
       prefix = "${node.prefix}"
       session = "${sessionName}"
       remote_bin = "${node.remoteBin}"
@@ -154,7 +169,9 @@ let
       session=${lib.escapeShellArg sessionName}
 
       usage() {
-        echo "usage: herdctl hosts | herdctl <runner03|runner04|runner05|gpu> <herdr arguments...>" >&2
+        echo "usage: herdctl hosts | herdctl <${
+          lib.concatMapStringsSep "|" (node: node.name) fleetNodes
+        }> <herdr arguments...>" >&2
         exit 2
       }
 
@@ -165,7 +182,7 @@ let
       if [ "$node" = "hosts" ]; then
         printf '%-10s %-15s %s\n' NODE ROLE TARGET
         ${lib.concatMapStringsSep "\n" (
-          node: "printf '%-10s %-15s %s\\n' ${node.name} ${node.role} ${node.ip}"
+          node: "printf '%-10s %-15s %s\\n' ${node.name} ${node.role} ${node.target}"
         ) fleetNodes}
         exit 0
       fi
@@ -173,7 +190,7 @@ let
       [ "$#" -ge 1 ] || usage
       case "$node" in
         ${lib.concatMapStringsSep "\n" (node: ''
-          ${node.name}) target="joost@${node.ip}"; remote_bin="${node.remoteBin}" ;;
+          ${node.name}) target="${node.user}@${node.target}"; remote_bin="${node.remoteBin}" ;;
         '') fleetNodes}
         *) usage ;;
       esac

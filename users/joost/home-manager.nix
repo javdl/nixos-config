@@ -142,6 +142,7 @@ let
   # that wildcard, so the identity holds regardless of ordering.
   exeWorkVm = name: {
     hostname = "${name}.exe.xyz";
+    HostKeyAlias = "exe.dev";
     identityFile = "~/.ssh/exe-work.pub";
     identitiesOnly = true;
   };
@@ -1195,9 +1196,10 @@ in
       "exe-work" = exeHost "exe-work";
 
       # FashionUnited team VMs, reached by alias so the wildcard below cannot
-      # shadow their identity: `ssh fu-developer`, `ssh fu-handbook`.
+      # shadow their identity.
       "fu-developer" = exeWorkVm "fu-developer";
       "fu-handbook" = exeWorkVm "fu-handbook";
+      "fu-herdr-dev" = exeWorkVm "fu-herdr-dev";
 
       # Every other VM shell belongs to the personal account.
       "*.exe.xyz" = exeVm "exe";
