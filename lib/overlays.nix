@@ -363,7 +363,7 @@
           };
           agentBrowserSource = agentBrowserSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for agent-browser: ${prev.stdenv.hostPlatform.system}");
 
-          # pi - prompt injection detection agent (Rust)
+          # pi - coding agent CLI (Rust port of Mario Zechner's pi)
           piVersion = "0.1.22";
           piSources = {
             "x86_64-linux" = {
@@ -436,6 +436,32 @@
             };
           };
           s2pSource = s2pSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for s2p: ${prev.stdenv.hostPlatform.system}");
+
+          # omp - oh-my-pi coding agent (fork of pi with LSP/DAP and hashline edits)
+          # Bare bun-compiled binary. Unlike grok/herdr these are *dynamically*
+          # linked against glibc (verified `file` on omp-linux-x64), so the Linux
+          # builds need autoPatchelfHook. Upstream also ships musl variants; the
+          # glibc ones are used because autoPatchelfHook handles them natively.
+          ompVersion = "18.0.11";
+          ompSources = {
+            "x86_64-linux" = {
+              url = "https://github.com/can1357/oh-my-pi/releases/download/v${ompVersion}/omp-linux-x64";
+              sha256 = "09hxd366dmmgj8nzr5ndlnh2z74pw68z4dl3lzmxbfp9545lcm30";
+            };
+            "aarch64-linux" = {
+              url = "https://github.com/can1357/oh-my-pi/releases/download/v${ompVersion}/omp-linux-arm64";
+              sha256 = "047hyc9g413gxaf21szjilf2fi3a5qxvwcjri9x7gp52bav7rxz5";
+            };
+            "x86_64-darwin" = {
+              url = "https://github.com/can1357/oh-my-pi/releases/download/v${ompVersion}/omp-darwin-x64";
+              sha256 = "0bbszybi93iv54ngnkwg69lsy487jh74vsz4bidybl48kdbxrxw0";
+            };
+            "aarch64-darwin" = {
+              url = "https://github.com/can1357/oh-my-pi/releases/download/v${ompVersion}/omp-darwin-arm64";
+              sha256 = "0ln21k5q5i2gaqfi0vbaw17myyb8xwcv790vrj7lp40rivka7d48";
+            };
+          };
+          ompSource = ompSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for omp: ${prev.stdenv.hostPlatform.system}");
 
           # pt - process triage (intelligent process termination)
           ptVersion = "2.1.0";
@@ -1166,7 +1192,7 @@
             };
           } else null;
 
-          # pi - prompt injection detection agent (Rust)
+          # pi - coding agent CLI (Rust port of Mario Zechner's pi)
           pi-agent = if piSource != null then prev.stdenv.mkDerivation {
             pname = "pi-agent";
             version = piVersion;
@@ -1190,7 +1216,7 @@
             '';
 
             meta = with prev.lib; {
-              description = "Prompt injection detection agent";
+              description = "Coding agent CLI in the terminal (Rust port of pi)";
               homepage = "https://github.com/Dicklesworthstone/pi_agent_rust";
               license = licenses.mit;
               platforms = [ "x86_64-linux" "aarch64-darwin" ];
@@ -1320,6 +1346,46 @@
               platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
             };
           };
+
+          # omp - oh-my-pi coding agent (bare binary, needs patchelf on Linux)
+          omp = prev.stdenv.mkDerivation {
+            pname = "omp";
+            version = ompVersion;
+
+            src = prev.fetchurl {
+              url = ompSource.url;
+              sha256 = ompSource.sha256;
+            };
+
+            dontUnpack = true;
+
+            nativeBuildInputs = prev.lib.optionals prev.stdenv.isLinux [ prev.autoPatchelfHook ];
+            buildInputs = prev.lib.optionals prev.stdenv.isLinux [ prev.stdenv.cc.cc.lib ];
+
+            installPhase = ''
+              mkdir -p $out/bin
+              cp $src $out/bin/omp
+              chmod +x $out/bin/omp
+            '';
+
+            meta = with prev.lib; {
+              description = "Coding agent for the terminal with the IDE wired in (oh-my-pi)";
+              homepage = "https://github.com/can1357/oh-my-pi";
+              license = licenses.mit;
+              mainProgram = "omp";
+              platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+            };
+          };
+
+          # hermes - Hermes Agent CLI/TUI (NousResearch), from the flake input.
+          # `minimal` (not `default`) is the core agent: `default` is the `full`
+          # variant that pre-builds every optional integration (messaging, voice,
+          # matrix, bedrock, ...), which is far more closure than a coding-agent
+          # CLI needs on every machine. The messaging gateway deployments on
+          # bali/hermes-fu use the upstream NixOS module, not this package.
+          # No x86_64-darwin output upstream; null there and filtered by callers.
+          hermes-agent =
+            (inputs.hermes-agent.packages.${prev.stdenv.hostPlatform.system} or { }).minimal or null;
 
           # pt - process triage (intelligent process termination with Bayesian scoring)
           process-triage = if ptSource != null then prev.stdenv.mkDerivation {
