@@ -535,11 +535,11 @@ in
   # has a branch to rebase against.
   home.activation.chezmoiSync = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     CHEZMOI_SOURCE="$HOME/.local/share/chezmoi"
-    if [ ! -d "$CHEZMOI_SOURCE" ]; then
-      echo "Chezmoi source missing — bootstrapping from javdl/dotfiles..."
+    if [ ! -d "$CHEZMOI_SOURCE/.git" ]; then
+      echo "Chezmoi checkout missing — bootstrapping from javdl/dotfiles..."
       $DRY_RUN_CMD env PATH="${pkgs.bitwarden-cli}/bin:${pkgs.git}/bin:$PATH" GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=15" GIT_TERMINAL_PROMPT=0 ${pkgs.chezmoi}/bin/chezmoi init git@github.com:javdl/dotfiles.git || echo "chezmoi clone failed (check git auth); will retry on next switch."
     fi
-    if [ -d "$CHEZMOI_SOURCE" ]; then
+    if [ -d "$CHEZMOI_SOURCE/.git" ]; then
       if ! ${pkgs.git}/bin/git -C "$CHEZMOI_SOURCE" symbolic-ref -q HEAD >/dev/null; then
         echo "chezmoi repo is in detached HEAD; checking out main before sync..."
         $DRY_RUN_CMD ${pkgs.git}/bin/git -C "$CHEZMOI_SOURCE" checkout main || true

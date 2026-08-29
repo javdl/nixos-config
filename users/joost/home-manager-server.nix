@@ -308,11 +308,11 @@ in
   # Bitwarden vault is unlocked.
   home.activation.chezmoiSync = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     CHEZMOI_SOURCE="$HOME/.local/share/chezmoi"
-    if [ ! -d "$CHEZMOI_SOURCE" ]; then
-      echo "Chezmoi source missing — bootstrapping from javdl/dotfiles..."
+    if [ ! -d "$CHEZMOI_SOURCE/.git" ]; then
+      echo "Chezmoi checkout missing — bootstrapping from javdl/dotfiles..."
       $DRY_RUN_CMD env PATH="${pkgs.bitwarden-cli}/bin:${pkgs.git}/bin:$PATH" GIT_TERMINAL_PROMPT=0 ${pkgs.chezmoi}/bin/chezmoi init https://github.com/javdl/dotfiles.git || echo "chezmoi clone failed (check git auth); will retry on next switch."
     fi
-    if [ -d "$CHEZMOI_SOURCE" ]; then
+    if [ -d "$CHEZMOI_SOURCE/.git" ]; then
       echo "Syncing dotfiles from chezmoi repo..."
       $DRY_RUN_CMD env PATH="${pkgs.bitwarden-cli}/bin:${pkgs.git}/bin:$PATH" ${pkgs.chezmoi}/bin/chezmoi update || echo "chezmoi apply incomplete (unlock Bitwarden, then re-run rebuild)."
       # `chezmoi update` renders ALL templates up front and aborts its apply on
