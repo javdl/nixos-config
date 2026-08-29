@@ -141,14 +141,18 @@ fu137 is reached over **Tailscale SSH**, not OpenSSH.
 
 ```bash
 sudo tailscale set --ssh
+sudo ufw allow in on tailscale0 to any port 22 proto tcp \
+  comment 'Herdr command center'
 sudo loginctl enable-linger joost
 loginctl show-user joost -p Linger
 ```
 
 Tailscale SSH terminates the connection inside `tailscaled` and authorizes it
 from tailnet identity and the tailnet SSH ACL, so it needs neither an
-`~/.ssh/authorized_keys` entry nor a listening port. Consequences, all
-deliberate:
+`~/.ssh/authorized_keys` entry nor an OpenSSH daemon. It still receives TCP 22
+on `tailscale0`; fu137's UFW default-deny input policy blocks that traffic
+unless the interface-scoped rule above is present. Apply that firewall change
+only after explicit operator approval. Consequences, all deliberate:
 
 - **`users/herdr-fleet.nix` must not declare `home.file.".ssh/authorized_keys"`
   for fu137.** Home Manager would replace the user-owned live file with a
@@ -157,9 +161,9 @@ deliberate:
 - **Do not run `systemctl enable sshd` on fu137.** Omarchy ships OpenSSH but
   leaves the daemon disabled; enabling it creates a second, redundant network
   listener that Tailscale SSH already makes unnecessary.
-- **Do not open port 22 in the firewall.** fu137's UFW default-deny input
-  policy stays as-is; no rule, interface-scoped or otherwise, is added. Nothing
-  new is exposed on the public interface.
+- **Do not add a global port-22 rule.** Allow TCP 22 only on `tailscale0`.
+  Traffic arriving on the public interface remains covered by UFW's
+  default-deny policy.
 
 `loginctl enable-linger` is what keeps `herdr-agents` running across logout and
 reboot, since Tailscale SSH sessions do not hold the user manager open.
