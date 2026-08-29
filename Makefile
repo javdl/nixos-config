@@ -6,8 +6,16 @@ NIXUSER ?= joost
 # Get the path to this Makefile and directory
 MAKEFILE_DIR := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 
-# The name of the nixosConfiguration in the flake
-NIXNAME ?= vm-intel
+# The flake configuration name. This must be supplied explicitly so an
+# unqualified command can never target the wrong host.
+NIXNAME ?=
+
+.PHONY: require-nixname
+require-nixname:
+	@test -n "$(strip $(NIXNAME))" || { \
+		echo "Error: NIXNAME is required (example: make switch NIXNAME=$$(hostname -s))" >&2; \
+		exit 2; \
+	}
 
 # SSH options that are used. These aren't meant to be overridden but are
 # reused a lot so we just store them up here.
@@ -20,7 +28,7 @@ IS_NIXOS := $(shell if [ -f /etc/NIXOS ]; then echo "yes"; else echo "no"; fi)
 # Detect distribution name for non-NixOS systems
 DISTRO := $(shell if [ -f /etc/os-release ]; then . /etc/os-release && echo $$ID; else echo "unknown"; fi)
 
-switch:
+switch: require-nixname
 	@if command -v determinate-nixd >/dev/null 2>&1; then \
 		DNX_STATUS=$$(determinate-nixd status 2>&1) || true; \
 		if echo "$$DNX_STATUS" | grep -q "out of date"; then \
@@ -30,8 +38,16 @@ switch:
 			printf '\033[33mWarning: Not logged in to FlakeHub (no binary cache). Run: determinate-nixd login\033[0m\n'; \
 	fi
 ifeq ($(UNAME), Darwin)
-	nix build --extra-experimental-features nix-command --extra-experimental-features flakes ".#darwinConfigurations.${NIXNAME}.system"
-	sudo ./result/sw/bin/darwin-rebuild switch --flake "$$(pwd)#${NIXNAME}"
+	@if DARWIN_REBUILD=$$(command -v darwin-rebuild); then \
+		sudo "$$DARWIN_REBUILD" switch --flake "$$(pwd)#${NIXNAME}"; \
+	else \
+		echo "darwin-rebuild is not installed; using bootstrap path..." >&2; \
+		nix build --extra-experimental-features nix-command \
+			--extra-experimental-features flakes \
+			".#darwinConfigurations.${NIXNAME}.system"; \
+		sudo ./result/sw/bin/darwin-rebuild switch \
+			--flake "$$(pwd)#${NIXNAME}"; \
+	fi
 else ifeq ($(IS_NIXOS), yes)
 	sudo NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nixos-rebuild switch --flake ".#${NIXNAME}"
 else
@@ -40,12 +56,11 @@ else
 	nix run home-manager/release-26.05 -- switch -b backup --flake ".#${NIXNAME}"
 endif
 
-test:
+test: require-nixname
 ifeq ($(UNAME), Darwin)
 	nix build ".#darwinConfigurations.${NIXNAME}.system"
-	sudo ./result/sw/bin/darwin-rebuild test --flake "$$(pwd)#${NIXNAME}"
 else ifeq ($(IS_NIXOS), yes)
-	sudo NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nixos-rebuild test --flake ".#$(NIXNAME)"
+	NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nixos-rebuild build --flake ".#$(NIXNAME)"
 else
 	# For standalone Home Manager systems (including Arch/Omarchy)
 	@echo "Detected non-NixOS system ($(DISTRO)), testing home-manager configuration..."
@@ -55,7 +70,7 @@ endif
 # This builds the given configuration and pushes the results to the
 # cache. This does not alter the current running system. This requires
 # cachix authentication to be configured out of band.
-cache:
+cache: require-nixname
 ifeq ($(UNAME), Darwin)
 	nix build '.#darwinConfigurations.$(NIXNAME).system' --json \
 		| jq -r '.[].outputs | to_entries[].value' \
@@ -130,7 +145,7 @@ vm/bootstrap0:
 
 # after bootstrap0, run this to finalize. After this, do everything else
 # in the VM unless secrets change.
-vm/bootstrap:
+vm/bootstrap: require-nixname
 	NIXUSER=root $(MAKE) vm/copy
 	NIXUSER=root $(MAKE) vm/switch
 	$(MAKE) vm/secrets
@@ -175,7 +190,7 @@ vm/copy:
 # (Rust) panics with exit 101 the next time it writes to the now-broken stdout.
 # That aborts the switch *before* it starts the units it already stopped. See
 # the hetzner/switch target for the full explanation.
-vm/switch:
+vm/switch: require-nixname
 	ssh $(SSH_OPTIONS) -p$(NIXPORT) $(NIXUSER)@$(NIXADDR) " \
 		sudo systemd-run --collect --wait --service-type=exec --unit=nixos-deploy \
 			--setenv=PATH=/run/wrappers/bin:/run/current-system/sw/bin \
@@ -255,7 +270,7 @@ hetzner/bootstrap0:
 	"
 
 # After bootstrap0, copy our config and apply it
-hetzner/bootstrap:
+hetzner/bootstrap: require-nixname
 	@echo "==> Copying configuration to Hetzner..."
 	NIXUSER=root $(MAKE) hetzner/copy
 	@echo "==> Applying NixOS configuration..."
@@ -293,7 +308,7 @@ hetzner/copy:
 # blocks and propagates the real exit code; --collect self-cleans the unit so a
 # failed run can't wedge the next one with "unit was already loaded".
 # Build output goes to the journal: journalctl -u nixos-deploy (add -f to follow).
-hetzner/switch:
+hetzner/switch: require-nixname
 	ssh $(HETZNER_SSH_OPTIONS) -p$(NIXPORT) $(NIXUSER)@$(NIXADDR) " \
 		sudo systemd-run --collect --wait --service-type=exec --unit=nixos-deploy \
 			--setenv=PATH=/run/wrappers/bin:/run/current-system/sw/bin \
@@ -335,7 +350,7 @@ endif
 # Provision a new Hetzner Cloud server with nixos-anywhere (no rescue mode needed)
 # Prerequisites: Server must be reachable via SSH (any Linux OS, including Hetzner's default Ubuntu)
 # Usage: make hetzner/provision NIXADDR=<ip> NIXNAME=<hostname>
-hetzner/provision:
+hetzner/provision: require-nixname
 	@echo "==> Provisioning NixOS on Hetzner ($(NIXADDR)) using nixos-anywhere"
 	@echo "==> Target config: $(NIXNAME)"
 	@echo "==> This will WIPE ALL DATA on the server!"
@@ -349,7 +364,7 @@ hetzner/provision:
 
 # Fetch hardware config from Hetzner (run after bootstrap0, before bootstrap)
 # Usage: make hetzner/fetch-hardware NIXADDR=<ip> NIXNAME=<name>
-hetzner/fetch-hardware:
+hetzner/fetch-hardware: require-nixname
 	@echo "==> Fetching hardware configuration from Hetzner..."
 	scp $(HETZNER_SSH_OPTIONS) -P$(NIXPORT) root@$(NIXADDR):/mnt/etc/nixos/hardware-configuration.nix \
 		$(MAKEFILE_DIR)/hosts/hardware/$(NIXNAME).nix

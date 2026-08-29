@@ -498,7 +498,7 @@ in
     lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       if ! $HOME/.cargo/bin/caut --version &>/dev/null; then
         echo "Installing caut (coding agent usage tracker)..."
-        $DRY_RUN_CMD bash -c "${pkgs.rustup}/bin/rustup toolchain install nightly --profile minimal && ${pkgs.rustup}/bin/rustup run nightly cargo install --git https://github.com/Dicklesworthstone/coding_agent_usage_tracker" || echo "caut install failed (requires rustup nightly)"
+        $DRY_RUN_CMD bash -c "PATH='${pkgs.gcc}/bin:${pkgs.pkg-config}/bin:$PATH' PKG_CONFIG_PATH='${pkgs.sqlite.dev}/lib/pkgconfig' LIBRARY_PATH='${pkgs.sqlite.out}/lib' ${pkgs.rustup}/bin/rustup toolchain install nightly --profile minimal && ${pkgs.rustup}/bin/rustup run nightly cargo install --git https://github.com/Dicklesworthstone/coding_agent_usage_tracker && ${pkgs.patchelf}/bin/patchelf --add-rpath '${pkgs.sqlite.out}/lib' '$HOME/.cargo/bin/caut'" || echo "caut install failed (requires rustup nightly + sqlite)"
       fi
     ''
   );
@@ -506,7 +506,7 @@ in
   # Install tokei (lines-of-code counter) via cargo stable.
   home.activation.installTokei = lib.mkIf (!isMinimal) (
     lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      if ! $HOME/.cargo/bin/tokei --version &>/dev/null; then
+      if ! ${pkgs.tokei}/bin/tokei --version &>/dev/null; then
         echo "Installing tokei (lines-of-code counter)..."
         $DRY_RUN_CMD bash -c "${pkgs.rustup}/bin/rustup run stable cargo install tokei" || echo "tokei install failed"
       fi
