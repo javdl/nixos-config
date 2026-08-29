@@ -551,6 +551,11 @@ All dev servers include the following AI agent tooling. Run `ntm deps -v` to che
 | ubs | `ubs` | Ultimate Bug Scanner: static analysis catching 1000+ bug patterns |
 | grepai | `grepai` | Semantic code search for AI coding assistants |
 | herdr | `herdr` | Terminal workspace manager/multiplexer with first-class AI-agent awareness |
+| pi | `pi` | Terminal coding agent (Rust port of Mario Zechner's pi) |
+| omp | `omp` | oh-my-pi: terminal coding agent with LSP/DAP and hash-anchored edits |
+| opencode | `opencode` | Terminal coding agent (SST) |
+| grok | `grok` | xAI Grok Build CLI: coding agent harness + TUI |
+| hermes | `hermes` | Hermes Agent CLI/TUI (NousResearch), `minimal` variant of the flake input |
 | am | `am` | Agent Mail: MCP HTTP server for async multi-agent coordination (systemd service) |
 | ru | `ru` | Repo Updater: parallel GitHub repo clone/pull sync |
 
@@ -570,6 +575,16 @@ verification, authentication, and adding nodes.
 - **caam** wrapper translates `--version` flag to `version` subcommand (ntm compatibility)
 - **cass** index is rebuilt on each `make switch` via activation script
 - **agent-mail** runs as a systemd user service (`systemctl --user status agent-mail`)
+- **hermes** comes from the `hermes-agent` flake input, not a release binary. The overlay
+  exposes `pkgs.hermes-agent` = `packages.<system>.minimal`, deliberately **not** `default`:
+  upstream's `default` is the `full` variant that pre-builds every optional integration
+  (messaging, voice, matrix, bedrock, …), which is far more closure than a per-machine CLI
+  needs. This is the interactive `hermes` CLI/TUI only — the messaging-gateway deployments on
+  `bali`/`hermes-fu` are separate, driven by `services.hermes-agent` from the upstream NixOS
+  module. Upstream ships no `x86_64-darwin` output, so the attribute is `null` there and the
+  profiles guard it with `lib.optional`.
+- **omp** release assets are dynamically linked against glibc (unlike the static-PIE `grok`
+  and `herdr` binaries), so its derivation needs `autoPatchelfHook` on Linux.
 - `~/.cargo/bin` is in PATH via `home.sessionPath` for cargo-installed tools
 
 ## BitFocus Companion Config Sync

@@ -268,6 +268,7 @@ in
       # libheif
       # lmstudio — macOS via brew cask (lm-studio), Linux via nixpkgs-unstable overlay
       # ollama
+      omp # oh-my-pi coding agent (overlay pins 18.0.11)
       opencode
       oxlint
       railway
@@ -313,6 +314,7 @@ in
     ]
     ++ (lib.optional (pkgs.giil != null) pkgs.giil)
     ++ (lib.optional (pkgs.pi-agent != null) pkgs.pi-agent)
+    ++ (lib.optional (pkgs.hermes-agent != null) pkgs.hermes-agent) # hermes CLI/TUI
     ++ (lib.optional (pkgs.xf != null) pkgs.xf)
     ++ (lib.optional (pkgs.mcp-agent-mail != null) pkgs.mcp-agent-mail)
     ++ (lib.optional (pkgs.cross-agent-session-resumer != null) pkgs.cross-agent-session-resumer)
