@@ -29,26 +29,28 @@ operator's SSH client therefore leaves every server-owned pane running.
 | `runner03` | `github-runner-03` | regular | `100.126.150.43` | `r03` | control |
 | `runner04` | `github-runner-04` | regular | `100.97.77.46` | `r04` | control |
 | `runner05` | `github-runner-05` | regular | `100.108.96.124` | `r05` | control |
-| `gpu` | fu137 Omarchy boot | GPU | `100.92.74.63` | `gpu` | watch-first |
+| `gpu` | fu137 Omarchy boot | GPU | `fu137` SSH alias | `gpu` | watch-first |
 | `exedev` | `fu-herdr-dev` | dev | `fu-herdr-dev` SSH alias | `exe` | control |
 
-Bali runs Tailscale with DNS acceptance disabled, so tailnet nodes use IPs
-rather than MagicDNS names. The exe.dev worker uses the dotless
+Bali runs Tailscale with DNS acceptance disabled. The runner inventory uses
+stable tailnet IPs, while Bali's chezmoi-owned SSH config maps `fu137` to
+`100.92.74.63` and selects the fleet key. The exe.dev worker uses the dotless
 `fu-herdr-dev` SSH alias, which selects Bali's FashionUnited team key without
 matching its personal `*.exe.xyz` block. If a tailnet machine is re-enrolled
-and its IP changes, update `fleetNodes` in `users/herdr-fleet.nix`.
+and its IP changes, update the matching inventory or SSH-config entry.
 
 The GPU mirror sets `always_control = false`: it observes without changing the
 visible fu137 terminal geometry until somebody types into the mirrored pane.
 The headless runners and exe.dev worker stay writable and follow the controller
 pane size.
 
-The three runners are NixOS and accept Bali over OpenSSH. fu137 is Arch/Omarchy
-and instead uses **Tailscale SSH**: no `sshd`, no `authorized_keys` entry, and
-no open port 22. See [First rollout](#first-rollout) for why, and note that
-fu137 is a worker only. It never runs `herdr-mirror`; the mirror package,
-`hosts.toml`, and plugin activation are all gated on `controller`, which fu137
-does not set.
+The three runners and fu137 accept Bali over OpenSSH carried by Tailscale.
+fu137 remains a user-owned Arch/Omarchy workstation; because Bali is tagged
+`tag:devboxes`, Tailscale SSH cannot connect from Bali to fu137. Regular
+OpenSSH preserves fu137's user identity while the tailnet policy and its
+interface-scoped firewall rule keep port 22 private. fu137 is a worker only:
+the mirror package, `hosts.toml`, and plugin activation are all gated on
+`controller`, which fu137 does not set.
 
 ## Declarative pieces
 
@@ -136,42 +138,32 @@ Apply the standalone Home Manager output on fu137:
 make switch NIXNAME=fu137
 ```
 
-That activation starts the `agents` Herdr user service. It installs no SSH key:
-fu137 is reached over **Tailscale SSH**, not OpenSSH.
+That activation starts the `agents` Herdr user service and idempotently appends
+Bali's fleet public key to the existing user-owned `authorized_keys` file. It
+does not replace the file or remove other trusted keys.
 
 ```bash
-sudo tailscale set --ssh
+sudo tailscale set --ssh=false
 sudo ufw allow in on tailscale0 to any port 22 proto tcp \
   comment 'Herdr command center'
+sudo systemctl enable --now sshd
 sudo loginctl enable-linger joost
 loginctl show-user joost -p Linger
 ```
 
-Tailscale SSH terminates the connection inside `tailscaled` and authorizes it
-from tailnet identity and the tailnet SSH ACL, so it needs neither an
-`~/.ssh/authorized_keys` entry nor an OpenSSH daemon. It still receives TCP 22
-on `tailscale0`; fu137's UFW default-deny input policy blocks that traffic
-unless the interface-scoped rule above is present. Apply that firewall change
-only after explicit operator approval. Consequences, all deliberate:
-
-- **`users/herdr-fleet.nix` must not declare `home.file.".ssh/authorized_keys"`
-  for fu137.** Home Manager would replace the user-owned live file with a
-  read-only Nix store symlink and drop every other key already trusted on the
-  machine. The live file stays hand-managed.
-- **Do not run `systemctl enable sshd` on fu137.** Omarchy ships OpenSSH but
-  leaves the daemon disabled; enabling it creates a second, redundant network
-  listener that Tailscale SSH already makes unnecessary.
-- **Do not add a global port-22 rule.** Allow TCP 22 only on `tailscale0`.
-  Traffic arriving on the public interface remains covered by UFW's
-  default-deny policy.
+The tailnet policy must grant Bali (`100.113.194.113`) access to fu137
+(`100.92.74.63`) on TCP 22. Do not add a Tailscale `ssh` rule for this path:
+that section controls Tailscale SSH, whose tagged-to-user-owned restriction is
+why OpenSSH is used. Do not add a global firewall rule either; the
+`tailscale0` rule leaves the public interface under UFW's default-deny policy.
 
 `loginctl enable-linger` is what keeps `herdr-agents` running across logout and
-reboot, since Tailscale SSH sessions do not hold the user manager open.
+reboot, independently of SSH sessions.
 
 Authorize the connection once from Bali:
 
 ```bash
-ssh -o BatchMode=yes -o ConnectTimeout=5 joost@100.92.74.63 \
+ssh -o BatchMode=yes -o ConnectTimeout=5 fu137 \
   'HERDR_SESSION=agents herdr status server --json'
 ```
 
@@ -210,10 +202,12 @@ herdr integration status
 From Bali, SSH must be non-interactive and every remote server must answer:
 
 ```bash
-for ip in 100.126.150.43 100.97.77.46 100.108.96.124 100.92.74.63; do
+for ip in 100.126.150.43 100.97.77.46 100.108.96.124; do
   ssh -o BatchMode=yes -o ConnectTimeout=5 "joost@$ip" \
     'HERDR_SESSION=agents herdr status server --json'
 done
+ssh -o BatchMode=yes -o ConnectTimeout=5 fu137 \
+  'HERDR_SESSION=agents herdr status server --json'
 ssh -o BatchMode=yes -o ConnectTimeout=8 exedev@fu-herdr-dev \
   'HERDR_SESSION=agents ~/.local/bin/herdr status server --json'
 ```

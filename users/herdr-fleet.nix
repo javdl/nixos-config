@@ -13,6 +13,7 @@
 
 let
   sessionName = "agents";
+  baliFleetPublicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEfx6qICt/nunP+X3Wv8Y6hhZtGo0AZreAp3QOThy0SD bali-herdr-command-center";
   isFu137 = currentSystemName == "fu137";
   isFleetMachine = controller || isFu137 || provisionAgentRuntime;
 
@@ -52,7 +53,7 @@ let
       name = "gpu";
       role = "gpu";
       user = "joost";
-      target = "100.92.74.63";
+      target = "fu137";
       prefix = "gpu";
       remoteBin = "/home/joost/.nix-profile/bin/herdr";
       alwaysControl = false;
@@ -244,13 +245,34 @@ lib.mkIf isFleetMachine {
     source = "${herdrMirror}/bin/herdr-mirror";
   };
 
-  # fu137 deliberately has no declarative `~/.ssh/authorized_keys`. It reaches
-  # the fleet over Tailscale SSH (`tailscale set --ssh`), which authenticates
-  # against tailnet identity and ACLs instead of an authorized_keys file, so
-  # Bali needs no key installed here. Managing that file from Home Manager
-  # would also replace the user-owned live file with a read-only store symlink
-  # and drop every other key on the machine. Do not enable OpenSSH sshd on
-  # fu137 and do not open port 22 in its firewall.
+  # Bali is a tagged device while fu137 deliberately remains user-owned, so
+  # Tailscale SSH cannot authorize this direction. Append Bali's fleet key to
+  # the user-owned file instead of declaring home.file: a Home Manager symlink
+  # would replace every other key already trusted by this workstation.
+  home.activation.herdrFleetAuthorizedKey = lib.mkIf isFu137 (
+    lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      auth_dir="$HOME/.ssh"
+      auth_file="$auth_dir/authorized_keys"
+      fleet_key=${lib.escapeShellArg baliFleetPublicKey}
+
+      $DRY_RUN_CMD ${pkgs.coreutils}/bin/install -d -m 0700 "$auth_dir"
+      if [ -L "$auth_file" ]; then
+        echo "Refusing to modify symlinked $auth_file; migrate it to a regular file first." >&2
+        exit 1
+      fi
+      if [ ! -e "$auth_file" ]; then
+        $DRY_RUN_CMD ${pkgs.coreutils}/bin/install -m 0600 /dev/null "$auth_file"
+      fi
+      if ! ${pkgs.gnugrep}/bin/grep -qxF "$fleet_key" "$auth_file" 2>/dev/null; then
+        if [ -n "$DRY_RUN_CMD" ]; then
+          echo "Would append Bali's Herdr fleet key to $auth_file"
+        else
+          printf '%s\n' "$fleet_key" >> "$auth_file"
+        fi
+      fi
+      $DRY_RUN_CMD ${pkgs.coreutils}/bin/chmod 0600 "$auth_file"
+    ''
+  );
 
   systemd.user.services.herdr-agents = {
     Unit = {
