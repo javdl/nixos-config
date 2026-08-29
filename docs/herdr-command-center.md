@@ -37,6 +37,13 @@ The GPU mirror sets `always_control = false`: it observes without changing the
 visible fu137 terminal geometry until somebody types into the mirrored pane.
 The headless runners stay writable and follow the controller pane size.
 
+The three runners are NixOS and accept Bali over OpenSSH. fu137 is Arch/Omarchy
+and instead uses **Tailscale SSH**: no `sshd`, no `authorized_keys` entry, and
+no open port 22. See [First rollout](#first-rollout) for why, and note that
+fu137 is a worker only. It never runs `herdr-mirror`; the mirror package,
+`hosts.toml`, and plugin activation are all gated on `controller`, which fu137
+does not set.
+
 ## Declarative pieces
 
 - `users/herdr-fleet.nix` is the fleet source of truth. It generates the node
@@ -88,19 +95,39 @@ Apply the standalone Home Manager output on fu137:
 make switch NIXNAME=fu137
 ```
 
-That activation installs Bali's public fleet key in
-`~/.ssh/authorized_keys` and starts the `agents` Herdr user service. Omarchy
-already installs OpenSSH, but its daemon is not enabled by Home Manager.
-Enabling it creates a new network listener. fu137 uses UFW with a default-deny
-input policy, so add an interface-scoped rule rather than opening SSH on every
-interface. After explicit operator approval, configure and enable it once:
+That activation starts the `agents` Herdr user service. It installs no SSH key:
+fu137 is reached over **Tailscale SSH**, not OpenSSH.
 
 ```bash
-sudo ufw allow in on tailscale0 to any port 22 proto tcp \
-  comment 'Herdr command center'
-sudo systemctl enable --now sshd
-ss -lnt | rg ':22\\b'
-sudo ufw status verbose
+sudo tailscale set --ssh
+sudo loginctl enable-linger joost
+loginctl show-user joost -p Linger
+```
+
+Tailscale SSH terminates the connection inside `tailscaled` and authorizes it
+from tailnet identity and the tailnet SSH ACL, so it needs neither an
+`~/.ssh/authorized_keys` entry nor a listening port. Consequences, all
+deliberate:
+
+- **`users/herdr-fleet.nix` must not declare `home.file.".ssh/authorized_keys"`
+  for fu137.** Home Manager would replace the user-owned live file with a
+  read-only Nix store symlink and drop every other key already trusted on the
+  machine. The live file stays hand-managed.
+- **Do not run `systemctl enable sshd` on fu137.** Omarchy ships OpenSSH but
+  leaves the daemon disabled; enabling it creates a second, redundant network
+  listener that Tailscale SSH already makes unnecessary.
+- **Do not open port 22 in the firewall.** fu137's UFW default-deny input
+  policy stays as-is; no rule, interface-scoped or otherwise, is added. Nothing
+  new is exposed on the public interface.
+
+`loginctl enable-linger` is what keeps `herdr-agents` running across logout and
+reboot, since Tailscale SSH sessions do not hold the user manager open.
+
+Authorize the connection once from Bali:
+
+```bash
+ssh -o BatchMode=yes -o ConnectTimeout=5 joost@100.92.74.63 \
+  'HERDR_SESSION=agents herdr status server --json'
 ```
 
 No `/usr/share/omarchy` files are modified.

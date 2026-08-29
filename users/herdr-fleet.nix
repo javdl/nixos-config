@@ -227,14 +227,13 @@ lib.mkIf isFleetMachine {
     source = "${herdrMirror}/bin/herdr-mirror";
   };
 
-  # fu137 is Arch/Omarchy, so its sshd authorization is user-owned rather than
-  # a NixOS users.users.* option. This is Bali's existing no-pass fleet key,
-  # already used on the runner hosts.
-  home.file.".ssh/authorized_keys" = lib.mkIf isFu137 {
-    text = ''
-      ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEfx6qICt/nunP+X3Wv8Y6hhZtGo0AZreAp3QOThy0SD bali-herdr-command-center
-    '';
-  };
+  # fu137 deliberately has no declarative `~/.ssh/authorized_keys`. It reaches
+  # the fleet over Tailscale SSH (`tailscale set --ssh`), which authenticates
+  # against tailnet identity and ACLs instead of an authorized_keys file, so
+  # Bali needs no key installed here. Managing that file from Home Manager
+  # would also replace the user-owned live file with a read-only store symlink
+  # and drop every other key on the machine. Do not enable OpenSSH sshd on
+  # fu137 and do not open port 22 in its firewall.
 
   systemd.user.services.herdr-agents = {
     Unit = {
