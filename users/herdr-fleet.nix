@@ -293,9 +293,9 @@ lib.mkIf isFleetMachine {
     Install.WantedBy = [ "default.target" ];
   };
 
-  # Match the established native Claude Code installation used by the full
-  # server profiles. Authentication remains an explicit interactive step.
-  home.activation.herdrAgentIntegrations = lib.mkIf provisionAgentRuntime (
+  # Ensure every fleet machine publishes Claude and Codex lifecycle state to
+  # Herdr. Authentication remains an explicit, machine-local interactive step.
+  home.activation.herdrAgentIntegrations = lib.mkIf isFleetMachine (
     lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       if [ ! -x "$HOME/.local/bin/claude" ]; then
         $DRY_RUN_CMD ${pkgs.coreutils}/bin/env \
