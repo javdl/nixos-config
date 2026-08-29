@@ -45,6 +45,7 @@
     ../modules/mosh.nix
     ../modules/netdata.nix
     ../modules/ci-disk-cleanup.nix
+    ../modules/herdr-fleet-node.nix
   ];
 
   # Enable the GitHub Actions runner packages module

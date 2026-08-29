@@ -528,6 +528,14 @@ All dev servers include the following AI agent tooling. Run `ntm deps -v` to che
 | am | `am` | Agent Mail: MCP HTTP server for async multi-agent coordination (systemd service) |
 | ru | `ru` | Repo Updater: parallel GitHub repo clone/pull sync |
 
+### Herdr fleet command center
+
+`bali` is the main Herdr controller. It mirrors the named `agents` sessions on
+github-runner-03, github-runner-04, github-runner-05, and the fu137 GPU machine.
+Keep the fleet inventory in `users/herdr-fleet.nix`; follow
+[`docs/herdr-command-center.md`](docs/herdr-command-center.md) for rollout,
+verification, authentication, and adding nodes.
+
 ### Installation notes
 
 - Most tools are pre-built binaries installed via Nix overlay (`flake.nix`)

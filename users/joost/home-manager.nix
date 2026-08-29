@@ -173,7 +173,10 @@ let
 
 in
 {
-  imports = [ ./cachix-daemon.nix ]; # auto-push locally-built paths to javdl-nixos-config cachix
+  imports = [
+    ./cachix-daemon.nix # auto-push locally-built paths to javdl-nixos-config cachix
+    (import ../herdr-fleet.nix { inherit currentSystemName; })
+  ];
 
   # Home-manager 22.11 requires this be set. We never set it so we have
   # to use the old state version.

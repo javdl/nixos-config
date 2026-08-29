@@ -1,0 +1,94 @@
+id = "mirror"
+name = "Herdr Mirror"
+version = "0.4.1"
+min_herdr_version = "0.7.2"
+description = "Mirror remote Herdr servers into the Bali command center"
+platforms = ["linux"]
+
+# The Nix package installs the pinned release binary at this path, so the
+# upstream network-fetching [[build]] step is intentionally omitted.
+[[panes]]
+id = "pick-host"
+title = "New workspace"
+command = ["./target/release/herdr-mirror", "pick-workspace", "--menu"]
+
+[[actions]]
+id = "start"
+title = "Mirror: start / resume"
+command = ["./target/release/herdr-mirror", "start"]
+
+[[actions]]
+id = "pause"
+title = "Mirror: pause"
+command = ["./target/release/herdr-mirror", "pause"]
+
+[[actions]]
+id = "status"
+title = "Mirror: status"
+command = ["./target/release/herdr-mirror", "status"]
+
+[[actions]]
+id = "once"
+title = "Mirror: sync once"
+command = ["./target/release/herdr-mirror", "once"]
+
+[[actions]]
+id = "remote-new-workspace"
+title = "Mirror: new workspace"
+command = ["./target/release/herdr-mirror", "remote-workspace"]
+
+[[actions]]
+id = "new-workspace-pick"
+title = "Mirror: new workspace - pick host"
+command = ["./target/release/herdr-mirror", "pick-workspace"]
+
+[[actions]]
+id = "remote-new-tab"
+title = "Mirror: new tab"
+command = ["./target/release/herdr-mirror", "remote-tab"]
+
+[[actions]]
+id = "remote-split-right"
+title = "Mirror: split right"
+command = ["./target/release/herdr-mirror", "remote-split", "right"]
+
+[[actions]]
+id = "remote-split-down"
+title = "Mirror: split down"
+command = ["./target/release/herdr-mirror", "remote-split", "down"]
+
+[[actions]]
+id = "hide"
+title = "Mirror: hide"
+command = ["./target/release/herdr-mirror", "hide"]
+
+[[actions]]
+id = "show"
+title = "Mirror: show"
+command = ["./target/release/herdr-mirror", "show"]
+
+[[actions]]
+id = "restore"
+title = "Mirror: restore closed mirrors"
+command = ["./target/release/herdr-mirror", "restore"]
+
+[[actions]]
+id = "teardown"
+title = "Mirror: teardown"
+command = ["./target/release/herdr-mirror", "teardown"]
+
+[[events]]
+on = "workspace.focused"
+command = ["./target/release/herdr-mirror", "ensure"]
+
+[[events]]
+on = "workspace.created"
+command = ["./target/release/herdr-mirror", "intercept-new", "workspace"]
+
+[[events]]
+on = "tab.created"
+command = ["./target/release/herdr-mirror", "intercept-new", "tab"]
+
+[[events]]
+on = "pane.created"
+command = ["./target/release/herdr-mirror", "intercept-new", "pane"]
