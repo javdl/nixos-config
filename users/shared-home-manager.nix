@@ -107,6 +107,17 @@ in
     # chpwd_functions array, so __zoxide_doctor sees no hook and warns on every
     # cd. Real shells register it fine — see AGENTS.md (Common Issues).
     _ZO_DOCTOR = "0";
+
+    # uv's standalone Python is built to look for /etc/ssl/cert.pem, falling
+    # back to a hashed OpenSSL capath in /etc/ssl/certs. NixOS provides
+    # neither — only the bundle at /etc/ssl/certs/ca-certificates.crt — so any
+    # package that downloads over TLS during its build fails with
+    # CERTIFICATE_VERIFY_FAILED. Nix-built Python is unaffected because the
+    # bundle path is compiled in. Point uv (and anything else honouring this
+    # variable) at the nix cacert bundle; a store path, so it resolves on both
+    # Linux and Darwin. Hit via shfmt-py in a prek hook, whose setup.py fetches
+    # the shfmt binary with plain urllib.
+    SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
   };
 
   # Common fish plugins - removed with niv
