@@ -186,7 +186,13 @@
 
       omarchyHome = mkOmarchyHome {
         hostName = "fu137";
-        extraPackages = pkgs: [ pkgs.playerctl ];
+        # mosh is not an Omarchy/pacman-managed package, so Nix may own it here.
+        # NixOS and Darwin hosts get mosh from lib/mksystem.nix; this standalone
+        # Home Manager profile has no system layer, so it carries its own copy.
+        extraPackages = pkgs: [
+          pkgs.playerctl
+          pkgs.mosh
+        ];
       };
     in
     {
@@ -423,8 +429,18 @@
         };
         modules = [
           ./users/ubuntu-runner/home-manager.nix
-          # mise (dev tool / runtime version manager) on every machine
-          ({ pkgs, ... }: { home.packages = [ pkgs.mise ]; })
+          # mise (dev tool / runtime version manager) and mosh on every machine.
+          # Standalone HM on Ubuntu: no system layer, so mosh ships here rather
+          # than via lib/mksystem.nix like the NixOS/Darwin hosts.
+          (
+            { pkgs, ... }:
+            {
+              home.packages = [
+                pkgs.mise
+                pkgs.mosh
+              ];
+            }
+          )
         ];
       };
 

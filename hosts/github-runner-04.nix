@@ -42,7 +42,6 @@
     ../modules/nixos-auto-update.nix
     ../modules/security-audit.nix
     ../modules/ghostty-terminfo.nix
-    ../modules/mosh.nix
     ../modules/netdata.nix
     ../modules/ci-disk-cleanup.nix
     ../modules/herdr-fleet-node.nix

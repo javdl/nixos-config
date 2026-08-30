@@ -87,6 +87,17 @@ systemFunc rec {
         inputs.nix-index-database.nixosModules.nix-index
     )
 
+    # Mosh on every machine. NixOS gets the shared module (which also opens
+    # UDP 60000-61000); nix-darwin has no programs.mosh option, so Darwin gets
+    # the package directly. Hosts needing a different firewall stance override
+    # programs.mosh.openFirewall themselves (see hosts/bali.nix).
+    (
+      if darwin then
+        ({ pkgs, ... }: { environment.systemPackages = [ pkgs.mosh ]; })
+      else
+        ../modules/mosh.nix
+    )
+
     machineConfig
     userOSConfig
     home-manager.home-manager

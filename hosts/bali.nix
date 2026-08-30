@@ -185,6 +185,12 @@ in
   networking.firewall.enable = true;
   networking.firewall.allowedTCPPorts = [ ];
 
+  # Mosh comes from lib/mksystem.nix on every host, but its default
+  # openFirewall would punch UDP 60000-61000 into the public firewall — which
+  # is exactly what the "no public ports" stance above rules out. Mosh still
+  # works over the tailnet, where tailscale0 is a trusted interface.
+  programs.mosh.openFirewall = false;
+
   # SSH daemon - key-only auth, tailnet-only (no port is publicly open).
   # Port 2222 additionally allows password auth for clients that can't do
   # keys or Tailscale SSH (Codex app). Port 22 over the tailnet is
