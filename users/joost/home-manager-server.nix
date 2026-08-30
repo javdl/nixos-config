@@ -808,7 +808,7 @@ in
 
   # chezmoi-memory-sync — Linux counterpart of the Darwin launchd agent in
   # hosts/mac-shared.nix. Runs every 5 minutes to re-add ~/.claude/MEMORY into
-  # the chezmoi source and push via jj. Script body shared via
+  # the chezmoi source and push via git. Script body shared via
   # lib/chezmoi-memory-sync.nix so both platforms stay in lockstep.
   #
   # Gated on loom for now. Linger is already enabled on loom (hosts/loom.nix
