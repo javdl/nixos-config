@@ -29,6 +29,18 @@ pkgs.writeShellScript "chezmoi-memory-sync" ''
 
   cd "$CHEZMOI_SRC" || exit 0
 
+  # Fail loudly if the source is not a jj repo, or jj is unavailable. Without
+  # this the guard below swallows the error: `jj diff` writes to /dev/null,
+  # the empty output fails `grep -q .`, the negation makes the test true, and
+  # the script exits 0. systemd then reports success every 5 minutes while
+  # nothing is ever synced. Observed on bali, whose chezmoi clone was plain
+  # git; the timer had been a silent no-op.
+  if ! jj root >/dev/null 2>&1; then
+    echo "error: $CHEZMOI_SRC is not a jj repo, or jj is unavailable" >&2
+    echo "recover: cd $CHEZMOI_SRC && jj git init --colocate && jj bookmark track main --remote=origin" >&2
+    exit 1
+  fi
+
   # Bail out if nothing changed under MEMORY.
   if ! jj diff --stat -- "$MEMORY_SRC_PATH" 2>/dev/null | grep -q .; then
     exit 0
