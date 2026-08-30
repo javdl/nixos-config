@@ -30,7 +30,6 @@
     ./podman.nix
     ./repo-updater.nix
     ./ghostty-terminfo.nix
-    ./mosh.nix
   ];
 
   # Latest kernel for best hardware support

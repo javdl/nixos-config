@@ -81,6 +81,80 @@
           };
           herdrSource = herdrSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for herdr: ${prev.stdenv.hostPlatform.system}");
 
+          # moshi-hook - daemon + CLI for the Moshi mobile app (Easy Pair SSH/mosh,
+          # agent hooks, approval round-trips). Statically linked Go binary
+          # (verified `file`: statically linked), so no patchelf on NixOS.
+          # Version endpoint: https://cdn.getmoshi.app/hook/latest/version.txt
+          # Checksums: https://cdn.getmoshi.app/hook/<version>/checksums.txt
+          moshiHookVersion = "0.3.13";
+          moshiHookSources = {
+            "x86_64-linux" = {
+              url = "https://cdn.getmoshi.app/hook/v${moshiHookVersion}/moshi-hook_Linux_x86_64.tar.gz";
+              sha256 = "1hy2vdyivijkyh0ww6g1f00h2a7pqp9124vfijih8k4k9k32sncp";
+            };
+            "aarch64-linux" = {
+              url = "https://cdn.getmoshi.app/hook/v${moshiHookVersion}/moshi-hook_Linux_arm64.tar.gz";
+              sha256 = "1f3md1alz6m0xylirgnszcps65v1i17qq8j18f1p90hd6j850r86";
+            };
+            "x86_64-darwin" = {
+              url = "https://cdn.getmoshi.app/hook/v${moshiHookVersion}/moshi-hook_Darwin_x86_64.tar.gz";
+              sha256 = "1wn0zzskn2nh0f1qb2mxvm1v13pgz8jjpi9ivas860q1y05j1had";
+            };
+            "aarch64-darwin" = {
+              url = "https://cdn.getmoshi.app/hook/v${moshiHookVersion}/moshi-hook_Darwin_arm64.tar.gz";
+              sha256 = "0z0i6pvd4a40shy5lnqym8bwx08d3v8yh25pzkp4zy5h237yr1vn";
+            };
+          };
+          moshiHookSource = moshiHookSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for moshi-hook: ${prev.stdenv.hostPlatform.system}");
+
+          # omp (oh-my-pi) - terminal coding agent forked from Mario Zechner's Pi
+          # harness. Packaged from the platform npm tarballs, the same pattern as
+          # codex below, NOT from the GitHub release asset: `oh-omp-linux-x64`
+          # there is a bare Bun runtime that prints Bun's own help, so shipping it
+          # would install Bun under the name omp. The npm entry point
+          # (@oh-labs/oh-omp) is only a launcher that resolves these per-platform
+          # packages, so we fetch them directly. Binaries are dynamically linked,
+          # hence autoPatchelfHook on Linux. Upstream ships linux-x64 and
+          # darwin-arm64 only, so this follows the pi-agent null pattern.
+          ompVersion = "0.15.1";
+          ompSources = {
+            "x86_64-linux" = {
+              url = "https://registry.npmjs.org/@oh-labs/oh-omp-linux-x64/-/oh-omp-linux-x64-${ompVersion}.tgz";
+              sha256 = "1cp60jjslg2dj3lvk4369wdd4vkvvi9l4l6sgprbp8rvwz02132w";
+            };
+            "aarch64-darwin" = {
+              url = "https://registry.npmjs.org/@oh-labs/oh-omp-darwin-arm64/-/oh-omp-darwin-arm64-${ompVersion}.tgz";
+              sha256 = "01si0hl9pi10ydky7b6fc61d6n9mnkawgz9wzvrszhx71xcmk83l";
+            };
+          };
+          ompSource = ompSources.${prev.stdenv.hostPlatform.system} or null;
+
+          # tailmix - joins several tailnets at once by running one tsnet client
+          # per tailnet behind a single TUN, remapping peers into a local IPv4
+          # range and answering MagicDNS with those addresses. Used on bali to
+          # reach personal-tailnet machines; node sharing cannot do this because
+          # bali is a tagged device and tagged machines cannot accept shares.
+          tailmixVersion = "0.1.9";
+          tailmixSources = {
+            "x86_64-linux" = {
+              url = "https://github.com/maisem/tailmix/releases/download/v${tailmixVersion}/tailmix_linux_amd64.tar.gz";
+              sha256 = "1pf88iqzly8bz8f7hz2c14qawf5rh71pais6jj155m6vqdrmbnxs";
+            };
+            "aarch64-linux" = {
+              url = "https://github.com/maisem/tailmix/releases/download/v${tailmixVersion}/tailmix_linux_arm64.tar.gz";
+              sha256 = "11g4jdyn57gj7ihkqlvyyqwacjxdywi2j3q87vg9i06w8r2cr5z0";
+            };
+            "x86_64-darwin" = {
+              url = "https://github.com/maisem/tailmix/releases/download/v${tailmixVersion}/tailmix_darwin_amd64.tar.gz";
+              sha256 = "027fmnh36dvrj75xig1snbqwg5mrkii854l35bm57hblghhv2asp";
+            };
+            "aarch64-darwin" = {
+              url = "https://github.com/maisem/tailmix/releases/download/v${tailmixVersion}/tailmix_darwin_arm64.tar.gz";
+              sha256 = "14w1pg6v9f6bgxv0s7dvdn5ry9gfmwh619vv7xlrgwj82ff38rra";
+            };
+          };
+          tailmixSource = tailmixSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for tailmix: ${prev.stdenv.hostPlatform.system}");
+
           # beads_viewer (bv) - TUI for beads issue tracking
           bvVersion = "0.18.0";
           bvSources = {
@@ -541,6 +615,129 @@
               homepage = "https://github.com/herdrdev/herdr";
               license = licenses.asl20;
               mainProgram = "herdr";
+              platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+            };
+          };
+
+          # moshi-hook - Moshi mobile app daemon/CLI. The release tarball has
+          # several top-level entries (README.md, docs/, moshi-hook), so
+          # sourceRoot must be "." for stdenv's unpackPhase. Upstream's install
+          # script also drops a `moshi` alias next to the binary; reproduce it as
+          # a symlink so `moshi .` works the same way here.
+          moshi-hook = prev.stdenv.mkDerivation {
+            pname = "moshi-hook";
+            version = moshiHookVersion;
+
+            src = prev.fetchurl {
+              url = moshiHookSource.url;
+              sha256 = moshiHookSource.sha256;
+            };
+
+            sourceRoot = ".";
+
+            installPhase = ''
+              mkdir -p $out/bin
+              cp moshi-hook $out/bin/moshi-hook
+              chmod +x $out/bin/moshi-hook
+              ln -s moshi-hook $out/bin/moshi
+            '';
+
+            meta = with prev.lib; {
+              description = "Daemon and CLI for the Moshi mobile terminal app (Easy Pair, agent hooks)";
+              homepage = "https://getmoshi.app";
+              license = licenses.unfree;
+              mainProgram = "moshi-hook";
+              platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+            };
+          };
+
+          # omp (oh-my-pi) - terminal coding agent.
+          #
+          # Do NOT run autoPatchelfHook on this binary. It is a Bun standalone
+          # executable: the JS payload is appended past the ELF and located
+          # relative to end-of-file, so patchelf's rewrite silently drops it and
+          # the result degrades into a plain Bun runtime. Verified both ways on
+          # bali: patched `omp --version` prints Bun's "1.3.14" and `--help`
+          # prints Bun's help, while the untouched binary prints "oh-omp/0.15.1"
+          # and the real agent help. Same class of breakage already documented
+          # for cm below ("bun cross-compilation doesn't embed scripts").
+          #
+          # Instead keep the file byte-identical and invoke it through the glibc
+          # loader. omp also downloads a pi_natives .node addon into
+          # ~/.oh-omp/natives at runtime and dlopens it, and that addon needs
+          # libz, so LD_LIBRARY_PATH has to carry zlib as well as libstdc++.
+          omp = if ompSource != null then prev.stdenv.mkDerivation {
+            pname = "omp";
+            version = ompVersion;
+
+            src = prev.fetchurl {
+              url = ompSource.url;
+              sha256 = ompSource.sha256;
+            };
+
+            sourceRoot = "package";
+
+            nativeBuildInputs = [ prev.makeWrapper ];
+
+            # Stripping would rewrite the ELF the same way patchelf does.
+            dontStrip = true;
+            dontPatchELF = true;
+
+            installPhase = ''
+              mkdir -p $out/bin $out/libexec
+              cp oh-omp $out/libexec/oh-omp
+              chmod +x $out/libexec/oh-omp
+            '' + (if prev.stdenv.hostPlatform.isLinux then ''
+              makeWrapper ${prev.stdenv.cc.bintools.dynamicLinker} $out/bin/oh-omp \
+                --add-flags $out/libexec/oh-omp \
+                --prefix LD_LIBRARY_PATH : ${prev.lib.makeLibraryPath [
+                  prev.zlib
+                  prev.stdenv.cc.cc.lib
+                ]}
+            '' else ''
+              makeWrapper $out/libexec/oh-omp $out/bin/oh-omp
+            '') + ''
+              ln -s oh-omp $out/bin/omp
+            '';
+
+            meta = with prev.lib; {
+              description = "oh-my-pi (omp) - batteries-included terminal coding agent";
+              homepage = "https://github.com/open-horizon-labs/oh-omp";
+              license = licenses.mit;
+              mainProgram = "omp";
+              platforms = [ "x86_64-linux" "aarch64-darwin" ];
+            };
+          } else null;
+
+          # tailmix - multi-tailnet client. Release tarball holds the bare
+          # binary plus docs, hence sourceRoot ".".
+          tailmix = prev.stdenv.mkDerivation {
+            pname = "tailmix";
+            version = tailmixVersion;
+
+            src = prev.fetchurl {
+              url = tailmixSource.url;
+              sha256 = tailmixSource.sha256;
+            };
+
+            sourceRoot = ".";
+
+            installPhase = ''
+              mkdir -p $out/bin $out/share/tailmix
+              # The release ships the CLI *and* the tailmixd daemon; the daemon
+              # is what modules/tailmix.nix runs. Installing only the CLI leaves
+              # `tailmix status` failing on a missing tailmixd.sock.
+              cp tailmix $out/bin/tailmix
+              cp tailmixd $out/bin/tailmixd
+              chmod +x $out/bin/tailmix $out/bin/tailmixd
+              cp README.md LICENSE $out/share/tailmix/
+            '';
+
+            meta = with prev.lib; {
+              description = "Connect to multiple tailnets at once behind a single TUN";
+              homepage = "https://github.com/maisem/tailmix";
+              license = licenses.bsd3;
+              mainProgram = "tailmix";
               platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
             };
           };

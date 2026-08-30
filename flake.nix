@@ -157,6 +157,9 @@
               inherit inputs;
               currentSystemName = hostName;
             })
+            # Same agent CLI toolset the NixOS/Darwin hosts get from
+            # lib/mksystem.nix; this profile has no system layer to inherit it.
+            ./users/agent-clis.nix
             (
               { lib, pkgs, ... }:
               {
@@ -193,6 +196,10 @@
           # runtimes (ollama-cuda, nvidia-container-toolkit) come from pacman.
           # See docs/fu137-local-inference.md.
           pkgs.gollama
+          # mosh is not an Omarchy/pacman-managed package, so Nix may own it here.
+          # NixOS and Darwin hosts get mosh from lib/mksystem.nix; this standalone
+          # Home Manager profile has no system layer, so it carries its own copy.
+          pkgs.mosh
         ];
       };
     in
@@ -422,11 +429,28 @@
         pkgs = import nixpkgs {
           system = "x86_64-linux";
           overlays = overlays;
+          # claude-code and cursor-cli (users/agent-clis.nix) are unfree; the
+          # NixOS/Darwin hosts get this from lib/mksystem.nix, this standalone
+          # profile has to set it itself.
+          config.allowUnfree = true;
         };
         modules = [
           ./users/ubuntu-runner/home-manager.nix
-          # mise (dev tool / runtime version manager) on every machine
-          ({ pkgs, ... }: { home.packages = [ pkgs.mise ]; })
+          # Same agent CLI toolset the NixOS/Darwin hosts get from
+          # lib/mksystem.nix; this profile has no system layer to inherit it.
+          ./users/agent-clis.nix
+          # mise (dev tool / runtime version manager) and mosh on every machine.
+          # Standalone HM on Ubuntu: no system layer, so mosh ships here rather
+          # than via lib/mksystem.nix like the NixOS/Darwin hosts.
+          (
+            { pkgs, ... }:
+            {
+              home.packages = [
+                pkgs.mise
+                pkgs.mosh
+              ];
+            }
+          )
         ];
       };
 
