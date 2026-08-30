@@ -12,8 +12,6 @@
     package = pkgs.nixVersions.latest; # nixUnstable removed/renamed in nixpkgs 26.05
     extraOptions = ''
       experimental-features = nix-command flakes
-      keep-outputs = true
-      keep-derivations = true
     '';
   };
 

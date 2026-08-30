@@ -48,5 +48,21 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - name: Run flake checks
-        run: nix flake check --print-build-logs
+      - name: Evaluate every flake output
+        shell: bash
+        run: |
+          if nix flake check --all-systems --no-build --print-build-logs; then
+            exit 0
+          fi
+
+          # Determinate lazy trees can occasionally retain an input source path
+          # that was collected before a dependent output forces it. Retry only
+          # after a real failure; ordinary evaluation keeps lazy trees enabled.
+          echo "::warning::Retrying evaluation with lazy trees disabled"
+          nix flake check --all-systems --no-build --print-build-logs --option lazy-trees false
+
+      - name: Build native checks
+        run: |
+          nix build --print-build-logs \
+            .#checks.x86_64-linux.format \
+            .#checks.x86_64-linux.performance-policy

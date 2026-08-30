@@ -124,8 +124,6 @@
     package = pkgs.nixVersions.latest;
     extraOptions = ''
       experimental-features = nix-command flakes
-      keep-outputs = true
-      keep-derivations = true
     '';
   };
 
@@ -150,7 +148,7 @@
   # Security auditing — disabled, auditd filled disks on dev servers
   services.securityAudit.enable = false;
 
-  # Weekly disk cleanup (logs, tmp, containers, nix)
+  # Weekly disk cleanup (logs, tmp, and containers)
   services.diskCleanup.enable = true;
 
   # Allow unfree packages

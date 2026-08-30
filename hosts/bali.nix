@@ -41,9 +41,11 @@ in
   imports = [
     ../modules/hetzner-dedicated-hardware.nix
     ../modules/disko-hetzner-dedicated.nix
+    # The dedicated full-flake evaluation runner pilots Determinate Nix's
+    # parallel evaluator and continuous, low-impact Nixd garbage collector.
+    inputs.determinate.nixosModules.default
     ../modules/cachix.nix
     ../modules/secrets.nix
-    ../modules/automatic-nix-gc.nix
     ../modules/nixos-auto-update.nix
     ../modules/security-audit.nix
     ../modules/disk-cleanup.nix
@@ -122,25 +124,6 @@ in
   # Timezone (UTC for servers)
   time.timeZone = "UTC";
 
-  # Nix configuration
-  nix = {
-    package = pkgs.nixVersions.latest;
-    extraOptions = ''
-      experimental-features = nix-command flakes
-      keep-outputs = true
-      keep-derivations = true
-    '';
-  };
-
-  # Disk-based garbage collection (only runs when disk space is low)
-  services.automaticNixGC = {
-    enable = true;
-    minFreeGB = 50;
-    maxFreeGB = 100;
-    scheduledThresholdGB = 50;
-    keepDays = 14;
-  };
-
   # Automatic NixOS updates from git repository
   services.nixosAutoUpdate = {
     enable = true;
@@ -172,7 +155,8 @@ in
   # Security auditing — disabled, auditd filled disks on dev servers
   services.securityAudit.enable = false;
 
-  # Weekly disk cleanup (logs, tmp, containers, nix)
+  # Weekly disk cleanup (logs, tmp, and containers). Determinate Nixd owns
+  # incremental Nix store garbage collection on this host.
   services.diskCleanup.enable = true;
 
   # Allow unfree packages

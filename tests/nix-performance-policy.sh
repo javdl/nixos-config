@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+repo_root="${1:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 cd "$repo_root"
 
 fail() {
@@ -27,7 +27,9 @@ require() {
 }
 
 reject 'fh\.url|hyprland\.url' flake.nix
-require 'nixos-hardware\.inputs\.nixpkgs\.follows = "nixpkgs"' flake.nix
+if ! rg -Uq 'nixos-hardware = \{\n[^}]*inputs\.nixpkgs\.follows = "nixpkgs"' flake.nix; then
+  fail 'nixos-hardware must follow the primary nixpkgs input'
+fi
 require 'determinate\.url = "https://flakehub\.com/f/DeterminateSystems/determinate/3"' flake.nix
 
 require 'pkgsUnstableForSystem' lib/overlays.nix
@@ -43,7 +45,7 @@ require 'isServer' lib/mksystem.nix modules/cachix.nix
 
 reject 'keep-outputs|keep-derivations' hosts modules
 reject 'darwinNixGC|darwin-nix-gc' hosts modules
-reject 'nix-collect-garbage|nixKeepDays' modules/disk-cleanup.nix
+reject 'nix-collect-garbage|nixKeepDays' modules/disk-cleanup.nix modules/ci-disk-cleanup.nix
 require 'inputs\.determinate\.nixosModules\.default' hosts/bali.nix
 
 printf 'Nix performance policy checks passed.\n'

@@ -27,8 +27,6 @@
     # We need to enable flakes
     extraOptions = ''
       experimental-features = nix-command flakes
-      keep-outputs = true
-      keep-derivations = true
     '';
     # Cache settings moved to ../modules/cachix.nix
   };

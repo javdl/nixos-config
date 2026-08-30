@@ -17,7 +17,6 @@
   imports = [
     ./mac-shared.nix
     ../modules/darwin-auto-update.nix
-    ../modules/darwin-nix-gc.nix
     ../modules/darwin-tailscaled.nix
   ];
 
@@ -27,9 +26,6 @@
     enable = true;
     flake = "github:javdl/nixos-config#radon";
   };
-
-  # Keep the Nix store from growing unbounded — Determinate does no auto-GC.
-  services.darwinNixGC.enable = true;
 
   # Hardened headless Tailscale (replaces the inline launchd daemon). Persistent
   # state, userspace networking (required on macOS without macsys), joost as

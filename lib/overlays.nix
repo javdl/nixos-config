@@ -1,16 +1,32 @@
 { inputs }:
+let
+  supportedSystems = [
+    "x86_64-linux"
+    "aarch64-linux"
+    "x86_64-darwin"
+    "aarch64-darwin"
+  ];
+
+  # Import unstable once per platform for the entire flake evaluation. Keeping
+  # this outside the overlay callback lets every host on a platform share it.
+  pkgsUnstableForSystem = inputs.nixpkgs.lib.genAttrs supportedSystems (
+    system:
+    import inputs.nixpkgs-unstable {
+      inherit system;
+      config.allowUnfree = true;
+      overlays = [ ];
+    }
+  );
+in
 [
       # inputs.jujutsu.overlays.default
       # inputs.zig.overlays.default
 
       (final: prev:
         let
-          # Import nixpkgs-unstable with allowUnfree enabled
-          pkgs-unstable = import inputs.nixpkgs-unstable {
-            system = prev.stdenv.hostPlatform.system;
-            config.allowUnfree = true;
-            overlays = [ ];
-          };
+          pkgs-unstable =
+            pkgsUnstableForSystem.${prev.stdenv.hostPlatform.system}
+              or (throw "Unsupported system for unstable packages: ${prev.stdenv.hostPlatform.system}");
 
           # grepai - semantic code search CLI tool
           grepaiVersion = "0.35.0";

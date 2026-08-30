@@ -1,11 +1,6 @@
 {
   description = "NixOS systems and tools by joost";
 
-  # download-buffer-size is set daemon-side:
-  # - macOS: via nix.custom.conf in mac-shared.nix
-  # - NixOS: via nix.settings in cachix.nix
-  # Setting it here in nixConfig causes "not a trusted user" warnings on macOS.
-
   inputs = {
     # Pin our primary nixpkgs repository. This is the main nixpkgs repository
     # we'll use for our configurations. Be very careful changing this because
@@ -15,7 +10,10 @@
     # We use the unstable nixpkgs repo for some packages.
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixpkgs-unstable";
 
-    nixos-hardware.url = "github:NixOS/nixos-hardware/master";
+    nixos-hardware = {
+      url = "github:NixOS/nixos-hardware/master";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     # Build a custom WSL installer
     nixos-wsl.url = "github:nix-community/NixOS-WSL";
@@ -35,7 +33,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    fh.url = "https://flakehub.com/f/DeterminateSystems/fh/*";
+    # Determinate Nix pilot on bali, the dedicated full-flake evaluation runner.
+    # Do not make this input follow nixpkgs: the upstream module deliberately
+    # pins the package set used for its pre-built FlakeHub artifacts.
+    determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/3";
 
     # Declarative disk partitioning (used by nixos-anywhere)
     disko = {
@@ -56,8 +57,6 @@
 
     nix-index-database.url = "github:nix-community/nix-index-database";
     nix-index-database.inputs.nixpkgs.follows = "nixpkgs";
-
-    hyprland.url = "github:hyprwm/Hyprland";
 
     # I think technically you're not supposed to override the nixpkgs
     # used by neovim but recently I had failures if I didn't pin to my
@@ -250,13 +249,29 @@
       );
 
       # `nix flake check` — format gate over the repo's own Nix sources, plus an
-      # evaluation gate over every host (see eval-hosts below). Lints
+      # independently schedulable evaluation gate for every host below. Lints
       # (statix/deadnix) live in the devShell but are kept out of checks for now to
       # avoid blocking on pre-existing legacy findings.
       checks = forAllSystems (
         system:
         let
           pkgs = pkgsFor system;
+          inherit (nixpkgs) lib;
+
+          mkHostEvalChecks =
+            kind: configs: getDrv:
+            lib.mapAttrs' (
+              name: cfg:
+              lib.nameValuePair "eval-${kind}-${name}" (
+                pkgs.runCommandLocal "check-eval-${kind}-${name}"
+                  {
+                    evaluated = builtins.unsafeDiscardStringContext (getDrv cfg);
+                  }
+                  ''
+                    printf '%s\n' "$evaluated" > $out
+                  ''
+              )
+            ) configs;
         in
         {
           format =
@@ -277,38 +292,31 @@
                 fi
                 touch $out
               '';
-        }
-        // nixpkgs.lib.optionalAttrs (system == "x86_64-linux") {
-          # Every host must still *evaluate*. 15 hosts run services.nixosAutoUpdate
-          # against `main`, so an unevaluatable config reaches the fleet at 4 AM
-          # without this gate. Referencing each toplevel's .drvPath forces a full
-          # module-system evaluation; the context is discarded so the check itself
-          # never builds a system. Linux-only: CI has no other runner, and the
-          # evaluation is identical wherever it runs.
-          eval-hosts =
-            let
-              inherit (nixpkgs) lib;
-              line =
-                kind: name: drv:
-                "${kind}/${name} ${builtins.unsafeDiscardStringContext drv}";
-              nixosLines = lib.mapAttrsToList (
-                name: cfg: line "nixos" name cfg.config.system.build.toplevel.drvPath
-              ) (removeAttrs self.nixosConfigurations knownBrokenHosts);
-              darwinLines = lib.mapAttrsToList (
-                name: cfg: line "darwin" name cfg.config.system.build.toplevel.drvPath
-              ) self.darwinConfigurations;
-              homeLines = lib.mapAttrsToList (
-                name: cfg: line "home" name cfg.activationPackage.drvPath
-              ) self.homeConfigurations;
-            in
-            pkgs.runCommandLocal "check-eval-hosts"
+
+          performance-policy =
+            pkgs.runCommandLocal "check-nix-performance-policy"
               {
-                evaluated = lib.concatStringsSep "\n" (nixosLines ++ darwinLines ++ homeLines);
+                nativeBuildInputs = [
+                  pkgs.bash
+                  pkgs.ripgrep
+                ];
               }
               ''
-                printf '%s\n' "$evaluated" > $out
+                bash ${./tests/nix-performance-policy.sh} ${self}
+                touch $out
               '';
         }
+        // nixpkgs.lib.optionalAttrs (system == "x86_64-linux") (
+          # Keep explicit full-module evaluation coverage, but expose each host
+          # independently so Determinate Nix can schedule them in parallel.
+          mkHostEvalChecks "nixos" (removeAttrs self.nixosConfigurations knownBrokenHosts) (
+            cfg: cfg.config.system.build.toplevel.drvPath
+          )
+          // mkHostEvalChecks "darwin" self.darwinConfigurations (
+            cfg: cfg.config.system.build.toplevel.drvPath
+          )
+          // mkHostEvalChecks "home" self.homeConfigurations (cfg: cfg.activationPackage.drvPath)
+        )
       );
 
       # vm-aarch64, vm-aarch64-utm and vm-aarch64-prl retired 2026-07-28. The

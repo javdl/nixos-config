@@ -7,7 +7,7 @@
 
 # Weekly disk cleanup for dev servers
 #
-# Cleans: audit logs, journal, tmp files, Docker/Podman, nix store generations
+# Cleans: audit logs, journal, tmp files, and Docker/Podman data
 # Prevents the disk-full incidents caused by runaway auditd logging
 
 let
@@ -21,7 +21,7 @@ let
 in
 {
   options.services.diskCleanup = {
-    enable = mkEnableOption "weekly disk cleanup (logs, tmp, containers, nix)";
+    enable = mkEnableOption "weekly disk cleanup (logs, tmp, and containers)";
 
     journalMaxSize = mkOption {
       type = types.str;
@@ -34,18 +34,12 @@ in
       default = "7d";
       description = "Delete tmp files older than this (systemd-tmpfiles age format)";
     };
-
-    nixKeepDays = mkOption {
-      type = types.int;
-      default = 14;
-      description = "Keep nix generations from the last N days";
-    };
   };
 
   config = mkIf cfg.enable {
     # Weekly cleanup service
     systemd.services.disk-cleanup = {
-      description = "Weekly disk cleanup (logs, tmp, containers, nix)";
+      description = "Weekly disk cleanup (logs, tmp, and containers)";
       path = with pkgs; [
         coreutils
         gawk
@@ -82,10 +76,6 @@ in
           echo "Pruned Podman"
         fi
 
-        # 6. Nix garbage collection
-        nix-collect-garbage --delete-older-than ${toString cfg.nixKeepDays}d 2>/dev/null || true
-        echo "Ran nix garbage collection"
-
         echo "=== Cleanup complete ==="
         df -h / | tail -1
       '';
@@ -100,7 +90,8 @@ in
       description = "Weekly disk cleanup timer";
       wantedBy = [ "timers.target" ];
       timerConfig = {
-        OnCalendar = "Sun 03:00";
+        # Keep this well clear of the fleet's 04:00 auto-update window.
+        OnCalendar = "Sun 01:00";
         RandomizedDelaySec = "1h";
         Persistent = true;
       };

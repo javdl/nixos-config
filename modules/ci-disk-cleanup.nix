@@ -200,7 +200,8 @@ in
     };
 
     # Proactive disk space monitor — runs every 10 minutes
-    # Cleans Docker, Actions tool cache, and nix store when disk is low.
+    # Cleans Docker and Actions tool caches when disk is low. Nix store pressure
+    # is handled earlier by automaticNixGC's min-free/max-free daemon settings.
     # Also monitors /run (tmpfs) since the upstream github-runner module places
     # runtime state there and any spillover (e.g., _actions/_temp) fills it fast.
     systemd.services.ci-disk-monitor = {
@@ -210,7 +211,6 @@ in
         coreutils
         gawk
         docker
-        nix
       ];
       script = ''
         set -euo pipefail
@@ -255,14 +255,10 @@ in
           docker volume prune --force 2>/dev/null || true
           echo "Cleaned Docker images, build cache, and volumes"
 
-          # 3. Nix store GC
-          nix-collect-garbage --delete-older-than 3d 2>/dev/null || true
-          echo "Ran nix garbage collection"
-
-          # 4. Clean old logs
+          # 3. Clean old logs
           journalctl --vacuum-size=200M 2>/dev/null || true
 
-          # 5. Truncate audit logs if they're large (auditd rotation can lag)
+          # 4. Truncate audit logs if they're large (auditd rotation can lag)
           if [ -f /var/log/audit/audit.log ]; then
             AUDIT_MB=$(du -sm /var/log/audit 2>/dev/null | awk '{print $1}')
             if [ "''${AUDIT_MB:-0}" -gt 500 ]; then
@@ -273,11 +269,11 @@ in
             fi
           fi
 
-          # 6. Clean npm/pnpm caches
+          # 5. Clean npm/pnpm caches
           rm -rf /home/github-runner/.npm /home/github-runner/.pnpm-store 2>/dev/null || true
           rm -rf /home/github-runner/.cache/pnpm /home/github-runner/.local/share/pnpm 2>/dev/null || true
 
-          # 7. Clean all runner work dirs (repos re-clone on next job)
+          # 6. Clean all runner work dirs (repos re-clone on next job)
           if [ -d "$RUNNER_DIR" ]; then
             for runner in "$RUNNER_DIR"/fuww-runner-*/; do
               [ -d "$runner" ] || continue

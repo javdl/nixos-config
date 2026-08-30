@@ -46,8 +46,6 @@
     package = pkgs.nixVersions.latest;
     extraOptions = ''
       experimental-features = nix-command flakes
-      keep-outputs = true
-      keep-derivations = true
     '';
   };
 
@@ -90,7 +88,7 @@
     numLogs = 10;
   };
 
-  # Weekly disk cleanup (logs, tmp, containers, nix)
+  # Weekly disk cleanup (logs, tmp, and containers)
   services.diskCleanup.enable = true;
 
   # Allow unfree packages

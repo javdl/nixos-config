@@ -51,7 +51,7 @@ Nix GC will have one owner per machine. Linux `automaticNixGC` owns generation/s
 2. Remove the unused `fh` and Hyprland inputs.
 3. Make `nixos-hardware` follow the primary nixpkgs input.
 4. Add the official Determinate input without making it follow nixpkgs, preserving its binary-cache hits.
-5. Update the lock file and verify the toplevel derivation-path hash is unchanged except for the Bali Nix implementation.
+5. Update the lock file and inspect the resulting toplevel changes against the intentional Nix, cache, and retention policy changes.
 
 ## Task 4: Scope caches and remove obsolete download tuning
 
@@ -94,3 +94,11 @@ Nix GC will have one owner per machine. Linux `automaticNixGC` owns generation/s
 4. Build native flake checks.
 5. Repeat evaluation benchmarks and compare them with the baseline.
 6. Rebase on `origin/main`, rerun the full verification, commit, and push.
+
+## Measured results
+
+- Clean-tree evaluation of every NixOS toplevel with the eval cache disabled improved from 88.08 seconds to 84.68 seconds (3.9%).
+- The lock graph shrank from 46 nodes to 36 even after adding the Determinate Nix pilot input.
+- `nix flake check --all-systems --no-build` exposes each explicit host check independently and completed successfully.
+- Bali evaluates with `determinate-nix-3.22.2`, a `determinate-nixd` socket, no custom GC service, and `keep-outputs = false`.
+- Server configurations retain only the personal cache plus NixOS's official default; desktop configurations retain Devenv and nix-community as consumers require.

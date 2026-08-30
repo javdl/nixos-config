@@ -142,6 +142,7 @@ systemFunc {
         currentSystem = system;
         currentSystemName = name;
         currentSystemUser = user;
+        isServer = server;
         isWSL = isWSL;
         inputs = inputs;
       };
