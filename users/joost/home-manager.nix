@@ -1159,6 +1159,11 @@ in
 
     includes = [
       "~/.ssh/brev-ssh-config" # Brev CLI manages this file for GPU cloud instances
+      # Host entries shared with machines that have no HM-managed ssh config
+      # (servers run home-manager-server.nix, which sets no programs.ssh).
+      # chezmoi owns the file; their standalone ~/.ssh/config includes it too.
+      # Includes are emitted first, so anything here wins over the blocks below.
+      "~/.ssh/config.local"
     ];
 
     settings = {
