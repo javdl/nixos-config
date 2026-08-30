@@ -175,9 +175,9 @@ Expected warnings after first boot:
 make hetzner/tailscale-auth NIXADDR=<ip> TAILSCALE_AUTHKEY=tskey-auth-xxx
 
 # Commit and push config so auto-update works
-jj describe -m "feat: add <name> colleague server (<hostname>)"
-jj bookmark set main -r @
-jj git push
+git add -A
+git commit -m "feat: add <name> colleague server (<hostname>)"
+git push
 ```
 
 After push, the server's `nixosAutoUpdate` will pull from `github:javdl/nixos-config#<hostname>` daily at 4 AM.
@@ -304,7 +304,7 @@ Only add CLI tools that complement Omarchy without conflicting. `playerctl` is t
 1. Run `make test` before applying changes
 2. Check for evaluation errors
 3. Apply with `make switch` when ready
-4. For new hosts, files must be tracked: `jj file track .`
+4. For new hosts, files must be tracked: `git add -A` (nix flakes ignore untracked files)
 
 ## Package Management
 
@@ -356,7 +356,9 @@ Claude Code performs **literal env-var substitution** on hook commands like `"${
 The file is therefore a chezmoi template: `~/.local/share/chezmoi/dot_claude/settings.json.tmpl`. All home-rooted env vars use `{{ .chezmoi.homeDir }}` (renders to `/home/joost/...` on Linux, `/Users/joost/...` on macOS). Never put tildes or hardcoded `/home/joost` in the source; edit the `.tmpl` instead. If a chezmoi auto-sync from another machine reintroduces tildes, revert it.
 
 ### chezmoi auto-sync races with manual pushes
-A background hook auto-syncs `~/.claude/MEMORY` (and observably `~/.claude/settings.json`) to `~/.local/share/chezmoi` every ~5 min and `jj git push`es to `javdl/dotfiles`. Manual pushes regularly hit "stale info" rejections. Standard recovery: `jj git fetch && jj rebase -d main@origin && jj bookmark set main -r @ && jj git push`. Plan for one or two rebase cycles; it's not a bug.
+A background timer auto-syncs `~/.claude/MEMORY` (and observably `~/.claude/settings.json`) to `~/.local/share/chezmoi` every ~5 min and pushes to `javdl/dotfiles`. Manual pushes regularly hit non-fast-forward rejections. Standard recovery: `git pull --rebase --autostash && git push`. Plan for one or two rebase cycles; it's not a bug.
+
+The sync script (`lib/chezmoi-memory-sync.nix`) uses plain git. It was jj-based until 2026-08-30; the chezmoi clone on `bali` was never jj-colocated, so every `jj` call failed, the guards read those errors as "nothing to do", and the timer reported success while syncing nothing. The script now exits non-zero if `git rev-parse --git-dir` fails, so the same rot cannot recur silently.
 
 ### Bitwarden session handoff for agents
 
@@ -555,11 +557,11 @@ Companion button/macro configs are synced between machines via chezmoi using the
 # After editing Companion buttons/connections:
 companion-sync export          # Exports config via Companion API → chezmoi source
 cd ~/.local/share/chezmoi
-jj describe -m "chore: update Companion config"
-jj bookmark set main -r @ && jj git push
+git add -A && git commit -m "chore: update Companion config"
+git pull --rebase --autostash && git push
 
 # On another machine, to pull updated config:
-cd ~/.local/share/chezmoi && jj git fetch && jj rebase -d main
+cd ~/.local/share/chezmoi && git pull --rebase --autostash
 chezmoi apply
 companion-sync import          # Guides you through importing into Companion
 ```
