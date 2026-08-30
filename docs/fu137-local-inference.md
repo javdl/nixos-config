@@ -203,14 +203,14 @@ find the driver at runtime.
 
 ## C. NixOS side (`hosts/fu137.nix`) — only if fu137 is ever booted into NixOS
 
-This config described a GPU the machine does not have. The RTX 4090 naming was
-corrected to 3090 on 2026-08-30; the remaining rows are still open.
+**This config is stale and does not describe the running machine.** Flagging rather
+than fixing, since it is out of scope for the benchmark:
 
-| `hosts/fu137.nix` | State |
+| `hosts/fu137.nix` says | Reality (`nvidia-smi`) |
 |---|---|
-| `networking.hostName = "fu137-3090-ML"` | GPU model fixed. Still does not match the real hostname, which is plain `fu137` |
-| runner name `fu137-AMD-RTX3090-runner` | GPU model fixed. Renaming re-registers the runner in the `fuww` org if this config is ever booted |
-| `modules/nvidia-drivers-535.nix`, pinned 535.154.05, comment references a 4070 SUPER | **Still stale.** Imported only by fu137, so it is effectively this host's file. Arch side runs 610.57.04 |
+| `networking.hostName = "fu137-4090-ML"` | actual hostname is `fu137` |
+| runner name `fu137-AMD-RTX4090-runner` | GPU is an **RTX 3090**, not a 4090 |
+| `modules/nvidia-drivers-535.nix`, pinned 535.154.05, comment references a 4070 SUPER | Arch side runs **610.57.04** |
 
 If you do bring NixOS up on this box, the GPU-container equivalent of A1 is:
 

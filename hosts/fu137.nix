@@ -31,7 +31,7 @@
   boot.kernel.sysctl."net.ipv4.ip_forward" = true; # Docker
   virtualisation.docker.enable = true;
 
-  networking.hostName = "fu137-3090-ML"; # Define your hostname.
+  networking.hostName = "fu137-4090-ML"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
   # Configure network proxy if necessary
@@ -163,7 +163,7 @@
     github-runners = {
       runner = {
         enable = true;
-        name = "fu137-AMD-RTX3090-runner";
+        name = "fu137-AMD-RTX4090-runner";
         # We suggest using the fine-grained PATs https://search.nixos.org/options?channel=24.05&show=services.github-runners.%3Cname%3E.tokenFile&from=0&size=50&sort=relevance&type=packages&query=services.github-runner
         # The file should contain exactly one line with the token without any newline.
         # https://github.com/settings/personal-access-tokens/new
