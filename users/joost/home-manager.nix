@@ -90,16 +90,6 @@ let
       ;
   };
 
-  # Get unstable packages
-  pkgsUnstable = import inputs.nixpkgs-unstable {
-    inherit (pkgs) system;
-    inherit (pkgs.config) allowUnfree;
-    config = {
-      allowUnfree = true;
-      allowUnsupportedSystem = true;
-    };
-  };
-
   # Use shared manpager
   manpager = shared.manpager;
 
@@ -310,8 +300,6 @@ in
       pre-commit
       # worktrunk: installed via cargo in activation script below
       wasm-pack
-      # pkgsUnstable.fermyon-spin  # Use unstable version
-
       uv
       ruff # Python linter/formatter
       ty # Python type checker

@@ -41,7 +41,7 @@ let
   home-manager =
     if darwin then inputs.home-manager.darwinModules else inputs.home-manager.nixosModules;
 in
-systemFunc rec {
+systemFunc {
   inherit system;
 
   # specialArgs is the right channel for values needed during `imports` resolution

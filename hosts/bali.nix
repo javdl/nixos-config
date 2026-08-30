@@ -459,9 +459,9 @@ in
       ) javdlRunnerCount
     )
     // {
-      # Dedicated runner for this repo. fh.yml's runner-map sends the
-      # x86_64-linux leg to the "nixos-config" label so it lands here rather
-      # than on a 16 GB GitHub-hosted runner.
+      # Dedicated runner for this repo. flake-checker.yml sends full flake
+      # evaluation to the "nixos-config" label so it lands here rather than on
+      # a memory-constrained GitHub-hosted runner.
       nixos-config = common // {
         name = "bali-nixos-config";
         url = "https://github.com/javdl/nixos-config";

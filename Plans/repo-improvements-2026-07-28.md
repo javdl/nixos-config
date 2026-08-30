@@ -243,19 +243,25 @@ explicit rather than guessed.
   `users/music/autostart.nix` ("truncated" per the same comment).
 - **Effort:** minutes.
 
+**RESOLVED 2026-08-30.** Both unreferenced invalid files were deleted and their formatter
+exclusions removed. The similarly orphaned `hosts/ubuntu/fu137.nix` was deleted in the
+same cleanup; `fu137` is managed by the flake's Omarchy Home Manager output. A full
+parser-backed `statix` run now reports zero syntax errors.
+
 ---
 
 ## Batch D — Lint debt (P2)
 
-### D1. 200 deadnix findings, 0 statix findings
-- **Evidence:** `deadnix hosts modules lib users flake.nix` → 200 unused declarations
-  (mostly `Unused lambda pattern: pkgs`); `statix check` → clean.
-- **Impact:** the flake comment says lints are kept out of `checks` "to avoid blocking on
-  pre-existing legacy findings" — this quantifies that debt. statix is already clean, so it
-  could be gated **today** at zero cost.
-- **Action:** (a) add `statix` to `checks` now; (b) burn down deadnix in one mechanical pass,
-  then gate it too.
-- **Effort:** (a) minutes, (b) half a day.
+### D1. Parser-clean tree with 204 statix style findings
+- **Evidence (refreshed 2026-08-30):** `statix check --format json .` parses every tracked
+  Nix file with zero syntax errors and reports 204 style suggestions: 117 repeated dotted
+  keys, 79 `inherit` suggestions, 4 unnecessary-parentheses findings, 2 useless `let`
+  expressions, and 2 empty argument patterns.
+- **Impact:** this is style debt, not a current evaluation failure. Enabling the full lint
+  as a hard gate would make every existing warning block unrelated work.
+- **Action:** reduce findings in small, host-evaluation-protected batches, then add the lint
+  gate once the baseline reaches zero. Do not run an unreviewed whole-tree automatic fix.
+- **Effort:** several mechanical batches.
 
 ### D2. 32 TODO/FIXME/XXX markers across `.nix` files
 - **Action:** triage into real issues or delete. Low priority, but they hide real gaps
@@ -319,4 +325,5 @@ explicit rather than guessed.
 4. **E1** → oldest unmitigated risk; cheap.
 5. **C1, C3, C4** → free weight loss, no behaviour change.
 6. **B1 + B2** → the duplication that keeps generating bugs.
-7. **D1(a)** statix gate, then **B5, B4** behind the A4 safety net.
+7. Reduce **D1** in small batches before enabling a statix gate; keep **B5/B4** behind the
+   host-evaluation safety net.

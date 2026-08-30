@@ -204,11 +204,9 @@
       };
     in
     {
-      # `nix fmt` — formats this repo's own Nix sources only. Skips vendored trees
-      # (skills, .claude worktrees), the dead all-comment
-      # modules/programs.nix (not valid standalone Nix) and truncated
-      # users/music/autostart.nix, and the machine-generated lib/overlays.nix
-      # (rewritten wholesale by the tool-updater automation — not hand-formatted).
+      # `nix fmt` — formats this repo's own Nix sources only. lib/overlays.nix
+      # remains excluded because package-update automation edits its large,
+      # mechanically structured blocks in place.
       formatter = forAllSystems (
         system:
         let
@@ -225,8 +223,6 @@
               exec nixfmt "$@"
             fi
             find flake.nix lib modules hosts users -name '*.nix' \
-              ! -name programs.nix \
-              ! -path '*/music/autostart.nix' \
               ! -name overlays.nix \
               -print0 | xargs -0 nixfmt
           '';
@@ -274,8 +270,6 @@
               ''
                 cd ${self}
                 if ! find flake.nix lib modules hosts users -name '*.nix' \
-                  ! -name programs.nix \
-                  ! -path '*/music/autostart.nix' \
                   ! -name overlays.nix \
                   -print0 | xargs -0 nixfmt --check; then
                   echo "Nix files are not formatted. Run 'nix fmt' to fix." >&2
@@ -321,7 +315,7 @@
       # Apple-Silicon NixOS VMs were unused and no longer evaluated: 13 tools in
       # lib/overlays.nix ship no aarch64-linux binary. vm-intel remains.
 
-      nixosConfigurations.vm-intel = mkSystem "vm-intel" rec {
+      nixosConfigurations.vm-intel = mkSystem "vm-intel" {
         system = "x86_64-linux";
         user = "joost";
       };
@@ -332,17 +326,17 @@
         wsl = true;
       };
 
-      nixosConfigurations.fumusic = mkSystem "fumusic" rec {
+      nixosConfigurations.fumusic = mkSystem "fumusic" {
         system = "x86_64-linux";
         user = "joost";
       };
 
-      nixosConfigurations.fu095 = mkSystem "fu095" rec {
+      nixosConfigurations.fu095 = mkSystem "fu095" {
         system = "x86_64-linux";
         user = "joost";
       };
 
-      nixosConfigurations.j7 = mkSystem "j7" rec {
+      nixosConfigurations.j7 = mkSystem "j7" {
         system = "x86_64-linux";
         user = "joost";
         raphael = true;

@@ -9,6 +9,7 @@
           pkgs-unstable = import inputs.nixpkgs-unstable {
             system = prev.stdenv.hostPlatform.system;
             config.allowUnfree = true;
+            overlays = [ ];
           };
 
           # grepai - semantic code search CLI tool

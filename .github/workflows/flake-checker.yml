@@ -1,24 +1,52 @@
 name: Flake ❄️ Checker ✅
 
 on:
+  pull_request:
+  push:
+    branches:
+      - main
   schedule:
     # l33t o'clock
     - cron: "37 13 * * *"
   workflow_dispatch:
 
+concurrency:
+  group: nix-flake-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   flake-checker:
-    name: Flake Checker
-    runs-on: ubuntu-22.04
+    name: Check flake inputs
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
-      id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/flake-checker-action@de924abd783455e8429c858962b9e43062d19da1
         with:
-          determinate: true
-      - uses: DeterminateSystems/flakehub-cache-action@main
-      - uses: DeterminateSystems/flake-checker-action@main
+          # Freshness is handled by lock-updater.yml; fail here on provenance,
+          # supported-ref, and lockfile-policy violations.
+          check-outdated: false
+          fail-mode: true
+          ignore-missing-flake-lock: false
+          nixpkgs-keys: nixpkgs,nixpkgs-unstable
+
+  flake-check:
+    name: Evaluate and check every configuration
+    # This is a public repository. Never run code from an untrusted fork on the
+    # persistent self-hosted runner; same-repository PRs require write access.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on:
+      - self-hosted
+      - nixos-config
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Run flake checks
+        run: nix flake check --print-build-logs
