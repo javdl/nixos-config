@@ -51,7 +51,7 @@ Each runner:
 The config merges three existing patterns:
 1. **Hetzner server infra** (`hosts/desmondroid.nix`) - Tailscale, auto-update, SOPS, security audit, GC
 2. **CI package set** (`modules/github-actions-runner.nix`) - Docker, languages, build tools, browsers, cloud CLIs
-3. **Runner service** (`hosts/fu137.nix`) - NixOS `services.github-runners` with token + org URL
+3. **Runner service** (`hosts/j7.nix`) - NixOS `services.github-runners` with token + org URL
 
 Key design choices:
 - **Dedicated `github-runner` user** runs the runner process, has Docker group access

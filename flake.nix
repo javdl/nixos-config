@@ -189,11 +189,16 @@
 
       omarchyHome = mkOmarchyHome {
         hostName = "fu137";
-        # mosh is not an Omarchy/pacman-managed package, so Nix may own it here.
-        # NixOS and Darwin hosts get mosh from lib/mksystem.nix; this standalone
-        # Home Manager profile has no system layer, so it carries its own copy.
         extraPackages = pkgs: [
           pkgs.playerctl
+          # Local-inference helper. CPU-only, no CUDA linkage: Nix-built CUDA
+          # binaries cannot reach Arch's driver libs without nixGL, so the GPU
+          # runtimes (ollama-cuda, nvidia-container-toolkit) come from pacman.
+          # See docs/fu137-local-inference.md.
+          pkgs.gollama
+          # mosh is not an Omarchy/pacman-managed package, so Nix may own it here.
+          # NixOS and Darwin hosts get mosh from lib/mksystem.nix; this standalone
+          # Home Manager profile has no system layer, so it carries its own copy.
           pkgs.mosh
         ];
       };
@@ -337,14 +342,6 @@
         user = "joost";
       };
 
-      nixosConfigurations.fu137 = mkSystem "fu137" rec {
-        system = "x86_64-linux";
-        user = "joost";
-        raphael = true;
-        pstate = true; # for modern AMD cpu's
-        zenpower = true; # for modern AMD cpu's
-      };
-
       nixosConfigurations.j7 = mkSystem "j7" rec {
         system = "x86_64-linux";
         user = "joost";
@@ -353,8 +350,11 @@
         zenpower = true;
       };
 
-      # fu137 also boots Arch Linux (Omarchy). On that OS it is managed through
-      # homeConfigurations."fu137", not this NixOS output.
+      # fu137 runs Arch Linux (Omarchy) and is managed entirely through
+      # homeConfigurations."fu137" below. Its NixOS output, hosts/fu137.nix,
+      # hosts/hardware/fu137.nix and modules/nvidia-drivers-535.nix were
+      # removed on 2026-08-30; nothing built them. Recover from git history if
+      # the box is ever reinstalled with NixOS.
 
       nixosConfigurations.github-runner = mkSystem "github-runner" {
         system = "x86_64-linux";
