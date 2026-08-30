@@ -328,14 +328,6 @@
         user = "joost";
       };
 
-      nixosConfigurations.fu137 = mkSystem "fu137" rec {
-        system = "x86_64-linux";
-        user = "joost";
-        raphael = true;
-        pstate = true; # for modern AMD cpu's
-        zenpower = true; # for modern AMD cpu's
-      };
-
       nixosConfigurations.j7 = mkSystem "j7" rec {
         system = "x86_64-linux";
         user = "joost";
@@ -344,8 +336,11 @@
         zenpower = true;
       };
 
-      # fu137 also boots Arch Linux (Omarchy). On that OS it is managed through
-      # homeConfigurations."fu137", not this NixOS output.
+      # fu137 runs Arch Linux (Omarchy) and is managed entirely through
+      # homeConfigurations."fu137" below. Its NixOS output, hosts/fu137.nix,
+      # hosts/hardware/fu137.nix and modules/nvidia-drivers-535.nix were
+      # removed on 2026-08-30; nothing built them. Recover from git history if
+      # the box is ever reinstalled with NixOS.
 
       nixosConfigurations.github-runner = mkSystem "github-runner" {
         system = "x86_64-linux";

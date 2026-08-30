@@ -201,31 +201,40 @@ find the driver at runtime.
 
 ---
 
-## C. NixOS side (`hosts/fu137.nix`) — only if fu137 is ever booted into NixOS
+## C. NixOS side (removed)
 
-**This config is stale and does not describe the running machine.** Flagging rather
-than fixing, since it is out of scope for the benchmark:
+fu137 runs Omarchy. It has no NixOS config any more.
 
-| `hosts/fu137.nix` says | Reality (`nvidia-smi`) |
-|---|---|
-| `networking.hostName = "fu137-4090-ML"` | actual hostname is `fu137` |
-| runner name `fu137-AMD-RTX4090-runner` | GPU is an **RTX 3090**, not a 4090 |
-| `modules/nvidia-drivers-535.nix`, pinned 535.154.05, comment references a 4070 SUPER | Arch side runs **610.57.04** |
+`hosts/fu137.nix`, `hosts/hardware/fu137.nix`, `modules/nvidia-drivers-535.nix`
+and the `nixosConfigurations.fu137` entry in `flake.nix` were deleted on
+2026-08-30. Nothing built them: the cluster was reachable only from that one
+flake entry, and the driver module was imported by `hosts/fu137.nix` alone. The
+config had also drifted badly, naming an RTX 4090 and pinning driver 535.154.05
+against hardware that is an RTX 3090 running 610.57.04.
 
-If you do bring NixOS up on this box, the GPU-container equivalent of A1 is:
+`homeConfigurations."fu137"` is unaffected and remains how this box is managed.
+The Herdr fleet entry in `users/herdr-fleet.nix` reaches fu137 over SSH and never
+depended on the NixOS output.
 
-```diff
-   boot.kernel.sysctl."net.ipv4.ip_forward" = true; # Docker
-   virtualisation.docker.enable = true;
-+  hardware.nvidia-container-toolkit.enable = true;   # gives docker --gpus
-+  users.users.joost.extraGroups = [ "networkmanager" "wheel" "docker" ];
-+
-+  services.ollama = {
-+    enable = true;
-+    acceleration = "cuda";
-+    models = "/var/lib/ollama/models";
-+  };
+If the box is ever reinstalled with NixOS, recover the files from git history
+(they precede the deletion commit) rather than writing them fresh, then:
+
+- bump the driver. Our pinned `nixos-26.05` tops out at 595.71.05, while
+  `nixpkgs-unstable` carries 610.43.03 as `new_feature` in
+  `pkgs/os-specific/linux/nvidia-x11/default.nix` with upstream-verified hashes
+  to copy into a `mkDriver` call
+- add the GPU-container bits, the NixOS equivalent of section A1:
+
+```nix
+  hardware.nvidia-container-toolkit.enable = true;   # gives docker --gpus
+  users.users.joost.extraGroups = [ "networkmanager" "wheel" "docker" ];
+
+  services.ollama = {
+    enable = true;
+    acceleration = "cuda";
+    models = "/var/lib/ollama/models";
+  };
 ```
 
-`hardware.nvidia-container-toolkit.enable` requires `hardware.graphics.enable`, which
-`modules/nvidia-drivers-535.nix` already sets.
+`hardware.nvidia-container-toolkit.enable` requires `hardware.graphics.enable`,
+which the old driver module set.
