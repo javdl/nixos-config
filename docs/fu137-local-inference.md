@@ -93,7 +93,8 @@ box has 12 GiB of RAM available with 16 GiB already swapped, and `/tmp` is RAM-b
 
 ## Constraint that drives every choice below
 
-fu137 currently boots **Arch/Omarchy**, not NixOS. Its entire Nix surface is:
+fu137 runs **Arch/Omarchy**, not NixOS. The Nix package manager is present and
+active (Determinate Nix 3.22.2), but only as a **standalone Home Manager** profile:
 
     # flake.nix:187
     omarchyHome = mkOmarchyHome {
@@ -101,9 +102,20 @@ fu137 currently boots **Arch/Omarchy**, not NixOS. Its entire Nix surface is:
       extraPackages = pkgs: [ pkgs.playerctl ];
     };
 
-That is a **standalone Home Manager** profile — no system services, no kernel modules,
-no /etc. There is also **no nixGL** anywhere in this repo, so a Nix-built CUDA binary
-(`pkgs.ollama-cuda`) has no supported way to find Arch's `/usr/lib/libcuda.so.1`.
+`extraPackages` is only the host-specific tail. The profile imports
+`users/joost/home-manager.nix` with `isOmarchy = true`, so the real package set is
+**133 packages**, `aichat` among them. Check before adding anything:
+
+    nix eval --impure --expr 'let f = builtins.getFlake (toString ./.); in
+      map (p: p.pname or p.name) f.homeConfigurations.fu137.config.home.packages'
+
+What standalone Home Manager cannot do is the point here: no system services, no
+kernel modules, no /etc. There is also **no nixGL** anywhere in this repo, so a
+Nix-built CUDA binary (`pkgs.ollama-cuda`) has no supported way to find Arch's
+`/usr/lib/libcuda.so.1`.
+
+Omarchy owns the desktop stack and its own packages via pacman. See the Quattro
+rules in `CLAUDE.md`; the profile was trimmed for Quattro in `7dd22a7` (2026-08-26).
 
 => GPU runtimes on fu137 must come from **pacman**, not Nix. The Nix layer stays for
 non-GPU CLI helpers only. Everything below is split accordingly.
@@ -185,14 +197,18 @@ Better alternative: leave /tmp alone and keep model caches on disk via
 +          # Nix-built CUDA binaries cannot reach Arch's driver libs without nixGL,
 +          # so the GPU runtimes (ollama-cuda, nvidia-container-toolkit) come from
 +          # pacman instead. See docs/fu137-local-inference.md.
-+          pkgs.aichat        # CLI client, talks to the ollama HTTP endpoint
 +          pkgs.gollama       # manage/inspect local ollama models
 +        ];
        };
 ```
 
-Both verified present in this repo's pinned nixpkgs: `aichat-0.30.0`, `gollama-2.0.4`.
-(`gguf-tools` and `huggingface-cli` are NOT in nixpkgs — do not reach for them.)
+Only `gollama` is worth adding. **Do not add `aichat`**: it already reaches fu137 via
+`users/joost/home-manager.nix:323` and is on PATH at `~/.nix-profile/bin/aichat`.
+
+`gollama-2.0.4` is verified present in this repo's pinned nixpkgs, is not installed,
+and is not in Arch's official repos, so Nix is the right source for it. Adding it
+respects the Quattro rule of layering only CLI tools that pacman does not own.
+(`gguf-tools` and `huggingface-cli` are NOT in nixpkgs. Do not reach for them.)
 
 Apply with: `home-manager switch --flake ".#fu137"`
 
