@@ -116,6 +116,10 @@ systemFunc rec {
         { manual.manpages.enable = false; }
         # mise (dev tool / runtime version manager) on every machine
         ({ pkgs, ... }: { home.packages = [ pkgs.mise ]; })
+        # Agent CLIs (claude, codex, opencode, cursor, grok, omp, pi), Herdr
+        # integrations for them, and the moshi-hook daemon, for every user on
+        # every machine. See users/agent-clis.nix.
+        ../users/agent-clis.nix
         # programs.git manages ~/.config/git/config as a read-only store symlink,
         # so `git config --global ...` fails to lock it. Git writes --global to
         # ~/.gitconfig when it exists, and reads it after (overriding) the XDG

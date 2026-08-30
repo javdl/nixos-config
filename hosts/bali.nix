@@ -50,6 +50,10 @@ in
     ../modules/podman.nix
     ../modules/repo-updater.nix
     ../modules/ghostty-terminfo.nix
+    # Reaches personal-tailnet machines (terra, radon) that node sharing cannot
+    # deliver to a tagged device. Profiles are added imperatively; see the
+    # module header.
+    ../modules/tailmix.nix
     ../modules/github-actions-runner.nix
     inputs.hermes-agent.nixosModules.default
   ];
@@ -190,6 +194,10 @@ in
   # is exactly what the "no public ports" stance above rules out. Mosh still
   # works over the tailnet, where tailscale0 is a trusted interface.
   programs.mosh.openFirewall = false;
+
+  # Multi-tailnet daemon (see modules/tailmix.nix). Enabled here only: bali is
+  # the Herdr controller that needs to reach the personal tailnet.
+  services.tailmix.enable = true;
 
   # SSH daemon - key-only auth, tailnet-only (no port is publicly open).
   # Port 2222 additionally allows password auth for clients that can't do

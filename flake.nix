@@ -157,6 +157,9 @@
               inherit inputs;
               currentSystemName = hostName;
             })
+            # Same agent CLI toolset the NixOS/Darwin hosts get from
+            # lib/mksystem.nix; this profile has no system layer to inherit it.
+            ./users/agent-clis.nix
             (
               { lib, pkgs, ... }:
               {
@@ -426,9 +429,16 @@
         pkgs = import nixpkgs {
           system = "x86_64-linux";
           overlays = overlays;
+          # claude-code and cursor-cli (users/agent-clis.nix) are unfree; the
+          # NixOS/Darwin hosts get this from lib/mksystem.nix, this standalone
+          # profile has to set it itself.
+          config.allowUnfree = true;
         };
         modules = [
           ./users/ubuntu-runner/home-manager.nix
+          # Same agent CLI toolset the NixOS/Darwin hosts get from
+          # lib/mksystem.nix; this profile has no system layer to inherit it.
+          ./users/agent-clis.nix
           # mise (dev tool / runtime version manager) and mosh on every machine.
           # Standalone HM on Ubuntu: no system layer, so mosh ships here rather
           # than via lib/mksystem.nix like the NixOS/Darwin hosts.
