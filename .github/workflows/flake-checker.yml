@@ -55,11 +55,22 @@ jobs:
             exit 0
           fi
 
-          # Determinate lazy trees can occasionally retain an input source path
-          # that was collected before a dependent output forces it. Retry only
-          # after a real failure; ordinary evaluation keeps lazy trees enabled.
-          echo "::warning::Retrying evaluation with lazy trees disabled"
-          nix flake check --all-systems --no-build --print-build-logs --option lazy-trees false
+          # Hermes' flake-parts module refers back to inputs.self.packages. A
+          # collected lazy self-source cannot be restored by archiving the root
+          # flake; directly evaluating the pinned package materializes it.
+          echo "::warning::Materializing the locked Hermes package before retrying evaluation"
+          # shellcheck disable=SC2016 # ${...} below is Nix interpolation.
+          hermes_ref="$(
+            nix eval --raw --impure --expr '
+              let
+                locked = (builtins.fromJSON (builtins.readFile ./flake.lock)).nodes."hermes-agent".locked;
+              in
+              "github:${locked.owner}/${locked.repo}/${locked.rev}"
+            '
+          )"
+          nix eval --raw "${hermes_ref}#packages.x86_64-linux.default.drvPath" \
+            --no-eval-cache --option lazy-trees false >/dev/null
+          nix flake check --all-systems --no-build --no-eval-cache --print-build-logs --option lazy-trees false
 
       - name: Build native checks
         run: |

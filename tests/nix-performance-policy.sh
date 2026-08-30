@@ -38,6 +38,9 @@ reject 'pkgs-unstable = import inputs\.nixpkgs-unstable' lib/overlays.nix
 require 'mkHostEvalChecks' flake.nix
 reject 'evaluated = lib\.concatStringsSep' flake.nix
 require 'nix flake check --all-systems --no-build' .github/workflows/flake-checker.yml
+require 'nix flake check --all-systems --no-build --no-eval-cache.*--option lazy-trees false' .github/workflows/flake-checker.yml
+require 'hermes_ref=' .github/workflows/flake-checker.yml
+require 'packages\.x86_64-linux\.default\.drvPath' .github/workflows/flake-checker.yml
 
 reject 'download-buffer-size' flake.nix modules/cachix.nix hosts/mac-shared.nix
 reject 'cache\.nixos\.org|hyprland\.cachix\.org' modules/cachix.nix
