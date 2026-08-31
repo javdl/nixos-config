@@ -108,10 +108,12 @@ ping -c1 bali                  # a work-tailnet host
 
 ## Notes
 
-- **`tailmixd` defaults to `-auto-update=true`.** Nix owns the binary and
-  `/nix/store` is read-only, so that update can never apply. It is harmless but
-  pointless; add `-auto-update=false` via `extraFlags` if the log noise annoys
-  you. `bali` has the same default today.
+- **`-auto-update=false` is set for you.** `tailmixd` defaults it to true, but
+  Nix owns the binary and `/nix/store` is read-only, so a self-update can never
+  apply. It is passed from `lib/tailmix-service.nix`, so bali gets it too.
+  Upgrade by bumping `tailmixVersion` in `lib/overlays.nix`. A host that wants
+  the daemon updating itself can pass `-auto-update=true` through `extraFlags`,
+  which lands after this flag and wins.
 - The unit reads its binary from `~/.nix-profile/bin/tailmixd`, a stable symlink
   that follows the current Home Manager generation, so `make switch` upgrades the
   daemon without touching the unit. This is the same convention

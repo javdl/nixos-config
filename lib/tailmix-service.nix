@@ -28,6 +28,12 @@ rec {
       tailmixd
       "-state=/var/lib/tailmix/state.json"
       "-socket-dir=/run/tailmix"
+      # tailmixd defaults this to true, but Nix owns the binary and /nix/store
+      # is read-only, so a self-update can never apply -- it can only fail and
+      # make noise. Upgrades come from bumping tailmixVersion in
+      # lib/overlays.nix. Listed before extraFlags so a host can still turn it
+      # back on: Go's flag package takes the last occurrence.
+      "-auto-update=false"
     ]
     ++ extraFlags;
 
