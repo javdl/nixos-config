@@ -124,28 +124,6 @@ in
           };
           moshiHookSource = moshiHookSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for moshi-hook: ${prev.stdenv.hostPlatform.system}");
 
-          # omp (oh-my-pi) - terminal coding agent forked from Mario Zechner's Pi
-          # harness. Packaged from the platform npm tarballs, the same pattern as
-          # codex below, NOT from the GitHub release asset: `oh-omp-linux-x64`
-          # there is a bare Bun runtime that prints Bun's own help, so shipping it
-          # would install Bun under the name omp. The npm entry point
-          # (@oh-labs/oh-omp) is only a launcher that resolves these per-platform
-          # packages, so we fetch them directly. Binaries are dynamically linked,
-          # hence autoPatchelfHook on Linux. Upstream ships linux-x64 and
-          # darwin-arm64 only, so this follows the pi-agent null pattern.
-          ompVersion = "0.15.1";
-          ompSources = {
-            "x86_64-linux" = {
-              url = "https://registry.npmjs.org/@oh-labs/oh-omp-linux-x64/-/oh-omp-linux-x64-${ompVersion}.tgz";
-              sha256 = "1cp60jjslg2dj3lvk4369wdd4vkvvi9l4l6sgprbp8rvwz02132w";
-            };
-            "aarch64-darwin" = {
-              url = "https://registry.npmjs.org/@oh-labs/oh-omp-darwin-arm64/-/oh-omp-darwin-arm64-${ompVersion}.tgz";
-              sha256 = "01si0hl9pi10ydky7b6fc61d6n9mnkawgz9wzvrszhx71xcmk83l";
-            };
-          };
-          ompSource = ompSources.${prev.stdenv.hostPlatform.system} or null;
-
           # tailmix - joins several tailnets at once by running one tsnet client
           # per tailnet behind a single TUN, remapping peers into a local IPv4
           # range and answering MagicDNS with those addresses. Used on bali to
@@ -693,64 +671,6 @@ in
               platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
             };
           };
-
-          # omp (oh-my-pi) - terminal coding agent.
-          #
-          # Do NOT run autoPatchelfHook on this binary. It is a Bun standalone
-          # executable: the JS payload is appended past the ELF and located
-          # relative to end-of-file, so patchelf's rewrite silently drops it and
-          # the result degrades into a plain Bun runtime. Verified both ways on
-          # bali: patched `omp --version` prints Bun's "1.3.14" and `--help`
-          # prints Bun's help, while the untouched binary prints "oh-omp/0.15.1"
-          # and the real agent help. Same class of breakage already documented
-          # for cm below ("bun cross-compilation doesn't embed scripts").
-          #
-          # Instead keep the file byte-identical and invoke it through the glibc
-          # loader. omp also downloads a pi_natives .node addon into
-          # ~/.oh-omp/natives at runtime and dlopens it, and that addon needs
-          # libz, so LD_LIBRARY_PATH has to carry zlib as well as libstdc++.
-          omp = if ompSource != null then prev.stdenv.mkDerivation {
-            pname = "omp";
-            version = ompVersion;
-
-            src = prev.fetchurl {
-              url = ompSource.url;
-              sha256 = ompSource.sha256;
-            };
-
-            sourceRoot = "package";
-
-            nativeBuildInputs = [ prev.makeWrapper ];
-
-            # Stripping would rewrite the ELF the same way patchelf does.
-            dontStrip = true;
-            dontPatchELF = true;
-
-            installPhase = ''
-              mkdir -p $out/bin $out/libexec
-              cp oh-omp $out/libexec/oh-omp
-              chmod +x $out/libexec/oh-omp
-            '' + (if prev.stdenv.hostPlatform.isLinux then ''
-              makeWrapper ${prev.stdenv.cc.bintools.dynamicLinker} $out/bin/oh-omp \
-                --add-flags $out/libexec/oh-omp \
-                --prefix LD_LIBRARY_PATH : ${prev.lib.makeLibraryPath [
-                  prev.zlib
-                  prev.stdenv.cc.cc.lib
-                ]}
-            '' else ''
-              makeWrapper $out/libexec/oh-omp $out/bin/oh-omp
-            '') + ''
-              ln -s oh-omp $out/bin/omp
-            '';
-
-            meta = with prev.lib; {
-              description = "oh-my-pi (omp) - batteries-included terminal coding agent";
-              homepage = "https://github.com/open-horizon-labs/oh-omp";
-              license = licenses.mit;
-              mainProgram = "omp";
-              platforms = [ "x86_64-linux" "aarch64-darwin" ];
-            };
-          } else null;
 
           # tailmix - multi-tailnet client. Release tarball holds the bare
           # binary plus docs, hence sourceRoot ".".
@@ -1561,7 +1481,22 @@ in
             };
           };
 
-          # omp - oh-my-pi coding agent (bare binary, needs patchelf on Linux)
+          # omp - oh-my-pi coding agent.
+          #
+          # Do NOT run autoPatchelfHook on this binary. It is a Bun standalone
+          # executable: the JS payload is appended past the ELF and located
+          # relative to end-of-file, so patchelf's rewrite silently drops it and
+          # the result degrades into a plain Bun runtime. Being dynamically
+          # linked against glibc does not make the rewrite safe -- that was the
+          # reasoning that shipped a patchelf'd build, and the result printed
+          # Bun's own "1.4.0" for `omp --version` and Bun's help for
+          # `omp --help`. Same class of breakage documented for cm below
+          # ("bun cross-compilation doesn't embed scripts").
+          #
+          # Instead keep the file byte-identical and invoke it through the glibc
+          # loader. omp also downloads a pi_natives .node addon into its state
+          # dir at runtime and dlopens it, and that addon needs libz, so
+          # LD_LIBRARY_PATH has to carry zlib as well as libstdc++.
           omp = prev.stdenv.mkDerivation {
             pname = "omp";
             version = ompVersion;
@@ -1573,14 +1508,26 @@ in
 
             dontUnpack = true;
 
-            nativeBuildInputs = prev.lib.optionals prev.stdenv.isLinux [ prev.autoPatchelfHook ];
-            buildInputs = prev.lib.optionals prev.stdenv.isLinux [ prev.stdenv.cc.cc.lib ];
+            nativeBuildInputs = [ prev.makeWrapper ];
+
+            # Stripping would rewrite the ELF the same way patchelf does.
+            dontStrip = true;
+            dontPatchELF = true;
 
             installPhase = ''
-              mkdir -p $out/bin
-              cp $src $out/bin/omp
-              chmod +x $out/bin/omp
-            '';
+              mkdir -p $out/bin $out/libexec
+              cp $src $out/libexec/omp
+              chmod +x $out/libexec/omp
+            '' + (if prev.stdenv.hostPlatform.isLinux then ''
+              makeWrapper ${prev.stdenv.cc.bintools.dynamicLinker} $out/bin/omp \
+                --add-flags $out/libexec/omp \
+                --prefix LD_LIBRARY_PATH : ${prev.lib.makeLibraryPath [
+                  prev.zlib
+                  prev.stdenv.cc.cc.lib
+                ]}
+            '' else ''
+              makeWrapper $out/libexec/omp $out/bin/omp
+            '');
 
             meta = with prev.lib; {
               description = "Coding agent for the terminal with the IDE wired in (oh-my-pi)";
