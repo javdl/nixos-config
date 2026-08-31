@@ -266,9 +266,25 @@ The repository uses a modular architecture with clear separation of concerns:
 - Global overlay: Add to flake.nix overlay section for unstable packages
 - Custom overlay: Create in `overlays/` directory
 
-### Omarchy Quattro/fu137 Machine (Arch Linux)
+### Omarchy Quattro Machines (Arch Linux)
 
-`fu137` also boots Arch Linux running **Omarchy Quattro** (Arch + Hyprland). It uses standalone Home Manager via `homeConfigurations."fu137"` in `flake.nix`; `j9` and `omarchy` remain compatibility aliases for old commands.
+Two boxes run **Omarchy Quattro** (Arch + Hyprland) and are managed through
+standalone Home Manager outputs in `flake.nix`, not as NixOS hosts:
+
+| Host | Hardware | Output | Notes |
+|---|---|---|---|
+| `fu137` | Ryzen 9 7950X, RTX 3090, 30 GiB | `homeConfigurations."fu137"` | Herdr fleet `gpu` worker (see `users/herdr-fleet.nix`) |
+| `j9` | Ryzen 9 9950X3D, RTX 4090, 60 GiB | `homeConfigurations."j9"` | Not a Herdr fleet node |
+
+Both are built from `mkOmarchyHome` with the shared `omarchyExtraPackages`
+list, so they differ only in the `hostName` threaded through as
+`currentSystemName`. **That hostname is load-bearing.** `users/herdr-fleet.nix`
+keys the fleet worker role off `currentSystemName == "fu137"`, so pointing a
+second machine's output at `hostName = "fu137"` installs bali's fleet SSH key
+into that machine's `authorized_keys`. Give every new Omarchy box its own
+`mkOmarchyHome` call rather than aliasing an existing one.
+
+`omarchy` remains a compatibility alias for `fu137`.
 
 **DO NOT add these packages to the Omarchy Nix config.** They are managed by Omarchy via pacman:
 - Desktop stack: `hyprland`, `quickshell`, `uwsm`, `xdg-desktop-portal-hyprland`

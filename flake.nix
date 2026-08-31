@@ -186,20 +186,36 @@
           ];
         };
 
+      # Packages layered on top of Quattro's pacman set on every Omarchy box.
+      # Keep this list in sync with omarchyManagedPackageNames in
+      # users/joost/home-manager.nix: anything Quattro ships must not appear here.
+      omarchyExtraPackages = pkgs: [
+        pkgs.playerctl
+        # Local-inference helper. CPU-only, no CUDA linkage: Nix-built CUDA
+        # binaries cannot reach Arch's driver libs without nixGL, so the GPU
+        # runtimes (ollama-cuda, nvidia-container-toolkit) come from pacman.
+        # See docs/fu137-local-inference.md.
+        pkgs.gollama
+        # mosh is not an Omarchy/pacman-managed package, so Nix may own it here.
+        # NixOS and Darwin hosts get mosh from lib/mksystem.nix; this standalone
+        # Home Manager profile has no system layer, so it carries its own copy.
+        pkgs.mosh
+      ];
+
+      # fu137: Ryzen 9 7950X / RTX 3090 / 30 GiB. Herdr fleet "gpu" worker —
+      # users/herdr-fleet.nix keys that role off currentSystemName == "fu137".
       omarchyHome = mkOmarchyHome {
         hostName = "fu137";
-        extraPackages = pkgs: [
-          pkgs.playerctl
-          # Local-inference helper. CPU-only, no CUDA linkage: Nix-built CUDA
-          # binaries cannot reach Arch's driver libs without nixGL, so the GPU
-          # runtimes (ollama-cuda, nvidia-container-toolkit) come from pacman.
-          # See docs/fu137-local-inference.md.
-          pkgs.gollama
-          # mosh is not an Omarchy/pacman-managed package, so Nix may own it here.
-          # NixOS and Darwin hosts get mosh from lib/mksystem.nix; this standalone
-          # Home Manager profile has no system layer, so it carries its own copy.
-          pkgs.mosh
-        ];
+        extraPackages = omarchyExtraPackages;
+      };
+
+      # j9: Ryzen 9 9950X3D / RTX 4090 / 60 GiB, a second Omarchy Quattro box.
+      # Distinct from fu137 despite the shared profile, so it needs its own
+      # hostName: threading "fu137" through here would hand j9 fu137's identity
+      # and, via users/herdr-fleet.nix, fu137's Herdr fleet worker key.
+      j9Home = mkOmarchyHome {
+        hostName = "j9";
+        extraPackages = omarchyExtraPackages;
       };
     in
     {
@@ -457,11 +473,11 @@
       };
 
       # Omarchy Quattro package manifests live in /usr/share/omarchy/install.
-      # gum, tldr, mpv, localsend, inxi and mise are Quattro core packages;
-      # playerctl is the only remaining complementary package from the old list.
-      # Current hostname plus compatibility aliases used by older commands.
+      # gum, tldr, mpv, localsend, inxi and mise are Quattro core packages, so
+      # they stay out of the Nix layer. Two real Omarchy hosts, fu137 and j9;
+      # "omarchy" stays an alias for fu137 for older commands.
       homeConfigurations."fu137" = omarchyHome;
-      homeConfigurations."j9" = omarchyHome;
+      homeConfigurations."j9" = j9Home;
       homeConfigurations."omarchy" = omarchyHome;
     };
 }
