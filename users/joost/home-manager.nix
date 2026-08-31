@@ -78,6 +78,29 @@ let
   keepPackage =
     package: !(isOmarchy && builtins.elem (lib.getName package) omarchyManagedPackageNames);
 
+  # Pinentry for services.gpg-agent on Omarchy Quattro.
+  #
+  # pinentry-tty (the default below) prompts on whichever terminal gpg-agent
+  # currently believes is yours. On a Hyprland desktop with a long-lived agent
+  # that TTY goes stale, the prompt lands nowhere, and signing dies with
+  # "gpg: signing failed: Operation cancelled".
+  #
+  # Quattro already ships pinentry via pacman, and /usr/bin/pinentry is Arch's
+  # chooser: it picks a GUI backend when WAYLAND/DISPLAY is set and falls back
+  # to curses/tty otherwise. That fallback is why this beats hardcoding one
+  # backend -- the same config keeps working when you SSH into the box. It
+  # resolves to pinentry-gnome3 here, which needs org.gnome.keyring.SystemPrompter;
+  # Omarchy runs gnome-keyring-daemon, so that prompter is available.
+  #
+  # Symlinked rather than packaged from nixpkgs on purpose: a Nix-built Qt/GTK
+  # pinentry would have to locate its platform plugins inside an Arch Wayland
+  # session, the same impedance mismatch documented for CUDA in
+  # docs/fu137-local-inference.md. Desktop integration stays Omarchy's job.
+  omarchyPinentry = pkgs.runCommand "omarchy-pinentry" { } ''
+    mkdir -p "$out/bin"
+    ln -s /usr/bin/pinentry "$out/bin/pinentry"
+  '';
+
   # Import shared configuration
   shared = import ../shared-home-manager.nix {
     inherit
@@ -2331,7 +2354,9 @@ in
 
   services.gpg-agent = {
     enable = isLinux;
-    pinentry.package = pkgs.pinentry-tty;
+    # Omarchy borrows Quattro's pacman pinentry (see omarchyPinentry above);
+    # every other Linux host, servers included, keeps the tty prompt.
+    pinentry.package = if isOmarchy then omarchyPinentry else pkgs.pinentry-tty;
 
     # cache the keys forever so we don't get asked for a password
     defaultCacheTtl = 31536000;
