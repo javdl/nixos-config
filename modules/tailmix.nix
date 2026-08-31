@@ -28,6 +28,10 @@
 
 let
   cfg = config.services.tailmix;
+
+  # Unit fields shared with the Omarchy boxes, which get the same daemon from a
+  # rendered unit file instead of this module. See lib/tailmix-service.nix.
+  unit = import ../lib/tailmix-service.nix { inherit lib; };
 in
 {
   options.services.tailmix = {
@@ -47,28 +51,17 @@ in
     environment.systemPackages = [ cfg.package ];
 
     systemd.services.tailmixd = {
-      description = "Tailmix multi-tailnet networking daemon";
-      documentation = [ "https://github.com/maisem/tailmix" ];
+      inherit (unit) description;
+      documentation = [ unit.documentation ];
       wants = [ "network-online.target" ];
       after = [ "network-online.target" ];
       wantedBy = [ "multi-user.target" ];
 
-      serviceConfig = {
-        Type = "simple";
-        ExecStart = lib.concatStringsSep " " (
-          [
-            "${cfg.package}/bin/tailmixd"
-            "-state=/var/lib/tailmix/state.json"
-            "-socket-dir=/run/tailmix"
-          ]
-          ++ cfg.extraFlags
-        );
-        Restart = "on-failure";
-        RestartSec = "5s";
-        StateDirectory = "tailmix";
-        StateDirectoryMode = "0700";
-        RuntimeDirectory = "tailmix";
-        RuntimeDirectoryMode = "0755";
+      serviceConfig = unit.serviceConfig // {
+        ExecStart = unit.execStart {
+          tailmixd = "${cfg.package}/bin/tailmixd";
+          inherit (cfg) extraFlags;
+        };
       };
     };
   };

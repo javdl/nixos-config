@@ -101,6 +101,17 @@ let
     ln -s /usr/bin/pinentry "$out/bin/pinentry"
   '';
 
+  # tailmixd unit for the Omarchy boxes, sharing its fields with the NixOS
+  # module bali uses. See lib/tailmix-service.nix for why both exist.
+  tailmixUnit = import ../../lib/tailmix-service.nix { inherit lib; };
+
+  # [Service] keys render in Nix's alphabetical attribute order, which systemd
+  # does not care about; ExecStart is appended rather than folded into the
+  # shared set because only this consumer knows the binary's path.
+  tailmixServiceSection = lib.concatStringsSep "\n" (
+    lib.mapAttrsToList (k: v: "${k}=${toString v}") tailmixUnit.serviceConfig
+  );
+
   # Import shared configuration
   shared = import ../shared-home-manager.nix {
     inherit
@@ -572,6 +583,41 @@ in
   );
 
   home.file = {
+    # tailmix on Omarchy: reach a second tailnet without moving tailscaled.
+    #
+    # tailscaled serves one tailnet at a time. j9 must stay on buri-hoki,
+    # because the "j9" SSH alias below resolves to j9.buri-hoki.ts.net for every
+    # other personal machine. tailmix supplies the other tailnet instead: one
+    # tsnet client per tailnet behind a single TUN, peers remapped into a local
+    # IPv4 range so the two overlapping 100.64.0.0/10 spaces stop colliding. It
+    # is the same daemon bali runs, for the mirror-image reason
+    # (modules/tailmix.nix).
+    #
+    # tailmixd needs a TUN device, so it cannot be a Home Manager user service.
+    # This only renders the unit; linking and starting it is a one-time root
+    # step, and each tailnet profile consumes an auth key that must never reach
+    # the store. Both are documented in docs/tailmix-omarchy.md.
+    ".config/tailmix/tailmixd.service" = lib.mkIf isOmarchy {
+      text = ''
+        [Unit]
+        Description=${tailmixUnit.description}
+        Documentation=${tailmixUnit.documentation}
+        Wants=network-online.target
+        After=network-online.target
+
+        [Service]
+        ExecStart=${
+          tailmixUnit.execStart {
+            tailmixd = "${config.home.homeDirectory}/.nix-profile/bin/tailmixd";
+          }
+        }
+        ${tailmixServiceSection}
+
+        [Install]
+        WantedBy=multi-user.target
+      '';
+    };
+
     ".config/zellij/layouts/devops.kdl".source = ../zellij-monitor-runners.kdl;
     ".config/zellij/layouts/fun.kdl".source = ./zellij-fun.kdl;
     ".config/zellij/layouts/frontend.kdl".source = ../zellij-frontend-fuww.kdl;

@@ -200,6 +200,10 @@
         # NixOS and Darwin hosts get mosh from lib/mksystem.nix; this standalone
         # Home Manager profile has no system layer, so it carries its own copy.
         pkgs.mosh
+        # Multi-tailnet daemon. Only the binaries come from here; the unit is
+        # rendered by users/joost/home-manager.nix and installed by root once.
+        # See docs/tailmix-omarchy.md.
+        pkgs.tailmix
       ];
 
       # fu137: Ryzen 9 7950X / RTX 3090 / 30 GiB. Herdr fleet "gpu" worker —

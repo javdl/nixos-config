@@ -286,6 +286,14 @@ into that machine's `authorized_keys`. Give every new Omarchy box its own
 
 `omarchy` remains a compatibility alias for `fu137`.
 
+**Two tailnets from one Omarchy box.** `tailscaled` serves one tailnet at a
+time, and j9 must stay on `buri-hoki` so the `j9` SSH alias keeps resolving.
+The second tailnet comes from tailmix, whose unit is rendered into
+`~/.config/tailmix/tailmixd.service` by `users/joost/home-manager.nix` and
+installed by root once. The unit fields are shared with the NixOS module bali
+uses via `lib/tailmix-service.nix`, so the two cannot drift. See
+[`docs/tailmix-omarchy.md`](docs/tailmix-omarchy.md).
+
 **DO NOT add these packages to the Omarchy Nix config.** They are managed by Omarchy via pacman:
 - Desktop stack: `hyprland`, `quickshell`, `uwsm`, `xdg-desktop-portal-hyprland`
 - Omarchy CLI/core tools: `gum`, `tldr`, `mpv`, `localsend`, `inxi`, `mise-bin`, `tmux`, `starship`
