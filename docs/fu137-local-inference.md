@@ -4,7 +4,11 @@ fu137 is a Mac-less Arch/Omarchy workstation with an RTX 3090. This document
 records what the GPU stack actually contains, what it measures at, and what to
 install if the box becomes a persistent local-inference host.
 
-Nothing in section A or B has been applied. Review before running any of it.
+**Round 2 (2026-09-02)** fills the card with 7B-30B models, bge-m3, SigLIP2 and a
+VLM, and installs ollama-cuda: see [`fu137-local-inference-round2.md`](fu137-local-inference-round2.md).
+
+Applied so far: B (gollama, 2026-08-30) and A2 (ollama-cuda, 2026-09-02). A1, A3, A4
+are still proposals; review before running any of them.
 
 Harness: [`scripts/fu137-gpu-bench.py`](../scripts/fu137-gpu-bench.py)
 Raw numbers: [`docs/fu137-gpu-bench-results.json`](fu137-gpu-bench-results.json)
@@ -147,6 +151,8 @@ Adding joost to `docker` grants root-equivalent access to the host. Rootless doc
 podman avoids that if it matters here.
 
 ### A2. A persistent local model server
+
+**Applied 2026-09-02** (`ollama-cuda 0.32.15-1`, `ollama.service` enabled, models in `/var/lib/ollama`; the `OLLAMA_MODELS` override below was not needed since the Arch package already defaults there).
 
     sudo pacman -S --needed ollama-cuda                  # extra/0.32.15-1, 988 MiB
     sudo systemctl enable --now ollama
