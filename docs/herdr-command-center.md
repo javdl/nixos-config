@@ -2,8 +2,8 @@
 
 `bali` is the persistent Herdr command center. It runs the named `agents`
 session and uses `herdr-mirror` to present workspaces from three regular
-runners, the fu137 GPU workstation, and a maximum-size exe.dev development VM
-in one sidebar.
+runners, the fu137 and j9 GPU workstations, the j8 Mac Studio, and a
+maximum-size exe.dev development VM in one sidebar.
 
 ```text
 operator
@@ -15,6 +15,8 @@ bali: Herdr session "agents" + herdr-mirror
    |-- r04 --> github-runner-04 (regular)
    |-- r05 --> github-runner-05 (regular)
    |-- gpu --> fu137            (GPU, watch-first)
+   |-- j9  --> j9               (GPU, watch-first)
+   |-- j8  --> j8               (macOS, watch-first)
    `-- exe --> fu-herdr-dev     (exe.dev, 4 vCPU / 16 GB)
 ```
 
@@ -30,27 +32,39 @@ operator's SSH client therefore leaves every server-owned pane running.
 | `runner04` | `github-runner-04` | regular | `100.97.77.46` | `r04` | control |
 | `runner05` | `github-runner-05` | regular | `100.108.96.124` | `r05` | control |
 | `gpu` | fu137 Omarchy boot | GPU | `fu137` SSH alias | `gpu` | watch-first |
+| `j9` | j9 Omarchy boot | GPU | `100.115.211.110` | `j9` | watch-first |
+| `j8` | j8 Mac Studio (Darwin) | mac | `100.67.159.69` | `j8` | watch-first |
 | `exedev` | `fu-herdr-dev` | dev | `fu-herdr-dev` SSH alias | `exe` | control |
 
-Bali runs Tailscale with DNS acceptance disabled. The runner inventory uses
-stable tailnet IPs, while Bali's chezmoi-owned SSH config maps `fu137` to
-`100.92.74.63` and selects the fleet key. The exe.dev worker uses the dotless
-`fu-herdr-dev` SSH alias, which selects Bali's FashionUnited team key without
-matching its personal `*.exe.xyz` block. If a tailnet machine is re-enrolled
-and its IP changes, update the matching inventory or SSH-config entry.
+Bali runs Tailscale with DNS acceptance disabled. The runner, j9 and j8
+inventory entries use stable tailnet IPs, while Bali's chezmoi-owned SSH config
+maps `fu137` to `100.92.74.63` and selects the fleet key. The exe.dev worker
+uses the dotless `fu-herdr-dev` SSH alias, which selects Bali's FashionUnited
+team key without matching its personal `*.exe.xyz` block. If a tailnet machine
+is re-enrolled and its IP changes, update the matching inventory or SSH-config
+entry. Note that j8 and j9 are also reachable on the personal tailnet under
+different addresses; the inventory deliberately uses the addresses they hold on
+Bali's own tailnet (`j9` = `100.115.211.110`, `j8-1` = `100.67.159.69`).
 
-The GPU mirror sets `always_control = false`: it observes without changing the
-visible fu137 terminal geometry until somebody types into the mirrored pane.
-The headless runners and exe.dev worker stay writable and follow the controller
-pane size.
+The three workstation mirrors set `always_control = false`: they observe
+without changing the visible fu137/j9/j8 terminal geometry until somebody types
+into the mirrored pane. The headless runners and exe.dev worker stay writable
+and follow the controller pane size.
 
-The three runners and fu137 accept Bali over OpenSSH carried by Tailscale.
-fu137 remains a user-owned Arch/Omarchy workstation; because Bali is tagged
-`tag:devboxes`, Tailscale SSH cannot connect from Bali to fu137. Regular
-OpenSSH preserves fu137's user identity while the tailnet policy and its
-interface-scoped firewall rule keep port 22 private. fu137 is a worker only:
-the mirror package, `hosts.toml`, and plugin activation are all gated on
-`controller`, which fu137 does not set.
+The three runners and the three workstations accept Bali over OpenSSH carried
+by Tailscale. fu137 and j9 remain user-owned Arch/Omarchy machines and j8 a
+user-owned Mac; because Bali is tagged `tag:devboxes`, Tailscale SSH cannot
+connect from Bali to any of them. Regular OpenSSH preserves their user identity
+while the tailnet policy and an interface-scoped firewall rule keep port 22
+private. They are workers only: the mirror package, `hosts.toml`, and plugin
+activation are all gated on `controller`, which none of them set.
+
+j8 is the one Darwin node. Home Manager has no systemd there, so
+`users/herdr-fleet.nix` starts the same `agents` session from a launchd agent
+(`~/Library/LaunchAgents/org.nix-community.home.herdr-agents.plist`, logging to
+`/tmp/herdr-agents.log`) instead of a `systemd --user` unit, and its
+`remote_bin` is the nix-darwin per-user profile path
+`/etc/profiles/per-user/joost/bin/herdr`.
 
 ## Declarative pieces
 
@@ -64,8 +78,10 @@ the mirror package, `hosts.toml`, and plugin activation are all gated on
   binary, integrations, config, and lingering user service on an Ubuntu node.
 - `hosts/github-runner-{03,04,05}.nix` import the node module.
 - `users/joost/home-manager-server.nix` enables controller mode only on Bali.
-- `users/joost/home-manager.nix` enables node mode on fu137 without touching
-  Omarchy-owned desktop, terminal, Hyprland, or package configuration.
+- `users/joost/home-manager.nix` enables node mode on fu137, j9 and j8 (it
+  imports `users/herdr-fleet.nix`, which matches `currentSystemName` against its
+  `workstationWorkers` list) without touching Omarchy-owned desktop, terminal,
+  Hyprland, or package configuration.
 
 The repo pins Herdr `0.8.2` in `lib/overlays.nix` and herdr-mirror `0.4.1` in
 `users/herdr-fleet.nix`. The mirror release checksum is verified by Nix. Stable
@@ -132,10 +148,12 @@ ssh joost@100.97.77.46 'sudo nixos-rebuild switch --flake "github:javdl/nixos-co
 ssh joost@100.108.96.124 'sudo nixos-rebuild switch --flake "github:javdl/nixos-config#github-runner-05"'
 ```
 
-Apply the standalone Home Manager output on fu137:
+Apply the standalone Home Manager output on each Omarchy workstation, from the
+machine itself:
 
 ```bash
 make switch NIXNAME=fu137
+make switch NIXNAME=j9
 ```
 
 That activation starts the `agents` Herdr user service and idempotently appends
@@ -152,10 +170,11 @@ loginctl show-user joost -p Linger
 ```
 
 The tailnet policy must grant Bali (`100.113.194.113`) access to fu137
-(`100.92.74.63`) on TCP 22. Do not add a Tailscale `ssh` rule for this path:
-that section controls Tailscale SSH, whose tagged-to-user-owned restriction is
-why OpenSSH is used. Do not add a global firewall rule either; the
-`tailscale0` rule leaves the public interface under UFW's default-deny policy.
+(`100.92.74.63`) and j9 (`100.115.211.110`) on TCP 22. Do not add a Tailscale
+`ssh` rule for this path: that section controls Tailscale SSH, whose
+tagged-to-user-owned restriction is why OpenSSH is used. Do not add a global
+firewall rule either; the `tailscale0` rule leaves the public interface under
+UFW's default-deny policy.
 
 `loginctl enable-linger` is what keeps `herdr-agents` running across logout and
 reboot, independently of SSH sessions.
@@ -165,9 +184,43 @@ Authorize the connection once from Bali:
 ```bash
 ssh -o BatchMode=yes -o ConnectTimeout=5 fu137 \
   'HERDR_SESSION=agents herdr status server --json'
+ssh -o BatchMode=yes -o ConnectTimeout=5 joost@100.115.211.110 \
+  'HERDR_SESSION=agents herdr status server --json'
 ```
 
 No `/usr/share/omarchy` files are modified.
+
+### j8 (Darwin)
+
+j8 is a nix-darwin host, so the fleet profile arrives with the normal system
+switch, run on the Mac:
+
+```bash
+make switch NIXNAME=j8
+```
+
+That activation writes the launchd agent, loads it, and appends Bali's fleet key
+to `~/.ssh/authorized_keys`. macOS has no linger concept — a launchd *agent*
+runs in the user's GUI login session, so the `agents` server starts at login and
+stops at logout. Enable Remote Login (System Settings → General → Sharing →
+Remote Login) and confirm the agent came up:
+
+```bash
+launchctl print "gui/$UID/org.nix-community.home.herdr-agents" | head
+tail -n 20 /tmp/herdr-agents.log
+```
+
+Grant Bali (`100.113.194.113`) TCP 22 to j8 (`100.67.159.69`) in the tailnet
+policy, in the same `acls` section (not `ssh`) used for fu137 and j9. Then, from
+Bali:
+
+```bash
+ssh -o BatchMode=yes -o ConnectTimeout=5 joost@100.67.159.69 \
+  'HERDR_SESSION=agents /etc/profiles/per-user/joost/bin/herdr status server --json'
+```
+
+j8 sleeps like a normal workstation; when it is offline the mirror simply shows
+that host as unreachable and the rest of the sidebar is unaffected.
 
 ## Agent authentication
 
@@ -182,9 +235,10 @@ claude
 herdr integration status
 ```
 
-Repeat for runners 04 and 05. fu137 already has current Claude and Codex Herdr
-integrations. The exe.dev golden image supplies the agent binaries but no
-credentials, so complete the same interactive logins through
+Repeat for runners 04 and 05. fu137, j9 and j8 already have current Claude and
+Codex Herdr integrations from their normal workstation profile. The exe.dev
+golden image supplies the agent binaries but no credentials, so complete the
+same interactive logins through
 `ssh fu-herdr-dev`. Bali's existing agent configuration remains
 user/chezmoi-owned. Do not copy API keys, OAuth files, or subscription
 credentials into this repo.
@@ -194,7 +248,7 @@ credentials into this repo.
 On every machine:
 
 ```bash
-systemctl --user status herdr-agents
+systemctl --user status herdr-agents   # on j8: launchctl print "gui/$UID/org.nix-community.home.herdr-agents"
 HERDR_SESSION=agents herdr status server --json
 herdr integration status
 ```
@@ -208,6 +262,10 @@ for ip in 100.126.150.43 100.97.77.46 100.108.96.124; do
 done
 ssh -o BatchMode=yes -o ConnectTimeout=5 fu137 \
   'HERDR_SESSION=agents herdr status server --json'
+ssh -o BatchMode=yes -o ConnectTimeout=5 joost@100.115.211.110 \
+  'HERDR_SESSION=agents herdr status server --json'
+ssh -o BatchMode=yes -o ConnectTimeout=5 joost@100.67.159.69 \
+  'HERDR_SESSION=agents /etc/profiles/per-user/joost/bin/herdr status server --json'
 ssh -o BatchMode=yes -o ConnectTimeout=8 exedev@fu-herdr-dev \
   'HERDR_SESSION=agents ~/.local/bin/herdr status server --json'
 ```
@@ -255,6 +313,8 @@ Useful non-interactive commands:
 ```bash
 herdctl hosts
 herdctl gpu workspace list
+herdctl j9 workspace list
+herdctl j8 workspace list
 herdctl exedev workspace list
 herdctl runner04 agent list
 herdctl runner05 agent read reviewer --source recent-unwrapped --lines 120
@@ -270,7 +330,10 @@ session. Use raw SSH for non-Herdr administration.
    so the correct account identity wins.
 2. Import `modules/herdr-fleet-node.nix` from the NixOS host. For a non-NixOS
    host, import `users/herdr-fleet.nix` from its Home Manager profile with
-   `provisionAgentRuntime = true`.
+   `provisionAgentRuntime = true`. A personal workstation whose profile already
+   imports `users/herdr-fleet.nix` (anything on `users/joost/home-manager.nix`,
+   NixOS, Darwin or Omarchy) only needs its `currentSystemName` added to the
+   `workstationWorkers` list in that file.
 3. Add one entry to `fleetNodes` in `users/herdr-fleet.nix`, including its role,
    SSH user and target, sidebar prefix, Herdr path, and control policy.
 4. Evaluate and deploy both the node and Bali. Bali's generated `hosts.toml` and

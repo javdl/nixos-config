@@ -207,16 +207,17 @@
       ];
 
       # fu137: Ryzen 9 7950X / RTX 3090 / 30 GiB. Herdr fleet "gpu" worker —
-      # users/herdr-fleet.nix keys that role off currentSystemName == "fu137".
+      # users/herdr-fleet.nix keys the workstation-worker role off
+      # currentSystemName, so this string is what enrolls the box.
       omarchyHome = mkOmarchyHome {
         hostName = "fu137";
         extraPackages = omarchyExtraPackages;
       };
 
-      # j9: Ryzen 9 9950X3D / RTX 4090 / 60 GiB, a second Omarchy Quattro box.
-      # Distinct from fu137 despite the shared profile, so it needs its own
-      # hostName: threading "fu137" through here would hand j9 fu137's identity
-      # and, via users/herdr-fleet.nix, fu137's Herdr fleet worker key.
+      # j9: Ryzen 9 9950X3D / RTX 4090 / 60 GiB, a second Omarchy Quattro box,
+      # and the Herdr fleet "j9" worker. Distinct from fu137 despite the shared
+      # profile, so it needs its own hostName: threading "fu137" through here
+      # would hand j9 fu137's identity and its slot in the fleet inventory.
       j9Home = mkOmarchyHome {
         hostName = "j9";
         extraPackages = omarchyExtraPackages;
