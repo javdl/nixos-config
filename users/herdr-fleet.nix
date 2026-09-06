@@ -14,8 +14,17 @@
 let
   sessionName = "agents";
   baliFleetPublicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEfx6qICt/nunP+X3Wv8Y6hhZtGo0AZreAp3QOThy0SD bali-herdr-command-center";
-  isFu137 = currentSystemName == "fu137";
-  isFleetMachine = controller || isFu137 || provisionAgentRuntime;
+  # Personal workstations that join the fleet as workers. They already carry
+  # herdr and the agent CLIs from their normal profile, so they need the named
+  # session service, the shared config and Bali's fleet key — not the runtime
+  # packages that `provisionAgentRuntime` adds to the headless runners.
+  workstationWorkers = [
+    "fu137"
+    "j9"
+    "j8"
+  ];
+  isWorkstationWorker = builtins.elem currentSystemName workstationWorkers;
+  isFleetMachine = controller || isWorkstationWorker || provisionAgentRuntime;
 
   # Single fleet inventory consumed by both hosts.toml and herdctl. Bali has
   # Tailscale DNS disabled, so tailnet targets use their stable IPs. The
@@ -56,6 +65,27 @@ let
       target = "fu137";
       prefix = "gpu";
       remoteBin = "/home/joost/.nix-profile/bin/herdr";
+      alwaysControl = false;
+    }
+    {
+      name = "j9";
+      role = "gpu";
+      user = "joost";
+      target = "100.115.211.110";
+      prefix = "j9";
+      # Standalone Home Manager on Arch/Omarchy, same as fu137.
+      remoteBin = "/home/joost/.nix-profile/bin/herdr";
+      alwaysControl = false;
+    }
+    {
+      name = "j8";
+      role = "mac";
+      user = "joost";
+      target = "100.67.159.69";
+      prefix = "j8";
+      # nix-darwin sets home-manager.useUserPackages, so Home Manager packages
+      # land in the per-user system profile rather than ~/.nix-profile.
+      remoteBin = "/etc/profiles/per-user/joost/bin/herdr";
       alwaysControl = false;
     }
     {
@@ -204,7 +234,9 @@ let
 in
 lib.mkIf isFleetMachine {
   home.username = lib.mkDefault "joost";
-  home.homeDirectory = lib.mkDefault "/home/joost";
+  home.homeDirectory = lib.mkDefault (
+    if pkgs.stdenv.hostPlatform.isDarwin then "/Users/joost" else "/home/joost"
+  );
   home.stateVersion = lib.mkDefault "25.11";
 
   xdg.enable = true;
@@ -245,11 +277,12 @@ lib.mkIf isFleetMachine {
     source = "${herdrMirror}/bin/herdr-mirror";
   };
 
-  # Bali is a tagged device while fu137 deliberately remains user-owned, so
-  # Tailscale SSH cannot authorize this direction. Append Bali's fleet key to
-  # the user-owned file instead of declaring home.file: a Home Manager symlink
-  # would replace every other key already trusted by this workstation.
-  home.activation.herdrFleetAuthorizedKey = lib.mkIf isFu137 (
+  # Bali is a tagged device while the workstations deliberately remain
+  # user-owned, so Tailscale SSH cannot authorize this direction. Append Bali's
+  # fleet key to the user-owned file instead of declaring home.file: a Home
+  # Manager symlink would replace every other key already trusted by these
+  # machines.
+  home.activation.herdrFleetAuthorizedKey = lib.mkIf isWorkstationWorker (
     lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       auth_dir="$HOME/.ssh"
       auth_file="$auth_dir/authorized_keys"
@@ -274,7 +307,7 @@ lib.mkIf isFleetMachine {
     ''
   );
 
-  systemd.user.services.herdr-agents = {
+  systemd.user.services.herdr-agents = lib.mkIf pkgs.stdenv.hostPlatform.isLinux {
     Unit = {
       Description = "Persistent Herdr agents session";
       After = [ "network-online.target" ];
@@ -291,6 +324,31 @@ lib.mkIf isFleetMachine {
       RestartSec = 5;
     };
     Install.WantedBy = [ "default.target" ];
+  };
+
+  # Home Manager has no systemd on Darwin (systemd.user.enable defaults to
+  # pkgs.stdenv.isLinux, so the block above is silently dropped there). j8 gets
+  # the same named session from a launchd agent instead. KeepAlive is launchd's
+  # equivalent of Restart=on-failure plus WantedBy=default.target: it starts at
+  # login and restarts the server if it exits.
+  launchd.agents.herdr-agents = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
+    enable = true;
+    config = {
+      ProgramArguments = [
+        "${pkgs.herdr}/bin/herdr"
+        "--session"
+        sessionName
+        "server"
+      ];
+      EnvironmentVariables = {
+        HERDR_CONFIG_PATH = "${activeHerdrConfig}";
+        HERDR_SESSION = sessionName;
+      };
+      RunAtLoad = true;
+      KeepAlive = true;
+      StandardOutPath = "/tmp/herdr-agents.log";
+      StandardErrorPath = "/tmp/herdr-agents.log";
+    };
   };
 
   # Ensure every fleet machine publishes Claude and Codex lifecycle state to

@@ -274,15 +274,15 @@ standalone Home Manager outputs in `flake.nix`, not as NixOS hosts:
 | Host | Hardware | Output | Notes |
 |---|---|---|---|
 | `fu137` | Ryzen 9 7950X, RTX 3090, 30 GiB | `homeConfigurations."fu137"` | Herdr fleet `gpu` worker (see `users/herdr-fleet.nix`) |
-| `j9` | Ryzen 9 9950X3D, RTX 4090, 60 GiB | `homeConfigurations."j9"` | Not a Herdr fleet node |
+| `j9` | Ryzen 9 9950X3D, RTX 4090, 60 GiB | `homeConfigurations."j9"` | Herdr fleet `j9` worker (see `users/herdr-fleet.nix`) |
 
 Both are built from `mkOmarchyHome` with the shared `omarchyExtraPackages`
 list, so they differ only in the `hostName` threaded through as
 `currentSystemName`. **That hostname is load-bearing.** `users/herdr-fleet.nix`
-keys the fleet worker role off `currentSystemName == "fu137"`, so pointing a
-second machine's output at `hostName = "fu137"` installs bali's fleet SSH key
-into that machine's `authorized_keys`. Give every new Omarchy box its own
-`mkOmarchyHome` call rather than aliasing an existing one.
+keys the fleet worker role off `currentSystemName`, so pointing a second
+machine's output at an existing `hostName` gives it that machine's fleet
+identity and mirror slot. Give every new Omarchy box its own `mkOmarchyHome`
+call rather than aliasing an existing one.
 
 `omarchy` remains a compatibility alias for `fu137`.
 
@@ -562,8 +562,9 @@ All dev servers include the following AI agent tooling. Run `ntm deps -v` to che
 ### Herdr fleet command center
 
 `bali` is the main Herdr controller. It mirrors the named `agents` sessions on
-github-runner-03, github-runner-04, github-runner-05, the fu137 GPU machine,
-and the maximum-size `fu-herdr-dev` exe.dev worker.
+github-runner-03, github-runner-04, github-runner-05, the fu137 and j9 GPU
+workstations, the j8 Mac Studio, and the maximum-size `fu-herdr-dev` exe.dev
+worker.
 Keep the fleet inventory in `users/herdr-fleet.nix`; follow
 [`docs/herdr-command-center.md`](docs/herdr-command-center.md) for rollout,
 verification, authentication, and adding nodes.
