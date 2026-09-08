@@ -268,7 +268,7 @@ in
       # libheif
       # lmstudio — macOS via brew cask (lm-studio), Linux via nixpkgs-unstable overlay
       # ollama
-      omp # oh-my-pi coding agent (overlay pins 18.0.11)
+      omp # oh-my-pi coding agent (overlay pins 18.1.14)
       opencode
       oxlint
       railway
@@ -297,7 +297,7 @@ in
       codex
       destructive-command-guard # Safety hook for AI agents (dcg command)
       grepai # Semantic code search for AI coding assistants
-      herdr # Terminal workspace manager for AI coding agents (overlay pins 0.8.2)
+      herdr # Terminal workspace manager for AI coding agents (overlay pins 0.9.0)
       grok-build # xAI Grok Build CLI (grok command; overlay pins 1.0.5)
       gws # Google Workspace CLI
       ntm # Named Tmux Manager for AI agent coordination

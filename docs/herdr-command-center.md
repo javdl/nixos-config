@@ -67,7 +67,7 @@ the mirror package, `hosts.toml`, and plugin activation are all gated on
 - `users/joost/home-manager.nix` enables node mode on fu137 without touching
   Omarchy-owned desktop, terminal, Hyprland, or package configuration.
 
-The repo pins Herdr `0.8.2` in `lib/overlays.nix` and herdr-mirror `0.4.1` in
+The repo pins Herdr `0.9.0` in `lib/overlays.nix` and herdr-mirror `0.4.1` in
 `users/herdr-fleet.nix`. The mirror release checksum is verified by Nix. Stable
 Herdr 0.8.2 exposes the terminal session streams the mirror uses.
 
