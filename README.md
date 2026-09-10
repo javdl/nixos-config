@@ -38,7 +38,9 @@ Software that cannot (yet) be installed via Nix or Brew or Mac App Store:
 
 ### Bitfocus Companion
 
-We use [Bitfocus Companion](https://bitfocus.io/companion) to send keystrokes for triggering prompts and other automations. Companion sends keystroke commands over the network to the target machine, where [VICREO Listener](https://vicreo-listener.com/downloads) receives and executes them. It runs as a background service, listens on a local port, and types into whatever app is focused. Works identically on macOS and Linux.
+For the Omarchy/Wayland setup on fu137, see [Companion on Omarchy](docs/companion-omarchy.md).
+
+We use [Bitfocus Companion](https://bitfocus.io/companion) to send keystrokes for triggering prompts and other automations. Companion sends keystroke commands over the network to the target machine, where [VICREO Listener](https://vicreo-listener.com/downloads) receives and executes them. It runs as a background service, listens on a local port, and types into the focused app. VICREO supports macOS and Linux/X11; native Wayland typing on Omarchy uses local `wtype` actions instead.
 
 **Setup steps:**
 
