@@ -1,5 +1,13 @@
 # Agents Operational Guide
 
+## Start here: repository index
+
+Use the [repository index](docs/index.md) to find the source files and guidance
+for your task: host/user configuration, packages, deployment, secrets, agent
+services, desktop ownership, CI, and troubleshooting. Read the matching runbook
+before changing that area; the index also separates operational guides from
+historical plans and audits.
+
 ## Operating Principles (applied throughout this file)
 
 1. **Audit consumers before changing a config value.** If a field is interpolated (`${X}/...`), grep every file that consumes it and confirm the consumer handles your new value's shape (no unexpanded tildes, no unexpanded env vars).
