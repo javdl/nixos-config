@@ -40,6 +40,11 @@ let
     "geekbench"
     "gum"
     "imagemagick"
+    "ia-writer-duospace"
+    "ia-writer-mono"
+    "ia-writer-quattro"
+    "libinput"
+    "libwacom"
     "inxi"
     "inkscape"
     "jq"
@@ -199,6 +204,7 @@ let
 in
 {
   imports = [
+    (import ./omarchy-startup.nix { inherit isOmarchy currentSystemName; })
     ./cachix-daemon.nix # auto-push locally-built paths to javdl-nixos-config cachix
     (import ../herdr-fleet.nix { inherit currentSystemName; })
   ];
@@ -811,29 +817,6 @@ in
   );
 
   xdg.configFile = {
-    # Own only the requested login layout; Omarchy retains the rest of Hyprland.
-    "hypr/autostart.lua" =
-      lib.mkIf
-        (
-          isOmarchy
-          && builtins.elem currentSystemName [
-            "fu137"
-            "j9"
-          ]
-        )
-        {
-          force = true;
-          text = ''
-            -- Startup placement only: later windows open on the current workspace.
-            hl.on("hyprland.start", function()
-              hl.exec_cmd("/usr/bin/ghostty --gtk-single-instance=false -e ${pkgs.herdr}/bin/herdr --remote bali", { workspace = "1 silent" })
-              hl.exec_cmd("/usr/bin/chatgpt", { workspace = "2 silent" })
-              hl.exec_cmd("/usr/bin/zeditor --new", { workspace = "3 silent" })
-              hl.exec_cmd("/usr/bin/brave-origin", { workspace = "4 silent" })
-              hl.exec_cmd("/usr/bin/slack --gtk-version=3", { workspace = "5 silent" })
-            end)
-          '';
-        };
     "wezterm/wezterm.lua".text = ''
       local wezterm = require 'wezterm'
       local config = wezterm.config_builder()
@@ -2450,10 +2433,10 @@ in
     Install.WantedBy = [ "default.target" ];
   };
 
-  xresources.extraConfig = builtins.readFile ./Xresources;
+  xresources.extraConfig = lib.mkIf (!isOmarchy) (builtins.readFile ./Xresources);
 
   # Make cursor not tiny on HiDPI screens
-  home.pointerCursor = lib.mkIf (isLinux && !isWSL) {
+  home.pointerCursor = lib.mkIf (isLinux && !isWSL && !isOmarchy) {
     name = "Vanilla-DMZ";
     package = pkgs.vanilla-dmz;
     size = 128;

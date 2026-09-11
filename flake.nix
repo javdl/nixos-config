@@ -159,10 +159,6 @@
             # Same agent CLI toolset the NixOS/Darwin hosts get from
             # lib/mksystem.nix; this profile has no system layer to inherit it.
             ./users/agent-clis.nix
-            {
-              imports = [ ./users/companion-omarchy.nix ];
-              programs.companionOmarchy.enable = hostName == "fu137";
-            }
             (
               { lib, pkgs, ... }:
               {
