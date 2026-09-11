@@ -811,6 +811,29 @@ in
   );
 
   xdg.configFile = {
+    # Own only the requested login layout; Omarchy retains the rest of Hyprland.
+    "hypr/autostart.lua" =
+      lib.mkIf
+        (
+          isOmarchy
+          && builtins.elem currentSystemName [
+            "fu137"
+            "j9"
+          ]
+        )
+        {
+          force = true;
+          text = ''
+            -- Startup placement only: later windows open on the current workspace.
+            hl.on("hyprland.start", function()
+              hl.exec_cmd("/usr/bin/ghostty --gtk-single-instance=false -e ${pkgs.herdr}/bin/herdr --remote bali", { workspace = "1 silent" })
+              hl.exec_cmd("/usr/bin/chatgpt", { workspace = "2 silent" })
+              hl.exec_cmd("/usr/bin/zeditor --new", { workspace = "3 silent" })
+              hl.exec_cmd("/usr/bin/brave-origin", { workspace = "4 silent" })
+              hl.exec_cmd("/usr/bin/slack --gtk-version=3", { workspace = "5 silent" })
+            end)
+          '';
+        };
     "wezterm/wezterm.lua".text = ''
       local wezterm = require 'wezterm'
       local config = wezterm.config_builder()
