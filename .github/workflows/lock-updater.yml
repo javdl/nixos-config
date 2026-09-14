@@ -18,7 +18,7 @@ jobs:
         with:
           persist-credentials: false
       - uses: DeterminateSystems/determinate-nix-action@v3.21.9
-      - uses: DeterminateSystems/update-flake-lock@v28
+      - uses: DeterminateSystems/update-flake-lock@v29
         with:
           branch: automated/flake-lock-updates
           pr-title: "chore: update flake.lock"
