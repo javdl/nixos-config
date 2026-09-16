@@ -26,7 +26,7 @@
               -- Managed by Nix: users/joost/omarchy-startup.nix.
               -- Startup placement only: later windows open on the current workspace.
               hl.on("hyprland.start", function()
-                hl.exec_cmd("/usr/bin/ghostty --gtk-single-instance=false -e ${pkgs.herdr}/bin/herdr --remote bali", { workspace = "1 silent" })
+                hl.exec_cmd("/usr/bin/ghostty --gtk-single-instance=false", { workspace = "1 silent" })
                 hl.exec_cmd("/usr/bin/chatgpt", { workspace = "2 silent" })
                 hl.exec_cmd("/usr/bin/zeditor --new", { workspace = "3 silent" })
                 hl.exec_cmd("/usr/bin/brave-origin", { workspace = "4 silent" })
