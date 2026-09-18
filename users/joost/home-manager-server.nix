@@ -701,6 +701,9 @@ in
     initContent = ''
       export GPG_TTY=$(tty)
 
+      # API keys rendered by chezmoi from Bitwarden (TYPESAFE_API_KEY, OPENROUTER_API_KEY, ...)
+      [[ -r ~/.env ]] && { set -a; source ~/.env; set +a; }
+
       # SSH agent: find best working agent and update symlink
       _update_ssh_agent() {
         local sock best=""
