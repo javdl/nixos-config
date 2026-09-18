@@ -191,6 +191,7 @@
       # users/joost/home-manager.nix: anything Quattro ships must not appear here.
       omarchyExtraPackages = pkgs: [
         pkgs.playerctl
+        pkgs.thunderbird
         # Local-inference helper. CPU-only, no CUDA linkage: Nix-built CUDA
         # binaries cannot reach Arch's driver libs without nixGL, so the GPU
         # runtimes (ollama-cuda, nvidia-container-toolkit) come from pacman.
