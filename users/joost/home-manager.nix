@@ -1046,6 +1046,9 @@ in
 
       export GPG_TTY=$(tty)
 
+      # API keys rendered by chezmoi from Bitwarden (TYPESAFE_API_KEY, OPENROUTER_API_KEY, ...)
+      [[ -r ~/.env ]] && { set -a; source ~/.env; set +a; }
+
       # Force block cursor (escape sequence)
       # \e[2 q = steady block, \e[1 q = blinking block
       echo -ne '\e[2 q'
