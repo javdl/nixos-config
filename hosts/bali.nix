@@ -234,6 +234,7 @@ in
       "--secrets-encryption"
       "--cluster-cidr=10.52.0.0/16"
       "--service-cidr=10.53.0.0/16"
+      "--cluster-dns=10.53.0.10"
       # One node needs no inter-host overlay listener.
       "--flannel-backend=host-gw"
       "--flannel-iface=tailscale0"
