@@ -216,6 +216,74 @@ in
   # Docker for containerized development
   virtualisation.docker.enable = true;
 
+  # Independent single-node cluster for SkyPilot's Kubernetes integration.
+  # Do not use modules/k3s.nix here: its firewall rules open public ports.
+  # Registration and private connectivity: docs/bali-skypilot.md.
+  services.k3s = {
+    enable = true;
+    role = "server";
+    manifests.skypilot.source = ./bali-skypilot-rbac.yaml;
+    disable = [
+      "traefik"
+      "servicelb"
+    ];
+    extraFlags = [
+      "--node-ip=100.113.194.113"
+      "--advertise-address=100.113.194.113"
+      "--tls-san=bali.stargazer-duck.ts.net"
+      "--write-kubeconfig-mode=0600"
+      "--secrets-encryption"
+      "--cluster-cidr=10.52.0.0/16"
+      "--service-cidr=10.53.0.0/16"
+      "--cluster-dns=10.53.0.10"
+      # One node needs no inter-host overlay listener.
+      "--flannel-backend=host-gw"
+      "--flannel-iface=tailscale0"
+      # kube-proxy can bypass the host firewall for NodePort services.
+      "--kube-proxy-arg=nodeport-addresses=127.0.0.0/8,100.113.194.113/32"
+    ];
+  };
+  systemd.services.k3s = {
+    after = [ "tailscaled.service" ];
+    wants = [ "tailscaled.service" ];
+  };
+
+  # Reverse forwarding keeps the Kubernetes API private across the two tailnets.
+  # Uses Bali's existing exe.dev key; credentials never enter the Nix store.
+  systemd.services.skypilot-bali-tunnel = {
+    description = "Private Bali Kubernetes API tunnel to SkyPilot";
+    after = [
+      "network-online.target"
+      "k3s.service"
+    ];
+    wants = [
+      "network-online.target"
+      "k3s.service"
+    ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      User = "joost";
+      ExecStart = lib.concatStringsSep " " [
+        "${pkgs.openssh}/bin/ssh -F /dev/null -N -T"
+        "-i /home/joost/.ssh/id_exe_fu_sites"
+        "-o IdentitiesOnly=yes -o BatchMode=yes"
+        "-o StrictHostKeyChecking=yes -o HostKeyAlias=exe.dev"
+        "-o UserKnownHostsFile=/home/joost/.ssh/known_hosts"
+        "-o ExitOnForwardFailure=yes -o ConnectTimeout=15"
+        "-o ServerAliveInterval=30 -o ServerAliveCountMax=3"
+        "-R 127.0.0.1:16443:127.0.0.1:6443"
+        "joost@skypilot.exe.xyz"
+      ];
+      Restart = "always";
+      RestartSec = "10s";
+      NoNewPrivileges = true;
+      PrivateTmp = true;
+      ProtectSystem = "strict";
+      ProtectHome = "read-only";
+      UMask = "0077";
+    };
+  };
+
   # Podman for rootless containers (Docker alternative with better security)
   virtualisation.podmanConfig = {
     enable = true;
@@ -337,7 +405,11 @@ in
 
   # Allow Tailscale traffic through firewall
   networking.firewall = {
-    trustedInterfaces = [ "tailscale0" ];
+    trustedInterfaces = [
+      "tailscale0"
+      # Allow K3s pod traffic to the host.
+      "cni0"
+    ];
     allowedUDPPorts = [ config.services.tailscale.port ];
   };
 
