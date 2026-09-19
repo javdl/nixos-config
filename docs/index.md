@@ -47,6 +47,7 @@ directory in older guidance do not describe the current layout.
 | Change Hermes gateway deployment | [bali](../hosts/bali.nix), [loom](../hosts/loom.nix), [flake inputs](../flake.nix) | [bali/loom cutover constraints](../AGENTS.md#bali-loom-replacement); distinguish the gateway from the packaged CLI |
 | Change Omarchy desktop startup | [Startup module](../users/joost/omarchy-startup.nix) | [Startup ownership](omarchy-startup.md), [Omarchy platform boundaries](../AGENTS.md#omarchy-quattro-machines-arch-linux) |
 | Configure a second tailnet | [Shared service definition](../lib/tailmix-service.nix), [NixOS module](../modules/tailmix.nix) | [Tailmix on Omarchy](tailmix-omarchy.md) |
+| Use Bali as SkyPilot compute | [Bali host configuration](../hosts/bali.nix) | [K3s setup and private connectivity](bali-skypilot.md) |
 | Configure Companion or sync buttons | [Omarchy Companion module](../users/companion-omarchy.nix) | [fu137 setup](companion-omarchy.md), [Companion sync](../AGENTS.md#bitfocus-companion-config-sync) |
 | Diagnose chezmoi synchronization | [Memory sync implementation](../lib/chezmoi-memory-sync.nix) | [Sync races](../AGENTS.md#chezmoi-auto-sync-races-with-manual-pushes), [Common issues](../AGENTS.md#common-issues) for locked-vault scoped apply and hook paths |
 | Diagnose shell, package, or platform problems | [Common issues](../AGENTS.md#common-issues) | Includes zoxide, profile selection, package collisions, and macOS migration notes |

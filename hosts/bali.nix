@@ -216,6 +216,36 @@ in
   # Docker for containerized development
   virtualisation.docker.enable = true;
 
+  # Independent single-node cluster for SkyPilot's Kubernetes integration.
+  # Do not use modules/k3s.nix here: its firewall rules open public ports.
+  # Registration and private connectivity: docs/bali-skypilot.md.
+  services.k3s = {
+    enable = true;
+    role = "server";
+    disable = [
+      "traefik"
+      "servicelb"
+    ];
+    extraFlags = [
+      "--node-ip=100.113.194.113"
+      "--advertise-address=100.113.194.113"
+      "--tls-san=bali.stargazer-duck.ts.net"
+      "--write-kubeconfig-mode=0600"
+      "--secrets-encryption"
+      "--cluster-cidr=10.52.0.0/16"
+      "--service-cidr=10.53.0.0/16"
+      # One node needs no inter-host overlay listener.
+      "--flannel-backend=host-gw"
+      "--flannel-iface=tailscale0"
+      # kube-proxy can bypass the host firewall for NodePort services.
+      "--kube-proxy-arg=nodeport-addresses=127.0.0.0/8,100.113.194.113/32"
+    ];
+  };
+  systemd.services.k3s = {
+    after = [ "tailscaled.service" ];
+    wants = [ "tailscaled.service" ];
+  };
+
   # Podman for rootless containers (Docker alternative with better security)
   virtualisation.podmanConfig = {
     enable = true;
@@ -337,7 +367,11 @@ in
 
   # Allow Tailscale traffic through firewall
   networking.firewall = {
-    trustedInterfaces = [ "tailscale0" ];
+    trustedInterfaces = [
+      "tailscale0"
+      # Allow K3s pod traffic to the host.
+      "cni0"
+    ];
     allowedUDPPorts = [ config.services.tailscale.port ];
   };
 
