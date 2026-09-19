@@ -20,10 +20,15 @@ Tailscale policy must restrict the remote SkyPilot identity to the required
 destination. The `cni0` pod bridge is trusted for pod-to-host traffic.
 
 The administrator kubeconfig at `/etc/rancher/k3s/k3s.yaml` is root-only.
-Do not copy that administrator credential to SkyPilot. Provision a dedicated
-namespace and service account using the permissions documented in
+Do not copy that administrator credential to SkyPilot. The manifest
+`hosts/bali-skypilot-rbac.yaml` provisions the `skypilot` namespace, the
+`skypilot-api` account, and the pre-created `skypilot-workload` account using
+resource-specific permissions based on
 [SkyPilot's Kubernetes permissions guide](https://docs.skypilot.ai/en/latest/cloud-setup/cloud-permissions/kubernetes.html).
-Jobs can run code on Bali; namespace RBAC alone is not a host isolation boundary.
+The API account can manage workload resources only in `skypilot`, plus read
+nodes and runtime classes. It cannot write RBAC or read system namespace secrets.
+The namespace enforces the Kubernetes baseline pod security standard. Jobs can
+run code on Bali; namespace RBAC alone is not a host isolation boundary.
 
 ## Build and activation
 
@@ -54,23 +59,36 @@ launching jobs.
 
 ## Connect and register
 
-Connectivity remains a separate deployment decision. SkyPilot is in the
+SkyPilot is in the
 personal `buri-hoki.ts.net` tailnet; Bali is in the FashionUnited
 `stargazer-duck.ts.net` tailnet.
 
-- With approved declarative sharing, allow the SkyPilot server to reach Bali
-  on TCP 6443 and use `https://bali.stargazer-duck.ts.net:6443`.
-- Alternatively, prepare a persistent outbound SSH reverse tunnel from Bali
-  to the exe.dev VM, binding its remote listener to loopback only and forwarding
-  to Bali's Kubernetes API. Preserve Kubernetes CA verification and set the
-  kubeconfig TLS server name if the tunnel endpoint differs from the certificate.
-  Verify exe.dev forwarding support before relying on this path.
+The `skypilot-bali-tunnel` system service uses Bali's existing exe.dev SSH
+identity at `/home/joost/.ssh/id_exe_fu_sites` and the trusted `exe.dev` host key
+in `/home/joost/.ssh/known_hosts`. The service runs as `joost`, requires strict
+host-key checking, and restarts after connection failure or reboot. Neither
+private key nor Kubernetes credentials are stored in Nix or git.
 
-Create the dedicated service account credential after K3s is running. Store it
-outside git, transfer it securely, and merge a uniquely named `bali` context
+It forwards `127.0.0.1:16443` on the SkyPilot VM to `127.0.0.1:6443` on Bali.
+The kubeconfig endpoint is `https://127.0.0.1:16443`, with Bali's CA and
+`tls-server-name: bali.stargazer-duck.ts.net`; do not skip TLS verification.
+Verify recovery with `systemctl restart skypilot-bali-tunnel`, then check the
+remote listener with `ss -lnt 'sport = :16443'` on the VM. It must bind only
+to loopback.
+
+Declarative Tailscale sharing can replace the tunnel after approval, but is
+not required for this route.
+
+Kubernetes populates `skypilot-api-token` at runtime. Transfer that scoped
+credential only after approval, never the administrator credential. Store it
+outside git at `/home/exedev/.kube/bali.yaml` with mode 600, and merge a `bali` context
 into `/home/exedev/.kube/config` without overwriting the existing node pool's
-contexts. Use namespace `skypilot` and configure SkyPilot port-forward access
-as documented in its Kubernetes setup guide. Retain existing SkyPilot settings.
+contexts. Use namespace `skypilot` and configure the `bali` context's
+`remote_identity` as `skypilot-workload`, so SkyPilot uses the pre-created account
+instead of creating broader RBAC. Configure private port-forward access as
+documented in its Kubernetes setup guide. Retain existing SkyPilot settings.
+The service-account token is long-lived; rotate it if the VM or credential is
+compromised, and transfer the replacement through the same approved channel.
 
 On the API server, validate access with the dedicated context, then run:
 

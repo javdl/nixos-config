@@ -222,6 +222,7 @@ in
   services.k3s = {
     enable = true;
     role = "server";
+    manifests.skypilot.source = ./bali-skypilot-rbac.yaml;
     disable = [
       "traefik"
       "servicelb"
@@ -245,6 +246,42 @@ in
   systemd.services.k3s = {
     after = [ "tailscaled.service" ];
     wants = [ "tailscaled.service" ];
+  };
+
+  # Reverse forwarding keeps the Kubernetes API private across the two tailnets.
+  # Uses Bali's existing exe.dev key; credentials never enter the Nix store.
+  systemd.services.skypilot-bali-tunnel = {
+    description = "Private Bali Kubernetes API tunnel to SkyPilot";
+    after = [
+      "network-online.target"
+      "k3s.service"
+    ];
+    wants = [
+      "network-online.target"
+      "k3s.service"
+    ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      User = "joost";
+      ExecStart = lib.concatStringsSep " " [
+        "${pkgs.openssh}/bin/ssh -F /dev/null -N -T"
+        "-i /home/joost/.ssh/id_exe_fu_sites"
+        "-o IdentitiesOnly=yes -o BatchMode=yes"
+        "-o StrictHostKeyChecking=yes -o HostKeyAlias=exe.dev"
+        "-o UserKnownHostsFile=/home/joost/.ssh/known_hosts"
+        "-o ExitOnForwardFailure=yes -o ConnectTimeout=15"
+        "-o ServerAliveInterval=30 -o ServerAliveCountMax=3"
+        "-R 127.0.0.1:16443:127.0.0.1:6443"
+        "joost@skypilot.exe.xyz"
+      ];
+      Restart = "always";
+      RestartSec = "10s";
+      NoNewPrivileges = true;
+      PrivateTmp = true;
+      ProtectSystem = "strict";
+      ProtectHome = "read-only";
+      UMask = "0077";
+    };
   };
 
   # Podman for rootless containers (Docker alternative with better security)
