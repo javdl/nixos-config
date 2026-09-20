@@ -43,6 +43,7 @@ directory in older guidance do not describe the current layout.
 | Task | Start here | Guidance |
 | --- | --- | --- |
 | Install or configure coding-agent CLIs | [Agent CLI module](../users/agent-clis.nix), [overlays](../lib/overlays.nix) | [Tool inventory](../AGENTS.md#ntm-flywheel-tools), [installation notes](../AGENTS.md#installation-notes) |
+| Install ZCode desktop on workstations | [Overlays](../lib/overlays.nix), [Darwin casks](../users/joost/darwin.nix), [desktop profile](../users/joost/home-manager.nix) | [Setup and provider restriction limitations](zcode-workstations.md) |
 | Operate or extend the Herdr fleet | [Fleet inventory](../users/herdr-fleet.nix), [node module](../modules/herdr-fleet-node.nix) | [Command center runbook](herdr-command-center.md) |
 | Change Hermes gateway deployment | [bali](../hosts/bali.nix), [loom](../hosts/loom.nix), [flake inputs](../flake.nix) | [bali/loom cutover constraints](../AGENTS.md#bali-loom-replacement); distinguish the gateway from the packaged CLI |
 | Change Omarchy desktop startup | [Startup module](../users/joost/omarchy-startup.nix) | [Startup ownership](omarchy-startup.md), [Omarchy platform boundaries](../AGENTS.md#omarchy-quattro-machines-arch-linux) |

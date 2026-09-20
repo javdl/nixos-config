@@ -430,6 +430,7 @@ in
       # tailscale # do not add here, it will recompile each time
       yabai # tiling window manager
     ])
+    ++ (lib.optionals (isLinux && !isWSL && currentSystemName != "github-runner") [ zcode ])
     ++ (lib.optionals (isLinux && !isWSL) [
       bubblewrap
       chromium

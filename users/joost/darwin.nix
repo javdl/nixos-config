@@ -212,6 +212,7 @@ in
           coreCasks ++ personalCasks ++ lib.optionals (!noAudio) audioCasks
       )
       ++ extraCasks
+      ++ lib.optionals (!(builtins.elem currentSystemName serversMacos)) [ "zcode" ]
     );
     masApps = {
       # to find ID, App Store > Share > Copy link

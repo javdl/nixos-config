@@ -550,6 +550,33 @@ in
           };
           rchSource = rchSources.${prev.stdenv.hostPlatform.system} or null;
         in {
+          # ZCode desktop on Linux workstations; macOS uses the Homebrew cask.
+          zcode = let
+            pname = "zcode";
+            version = "3.14.0";
+            src = prev.fetchurl {
+              url = "https://cdn-zcode.z.ai/zcode/electron/releases/${version}/linux-x64/ZCode-${version}-linux-x64.AppImage";
+              sha256 = "0ybwyn9vz6mpxw3nbzl4z5ssg7mqw09iz3jzajdrx3hhwxwv04hq";
+            };
+            appimageContents = prev.appimageTools.extractType2 {
+              inherit pname version src;
+            };
+          in prev.appimageTools.wrapType2 {
+            inherit pname version src;
+            extraInstallCommands = ''
+              install -Dm444 ${appimageContents}/zcode.desktop $out/share/applications/zcode.desktop
+              substituteInPlace $out/share/applications/zcode.desktop \
+                --replace-fail 'Exec=AppRun' 'Exec=zcode'
+              install -Dm444 ${appimageContents}/zcode.png $out/share/pixmaps/zcode.png
+            '';
+            meta = with prev.lib; {
+              description = "ZCode desktop AI development environment";
+              homepage = "https://zcode.z.ai";
+              license = licenses.unfree;
+              platforms = [ "x86_64-linux" ];
+              mainProgram = "zcode";
+            };
+          };
           # grepai - semantic code search for AI coding assistants
           grepai = prev.stdenv.mkDerivation {
             pname = "grepai";
