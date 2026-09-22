@@ -509,23 +509,23 @@ in
           # linked against glibc (verified `file` on omp-linux-x64), so the Linux
           # builds need autoPatchelfHook. Upstream also ships musl variants; the
           # glibc ones are used because autoPatchelfHook handles them natively.
-          ompVersion = "18.1.14";
+          ompVersion = "18.2.9";
           ompSources = {
             "x86_64-linux" = {
               url = "https://github.com/can1357/oh-my-pi/releases/download/v${ompVersion}/omp-linux-x64";
-              sha256 = "1lp4j015vapd6vr5fi6hlgjgwxpky50dprhz3vszyf9cdb5ndp97";
+              sha256 = "1v46q11f2q10xaf7bcaykv2yv7ri1r4r3xzz2lm5lzgj3dkvxrvx";
             };
             "aarch64-linux" = {
               url = "https://github.com/can1357/oh-my-pi/releases/download/v${ompVersion}/omp-linux-arm64";
-              sha256 = "09bkiw8nsn28bfjqhgc581paliby0nkfz9dfry716sjwx51i3flk";
+              sha256 = "0bfd8w1i8bk13mrzxllizxa97li0b8dix35fwxgd49xjp9jx4mf4";
             };
             "x86_64-darwin" = {
               url = "https://github.com/can1357/oh-my-pi/releases/download/v${ompVersion}/omp-darwin-x64";
-              sha256 = "03md5px2fksm5sp6kxl0vrmbgkzhmcy34rv9vmpamjabqzgm6mmz";
+              sha256 = "0zclnn8k6wsr1q256nmpnf6z55bdk62zx51dn30w9j92pgwmgww7";
             };
             "aarch64-darwin" = {
               url = "https://github.com/can1357/oh-my-pi/releases/download/v${ompVersion}/omp-darwin-arm64";
-              sha256 = "1lm6iq4g602xyha6lj1xl7idf4i2qdy9qms9aqrq1q68zz2rrh36";
+              sha256 = "0vjhynhvilhafxvahjnl03alcfxzwx7sgwimgamrl1smldrfkw22";
             };
           };
           ompSource = ompSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for omp: ${prev.stdenv.hostPlatform.system}");
