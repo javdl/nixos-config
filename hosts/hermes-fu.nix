@@ -15,8 +15,8 @@
 #   3. ssh agent@<ip>  → derive age key, populate secrets/hermes-fu.yaml, uncomment sops below
 #   4. make hetzner/tailscale-auth NIXADDR=<ip> TAILSCALE_AUTHKEY=tskey-auth-...
 #
-# This host is a clone of loom's hermes-agent setup (Plans/migrate-hermes-to-nix-module.md).
-# Differences from loom: cloud-hardware modules, no static IPv6, no advertise-exit-node,
+# This host shares bali's hermes-agent module (Plans/migrate-hermes-to-nix-module.md).
+# Differences from bali: cloud-hardware modules, no advertise-exit-node,
 # no repoUpdater, admin user `agent` instead of `joost`.
 
 {
@@ -285,7 +285,7 @@
   services.nscd.enable = true;
   services.dbus.enable = true;
 
-  # Tailscale for secure access with SSH (no exit-node advertising — loom-specific)
+  # Tailscale for secure access with SSH (no exit-node advertising — bali-specific)
   services.tailscale = {
     enable = true;
     authKeyFile = "/etc/tailscale/authkey";

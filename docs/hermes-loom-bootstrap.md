@@ -1,5 +1,10 @@
 # Finishing hermes-agent bootstrap on loom
 
+> Historical record: this server has been destroyed. Use
+> [Bali’s current configuration](../hosts/bali.nix) and
+> [operational guidance](../AGENTS.md#bali-personal-server).
+> The commands below describe the original migration and are not current instructions.
+
 Five steps. ~10 minutes if joostclaw is reachable.
 
 ## Prerequisites (already done in PR #33)

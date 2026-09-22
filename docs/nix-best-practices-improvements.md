@@ -73,8 +73,8 @@ The implementation is accepted only when all of these commands succeed:
 ```bash
 nix flake check --print-build-logs
 nix eval .#nixosConfigurations.github-runner-03.config.services.github-actions-runner.packages.forRunner --apply builtins.length
-nix eval --raw .#nixosConfigurations.loom.config.services.repoUpdater.package.version
-nix eval --raw .#nixosConfigurations.loom.pkgs.gh.version
+nix eval --raw .#nixosConfigurations.bali.config.services.repoUpdater.package.version
+nix eval --raw .#nixosConfigurations.bali.pkgs.gh.version
 ```
 
 The representative consumer evaluations protect the shared runner module, repo-updater

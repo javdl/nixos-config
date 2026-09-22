@@ -8,12 +8,12 @@ Server facts:
 - **IPv4** 5.9.61.40 / **IPv6** 2a01:4f8:161:6209::2
 - **Rescue SSH** authorizes only the `j8 mac studio` key registered at order time.
   Run all `ssh`/`make hetzner/...` commands below **from j8** (or any machine
-  that holds that private key), not from loom.
+  that holds that private key).
 
 The matching NixOS config (`hosts/github-runner-03.nix`) and modules
 (`modules/hetzner-dedicated-hardware.nix`, `modules/disko-hetzner-dedicated.nix`)
-are already on `main`. The `secrets/github-runner-03.yaml` is encrypted to
-loom's age key as a chicken-and-egg placeholder. It is re-keyed in step 4.
+are already on `main`, with the provisioned host's SOPS recipient. For a new
+server, use bali's age key as a bootstrap placeholder and re-key in step 4.
 
 ---
 
@@ -71,7 +71,7 @@ This runs `nixos-anywhere --flake .#github-runner-03 root@5.9.61.40`, which:
 4. Reboots
 
 Expected first-boot warnings (normal until step 4 & 5):
-- `sops-nix` cannot decrypt `github-runner-token` (host age key ≠ loom's) →
+- `sops-nix` cannot decrypt `github-runner-token` (host age key ≠ bootstrap recipient) →
   the 16 `github-runner@fuww-runner-N.service` units stay in `activating`/`failed`.
 - `tailscaled-autoconnect` fails (no auth key yet).
 
@@ -85,7 +85,7 @@ ssh -o StrictHostKeyChecking=no joost@5.9.61.40 'sudo systemctl status sops-nix 
 
 ## 4. Re-key SOPS to the server's real age key
 
-On **loom** (where `sops` and the age-derived host key match):
+On **bali**, if its host key is the bootstrap recipient for the new server:
 
 ```bash
 cd ~/nixos-config
@@ -126,7 +126,7 @@ ssh joost@5.9.61.40 'tailscale status'
 
 1. Go to <https://github.com/organizations/fuww/settings/actions/runners/new>
 2. Copy the `--token AAU5P4...` value (29 chars, expires in 1 hour, single-use)
-3. From loom:
+3. From bali:
 
    ```bash
    sops secrets/github-runner-03.yaml

@@ -9,7 +9,7 @@
 
 let
   # Auto-sync ~/.claude/MEMORY to the chezmoi git remote.
-  # Body lives in lib/chezmoi-memory-sync.nix so loom (Linux, systemd-timer)
+  # Body lives in lib/chezmoi-memory-sync.nix so bali (Linux, systemd-timer)
   # and Darwin hosts (launchd, 5-min StartInterval below) share one source.
   chezmoiMemorySync = import ../lib/chezmoi-memory-sync.nix pkgs;
 

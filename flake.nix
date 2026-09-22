@@ -389,7 +389,7 @@
       nixosConfigurations.github-runner-05 = mkServer "github-runner-05" "github-runner";
 
       # github-runner-06 removed 2026-07-20 — its EX63 box was wiped and
-      # repurposed as bali (loom's replacement).
+      # repurposed as bali.
 
       # Agent dev box running rondo (autonomous Claude Code agent). Reuses the
       # decommissioned github-runner-01 box. See modules/agent-dev-box.nix and
@@ -397,15 +397,12 @@
       # agent users.
       nixosConfigurations.agent-jay-01 = mkServer "agent-jay-01" "agent-jay";
 
-      nixosConfigurations.loom = mkServer "loom" "joost";
-
-      # loom's replacement on a repurposed EX63 runner box (donor: one of
-      # github-runner-03..06). Loom stays up until bali is verified;
-      # hermes stays disabled on bali until cutover (hosts/bali.nix).
+      # Personal server on the former github-runner-06 EX63.
+      # Hermes has run here since the 2026-07-20 cutover (hosts/bali.nix).
       nixosConfigurations.bali = mkServer "bali" "joost";
 
       # FashionUnited company-wide hermes-agent host.
-      # Clone of loom's hermes-agent setup; see Plans/check-the-plan-for-misty-turtle.md.
+      # Shares bali's hermes-agent module; see Plans/check-the-plan-for-misty-turtle.md.
       nixosConfigurations.hermes-fu = mkServer "hermes-fu" "agent";
 
       nixosConfigurations.joostclaw = mkSystem "joostclaw" {

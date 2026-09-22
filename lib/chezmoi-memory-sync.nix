@@ -3,7 +3,7 @@
 #
 # Consumed by:
 #   - hosts/mac-shared.nix    -> launchd.user.agents.chezmoi-memory-sync (Darwin)
-#   - users/joost/home-manager-server.nix -> systemd.user.{service,timer}.chezmoi-memory-sync (loom)
+#   - users/joost/home-manager-server.nix -> systemd.user.{service,timer}.chezmoi-memory-sync (bali)
 #
 # Both schedule it every 5 minutes. Body is identical across platforms.
 pkgs:
@@ -11,7 +11,7 @@ pkgs.writeShellScript "chezmoi-memory-sync" ''
   set -u
 
   # systemd user services start with a minimal PATH that lacks chezmoi/git/grep.
-  # Set PATH explicitly so the script works under both systemd (loom) and
+  # Set PATH explicitly so the script works under both systemd (bali) and
   # launchd (Darwin) without needing per-consumer wrapping. These paths are
   # present on both NixOS and nix-darwin.
   export PATH="/etc/profiles/per-user/$USER/bin:/run/current-system/sw/bin:/nix/var/nix/profiles/default/bin:/usr/local/bin:/usr/bin:/bin"

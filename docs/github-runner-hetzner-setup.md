@@ -191,7 +191,7 @@ The fallback action uses this token to query runner availability via the GitHub 
 
 New servers don't have SSH host keys until they're provisioned, but `sops-install-secrets` needs an encrypted secrets file at build time. Solution:
 
-1. **Temporarily use a known age key** (e.g., loom's workstation key) in `.sops.yaml`
+1. **Temporarily use a known age key** (e.g., bali's host key) in `.sops.yaml`
 2. **Encrypt secrets with the temp key.** The NixOS build passes, and `sops-install-secrets` will fail during provisioning (expected, since host keys don't exist yet in the chroot), but the system installs and boots fine
 3. **After provisioning**, get the server's real age key: `ssh joost@<ip> 'sudo cat /etc/ssh/ssh_host_ed25519_key.pub' | ssh-to-age`
 4. **Replace the temp key** in `.sops.yaml` with the real one

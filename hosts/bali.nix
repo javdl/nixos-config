@@ -6,7 +6,7 @@
   ...
 }:
 
-# bali — loom's replacement, on a repurposed EX63 GitHub runner.
+# bali — personal server on a repurposed EX63 GitHub runner.
 # Donor box: github-runner-06 (136.243.104.36). Plain-DHCP networking, so the
 # same config would work on any of the other EX63 runners.
 #
@@ -16,16 +16,15 @@
 #   2. After first boot, re-key secrets (see .sops.yaml bali anchor):
 #      ssh-keygen -R <donor-ip>
 #      ssh-keyscan <donor-ip> 2>/dev/null | grep ed25519 | ssh-to-age
-#      # replace the &bali anchor, then (on loom, which holds the bootstrap key):
+#      # replace the &bali anchor, then (on the machine holding the bootstrap key):
 #      SOPS_AGE_KEY=$(sudo ssh-to-age -private-key -i /etc/ssh/ssh_host_ed25519_key) sops updatekeys secrets/bali.yaml
 #      make hetzner/copy NIXADDR=<donor-ip> NIXUSER=joost
 #      make hetzner/switch NIXADDR=<donor-ip> NIXNAME=bali NIXUSER=joost
 #   3. make hetzner/tailscale-auth NIXADDR=<donor-ip> TAILSCALE_AUTHKEY=tskey-auth-xxx
 
 let
-  # Hermes lives here since the 2026-07-20 cutover (loom's is gated off in
-  # hosts/loom.nix). Running both gateways with the same tokens double-answers
-  # Telegram/Discord/Slack — never enable both.
+  # Hermes lives on bali. Keep the shared platform tokens on a single gateway
+  # to avoid duplicate Telegram/Discord/Slack replies.
   enableHermes = true;
 
   # Personal (javdl/joost) GitHub Actions runners. Gated like enableHermes so a
@@ -66,7 +65,7 @@ in
   disko.devices.disk.main.device =
     lib.mkForce "/dev/disk/by-id/nvme-eui.000000000000000100a07525514551f9";
 
-  # Hermes Agent — personal AI gateway (see hosts/loom.nix, the current holder).
+  # Hermes Agent — personal AI gateway on bali.
   # Gated as a whole: with the module disabled the hermes user doesn't exist,
   # so an ungated sops secret with owner "hermes" would fail activation.
   sops.secrets."hermes-env" = lib.mkIf enableHermes {
@@ -100,14 +99,12 @@ in
 
   # The user manager must outlive logins: the chezmoi-memory-sync timer and the
   # persistent tmux service (users/joost/home-manager-server.nix) run under it.
-  # On loom this was enabled imperatively via loginctl; here it's declarative.
   users.users.joost.linger = true;
 
-  # Agent ops from loom: joost's personal key (users/joost/nixos.nix "loom")
-  # is passphrase-locked, so headless Claude Code sessions on loom use this
-  # key instead — the same one every runner host carried for provisioning.
+  # Headless agent access uses the same key as bali's Herdr command center
+  # (users/herdr-fleet.nix) and the runner provisioning hosts.
   users.users.joost.openssh.authorizedKeys.keys = [
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEfx6qICt/nunP+X3Wv8Y6hhZtGo0AZreAp3QOThy0SD loom-agent-nopass"
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEfx6qICt/nunP+X3Wv8Y6hhZtGo0AZreAp3QOThy0SD bali-agent-nopass"
   ];
 
   # Latest kernel for best hardware support
@@ -147,7 +144,7 @@ in
     repos = [
       "fuww/developer"
       "Dicklesworthstone/agent_flywheel_clawdbot_skills_and_integrations"
-      # Cloned on all joost machines (loom, joostclaw too) → code/javdl/joost.
+      # Cloned on all joost machines (joostclaw too) → code/javdl/joost.
       "javdl/joost"
     ];
   };

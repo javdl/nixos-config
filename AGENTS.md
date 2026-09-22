@@ -83,21 +83,22 @@ Dedicated self-hosted runner for the `fuww` GitHub organization:
 | github-runner-05 | `github-runner-05`   | `#github-runner-05`   | EX63 (dedicated, 144.76.86.24)  | `users/github-runner/home-manager-server.nix` |
 | ~~github-runner-06~~ | `github-runner-06`   | `#github-runner-06`   | EX63 (dedicated, 136.243.104.36) | **DECOMMISSIONED 2026-07-20**: box repurposed as `bali` |
 
-### bali (loom replacement)
+### bali (personal server)
 
-`bali` (EX63 dedicated, 136.243.104.36, Tailscale 100.113.194.113, ex-github-runner-06)
-is loom's replacement: a clone of `hosts/loom.nix` on `hetzner-dedicated-hardware` +
-`disko-hetzner-dedicated`, root disk pinned by NVMe EUI (enumeration on this box is
-unstable across boots). **Cutover completed 2026-07-20**: hermes-agent now runs on bali
-(state migrated from loom); loom's hermes is gated off via `enableHermes = false` in
-`hosts/loom.nix`. Never enable both; the shared tokens double-answer every platform.
-bali also took over loom's role as the SOPS bootstrap/editing key (agent-jay-01.yaml is
-encrypted to agent-jay-01 + bali). **SSH is tailnet-only** (public 22/2222 closed;
-recovery = Hetzner Robot rescue): `ssh bali` (chezmoi ssh config alias) or headless
-`ssh -i ~/.ssh/id_ed25519_nopass joost@100.113.194.113`; port 2222 allows password
-auth for key-less apps (Codex). Loom (91.99.204.187) is passive and pending decommission. Cancel at
-Hetzner when comfortable, then remove `hosts/loom.nix`, its flake entry, sops anchor,
-and `secrets/loom.yaml`.
+`bali` (EX63 dedicated, 136.243.104.36, Tailscale 100.113.194.113,
+ex-github-runner-06) runs the personal Hermes gateway. Its root disk is pinned
+by NVMe EUI because disk enumeration is unstable across boots. Keep the shared
+platform tokens on this gateway only to avoid duplicate replies.
+
+Bali is also the SOPS bootstrap/editing host; `agent-jay-01.yaml` is encrypted
+to agent-jay-01 and bali. **SSH is tailnet-only** (public 22/2222 closed;
+recovery = Hetzner Robot rescue): `ssh bali` or headless
+`ssh -i ~/.ssh/id_ed25519_nopass joost@100.113.194.113`. Port 2222 allows
+password auth for key-less apps (Codex).
+
+The predecessor server was destroyed; its configuration was removed on
+2026-09-22. Historical plans describe the earlier migration, not current
+build or deployment targets.
 
 The runners use `modules/github-actions-runner.nix` for CI packages (Docker, languages, build tools, browsers, cloud CLIs) and `services.github-runners` for runner registration. Tokens are SOPS-encrypted in `secrets/github-runner-{01,03,04,05,06}.yaml`. See `docs/github-runner-hetzner-setup.md` for full setup/scaling guide.
 
@@ -107,7 +108,7 @@ The runners use `modules/github-actions-runner.nix` for CI packages (Docker, lan
 - **SSH access**: rescue mode only ships the SSH key registered at order time (e.g. `j8 mac studio`). Run `make hetzner/provision NIXADDR=<ip> NIXNAME=github-runner-03` from a machine that holds the matching private key, or add an extra pubkey to rescue via Hetzner Robot first.
 - **Pre-provision disk prep** (in rescue, before `make hetzner/provision`): EX-series Robot orders sometimes include software RAID superblocks from the installimage step. Wipe both NVMes so disko has a clean canvas: `for d in /dev/nvme0n1 /dev/nvme1n1; do mdadm --stop --scan; mdadm --zero-superblock --force "$d" 2>/dev/null || true; wipefs -af "$d"; done`. Also confirm UEFI boot before proceeding: `[ -d /sys/firmware/efi ] && echo UEFI || echo BIOS`. If BIOS-only, swap `boot.loader.systemd-boot` for `boot.loader.grub` (devices = `[ "/dev/nvme0n1" ]`) before provisioning.
 - **Disk-name stability**: the disko module hardcodes `/dev/nvme0n1`. If a particular EX63 enumerates the boot disk as `nvme1n1`, override per-host with `disko.devices.disk.main.device = lib.mkForce "/dev/disk/by-id/nvme-<eui>";`.
-- **SOPS re-key after first boot**: the secrets file is initially encrypted to loom's age key. After provisioning succeeds, derive the server's real age key and re-encrypt:
+- **SOPS re-key after first boot**: the secrets file is initially encrypted to bali's age key. After provisioning succeeds, derive the server's real age key and re-encrypt:
   ```
   ssh-keyscan <ip> 2>/dev/null | grep ed25519 | ssh-to-age
   # replace the &github-runner-03 anchor in .sops.yaml with the printed key
@@ -119,7 +120,7 @@ The runners use `modules/github-actions-runner.nix` for CI packages (Docker, lan
 
 **Runner token type:** The `tokenFile` must contain an **org-level runner registration token** (format: `AAU5P4...`, 29 chars), NOT a GitHub PAT. Get it from https://github.com/organizations/fuww/settings/actions/runners/new → copy the `--token` value. Tokens expire in 1 hour and are single-use.
 
-**SOPS chicken-and-egg for new runners:** New servers don't have SSH host keys until provisioned, but the NixOS build needs an encrypted secrets file. Solution: temporarily use a known age key (e.g., loom's) in `.sops.yaml`, encrypt secrets, provision, then re-key with the server's real age key after provisioning.
+**SOPS chicken-and-egg for new runners:** New servers don't have SSH host keys until provisioned, but the NixOS build needs an encrypted secrets file. Solution: temporarily use a known age key (e.g., bali's) in `.sops.yaml`, encrypt secrets, provision, then re-key with the server's real age key after provisioning.
 
 **SSH after provisioning:** Root SSH has no authorized keys. Always SSH as `joost@<ip>` and use `sudo`. Run `ssh-keygen -R <ip>` first since the host key changes.
 
@@ -360,14 +361,14 @@ The flake.nix overlay uses three patterns for third-party tools:
 Prefer pre-built binaries. Building from source is slow and fragile with hash pinning.
 
 ### Testing Overlay Changes
-Overlays are internal to the flake (not exposed as outputs). You cannot test individual overlays with `nix build .#<pkg>`. Use `make test NIXNAME=loom` to validate overlay changes.
+Overlays are internal to the flake (not exposed as outputs). You cannot test individual overlays with `nix build .#<pkg>`. Use `make test NIXNAME=bali` to validate overlay changes.
 
 ### Nix Hash Gotcha
 `nix-prefetch-url --unpack` gives a DIFFERENT hash than `fetchurl`. If using `fetchurl` + manual `tar xzf` in unpackPhase, use `nix-prefetch-url` WITHOUT `--unpack` to get the correct hash.
 
 ## Common Issues
 
-### bd broken on loom
+### Legacy bd dependency failure
 `bd` has a broken libicu dependency (`libicui18n.so.74`). Use `br` (beads_rust) instead for all beads operations.
 
 ### Nix Command Not Found
@@ -494,8 +495,8 @@ Fix: `_ZO_DOCTOR = "0"` in `home.sessionVariables`, set in `users/shared-home-ma
 ### Editing `lib/overlays.nix`: audit siblings before removing
 Many overlay blocks are paired infrastructure (e.g., `ironclaw` + `openclaw` were both AI-assistant gateways with matching modules `modules/ironclaw-oci.nix` and `modules/openclaw-oci.nix`, both wired into `hosts/joostclaw.nix`). Before removing a package, grep for related names in the same files and surface them: "I see X is configured alongside Y, should that go too?"
 
-### Loom uses `home-manager-server.nix`, not `home-manager.nix`
-`loom` is `server = true` in `flake.nix`, so `lib/mksystem.nix` loads `users/joost/home-manager-server.nix` for it. Edits to `users/joost/home-manager.nix` have **no effect on loom**. Confirm which file a host uses before adding home-manager config for it:
+### Bali uses `home-manager-server.nix`, not `home-manager.nix`
+`bali` is `server = true` in `flake.nix`, so `lib/mksystem.nix` loads `users/joost/home-manager-server.nix` for it. Edits to `users/joost/home-manager.nix` have **no effect on bali**. Confirm which file a host uses before adding home-manager config for it:
 ```bash
 nix-instantiate --eval --strict -E '
   let f = builtins.getFlake (toString ./.);

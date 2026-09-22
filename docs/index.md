@@ -44,7 +44,7 @@ directory in older guidance do not describe the current layout.
 | --- | --- | --- |
 | Install or configure coding-agent CLIs | [Agent CLI module](../users/agent-clis.nix), [overlays](../lib/overlays.nix) | [Tool inventory](../AGENTS.md#ntm-flywheel-tools), [installation notes](../AGENTS.md#installation-notes) |
 | Operate or extend the Herdr fleet | [Fleet inventory](../users/herdr-fleet.nix), [node module](../modules/herdr-fleet-node.nix) | [Command center runbook](herdr-command-center.md) |
-| Change Hermes gateway deployment | [bali](../hosts/bali.nix), [loom](../hosts/loom.nix), [flake inputs](../flake.nix) | [bali/loom cutover constraints](../AGENTS.md#bali-loom-replacement); distinguish the gateway from the packaged CLI |
+| Change Hermes gateway deployment | [bali](../hosts/bali.nix), [flake inputs](../flake.nix) | [Bali gateway constraints](../AGENTS.md#bali-personal-server); distinguish the gateway from the packaged CLI |
 | Change Omarchy desktop startup | [Startup module](../users/joost/omarchy-startup.nix) | [Startup ownership](omarchy-startup.md), [Omarchy platform boundaries](../AGENTS.md#omarchy-quattro-machines-arch-linux) |
 | Configure a second tailnet | [Shared service definition](../lib/tailmix-service.nix), [NixOS module](../modules/tailmix.nix) | [Tailmix on Omarchy](tailmix-omarchy.md) |
 | Use Bali as SkyPilot compute | [Bali host configuration](../hosts/bali.nix) | [K3s setup and private connectivity](bali-skypilot.md) |
@@ -79,7 +79,7 @@ presence does not establish approval, completion, or current deployed state.
 - [Legacy Hetzner rescue bootstrap](hetzner-devbox-setup.md): consult when
   working on the legacy bootstrap path; compare with current Makefile targets.
 - [Historical Hermes bootstrap on loom](hermes-loom-bootstrap.md): migration
-  context; read the current bali/loom constraints before using its commands.
+  context; read the current Bali gateway constraints before using its commands.
 
 When adding a runbook or moving an entry point, update the matching row here.
 Keep procedures in their linked documents so there is one place to maintain them.

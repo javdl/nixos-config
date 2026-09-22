@@ -764,7 +764,7 @@ in
   # Named tmux-server, NOT tmux: tmux-continuum's automatic-start handler owns
   # the literal path ~/.config/systemd/user/tmux.service and, with
   # @continuum-boot unset, disables/removes any unit found there every time
-  # the tmux server starts (observed on loom and bali — see
+  # the tmux server starts (observed on bali — see
   # users/joost/home-manager-server.nix).
   systemd.user.services = lib.optionalAttrs persistentTmuxServer {
     tmux-server = lib.mkIf isLinux {

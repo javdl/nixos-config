@@ -368,7 +368,7 @@ The server also has automatic updates configured (`services.nixosAutoUpdate`) th
 
 | Hostname | User | IP | Hetzner Plan |
 |----------|------|----|-------------|
-| loom | joost | 91.99.204.187 | CPX32 |
+| bali | joost | 100.113.194.113 (Tailscale; SSH is tailnet-only) | EX63 |
 | desmondroid | desmond | 91.99.228.135 | CPX32 |
 | jacksonator | jackson | 49.13.202.212 | CPX32 |
 | peterbot | peter | 91.98.229.173 | CPX32 |

@@ -285,6 +285,12 @@ parser-backed `statix` run now reports zero syntax errors.
   host exists.
 
 ### E3. Decommissioned hosts still wired in
+
+**Update 2026-09-22:** Joost confirmed Loom was destroyed. Its host, hardware,
+flake output, SOPS policy, encrypted secrets file, SSH alias, and service guards
+were removed; operational guidance now targets Bali. The evidence below records
+the original audit.
+
 - **Evidence:** `loom` appears in **16** tracked files including `flake.nix`, `.sops.yaml`,
   `secrets/loom.yaml`, `hosts/loom.nix`, `hosts/hardware/loom.nix` — AGENTS.md says it is
   passive and pending cancellation. `github-runner-06` still has a `.sops.yaml` anchor and a

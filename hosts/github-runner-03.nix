@@ -12,7 +12,7 @@
 # accepts the j8 mac studio key registered at order time):
 #   1. Confirm server is reachable: ssh root@<ip>
 #   2. Run: make hetzner/provision NIXADDR=<ip> NIXNAME=github-runner-03
-#   3. SOPS re-key (host age key changes from loom's placeholder to real):
+#   3. SOPS re-key (host age key changes from bali's bootstrap to real):
 #        ssh-keyscan <ip> | grep ed25519 | ssh-to-age
 #        # Replace the github-runner-03 anchor in .sops.yaml with the new key
 #        sops updatekeys secrets/github-runner-03.yaml
@@ -134,7 +134,7 @@
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEx6MK8mQ22KWCA0uDV6uBNvMw/NeBl70Mu4hxrX9SJ9 j8 mac studio"
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKiS5X4s5jEKzgpaRMX7gIxKCGcRGSF9qUAlUkOUdFbW j@jlnw.nl"
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIy0FO1ta1djvSamjM1Ph/YZpMhMtXSeuFE1Zl9GHhkQ joost+agent@fashionunited.com"
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEfx6qICt/nunP+X3Wv8Y6hhZtGo0AZreAp3QOThy0SD loom-agent-nopass"
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEfx6qICt/nunP+X3Wv8Y6hhZtGo0AZreAp3QOThy0SD bali-agent-nopass"
     ];
   };
 

@@ -5,8 +5,8 @@ Procedure used to retire `github-runner-01` on 2026-05-21. Generalizes to any
 
 ## 1. Unregister from GitHub (run from a machine with `admin:org` scope)
 
-The fuww org token on loom only has `read:org`. Run these from **j8** (or any
-machine where `gh auth status` shows `admin:org` in the token scopes).
+Run these from **bali** or another machine where `gh auth status` shows
+`admin:org` in the token scopes; verify the active credential first.
 
 ```bash
 # List the runners that would be deleted (sanity check first)
@@ -48,7 +48,7 @@ workspace tmpfiles rules) intact makes re-enabling a single boolean flip.
 ## 3. Stop running services + rebuild
 
 ```bash
-# From loom (or wherever you control the host)
+# From bali (or wherever you control the host)
 ssh joost@<runner-ip> 'sudo systemctl stop "github-runner-fuww-runner-*.service"'
 
 git commit -am "fix(runner-<N>): disable github-runners services"
