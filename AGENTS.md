@@ -594,6 +594,14 @@ verification, authentication, and adding nodes.
   profiles guard it with `lib.optional`.
 - **omp** release assets are dynamically linked against glibc (unlike the static-PIE `grok`
   and `herdr` binaries), so its derivation needs `autoPatchelfHook` on Linux.
+- **moshi-hook** (Moshi mobile app) comes from `users/agent-clis.nix` for every user on every
+  machine: daemon as a systemd user unit (Linux) or launchd agent (Darwin), and
+  `moshi-hook install` re-run on each switch for claude, codex, opencode, cursor, grok, omp
+  and gemini (hook commands embed the store path). On joost's machines chezmoi owns
+  `~/.claude/settings.json` and `~/.gemini/settings.json`, so their templates carry the
+  Moshi hooks and activation skips those targets once current. Never add `hermes`: on bali
+  it writes into the gateway's `HERMES_HOME`. Pairing (`moshi-hook pair --token …`) stays
+  manual per machine.
 - `~/.cargo/bin` is in PATH via `home.sessionPath` for cargo-installed tools
 
 ## BitFocus Companion Config Sync

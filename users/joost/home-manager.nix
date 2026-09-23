@@ -575,7 +575,9 @@ in
         $DRY_RUN_CMD ${pkgs.git}/bin/git -C "$CHEZMOI_SOURCE" checkout main || true
       fi
       echo "Syncing dotfiles from chezmoi repo..."
-      $DRY_RUN_CMD env PATH="${pkgs.bitwarden-cli}/bin:${pkgs.git}/bin:$PATH" ${pkgs.chezmoi}/bin/chezmoi update || echo "chezmoi apply incomplete (unlock Bitwarden, then re-run 'make switch')."
+      # moshi-hook first on PATH: dot_claude/settings.json.tmpl resolves its
+      # store path for the Moshi hooks (see users/agent-clis.nix).
+      $DRY_RUN_CMD env PATH="${pkgs.moshi-hook}/bin:${pkgs.bitwarden-cli}/bin:${pkgs.git}/bin:$PATH" ${pkgs.chezmoi}/bin/chezmoi update || echo "chezmoi apply incomplete (unlock Bitwarden, then re-run 'make switch')."
     fi
   '';
 
