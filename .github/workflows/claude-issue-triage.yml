@@ -21,7 +21,7 @@ jobs:
 
       - name: Checkout repository
         if: ${{ env.ANTHROPIC_API_KEY != '' }}
-        uses: actions/checkout@v7.0.1
+        uses: actions/checkout@v7
 
       - name: Run Claude Issue Triage
         if: ${{ env.ANTHROPIC_API_KEY != '' }}
