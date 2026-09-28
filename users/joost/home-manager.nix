@@ -1,6 +1,9 @@
 {
   isWSL,
   isOmarchy ? false,
+  # Small-laptop profile (mba): skips local-model tooling and the heavyweight
+  # agent infrastructure (agent-mail service, session indexes, cargo builds).
+  isLite ? false,
   inputs,
   currentSystemName,
   ...
@@ -233,7 +236,6 @@ in
       asciinema
       air # Live reload for Go
       alacritty
-      brev-cli
       btop
       chezmoi
       kitty
@@ -302,32 +304,40 @@ in
       caam # Instant auth switching for AI coding subscriptions
       codex
       destructive-command-guard # Safety hook for AI agents (dcg command)
-      grepai # Semantic code search for AI coding assistants
       herdr # Terminal workspace manager for AI coding agents (overlay pins 0.9.0)
       grok-build # xAI Grok Build CLI (grok command; overlay pins 1.0.5)
       gws # Google Workspace CLI
-      ntm # Named Tmux Manager for AI agent coordination
       repo-updater # GitHub repo sync tool (ru command)
-      brenner # Sydney Brenner research platform CLI
       csctf # Convert AI chat share links to Markdown/HTML transcripts
       toon # Token-Optimized Object Notation converter
     ]
     ++ (lib.optional (pkgs.meta-skill != null) pkgs.meta-skill)
     ++ [
-      slb # Shannon Language Benchmark for LLM evaluation
       ubs # AI-native code quality scanner
       # caut: install via `cargo install --git https://github.com/Dicklesworthstone/coding_agent_usage_tracker`
     ]
     ++ (lib.optional (pkgs.giil != null) pkgs.giil)
     ++ (lib.optional (pkgs.pi-agent != null) pkgs.pi-agent)
-    ++ (lib.optional (pkgs.hermes-agent != null) pkgs.hermes-agent) # hermes CLI/TUI
     ++ (lib.optional (pkgs.xf != null) pkgs.xf)
-    ++ (lib.optional (pkgs.mcp-agent-mail != null) pkgs.mcp-agent-mail)
     ++ (lib.optional (pkgs.cross-agent-session-resumer != null) pkgs.cross-agent-session-resumer)
     ++ (lib.optional (pkgs.process-triage != null) pkgs.process-triage)
     ++ (lib.optional (pkgs.remote-compilation-helper != null) pkgs.remote-compilation-helper)
-    ++ (lib.optional (pkgs.cass != null) pkgs.cass)
-    ++ (lib.optional (pkgs.cass-memory != null) pkgs.cass-memory)
+    # Heavyweight AI tooling: local-model / embedding search, GPU cloud, LLM
+    # benchmarking, multi-agent orchestration and session indexes. Skipped on
+    # the lite laptop profile (mba).
+    ++ (lib.optionals (!isLite) (
+      [
+        brev-cli
+        grepai # Semantic code search for AI coding assistants
+        ntm # Named Tmux Manager for AI agent coordination
+        brenner # Sydney Brenner research platform CLI
+        slb # Shannon Language Benchmark for LLM evaluation
+      ]
+      ++ (lib.optional (pkgs.hermes-agent != null) pkgs.hermes-agent) # hermes CLI/TUI
+      ++ (lib.optional (pkgs.mcp-agent-mail != null) pkgs.mcp-agent-mail)
+      ++ (lib.optional (pkgs.cass != null) pkgs.cass)
+      ++ (lib.optional (pkgs.cass-memory != null) pkgs.cass-memory)
+    ))
     ++ [
       s2p # Turn code projects into LLM prompts with a TUI
 
@@ -514,7 +524,7 @@ in
 
   # Install worktrunk via cargo. Recent versions require rustc >= 1.93,
   # so make sure the stable toolchain is up-to-date before installing.
-  home.activation.installWorktrunk = lib.mkIf (!isMinimal) (
+  home.activation.installWorktrunk = lib.mkIf (!isMinimal && !isLite) (
     lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       if ! $HOME/.cargo/bin/worktrunk --version &>/dev/null; then
         echo "Installing worktrunk..."
@@ -525,7 +535,7 @@ in
 
   # Install caut (coding agent usage tracker) via cargo nightly.
   # Ensures the nightly toolchain is installed before invoking it.
-  home.activation.installCaut = lib.mkIf (!isMinimal) (
+  home.activation.installCaut = lib.mkIf (!isMinimal && !isLite) (
     lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       if ! $HOME/.cargo/bin/caut --version &>/dev/null; then
         echo "Installing caut (coding agent usage tracker)..."
@@ -2422,7 +2432,7 @@ in
   };
 
   # Agent Mail - MCP HTTP server for async agent coordination (Rust binary)
-  systemd.user.services.agent-mail = lib.mkIf (isLinux && !isWSL) {
+  systemd.user.services.agent-mail = lib.mkIf (isLinux && !isWSL && !isLite) {
     Unit = {
       Description = "MCP Agent Mail HTTP Server";
       After = [ "network.target" ];

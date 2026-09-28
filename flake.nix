@@ -136,10 +136,14 @@
         {
           hostName,
           extraPackages,
+          system ? "x86_64-linux",
+          # Small laptop profile: drops local-model and heavyweight agent
+          # tooling (see isLite in users/joost/home-manager.nix).
+          isLite ? false,
         }:
         let
           pkgs = import nixpkgs {
-            system = "x86_64-linux";
+            inherit system;
             overlays = overlays;
             config.allowUnfree = true;
           };
@@ -153,7 +157,7 @@
             (import ./users/joost/home-manager.nix {
               isWSL = false;
               isOmarchy = true;
-              inherit inputs;
+              inherit inputs isLite;
               currentSystemName = hostName;
             })
             # Same agent CLI toolset the NixOS/Darwin hosts get from
@@ -221,6 +225,23 @@
       j9Home = mkOmarchyHome {
         hostName = "j9";
         extraPackages = omarchyExtraPackages;
+      };
+
+      # mba: MacBook Air M1 / 16 GiB running Omarchy on Asahi (Arch Linux ARM,
+      # 16K pages). Named after its hostname so it stays distinct from
+      # darwinConfigurations."macbook-air-m1", the macOS install. Lite profile:
+      # no local-model tooling and none of the heavyweight agent infrastructure
+      # the desktops carry.
+      mbaHome = mkOmarchyHome {
+        hostName = "mba";
+        system = "aarch64-linux";
+        isLite = true;
+        extraPackages = pkgs: [
+          pkgs.playerctl
+          pkgs.thunderbird
+          pkgs.mosh
+          pkgs.tailmix
+        ];
       };
     in
     {
@@ -476,10 +497,11 @@
 
       # Omarchy Quattro package manifests live in /usr/share/omarchy/install.
       # gum, tldr, mpv, localsend, inxi and mise are Quattro core packages, so
-      # they stay out of the Nix layer. Two real Omarchy hosts, fu137 and j9;
-      # "omarchy" stays an alias for fu137 for older commands.
+      # they stay out of the Nix layer. Three real Omarchy hosts, fu137, j9 and
+      # mba; "omarchy" stays an alias for fu137 for older commands.
       homeConfigurations."fu137" = omarchyHome;
       homeConfigurations."j9" = j9Home;
+      homeConfigurations."mba" = mbaHome;
       homeConfigurations."omarchy" = omarchyHome;
     };
 }

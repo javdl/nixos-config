@@ -277,21 +277,29 @@ The repository uses a modular architecture with clear separation of concerns:
 
 ### Omarchy Quattro Machines (Arch Linux)
 
-Two boxes run **Omarchy Quattro** (Arch + Hyprland) and are managed through
+Three boxes run **Omarchy Quattro** (Arch + Hyprland) and are managed through
 standalone Home Manager outputs in `flake.nix`, not as NixOS hosts:
 
 | Host | Hardware | Output | Notes |
 |---|---|---|---|
 | `fu137` | Ryzen 9 7950X, RTX 3090, 30 GiB | `homeConfigurations."fu137"` | Herdr fleet `gpu` worker (see `users/herdr-fleet.nix`) |
 | `j9` | Ryzen 9 9950X3D, RTX 4090, 60 GiB | `homeConfigurations."j9"` | Not a Herdr fleet node |
+| `mba` | MacBook Air M1, 16 GiB (Asahi, aarch64) | `homeConfigurations."mba"` | Lite profile; the macOS install keeps `darwinConfigurations."macbook-air-m1"` |
 
-Both are built from `mkOmarchyHome` with the shared `omarchyExtraPackages`
-list, so they differ only in the `hostName` threaded through as
-`currentSystemName`. **That hostname is load-bearing.** `users/herdr-fleet.nix`
-keys the fleet worker role off `currentSystemName == "fu137"`, so pointing a
-second machine's output at `hostName = "fu137"` installs bali's fleet SSH key
-into that machine's `authorized_keys`. Give every new Omarchy box its own
-`mkOmarchyHome` call rather than aliasing an existing one.
+All are built from `mkOmarchyHome`. fu137 and j9 share the
+`omarchyExtraPackages` list, so they differ only in the `hostName` threaded
+through as `currentSystemName`. **That hostname is load-bearing.**
+`users/herdr-fleet.nix` keys the fleet worker role off
+`currentSystemName == "fu137"`, so pointing a second machine's output at
+`hostName = "fu137"` installs bali's fleet SSH key into that machine's
+`authorized_keys`. Give every new Omarchy box its own `mkOmarchyHome` call
+rather than aliasing an existing one.
+
+`mba` passes `system = "aarch64-linux"` and `isLite = true`. `isLite` in
+`users/joost/home-manager.nix` drops the heavyweight AI layer (hermes,
+agent-mail and its user service, cass/cass-memory, grepai, ntm, brev-cli, slb,
+brenner, and the cargo-built worktrunk/caut). Its own extra-package list also
+leaves out gollama. The agent CLIs themselves stay.
 
 `omarchy` remains a compatibility alias for `fu137`.
 

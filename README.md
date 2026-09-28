@@ -692,8 +692,8 @@ For more details on adding new dotfiles, making changes, see the [Chezmoi docume
 
 ## Omarchy
 
-The `fu137` and `j9` Home Manager outputs are the Nix-managed CLI layer for the
-two Omarchy Quattro workstations. Omarchy remains responsible for Hyprland,
+The `fu137`, `j9` and `mba` Home Manager outputs are the Nix-managed CLI layer
+for the Omarchy Quattro machines. Omarchy remains responsible for Hyprland,
 Quickshell, terminals, themes, and its core packages through pacman. Its
 authoritative manifests are
 `/usr/share/omarchy/install/omarchy-{base,other}.packages`.
@@ -703,14 +703,15 @@ curl -fsSL https://install.determinate.systems/nix | sh -s -- install
 
 determinate-nixd login
 
-make test NIXNAME=$(hostname -s)     # fu137 or j9
+make test NIXNAME=$(hostname -s)     # fu137, j9 or mba
 make switch NIXNAME=$(hostname -s)
 ```
 
-The two outputs share one profile and differ only in the hostname threaded
+fu137 and j9 share one profile and differ only in the hostname threaded
 through as `currentSystemName`, which decides Herdr fleet membership — so each
-machine needs its own output, not an alias. `omarchy` remains an alias for
-`fu137`.
+machine needs its own output, not an alias. `mba` (MacBook Air M1 on Asahi,
+aarch64-linux) uses a lite profile (`isLite`) without the local-model and
+heavyweight agent tooling. `omarchy` remains an alias for `fu137`.
 
 ## Dicklesworthstone AI Agent Tooling
 
