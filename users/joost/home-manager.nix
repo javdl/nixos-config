@@ -577,15 +577,20 @@ in
   # a missing key or locked vault never breaks the switch.
   # Recover from detached HEAD before update so `chezmoi update`'s git pull
   # has a branch to rebase against.
-  # Runs after linkGeneration: the clone authenticates through the Bitwarden
-  # agent named by IdentityAgent in ~/.ssh/config (programs.ssh). On a fresh
-  # host that file only exists once the generation is linked, and Omarchy
-  # sets no SSH_AUTH_SOCK, so an earlier run has no agent and the clone fails.
-  home.activation.chezmoiSync = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+  # The Bitwarden agent is named explicitly for git: this runs before
+  # linkGeneration, so on a fresh host ~/.ssh/config (programs.ssh, which
+  # carries IdentityAgent) is not linked yet, and Omarchy sets no
+  # SSH_AUTH_SOCK. Do not reorder after linkGeneration instead: chezmoi also
+  # manages ~/.ssh/config and would then replace Home Manager's copy.
+  home.activation.chezmoiSync = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     CHEZMOI_SOURCE="$HOME/.local/share/chezmoi"
+    sshAgentOpt=
+    if [ -S "$HOME/.bitwarden-ssh-agent.sock" ]; then
+      sshAgentOpt="-o IdentityAgent=$HOME/.bitwarden-ssh-agent.sock"
+    fi
     if [ ! -d "$CHEZMOI_SOURCE/.git" ]; then
       echo "Chezmoi checkout missing — bootstrapping from javdl/dotfiles..."
-      $DRY_RUN_CMD env PATH="${pkgs.bitwarden-cli}/bin:${pkgs.git}/bin:$PATH" GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=15" GIT_TERMINAL_PROMPT=0 ${pkgs.chezmoi}/bin/chezmoi init git@github.com:javdl/dotfiles.git || echo "chezmoi clone failed (check git auth); will retry on next switch."
+      $DRY_RUN_CMD env PATH="${pkgs.bitwarden-cli}/bin:${pkgs.git}/bin:$PATH" GIT_SSH_COMMAND="ssh $sshAgentOpt -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=15" GIT_TERMINAL_PROMPT=0 ${pkgs.chezmoi}/bin/chezmoi init git@github.com:javdl/dotfiles.git || echo "chezmoi clone failed (check git auth); will retry on next switch."
     fi
     if [ -d "$CHEZMOI_SOURCE/.git" ]; then
       if ! ${pkgs.git}/bin/git -C "$CHEZMOI_SOURCE" symbolic-ref -q HEAD >/dev/null; then
@@ -595,7 +600,7 @@ in
       echo "Syncing dotfiles from chezmoi repo..."
       # moshi-hook first on PATH: dot_claude/settings.json.tmpl resolves its
       # store path for the Moshi hooks (see users/agent-clis.nix).
-      $DRY_RUN_CMD env PATH="${pkgs.moshi-hook}/bin:${pkgs.bitwarden-cli}/bin:${pkgs.git}/bin:$PATH" ${pkgs.chezmoi}/bin/chezmoi update || echo "chezmoi apply incomplete (unlock Bitwarden, then re-run 'make switch')."
+      $DRY_RUN_CMD env ''${sshAgentOpt:+"GIT_SSH_COMMAND=ssh $sshAgentOpt"} PATH="${pkgs.moshi-hook}/bin:${pkgs.bitwarden-cli}/bin:${pkgs.git}/bin:$PATH" ${pkgs.chezmoi}/bin/chezmoi update || echo "chezmoi apply incomplete (unlock Bitwarden, then re-run 'make switch')."
     fi
   '';
 
