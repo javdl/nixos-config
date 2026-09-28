@@ -135,50 +135,6 @@ let
   # Use shared manpager
   manpager = shared.manpager;
 
-  sshTailscaleHost = hostname: {
-    inherit hostname;
-    user = "joost";
-    # 26.05: raw OpenSSH directives go directly in the block (freeform type);
-    # programs.ssh.matchBlocks.*.extraOptions is deprecated.
-    PreferredAuthentications = "publickey";
-    PubkeyAuthentication = "yes";
-    PasswordAuthentication = "no";
-  };
-
-  sshBuriHokiHost = host: sshTailscaleHost "${host}.buri-hoki.ts.net";
-
-  # One exe.dev account per alias; `name` is both the Host alias and the
-  # basename of the public key installed into ~/.ssh by home.file below.
-  exeHost = name: {
-    hostname = "exe.dev";
-    user = "root";
-    identityFile = "~/.ssh/${name}.pub";
-    identitiesOnly = true;
-  };
-
-  # VM shells (<vm>.exe.xyz), as opposed to the exe.dev control plane above.
-  # Without an explicit identity these match only "*" and offer every key in the
-  # Bitwarden agent; exe.dev then switches the account's "current" key to
-  # whichever one happens to authenticate, so `whoami` and `ls` start reporting a
-  # different account than you meant to use. No `user`: exe.dev routes VM shells
-  # regardless of username.
-  exeVm = name: {
-    identityFile = "~/.ssh/${name}.pub";
-    identitiesOnly = true;
-  };
-
-  # A VM on the FashionUnited team account. Deliberately a dotless alias rather
-  # than a "<vm>.exe.xyz" pattern: ssh keeps the first value it obtains for an
-  # option, but Nix renders attrset keys alphabetically, so "*.exe.xyz" would
-  # sort ahead of any "fu-….exe.xyz" block and win. An alias cannot collide with
-  # that wildcard, so the identity holds regardless of ordering.
-  exeWorkVm = name: {
-    hostname = "${name}.exe.xyz";
-    HostKeyAlias = "exe.dev";
-    identityFile = "~/.ssh/exe-work.pub";
-    identitiesOnly = true;
-  };
-
   gdk = pkgs.google-cloud-sdk.withExtraComponents (
     with pkgs.google-cloud-sdk.components;
     [
@@ -577,11 +533,9 @@ in
   # a missing key or locked vault never breaks the switch.
   # Recover from detached HEAD before update so `chezmoi update`'s git pull
   # has a branch to rebase against.
-  # The Bitwarden agent is named explicitly for git: this runs before
-  # linkGeneration, so on a fresh host ~/.ssh/config (programs.ssh, which
-  # carries IdentityAgent) is not linked yet, and Omarchy sets no
-  # SSH_AUTH_SOCK. Do not reorder after linkGeneration instead: chezmoi also
-  # manages ~/.ssh/config and would then replace Home Manager's copy.
+  # The Bitwarden agent is named explicitly for git: ~/.ssh/config, which
+  # carries IdentityAgent, is itself written by this chezmoi run, so a fresh
+  # host has none yet, and Omarchy sets no SSH_AUTH_SOCK.
   home.activation.chezmoiSync = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     CHEZMOI_SOURCE="$HOME/.local/share/chezmoi"
     sshAgentOpt=
@@ -597,10 +551,25 @@ in
         echo "chezmoi repo is in detached HEAD; checking out main before sync..."
         $DRY_RUN_CMD ${pkgs.git}/bin/git -C "$CHEZMOI_SOURCE" checkout main || true
       fi
+      # One-time takeover: Home Manager used to link ~/.ssh/config into the
+      # store. chezmoi reads that link as a local edit and would prompt, which
+      # fails without a TTY, and linkGeneration then removes the stale link,
+      # leaving no ssh config. A store link is never a user edit, so force it.
+      sshConfig="$HOME/.ssh/config"
+      if [ -L "$sshConfig" ] && [[ "$(readlink "$sshConfig")" == /nix/store/* ]]; then
+        $DRY_RUN_CMD ${pkgs.chezmoi}/bin/chezmoi apply --force "$sshConfig" || \
+          echo "chezmoi: could not take over ~/.ssh/config"
+      fi
       echo "Syncing dotfiles from chezmoi repo..."
       # moshi-hook first on PATH: dot_claude/settings.json.tmpl resolves its
       # store path for the Moshi hooks (see users/agent-clis.nix).
-      $DRY_RUN_CMD env ''${sshAgentOpt:+"GIT_SSH_COMMAND=ssh $sshAgentOpt"} PATH="${pkgs.moshi-hook}/bin:${pkgs.bitwarden-cli}/bin:${pkgs.git}/bin:$PATH" ${pkgs.chezmoi}/bin/chezmoi update || echo "chezmoi apply incomplete (unlock Bitwarden, then re-run 'make switch')."
+      if ! $DRY_RUN_CMD env ''${sshAgentOpt:+"GIT_SSH_COMMAND=ssh $sshAgentOpt"} PATH="${pkgs.moshi-hook}/bin:${pkgs.bitwarden-cli}/bin:${pkgs.git}/bin:$PATH" ${pkgs.chezmoi}/bin/chezmoi update; then
+        echo "chezmoi apply incomplete (unlock Bitwarden, then re-run 'make switch')."
+        # A locked vault aborts the whole apply, but ~/.ssh/config needs no
+        # secrets and nothing else writes it, so apply that target on its own.
+        $DRY_RUN_CMD ${pkgs.chezmoi}/bin/chezmoi apply "$sshConfig" || \
+          echo "chezmoi: ~/.ssh/config not applied"
+      fi
     fi
   '';
 
@@ -656,7 +625,8 @@ in
     ".config/zellij/layouts/frontend.kdl".source = ../zellij-frontend-fuww.kdl;
     ".config/zellij/layouts/backend.kdl".source = ../zellij-backend-fuww.kdl;
     # Public halves of the Bitwarden-held exe.dev keys, used purely as
-    # identity selectors for the `exe` / `exe-work` SSH aliases.
+    # identity selectors by the exe.dev entries in the chezmoi-owned
+    # ~/.ssh/config (javdl/dotfiles private_dot_ssh/config).
     ".ssh/exe.pub".source = ./ssh/exe.pub;
     ".ssh/exe-work.pub".source = ./ssh/exe-work.pub;
     ".gdbinit".source = ./gdbinit;
@@ -1255,68 +1225,6 @@ in
     options = {
       line-numbers = true;
       side-by-side = true;
-    };
-  };
-
-  programs.ssh = {
-    enable = true;
-    enableDefaultConfig = false;
-
-    includes = [
-      "~/.ssh/brev-ssh-config" # Brev CLI manages this file for GPU cloud instances
-      # Host entries shared with machines that have no HM-managed ssh config
-      # (servers run home-manager-server.nix, which sets no programs.ssh).
-      # chezmoi owns the file; their standalone ~/.ssh/config includes it too.
-      # Includes are emitted first, so anything here wins over the blocks below.
-      "~/.ssh/config.local"
-    ];
-
-    settings = {
-      "*" = {
-        compression = true;
-        serverAliveInterval = 60;
-        serverAliveCountMax = 3;
-        identityAgent = "~/.bitwarden-ssh-agent.sock";
-      };
-
-      "hetzner-work" = {
-        hostname = "2a01:4f8:1c1f:ad3c::1";
-        user = "root";
-        identityFile = "~/.ssh/id_ed25519_hetzner_work";
-        identitiesOnly = true;
-      };
-
-      # exe.dev accounts. Private keys live in Bitwarden and are served by its
-      # SSH agent (identityAgent in the "*" block); identityFile points at the
-      # *public* key so identitiesOnly can pick exactly one identity out of the
-      # agent instead of offering all of them.
-      "exe" = exeHost "exe";
-      "exe-work" = exeHost "exe-work";
-
-      # FashionUnited team VMs, reached by alias so the wildcard below cannot
-      # shadow their identity.
-      "fu-developer" = exeWorkVm "fu-developer";
-      "fu-handbook" = exeWorkVm "fu-handbook";
-      "fu-herdr-dev" = exeWorkVm "fu-herdr-dev";
-
-      # Every other VM shell belongs to the personal account.
-      "*.exe.xyz" = exeVm "exe";
-
-      "argon" = sshTailscaleHost "100.106.10.12";
-      "bali" = sshTailscaleHost "100.113.194.113";
-      "j8" = sshTailscaleHost "100.99.236.94";
-      "j9" = sshBuriHokiHost "j9";
-      "pikvm" = (sshTailscaleHost "100.121.9.3") // {
-        user = "root";
-      };
-      "radon" = sshTailscaleHost "100.101.199.29";
-      "router" = (sshTailscaleHost "100.97.154.115") // {
-        user = "root";
-      };
-
-      "nas" = sshBuriHokiHost "nas";
-      "terra" = sshBuriHokiHost "terra";
-
     };
   };
 

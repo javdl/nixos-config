@@ -396,6 +396,9 @@ Claude Code performs **literal env-var substitution** on hook commands like `"${
 
 The file is therefore a chezmoi template: `~/.local/share/chezmoi/dot_claude/settings.json.tmpl`. All home-rooted env vars use `{{ .chezmoi.homeDir }}` (renders to `/home/joost/...` on Linux, `/Users/joost/...` on macOS). Never put tildes or hardcoded `/home/joost` in the source; edit the `.tmpl` instead. If a chezmoi auto-sync from another machine reintroduces tildes, revert it.
 
+### `~/.ssh/config` is chezmoi-owned
+Add SSH hosts in `javdl/dotfiles` `private_dot_ssh/config`, not here. One file serves workstations and bali: the Bitwarden `IdentityAgent` sits behind `Match exec "test -S …"`, and exe.dev entries list both the workstation `*.pub` selector (still deployed by `home.file` in `users/joost/home-manager.nix`) and bali's private key file, since ssh skips missing identity files. Do not re-enable `programs.ssh` in `users/joost/home-manager.nix`: the two writers replace each other's file on every switch. `chezmoiSync` applies `~/.ssh/config` on its own when a locked vault aborts the full apply.
+
 ### chezmoi auto-sync races with manual pushes
 A background timer auto-syncs `~/.claude/MEMORY` (and observably `~/.claude/settings.json`) to `~/.local/share/chezmoi` every ~5 min and pushes to `javdl/dotfiles`. Manual pushes regularly hit non-fast-forward rejections. Standard recovery: `git pull --rebase --autostash && git push`. Plan for one or two rebase cycles; it's not a bug.
 

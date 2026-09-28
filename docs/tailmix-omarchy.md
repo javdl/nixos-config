@@ -15,8 +15,8 @@ ff53  jvdlxz@gmail.com   joostvanderlaan@gmail.com*
 
 `tailscale switch b793` moves the whole machine to the work tailnet and takes
 `j9.buri-hoki.ts.net` away from every other personal machine, because the `j9`
-SSH alias in `users/joost/home-manager.nix` resolves to that name. So switching
-is not a way to have both.
+SSH alias in the chezmoi-owned `~/.ssh/config` (javdl/dotfiles) resolves to
+that name. So switching is not a way to have both.
 
 tailmix is. It runs one tsnet client per extra tailnet behind a single TUN,
 remaps each tailnet's peers into a local IPv4 range and answers MagicDNS with
