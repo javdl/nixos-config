@@ -506,11 +506,15 @@ in
 
   # Install/update Vercel CLI via npm (removed from nixpkgs).
   # On Darwin, vercel-cli is managed by homebrew (see darwin.nix), so skip there.
+  # The prefix and node PATH are explicit because activation cannot rely on
+  # home.sessionVariables: Omarchy disables the bash module, so a shell there
+  # never sources them, and npm then targets the read-only store prefix.
   home.activation.installVercel = lib.mkIf (!isDarwin) (
     lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      if ! command -v vercel &>/dev/null || [ "$(vercel --version 2>/dev/null | head -1)" != "$(${pkgs.nodejs_22}/bin/npm view vercel version 2>/dev/null)" ]; then
+      vercelBin="$HOME/.npm-global/bin/vercel"
+      if [ ! -x "$vercelBin" ] || [ "$(PATH="${pkgs.nodejs_22}/bin:$PATH" "$vercelBin" --version 2>/dev/null | head -1)" != "$(${pkgs.nodejs_22}/bin/npm view vercel version 2>/dev/null)" ]; then
         echo "Installing/updating Vercel CLI..."
-        $DRY_RUN_CMD ${pkgs.nodejs_22}/bin/npm install -g vercel@latest 2>/dev/null || echo "Vercel CLI install failed"
+        $DRY_RUN_CMD env NPM_CONFIG_PREFIX="$HOME/.npm-global" PATH="${pkgs.nodejs_22}/bin:$PATH" ${pkgs.nodejs_22}/bin/npm install -g vercel@latest 2>/dev/null || echo "Vercel CLI install failed"
       fi
     ''
   );
@@ -573,7 +577,11 @@ in
   # a missing key or locked vault never breaks the switch.
   # Recover from detached HEAD before update so `chezmoi update`'s git pull
   # has a branch to rebase against.
-  home.activation.chezmoiSync = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+  # Runs after linkGeneration: the clone authenticates through the Bitwarden
+  # agent named by IdentityAgent in ~/.ssh/config (programs.ssh). On a fresh
+  # host that file only exists once the generation is linked, and Omarchy
+  # sets no SSH_AUTH_SOCK, so an earlier run has no agent and the clone fails.
+  home.activation.chezmoiSync = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
     CHEZMOI_SOURCE="$HOME/.local/share/chezmoi"
     if [ ! -d "$CHEZMOI_SOURCE/.git" ]; then
       echo "Chezmoi checkout missing — bootstrapping from javdl/dotfiles..."
