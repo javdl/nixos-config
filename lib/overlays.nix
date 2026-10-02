@@ -677,7 +677,9 @@ in
             installPhase = ''
               mkdir -p $out/libexec/posthog-cli $out/bin
               cp -r posthog-cli lib $out/libexec/posthog-cli/
+              # EU Cloud by default; an exported POSTHOG_CLI_HOST still wins.
               makeWrapper $out/libexec/posthog-cli/posthog-cli $out/bin/posthog-cli \
+                --set-default POSTHOG_CLI_HOST https://eu.posthog.com \
                 --suffix PATH : ${prev.lib.makeBinPath [ prev.nodejs ]}
             '';
 
