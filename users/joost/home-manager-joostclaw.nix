@@ -38,6 +38,7 @@ in
     fd
     fzf
     gh
+    hcloud
     git
     htop
     jq

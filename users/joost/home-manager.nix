@@ -216,6 +216,7 @@ in
       fzf
       gemini-cli
       gh
+      hcloud
       graphite-cli
       # ghostty
       git-lfs

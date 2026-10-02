@@ -82,6 +82,7 @@ in
       fd
       fzf
       gh
+      hcloud
       git
       git-lfs
       htop
