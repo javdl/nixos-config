@@ -39,6 +39,7 @@ in
     fzf
     gh
     hcloud
+    posthog-cli
     git
     htop
     jq

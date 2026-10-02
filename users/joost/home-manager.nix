@@ -217,6 +217,7 @@ in
       gemini-cli
       gh
       hcloud
+      posthog-cli
       graphite-cli
       # ghostty
       git-lfs

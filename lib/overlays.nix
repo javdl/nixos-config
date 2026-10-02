@@ -98,6 +98,31 @@ in
           };
           herdrSource = herdrSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for herdr: ${prev.stdenv.hostPlatform.system}");
 
+          # posthog-cli - PostHog CLI (API/MCP tool catalog, source maps, tasks).
+          # Linux uses the musl tarballs (verified `file`: static-pie linked), so
+          # no patchelf. The tarball ships lib/posthog-api-cli.mjs next to the
+          # binary for `posthog-cli api`; keep the layout and put node on PATH.
+          posthogCliVersion = "0.18.9";
+          posthogCliSources = {
+            "x86_64-linux" = {
+              target = "x86_64-unknown-linux-musl";
+              sha256 = "d132e0ab56d0afaee10fd37b0870ba1162b09f7dccc8eb92ea391fe081be60a5";
+            };
+            "aarch64-linux" = {
+              target = "aarch64-unknown-linux-musl";
+              sha256 = "60fbbbcf201730d063ce26de840aa129a07cd69c80d0f0a8d8fa19f7c4cd625f";
+            };
+            "x86_64-darwin" = {
+              target = "x86_64-apple-darwin";
+              sha256 = "8b8458f832eea96bd6b611927150467bae31256e63923a4e75a42cc7f22d7d8b";
+            };
+            "aarch64-darwin" = {
+              target = "aarch64-apple-darwin";
+              sha256 = "831d3a8f16f95fc7cdbff7c9e83a32f012e8bd5af983646582f52e3ca4221d01";
+            };
+          };
+          posthogCliSource = posthogCliSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for posthog-cli: ${prev.stdenv.hostPlatform.system}");
+
           # moshi-hook - daemon + CLI for the Moshi mobile app (Easy Pair SSH/mosh,
           # agent hooks, approval round-trips). Statically linked Go binary
           # (verified `file`: statically linked), so no patchelf on NixOS.
@@ -634,6 +659,33 @@ in
               homepage = "https://github.com/herdrdev/herdr";
               license = licenses.asl20;
               mainProgram = "herdr";
+              platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+            };
+          };
+
+          posthog-cli = prev.stdenv.mkDerivation {
+            pname = "posthog-cli";
+            version = posthogCliVersion;
+
+            src = prev.fetchurl {
+              url = "https://github.com/PostHog/posthog/releases/download/posthog-cli/v${posthogCliVersion}/posthog-cli-${posthogCliSource.target}.tar.gz";
+              sha256 = posthogCliSource.sha256;
+            };
+
+            nativeBuildInputs = [ prev.makeWrapper ];
+
+            installPhase = ''
+              mkdir -p $out/libexec/posthog-cli $out/bin
+              cp -r posthog-cli lib $out/libexec/posthog-cli/
+              makeWrapper $out/libexec/posthog-cli/posthog-cli $out/bin/posthog-cli \
+                --suffix PATH : ${prev.lib.makeBinPath [ prev.nodejs ]}
+            '';
+
+            meta = with prev.lib; {
+              description = "PostHog CLI: API tools, source map uploads and tasks from the terminal";
+              homepage = "https://posthog.com/docs/cli";
+              license = licenses.mit;
+              mainProgram = "posthog-cli";
               platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
             };
           };

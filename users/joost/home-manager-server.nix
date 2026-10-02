@@ -83,6 +83,7 @@ in
       fzf
       gh
       hcloud
+      posthog-cli
       git
       git-lfs
       htop
