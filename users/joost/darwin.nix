@@ -187,6 +187,11 @@ in
 
   homebrew = {
     enable = true;
+    # Nobody runs brew by hand on the headless servers, so Homebrew never
+    # updated itself there and failed on the next macOS release (radon on
+    # macOS 27: "unknown or unsupported macOS version: :dunno"). Update it
+    # before each bundle on those hosts only; it slows activation.
+    onActivation.autoUpdate = builtins.elem currentSystemName serversMacos;
     taps = [
       "dicklesworthstone/tap"
       "steipete/tap"
