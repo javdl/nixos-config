@@ -39,7 +39,12 @@
     ../modules/netdata.nix
     ../modules/ci-disk-cleanup.nix
     ../modules/herdr-fleet-node.nix
+    ../modules/cua-spaces-host.nix
   ];
+
+  # Cua Bots Spaces (docs/cua-bots-fleet.md). CI jobs share this Docker
+  # daemon, so any fuww workflow can reach these Spaces.
+  services.cuaSpacesHost.enable = true;
 
   # Enable the GitHub Actions runner packages module
   services.github-actions-runner.enable = true;
@@ -280,9 +285,9 @@
 
       if [ "$AVAIL_GB" -lt 40 ]; then
         echo "Low disk — running emergency cleanup before job"
-        docker system prune --all --force --filter "until=4h" 2>/dev/null || true
+        docker system prune --all --force --filter "until=4h" --filter "label!=ai.cua.managed=true" 2>/dev/null || true
         docker builder prune --all --force 2>/dev/null || true
-        docker volume prune --force 2>/dev/null || true
+        docker volume prune --force --filter "label!=ai.cua.managed=true" 2>/dev/null || true
         for dir in /var/lib/github-runner-work/fuww-runner-*/*/; do
           [ -d "$dir" ] || continue
           case "$(basename "$dir")" in

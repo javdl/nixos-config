@@ -166,6 +166,7 @@ in
     (import ./omarchy-startup.nix { inherit isOmarchy currentSystemName; })
     ./cachix-daemon.nix # auto-push locally-built paths to javdl-nixos-config cachix
     (import ../herdr-fleet.nix { inherit currentSystemName; })
+    (import ../cua-spaces-host-omarchy.nix { inherit currentSystemName; })
   ];
 
   # Home-manager 22.11 requires this be set. We never set it so we have

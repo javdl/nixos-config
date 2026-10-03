@@ -36,4 +36,10 @@
     operator = "joost";
     authKeyFile = "/etc/tailscale/authkey";
   };
+
+  # Cua Bots controller (docs/cua-bots-fleet.md): `cua auth login` and
+  # `cua devices enroll` for the app, which reaches the fleet's Spaces
+  # through the cua.ai relay. The app itself is built by
+  # scripts/build-cua-bots.sh.
+  environment.systemPackages = [ pkgs.cua ];
 }

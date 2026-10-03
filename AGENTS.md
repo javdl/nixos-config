@@ -588,6 +588,18 @@ Keep the fleet inventory in `users/herdr-fleet.nix`; follow
 [`docs/herdr-command-center.md`](docs/herdr-command-center.md) for rollout,
 verification, authentication, and adding nodes.
 
+### Cua Bots fleet
+
+bali, github-runner-03/04/05 and fu137 provide Linux Spaces (Docker) to the
+Cua Bots app on radon, through the cua.ai relay
+(`modules/cua-spaces-host.nix`, `users/cua-spaces-host-omarchy.nix`). The
+app is upstream's sample with `patches/cua-bots-host-placement.patch`, built
+by `scripts/build-cua-bots.sh`. Joining the relay takes a one-time device code
+per host (`sudo cua-spaces-host-setup`). The runners share Docker with fuww
+CI, so their prune commands skip `label=ai.cua.managed=true`; keep that
+filter. Read [`docs/cua-bots-fleet.md`](docs/cua-bots-fleet.md) before
+changing any of it.
+
 ### Installation notes
 
 - Most tools are pre-built binaries installed via Nix overlay (`flake.nix`)

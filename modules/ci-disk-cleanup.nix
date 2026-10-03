@@ -86,10 +86,14 @@ in
     virtualisation.docker.autoPrune = {
       enable = true;
       dates = "daily";
+      # Spaces the cua host provides (modules/cua-spaces-host.nix) carry this
+      # label; a stopped one keeps its disk and must survive the prune.
       flags = [
         "--all"
         "--filter"
         "until=24h"
+        "--filter"
+        "label!=ai.cua.managed=true"
       ];
     };
 
@@ -101,7 +105,7 @@ in
       script = ''
         ${pkgs.docker}/bin/docker builder prune --force --filter "until=168h"
         # Also prune dangling volumes (not cleaned by docker system prune)
-        ${pkgs.docker}/bin/docker volume prune --force 2>/dev/null || true
+        ${pkgs.docker}/bin/docker volume prune --force --filter "label!=ai.cua.managed=true" 2>/dev/null || true
       '';
       serviceConfig = {
         Type = "oneshot";
@@ -250,9 +254,9 @@ in
           fi
 
           # 2. Aggressive Docker cleanup — remove everything older than 4h
-          docker system prune --all --force --filter "until=4h" 2>/dev/null || true
+          docker system prune --all --force --filter "until=4h" --filter "label!=ai.cua.managed=true" 2>/dev/null || true
           docker builder prune --all --force 2>/dev/null || true
-          docker volume prune --force 2>/dev/null || true
+          docker volume prune --force --filter "label!=ai.cua.managed=true" 2>/dev/null || true
           echo "Cleaned Docker images, build cache, and volumes"
 
           # 3. Clean old logs

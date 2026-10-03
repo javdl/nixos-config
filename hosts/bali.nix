@@ -56,8 +56,13 @@ in
     # module header.
     ../modules/tailmix.nix
     ../modules/github-actions-runner.nix
+    # Cua Spaces host; enabled below.
+    ../modules/cua-spaces-host.nix
     inputs.hermes-agent.nixosModules.default
   ];
+
+  # Provides Linux Spaces to the Cua Bots app (docs/cua-bots-fleet.md).
+  services.cuaSpacesHost.enable = true;
 
   # EX63 NVMe enumeration is not stable across boots — the first provision
   # landed on the old disk via duplicate partlabels after a name swap. Pin the

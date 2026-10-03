@@ -574,6 +574,33 @@ in
             };
           };
           rchSource = rchSources.${prev.stdenv.hostPlatform.system} or null;
+
+          # cua - Cua CLI (sandboxes, Spaces, `cua host`, the cua daemon) and
+          # cua-spacesd, the host service that provides Spaces to Cua Bots
+          # (modules/cua-spaces-host.nix). Both are glibc-linked Rust binaries.
+          # Keep cua-spacesd on the CLI's minor line: CLI 0.2.0 pins spacesd
+          # 0.1.0 (never published) and upstream's own fallback picks the
+          # newest 0.1.x, so 0.1.3 is what `cua host setup` would download.
+          cuaVersion = "0.2.0";
+          cuaSources = {
+            "x86_64-linux" = {
+              url = "https://github.com/trycua/cua/releases/download/cua-sdk-v${cuaVersion}/cua-cli-${cuaVersion}-linux-x64.tar.gz";
+              sha256 = "0vnc63ra9nxd8h8dkrdy1ycgkn1vjj59f7nsmprg00hclhz9dhj0";
+            };
+            "aarch64-darwin" = {
+              url = "https://github.com/trycua/cua/releases/download/cua-sdk-v${cuaVersion}/cua-cli-${cuaVersion}-darwin-arm64.tar.gz";
+              sha256 = "157jzi9g37ncrmwfvnp3q5lhkz3qgznvpjm2gsqn0ppr5y3wdl35";
+            };
+          };
+          cuaSource = cuaSources.${prev.stdenv.hostPlatform.system} or null;
+          cuaSpacesdVersion = "0.1.3";
+          cuaSpacesdSources = {
+            "x86_64-linux" = {
+              url = "https://github.com/trycua/cua/releases/download/cua-spacesd-v${cuaSpacesdVersion}/cua-spacesd-linux-x86_64.tar.gz";
+              sha256 = "0n42mliviqasvqq8cx6p5whz8fizn3f8sz2y1nghbc0h079gzwb3";
+            };
+          };
+          cuaSpacesdSource = cuaSpacesdSources.${prev.stdenv.hostPlatform.system} or null;
         in {
           # grepai - semantic code search for AI coding assistants
           grepai = prev.stdenv.mkDerivation {
@@ -1670,6 +1697,62 @@ in
               homepage = "https://github.com/Dicklesworthstone/remote_compilation_helper";
               license = licenses.mit;
               platforms = [ "x86_64-linux" ];
+            };
+          } else null;
+
+          # cua - Cua CLI (see cuaVersion above)
+          cua = if cuaSource != null then prev.stdenv.mkDerivation {
+            pname = "cua";
+            version = cuaVersion;
+
+            src = prev.fetchurl {
+              url = cuaSource.url;
+              sha256 = cuaSource.sha256;
+            };
+
+            sourceRoot = ".";
+
+            nativeBuildInputs = prev.lib.optionals prev.stdenv.isLinux [ prev.autoPatchelfHook ];
+            buildInputs = prev.lib.optionals prev.stdenv.isLinux [ prev.stdenv.cc.cc.lib ];
+
+            installPhase = ''
+              install -Dm755 cua $out/bin/cua
+            '';
+
+            meta = with prev.lib; {
+              description = "Cua CLI: sandboxes, Spaces, unattended hosting and the cua daemon";
+              homepage = "https://github.com/trycua/cua";
+              license = licenses.mit;
+              platforms = [ "x86_64-linux" "aarch64-darwin" ];
+              mainProgram = "cua";
+            };
+          } else null;
+
+          # cua-spacesd - Cua host service that provides Spaces (see cuaVersion)
+          cua-spacesd = if cuaSpacesdSource != null then prev.stdenv.mkDerivation {
+            pname = "cua-spacesd";
+            version = cuaSpacesdVersion;
+
+            src = prev.fetchurl {
+              url = cuaSpacesdSource.url;
+              sha256 = cuaSpacesdSource.sha256;
+            };
+
+            sourceRoot = ".";
+
+            nativeBuildInputs = [ prev.autoPatchelfHook ];
+            buildInputs = with prev; [ stdenv.cc.cc.lib libx11 libxi ];
+
+            installPhase = ''
+              install -Dm755 cua-spacesd $out/bin/cua-spacesd
+            '';
+
+            meta = with prev.lib; {
+              description = "Cua host service: provides Spaces to your devices over the cua.ai relay";
+              homepage = "https://github.com/trycua/cua/tree/main/libs/cua-spacesd";
+              license = licenses.fsl11Mit;
+              platforms = [ "x86_64-linux" ];
+              mainProgram = "cua-spacesd";
             };
           } else null;
 

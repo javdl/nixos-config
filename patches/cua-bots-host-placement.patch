@@ -1,0 +1,182 @@
+diff --git a/samples/cua-bots-macos/Sources/CuaBotsCore/Model/Bot.swift b/samples/cua-bots-macos/Sources/CuaBotsCore/Model/Bot.swift
+index 2b446ce..1f0e6a3 100644
+--- a/samples/cua-bots-macos/Sources/CuaBotsCore/Model/Bot.swift
++++ b/samples/cua-bots-macos/Sources/CuaBotsCore/Model/Bot.swift
+@@ -42,15 +42,54 @@ public enum Harness: String, Codable, CaseIterable, Identifiable, Sendable {
+     }
+ }
+ 
+-/// Where a bot's own computer runs.
+-public enum Placement: String, Codable, CaseIterable, Identifiable, Sendable {
++/// Where a bot's own computer runs: `on` is what `Spaces.create` takes.
++public struct Placement: Codable, Hashable, Identifiable, Sendable {
++    /// `local`, `cloud` or `host:<id>` (one of your machines that provides
++    /// Spaces, set up with `cua host setup --profile spare`).
++    public let on: String
++    /// What the app shows.
++    public let name: String
++
++    public init(on: String, name: String) {
++        self.on = on
++        self.name = name
++    }
++
+     /// A Space on this Mac (a container under Docker or gVisor).
+-    case local
++    public static let local = Placement(on: "local", name: "This Mac")
+     /// A Cua Cloud Space.
+-    case cloud
+-
+-    public var id: String { rawValue }
+-    public var name: String { self == .local ? "This Mac" : "Cua Cloud" }
++    public static let cloud = Placement(on: "cloud", name: "Cua Cloud")
++    /// A Space on one of your machines, by its id from `Spaces.hosts()`.
++    public static func host(id: String, name: String) -> Placement {
++        Placement(on: "host:\(id)", name: name)
++    }
++    /// The choices every Mac has; your machines that provide Spaces follow.
++    public static let builtIn: [Placement] = [.local, .cloud]
++
++    public var id: String { on }
++    public var isHost: Bool { on.hasPrefix("host:") }
++
++    // Identity is `on`: a machine renamed on the relay is the same place.
++    public static func == (a: Placement, b: Placement) -> Bool { a.on == b.on }
++    public func hash(into hasher: inout Hasher) { hasher.combine(on) }
++
++    enum CodingKeys: String, CodingKey { case on, name }
++
++    public init(from decoder: Decoder) throws {
++        // Bots saved before machines were a choice stored a bare string.
++        if let raw = try? decoder.singleValueContainer().decode(String.self) {
++            switch raw {
++            case "local": self = .local
++            case "cloud": self = .cloud
++            default:
++                throw DecodingError.dataCorrupted(.init(
++                    codingPath: decoder.codingPath, debugDescription: "unknown placement \(raw)"))
++            }
++            return
++        }
++        let c = try decoder.container(keyedBy: CodingKeys.self)
++        self.init(on: try c.decode(String.self, forKey: .on), name: try c.decode(String.self, forKey: .name))
++    }
+ }
+ 
+ /// Access the bot has to the user's own computer. Off until the user allows
+diff --git a/samples/cua-bots-macos/Sources/CuaBotsCua/CuaEngine.swift b/samples/cua-bots-macos/Sources/CuaBotsCua/CuaEngine.swift
+index 2c59d9d..498c47e 100644
+--- a/samples/cua-bots-macos/Sources/CuaBotsCua/CuaEngine.swift
++++ b/samples/cua-bots-macos/Sources/CuaBotsCua/CuaEngine.swift
+@@ -56,10 +56,21 @@ public final class CuaEngine: BotEngine {
+ 
+     // MARK: - Spaces
+ 
++    /// Your machines that provide Spaces and answer now, as placements
++    /// (`on: "host:<id>"`): the relay hosts, then those added by address.
++    public func hostPlacements() async throws -> [Placement] {
++        try await cua.spaces().hosts()
++            .filter { $0.online }
++            .map { Placement.host(id: $0.id, name: $0.name) }
++    }
++
+     public func provision(_ bot: Bot, progress: @escaping @MainActor (EnginePhase) -> Void) async throws -> String {
+-        progress(.creatingSpace(bot.placement == .local ? "Creating a Space on this Mac" : "Creating a Cua Cloud Space"))
++        let what = bot.placement == .local ? "Creating a Space on this Mac"
++            : bot.placement == .cloud ? "Creating a Cua Cloud Space"
++            : "Creating a Space on \(bot.placement.name)"
++        progress(.creatingSpace(what))
+         let options = SpaceCreateOptions(
+-            image: try image ?? Image.linux(), on: bot.placement.rawValue, kind: "container", runtime: nil,
++            image: try image ?? Image.linux(), on: bot.placement.on, kind: "container", runtime: nil,
+             name: bot.spaceName, cpus: nil, memoryMb: nil, diskGb: nil, timeoutMs: nil, wait: true,
+             reuse: true, command: nil, env: [:], services: [:], spacesd: nil)
+         let result = try await cua.spaces().create(options: options)
+diff --git a/samples/cua-bots-macos/Sources/CuaBotsMac/AppModel.swift b/samples/cua-bots-macos/Sources/CuaBotsMac/AppModel.swift
+index c32acd6..75507d3 100644
+--- a/samples/cua-bots-macos/Sources/CuaBotsMac/AppModel.swift
++++ b/samples/cua-bots-macos/Sources/CuaBotsMac/AppModel.swift
+@@ -43,6 +43,7 @@ final class AppModel: ObservableObject, Notifier {
+ 
+     @Published var route: Route = .newBot
+     @Published var draft = BotDraft()
++    @Published var placements = Placement.builtIn
+     @Published var showProfile = true
+     @Published var showComputer = false
+     @Published var editingAvatar = false
+@@ -153,6 +154,12 @@ final class AppModel: ObservableObject, Notifier {
+ 
+     // MARK: - Actions
+ 
++    /// This Mac, Cua Cloud, and your machines that provide Spaces.
++    func refreshPlacements() async {
++        let hosts = (try? await engine?.hostPlacements()) ?? []
++        placements = Placement.builtIn + hosts
++    }
++
+     func createBot(name: String, avatar: AvatarConfig, harness: Harness, placement: Placement) {
+         Task {
+             let bot = await store.createBot(name: name, avatar: avatar, harness: harness, placement: placement)
+diff --git a/samples/cua-bots-macos/Sources/CuaBotsMac/NewBotView.swift b/samples/cua-bots-macos/Sources/CuaBotsMac/NewBotView.swift
+index 244f397..cdfda62 100644
+--- a/samples/cua-bots-macos/Sources/CuaBotsMac/NewBotView.swift
++++ b/samples/cua-bots-macos/Sources/CuaBotsMac/NewBotView.swift
+@@ -86,10 +86,11 @@ struct NewBotView: View {
+ 
+     var whereItRuns: some View {
+         Form {
++            // A menu, not segments: every machine that provides Spaces is a choice.
+             Picker("Its computer", selection: $model.draft.placement) {
+-                ForEach(Placement.allCases) { p in Text(p.name).tag(p) }
++                ForEach(model.placements) { p in Text(p.name).tag(p) }
+             }
+-            .pickerStyle(.segmented)
++            .pickerStyle(.menu)
+             Picker("Agent", selection: $model.draft.harness) {
+                 ForEach(Harness.allCases) { h in
+                     VStack(alignment: .leading) {
+@@ -106,10 +107,15 @@ struct NewBotView: View {
+             if model.draft.placement == .cloud {
+                 Text("A Cua Cloud Space is metered while it runs.").font(.caption).foregroundStyle(.secondary)
+             }
++            if model.draft.placement.isHost {
++                Text("Runs on \(model.draft.placement.name), one of your machines, through the cua.ai relay.")
++                    .font(.caption).foregroundStyle(.secondary)
++            }
+         }
+         .formStyle(.grouped)
+         .scrollDisabled(true)
+         .frame(height: 300)
++        .task { await model.refreshPlacements() }
+     }
+ 
+     var stepDots: some View {
+diff --git a/samples/cua-bots-macos/Tests/CuaBotsCoreTests/CoreTests.swift b/samples/cua-bots-macos/Tests/CuaBotsCoreTests/CoreTests.swift
+index 4d82d71..376acf6 100644
+--- a/samples/cua-bots-macos/Tests/CuaBotsCoreTests/CoreTests.swift
++++ b/samples/cua-bots-macos/Tests/CuaBotsCoreTests/CoreTests.swift
+@@ -133,6 +133,24 @@ struct ModelTests {
+     }
+ }
+ 
++struct PlacementTests {
++    @Test func testBotsSavedAsBareStringsStillLoad() throws {
++        let decoder = JSONDecoder()
++        #expect(try decoder.decode(Placement.self, from: Data(#""cloud""#.utf8)) == .cloud)
++        #expect(try decoder.decode(Placement.self, from: Data(#""local""#.utf8)) == .local)
++        #expect(throws: DecodingError.self) { try decoder.decode(Placement.self, from: Data(#""mars""#.utf8)) }
++    }
++
++    @Test func testAMachineRoundTripsAndIsKnownByItsId() throws {
++        let bali = Placement.host(id: "7d10", name: "bali")
++        let back = try JSONDecoder().decode(Placement.self, from: JSONEncoder().encode(bali))
++        #expect(back.on == "host:7d10")
++        #expect(back.name == "bali")
++        #expect(back.isHost && !Placement.local.isHost)
++        #expect(Placement.host(id: "7d10", name: "renamed") == bali)
++    }
++}
++
+ struct VolumeTests {
+     @Test func testWritesReadsAndRefusesSecrets() throws {
+         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
