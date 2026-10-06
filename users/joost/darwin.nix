@@ -16,7 +16,13 @@ let
   ];
 
   # Per-host extra casks layered on top of the base set.
-  extraCasks = lib.optionals (currentSystemName == "radon") [ "rouvy" ];
+  extraCasks = lib.optionals (currentSystemName == "radon") [
+    "rouvy"
+    # NVIDIA PAIR node alongside fu137 and j9; see docs/nvpair-omarchy.md.
+    # Homebrew sets this version; PAIR clusters need every node on the same
+    # release, so bump nvpairVersion in lib/overlays.nix to match.
+    "nvidia-pair"
+  ];
 
   # Machines without audio production tools
   noAudio = builtins.elem currentSystemName [ "macbook-air-m4" ];

@@ -50,7 +50,7 @@ directory in older guidance do not describe the current layout.
 | Configure a second tailnet | [Shared service definition](../lib/tailmix-service.nix), [NixOS module](../modules/tailmix.nix) | [Tailmix on Omarchy](tailmix-omarchy.md) |
 | Use Bali as SkyPilot compute | [Bali host configuration](../hosts/bali.nix) | [K3s setup and private connectivity](bali-skypilot.md) |
 | Configure Companion or sync buttons | [Omarchy Companion module](../users/companion-omarchy.nix) | [fu137 setup](companion-omarchy.md), [Companion sync](../AGENTS.md#bitfocus-companion-config-sync) |
-| Run NVIDIA PAIR across fu137 and j9 | [PAIR module](../users/nvpair-omarchy.nix), [overlay package](../lib/overlays.nix) (`nvpairVersion`) | [PAIR on Omarchy](nvpair-omarchy.md) |
+| Run NVIDIA PAIR across fu137, j9 and radon | [PAIR module](../users/nvpair-omarchy.nix), [overlay package](../lib/overlays.nix) (`nvpairVersion`), [radon](../hosts/radon.nix) | [PAIR runbook](nvpair-omarchy.md) |
 | Diagnose chezmoi synchronization | [Memory sync implementation](../lib/chezmoi-memory-sync.nix) | [Sync races](../AGENTS.md#chezmoi-auto-sync-races-with-manual-pushes), [Common issues](../AGENTS.md#common-issues) for locked-vault scoped apply and hook paths |
 | Diagnose shell, package, or platform problems | [Common issues](../AGENTS.md#common-issues) | Includes zoxide, profile selection, package collisions, and macOS migration notes |
 

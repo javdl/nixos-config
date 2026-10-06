@@ -168,7 +168,7 @@ Point models at the big disk, since / has 784 GiB free and /tmp is a 16 GiB tmpf
     Environment="OLLAMA_KEEP_ALIVE=30m"
     Environment="OLLAMA_FLASH_ATTENTION=1"
 
-Since NVIDIA PAIR joined fu137 and j9 into one cluster, `nvpair-omarchy-setup` moves
+Since fu137 joined the NVIDIA PAIR cluster, `nvpair-omarchy-setup` moves
 this service to `127.0.0.1:11435` and PAIR's proxy owns `11434`. Benchmarks that must
 stay on fu137 need `OLLAMA_HOST=http://127.0.0.1:11435`. See
 [`nvpair-omarchy.md`](nvpair-omarchy.md).

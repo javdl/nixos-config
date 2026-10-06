@@ -622,8 +622,9 @@ changing any of it.
   `nvidia-sync` (overlay, repackaged .deb) plus `cudaPackages_13_3` Nsight on Linux desktops.
   The `nvsync` Go helper inside `nvidia-sync` segfaults if patchelf adds an RPATH, so the
   derivation patches only its interpreter.
-- **nvpair** (NVIDIA PAIR) runs on fu137 and j9 only and needs a one-time
-  `nvpair-omarchy-setup` per node; see [`docs/nvpair-omarchy.md`](docs/nvpair-omarchy.md).
+- **nvpair** (NVIDIA PAIR) runs on fu137, j9 (overlay package, one-time `nvpair-omarchy-setup`)
+  and radon (`nvidia-pair` cask, tailscaled on kernel `utun`); see
+  [`docs/nvpair-omarchy.md`](docs/nvpair-omarchy.md).
 - **moshi-hook** (Moshi mobile app) comes from `users/agent-clis.nix` for every user on every
   machine: daemon as a systemd user unit (Linux) or launchd agent (Darwin), and
   `moshi-hook install` re-run on each switch for claude, codex, opencode, cursor, grok, omp

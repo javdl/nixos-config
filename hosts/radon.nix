@@ -35,6 +35,10 @@
     enable = true;
     operator = "joost";
     authKeyFile = "/etc/tailscale/authkey";
+    # NVIDIA PAIR (docs/nvpair-omarchy.md) must dial j9/fu137 over the
+    # tailnet and see peers' real addresses; userspace networking allows
+    # neither.
+    tun = "utun";
   };
 
   # Cua Bots controller (docs/cua-bots-fleet.md): `cua auth login` and
