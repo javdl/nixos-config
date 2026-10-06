@@ -167,6 +167,7 @@ in
     ./cachix-daemon.nix # auto-push locally-built paths to javdl-nixos-config cachix
     (import ../herdr-fleet.nix { inherit currentSystemName; })
     (import ../cua-spaces-host-omarchy.nix { inherit currentSystemName; })
+    (import ../nvpair-omarchy.nix { inherit currentSystemName; })
   ];
 
   # Home-manager 22.11 requires this be set. We never set it so we have
@@ -424,6 +425,14 @@ in
       tailscale-systray
       # windsurf  # Replaced with VS Code
       baobab # Disk usage, gnome only
+
+      # DGX Spark client software; Macs get the same set as casks in
+      # users/joost/darwin.nix. Nsight from the newest CUDA 13 set so the GUIs
+      # open reports from the Spark's CUDA 13 nsys/ncu.
+      nvidia-sync # NVIDIA Sync desktop app + nvsync CLI (lib/overlays.nix)
+      # Both ship a top-level LICENSE; hiPrio settles the buildEnv collision.
+      (lib.hiPrio cudaPackages_13_3.nsight_systems) # nsys, nsys-ui
+      cudaPackages_13_3.nsight_compute # ncu, ncu-ui
     ])
   );
 

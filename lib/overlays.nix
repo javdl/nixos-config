@@ -600,6 +600,77 @@ in
             };
           };
           cuaSpacesdSource = cuaSpacesdSources.${prev.stdenv.hostPlatform.system} or null;
+
+          # nvidia-sync - NVIDIA Sync, the desktop client for DGX Spark (SSH
+          # tunnels, app launching, Tailscale connections, Cluster Assistant).
+          # Linux only: NVIDIA ships it as an Electron .deb in its AI Workbench
+          # apt repo; macOS gets the `nvidia-sync` cask (users/joost/darwin.nix).
+          # Versions and SHA256s: dists/default/proprietary/binary-{amd64,arm64}/Packages
+          # under https://workbench.download.nvidia.com/stable/linux/debian.
+          nvidiaSyncVersion = "0.117.3-12";
+          nvidiaSyncSources = {
+            "x86_64-linux" = {
+              arch = "amd64";
+              sha256 = "0bx9hqzr9gyp1x6bin9i985bvikll3a84dz181xq54nyal55f9x2";
+            };
+            "aarch64-linux" = {
+              arch = "arm64";
+              sha256 = "0h5dszz58855nay2ydz7dhjqvfp60nkirs9yc121pycgzabypymc";
+            };
+          };
+          nvidiaSyncSource = nvidiaSyncSources.${prev.stdenv.hostPlatform.system} or null;
+
+          # nvpair - NVIDIA Personal AI Router (PAIR): routes Ollama/OpenAI
+          # requests across paired machines. Electron .deb from GitHub releases;
+          # the bundled Go services are static. SHA256s are the release asset
+          # digests. See users/nvpair-omarchy.nix and docs/nvpair-omarchy.md.
+          nvpairVersion = "0.1.1";
+          nvpairSources = {
+            "x86_64-linux" = {
+              arch = "amd64";
+              sha256 = "1b23nm08nmjxjzfinxcsqz2i93zzrz540azh0mpz5ydznlbc77w7";
+            };
+            "aarch64-linux" = {
+              arch = "arm64";
+              sha256 = "0a928i442mph8rcab3rk9k7hpapmqzp9zazk7rz53lpvk4fb4r4z";
+            };
+          };
+          nvpairSource = nvpairSources.${prev.stdenv.hostPlatform.system} or null;
+
+          # Libraries the Electron .deb apps above (nvidia-sync, nvpair) link
+          # against, and the ones Chromium dlopens at runtime.
+          electronDebLibs = with prev; [
+            alsa-lib
+            at-spi2-atk
+            at-spi2-core
+            cairo
+            cups
+            dbus
+            expat
+            glib
+            gtk3
+            libdrm
+            libgbm
+            libnotify
+            libsecret
+            libuuid
+            libxkbcommon
+            nspr
+            nss
+            pango
+            libx11
+            libxcomposite
+            libxdamage
+            libxext
+            libxfixes
+            libxrandr
+            libxscrnsaver
+            libxtst
+            libxcb
+            libxshmfence
+            stdenv.cc.cc.lib
+          ];
+          electronDebRuntimeDeps = with prev; [ libGL (lib.getLib systemd) libnotify libsecret ];
         in {
           # grepai - semantic code search for AI coding assistants
           grepai = prev.stdenv.mkDerivation {
@@ -1752,6 +1823,132 @@ in
               license = licenses.fsl11Mit;
               platforms = [ "x86_64-linux" ];
               mainProgram = "cua-spacesd";
+            };
+          } else null;
+
+          # nvidia-sync - NVIDIA Sync desktop client (see nvidiaSyncVersion)
+          nvidia-sync = if nvidiaSyncSource != null then prev.stdenv.mkDerivation {
+            pname = "nvidia-sync";
+            version = nvidiaSyncVersion;
+
+            src = prev.fetchurl {
+              url = "https://workbench.download.nvidia.com/stable/linux/debian/pool/proprietary/n/nvidia-sync/nvidia-sync_${nvidiaSyncVersion}_${nvidiaSyncSource.arch}.deb";
+              sha256 = nvidiaSyncSource.sha256;
+            };
+
+            nativeBuildInputs = with prev; [ dpkg autoPatchelfHook makeWrapper ];
+
+            buildInputs = electronDebLibs;
+            runtimeDependencies = electronDebRuntimeDeps;
+            dontStrip = true;
+
+            # The nvsync Go helper segfaults (SEGV_ACCERR) once patchelf adds an
+            # RPATH, so only the Electron files get autoPatchelf; the helper
+            # needs just libc and gets the interpreter alone.
+            dontAutoPatchelf = true;
+            postFixup = ''
+              autoPatchelf --no-recurse -- $out/opt/nvidia-sync
+              patchelf --set-interpreter "$(cat $NIX_CC/nix-support/dynamic-linker)" \
+                $out/opt/nvidia-sync/resources/bin/nvsync-${nvidiaSyncSource.arch}
+            '';
+
+            unpackPhase = ''
+              dpkg-deb -x $src .
+            '';
+
+            installPhase = ''
+              runHook preInstall
+
+              mkdir -p $out/opt $out/bin
+              cp -r "opt/NVIDIA Sync" $out/opt/nvidia-sync
+              # The store is read-only: drop the electron-updater feed so the app
+              # does not try to self-update through dpkg.
+              rm $out/opt/nvidia-sync/resources/app-update.yml
+
+              # Upstream's launcher script forces X11 (XWayland under Hyprland).
+              # ssh/xdg-open are spawned by the app and its nvsync helper.
+              makeWrapper $out/opt/nvidia-sync/nvidia-sync.bin $out/bin/nvidia-sync \
+                --add-flags --ozone-platform=x11 \
+                --suffix PATH : ${prev.lib.makeBinPath [ prev.openssh prev.xdg-utils ]}
+              makeWrapper $out/opt/nvidia-sync/resources/bin/nvsync-${nvidiaSyncSource.arch} $out/bin/nvsync \
+                --suffix PATH : ${prev.lib.makeBinPath [ prev.openssh ]}
+
+              install -Dm644 usr/share/icons/hicolor/512x512/apps/nvidia-sync.png \
+                $out/share/icons/hicolor/512x512/apps/nvidia-sync.png
+              install -Dm644 usr/share/applications/nvidia-sync.desktop \
+                $out/share/applications/nvidia-sync.desktop
+              substituteInPlace $out/share/applications/nvidia-sync.desktop \
+                --replace-fail '"/opt/NVIDIA Sync/nvidia-sync" --ozone-platform=x11' "$out/bin/nvidia-sync"
+
+              runHook postInstall
+            '';
+
+            meta = with prev.lib; {
+              description = "NVIDIA Sync: SSH tunnels and one-click apps on a remote DGX Spark";
+              homepage = "https://docs.nvidia.com/sync/latest/index.html";
+              license = licenses.unfree;
+              sourceProvenance = [ sourceTypes.binaryNativeCode ];
+              platforms = [ "x86_64-linux" "aarch64-linux" ];
+              mainProgram = "nvidia-sync";
+            };
+          } else null;
+
+          # nvpair - NVIDIA Personal AI Router (see nvpairVersion)
+          nvpair = if nvpairSource != null then prev.stdenv.mkDerivation {
+            pname = "nvpair";
+            version = nvpairVersion;
+
+            src = prev.fetchurl {
+              url = "https://github.com/NVIDIA/Personal-AI-Router/releases/download/v${nvpairVersion}/NVPAIR-Setup-${nvpairVersion}-${nvpairSource.arch}.deb";
+              sha256 = nvpairSource.sha256;
+            };
+
+            nativeBuildInputs = with prev; [ dpkg autoPatchelfHook makeWrapper ];
+            buildInputs = electronDebLibs;
+            runtimeDependencies = electronDebRuntimeDeps;
+            # resources/cli-bin/manifest.json pins the SHA256 of every static Go
+            # service binary; stripping would change them.
+            dontStrip = true;
+
+            unpackPhase = ''
+              dpkg-deb -x $src .
+            '';
+
+            installPhase = ''
+              runHook preInstall
+
+              mkdir -p $out/opt $out/bin $out/share
+              cp -r opt/PAIR $out/opt/PAIR
+              # The store is read-only: no electron-updater feed (it would try
+              # to install the next .deb through dpkg). Bump nvpairVersion
+              # instead, on every node at once: mixed-version clusters are
+              # unsupported upstream.
+              rm $out/opt/PAIR/resources/app-update.yml
+
+              # The engine manager installs Ollama with `tar --zstd` and reads
+              # GPU telemetry from nvidia-smi; the host PATH comes first so
+              # Arch's /usr/bin/nvidia-smi stays in use.
+              makeWrapper $out/opt/PAIR/nvpair $out/bin/nvpair-desktop \
+                --suffix PATH : ${prev.lib.makeBinPath [ prev.gnutar prev.zstd prev.xdg-utils ]}
+              # Upstream's `nvpair` command is the terminal UI.
+              ln -s $out/opt/PAIR/resources/cli-bin/nvpair-tui $out/bin/nvpair
+
+              cp -r usr/share/icons $out/share/icons
+              install -Dm644 usr/share/applications/nvpair.desktop \
+                $out/share/applications/nvpair.desktop
+              substituteInPlace $out/share/applications/nvpair.desktop \
+                --replace-fail /opt/PAIR/nvpair $out/bin/nvpair-desktop
+
+              runHook postInstall
+            '';
+
+            meta = with prev.lib; {
+              description = "NVIDIA Personal AI Router: routes local inference across paired machines";
+              homepage = "https://github.com/NVIDIA/Personal-AI-Router";
+              license = licenses.asl20;
+              sourceProvenance = [ sourceTypes.binaryNativeCode ];
+              platforms = [ "x86_64-linux" "aarch64-linux" ];
+              mainProgram = "nvpair-desktop";
             };
           } else null;
 

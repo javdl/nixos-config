@@ -60,6 +60,15 @@ let
     else
       casks;
 
+  # DGX Spark client software, on every Mac workstation (fu146 included) but
+  # not the headless servers. Linux workstations get the same set from
+  # users/joost/home-manager.nix.
+  dgxSparkCasks = [
+    "nvidia-sync" # SSH tunnels and one-click apps on a remote DGX Spark
+    "nvidia-nsight-systems" # timeline profiler GUI for nsys reports
+    "nvidia-nsight-compute" # CUDA kernel profiler GUI
+  ];
+
   # Core casks installed on all non-minimal machines
   coreCasks = [
     # "bitwarden" Must be installed via Mac App Store for browser integration to work
@@ -217,6 +226,7 @@ in
           coreCasks ++ personalCasks ++ lib.optionals (!noAudio) audioCasks
       )
       ++ extraCasks
+      ++ lib.optionals (!builtins.elem currentSystemName serversMacos) dgxSparkCasks
     );
     masApps = {
       # to find ID, App Store > Share > Copy link

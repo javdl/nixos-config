@@ -617,6 +617,13 @@ changing any of it.
   profiles guard it with `lib.optional`.
 - **omp** release assets are dynamically linked against glibc (unlike the static-PIE `grok`
   and `herdr` binaries), so its derivation needs `autoPatchelfHook` on Linux.
+- **DGX Spark client tools** go to every workstation: `nvidia-sync`, `nvidia-nsight-systems`
+  and `nvidia-nsight-compute` casks on non-server Macs (`users/joost/darwin.nix`), and
+  `nvidia-sync` (overlay, repackaged .deb) plus `cudaPackages_13_3` Nsight on Linux desktops.
+  The `nvsync` Go helper inside `nvidia-sync` segfaults if patchelf adds an RPATH, so the
+  derivation patches only its interpreter.
+- **nvpair** (NVIDIA PAIR) runs on fu137 and j9 only and needs a one-time
+  `nvpair-omarchy-setup` per node; see [`docs/nvpair-omarchy.md`](docs/nvpair-omarchy.md).
 - **moshi-hook** (Moshi mobile app) comes from `users/agent-clis.nix` for every user on every
   machine: daemon as a systemd user unit (Linux) or launchd agent (Darwin), and
   `moshi-hook install` re-run on each switch for claude, codex, opencode, cursor, grok, omp
