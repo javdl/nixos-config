@@ -4,12 +4,13 @@ import json
 import pathlib
 import sys
 
-# Verified against Codex's model catalog on 2026-10-06. Hidden/internal models
-# are excluded. Subscription requests have no per-token API charge here.
+# Requested subscription model allowlist. Subscription requests have no
+# per-token API charge here.
 models = {
-    "gpt-6-astra": "GPT-6 Astra",
+    "gpt-6.1-sol": "GPT-6.1 Sol",
     "gpt-6-sol": "GPT-6 Sol",
     "gpt-6-luna": "GPT-6 Luna",
+    "gpt-6-astra": "GPT-6 Astra",
     "gpt-5.6-sol": "GPT-5.6 Sol",
     "gpt-5.6-terra": "GPT-5.6 Terra",
     "gpt-5.6-luna": "GPT-5.6 Luna",
@@ -35,15 +36,17 @@ for filename in ("sidepanel.js", "debug.js"):
             "contextWindow": 272000,
             "maxTokens": 128000,
         }
-    source = source.replace(marker, marker + json.dumps(entries)[1:-1] + ",\n", 1)
+    start = source.index(marker) + len(marker)
+    end = source.index('\n' + indent + '}', start)
+    source = source[:start] + json.dumps(entries)[1:-1] + source[end:]
 
     # This bundled client offers reasoning through xhigh. Expose that level
     # for the new models and normalize its old "minimal" option to "low".
     for old, new in (
         ('model.id.includes("gpt-5.4")',
-         '(model.id.includes("gpt-5.4") || model.id.startsWith("gpt-5.6-") || model.id.startsWith("gpt-6-"))'),
+         '(model.id.includes("gpt-5.4") || model.id.startsWith("gpt-5.6-") || model.id.startsWith("gpt-6-") || model.id.startsWith("gpt-6.1-"))'),
         ('id.startsWith("gpt-5.4")',
-         '(id.startsWith("gpt-5.4") || id.startsWith("gpt-5.6-") || id.startsWith("gpt-6-"))'),
+         '(id.startsWith("gpt-5.4") || id.startsWith("gpt-5.6-") || id.startsWith("gpt-6-") || id.startsWith("gpt-6.1-"))'),
     ):
         assert old in source, f"{filename}: reasoning handling changed"
         source = source.replace(old, new)

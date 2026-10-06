@@ -60,14 +60,14 @@ activation is claimed.
 ## Sitegeist
 
 [Sitegeist v1.0.0](https://github.com/badlogic/sitegeist/releases/tag/v1.0.0)
-is packaged from the prebuilt extension ZIP. `lib/sitegeist-models.py` adds
-GPT-6 Astra/Sol/Luna and GPT-5.6 Sol/Terra/Luna to its Codex subscription
-catalog, using the visible entries in the local Codex model catalog dated
-2026-10-06. These use the ChatGPT subscription provider, not API keys.
+is packaged from the prebuilt extension ZIP. `lib/sitegeist-models.py` limits
+its Codex subscription catalog to GPT-6.1 Sol, GPT-6 Sol/Luna/Astra, and
+GPT-5.6 Sol/Terra/Luna, as requested on 2026-10-06.
+These use the ChatGPT subscription provider, not API keys.
 The existing client supports reasoning through xhigh; max/ultra are not
-added to its UI. Existing models remain available.
+added to its UI. Older Codex models are removed from this catalog.
 
-Both JavaScript bundles pass syntax checks, the six model entries were
+Both JavaScript bundles pass syntax checks, the exact seven model entries were
 verified, and their minimal-to-low reasoning normalization was executed.
 No authenticated model request or browser rendering was tested.
 
