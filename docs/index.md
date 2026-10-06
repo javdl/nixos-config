@@ -81,6 +81,8 @@ presence does not establish approval, completion, or current deployed state.
   working on the legacy bootstrap path; compare with current Makefile targets.
 - [Historical Hermes bootstrap on loom](hermes-loom-bootstrap.md): migration
   context; read the current Bali gateway constraints before using its commands.
+- [Package refresh, Sitegeist setup, and DataGrip installation](package-refresh-2026-10-06.md):
+  2026-10-06 version audit, validation limits, and remaining browser-loading steps.
 
 When adding a runbook or moving an entry point, update the matching row here.
 Keep procedures in their linked documents so there is one place to maintain them.

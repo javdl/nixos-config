@@ -588,6 +588,11 @@ in
   );
 
   home.file = {
+    # Shared workstation profile: Macs, Omarchy and NixOS desktops. Servers
+    # use separate profiles, except the legacy github-runner output.
+    ".local/share/sitegeist" = lib.mkIf (currentSystemName != "github-runner") {
+      source = "${pkgs.sitegeist}/share/sitegeist";
+    };
     # tailmix on Omarchy: reach a second tailnet without moving tailscaled.
     #
     # tailscaled serves one tailnet at a time. j9 must stay on buri-hoki,

@@ -36,6 +36,39 @@ Software that cannot (yet) be installed via Nix or Brew or Mac App Store:
 - `skhd --install-service && skhd --start-service`
 - [VICREO Listener](https://vicreo-listener.com/downloads) - Receives keystroke commands from Bitfocus Companion (see below)
 
+### Sitegeist browser extension
+
+[Sitegeist](https://github.com/badlogic/sitegeist) is an AI assistant in the
+browser sidebar. This config provides the prebuilt extension with GPT-6
+Astra/Sol/Luna and GPT-5.6 Sol/Terra/Luna in its Codex subscription model list.
+It is included on joost's workstations (fu137, j9, mba, the Macs, and NixOS
+desktops), but excluded from servers such as bali and the CI runners.
+
+After updating and activating the workstation's configuration, the extension
+is available at `~/.local/share/sitegeist`. Load it once in **each browser
+profile** where you want to use it:
+
+1. Open `chrome://extensions` in Chrome or Chromium, or `brave://extensions`
+   in Brave or Brave Origin.
+2. Enable **Developer mode**, then click **Load unpacked**.
+3. Select the extension directory:
+   - Linux: `/home/joost/.local/share/sitegeist`
+   - macOS: `/Users/joost/.local/share/sitegeist` (press **Cmd+Shift+G** in the
+     folder picker to enter the path).
+4. Open Sitegeist's **Details** and enable **Allow user scripts** and
+   **Allow access to file URLs**. Set site access to **On all sites**.
+5. Click Sitegeist's toolbar icon to open the sidebar. Connect the
+   **ChatGPT Plus/Pro** provider and choose a model from its model picker.
+
+Chrome/Chromium 141 or newer (or an equivalent Brave version) is required.
+Nix supplies the files; it does not automatically load them into browsers or
+sign in to providers. After a configuration update changes the extension,
+click **Reload** on its extensions-page card. Keep using the home-directory
+path above rather than selecting a version-specific `/nix/store` path.
+
+See the [package refresh report](docs/package-refresh-2026-10-06.md) for
+versions and validation details.
+
 ### Bitfocus Companion
 
 For the Omarchy/Wayland setup on fu137, see [Companion on Omarchy](docs/companion-omarchy.md).
