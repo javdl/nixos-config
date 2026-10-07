@@ -100,6 +100,16 @@ systemFunc {
 
     machineConfig
     userOSConfig
+    # Joost's workstation mise updater installs upstream agent binaries.
+    # Claude's Linux release needs the conventional ELF loader path; nix-ld
+    # provides it without modifying mise's installation. Servers retain their
+    # existing runtime policy, and Omarchy provides its own native loader.
+    (
+      if !darwin && user == "joost" && !server && name != "github-runner" then
+        { programs.nix-ld.enable = true; }
+      else
+        { }
+    )
     home-manager.home-manager
     {
       home-manager.backupFileExtension = "backup";
