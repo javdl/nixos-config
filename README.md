@@ -746,6 +746,26 @@ machine needs its own output, not an alias. `mba` (MacBook Air M1 on Asahi,
 aarch64-linux) uses a lite profile (`isLite`) without the local-model and
 heavyweight agent tooling. `omarchy` remains an alias for `fu137`.
 
+### Recover the LG display on fu137
+
+Press **Super + Ctrl + Shift + D** if the LG UltraGear stays lit but black
+after powering it on or locking/unlocking the desktop. The shortcut cycles
+only the LG's DisplayPort output (`DP-2`) off for two seconds and back on;
+the Dell (`DP-3`) stays on. It also works while the desktop is locked.
+
+The binding lives in `~/.config/hypr/bindings.lua` on fu137, owned by the
+local Omarchy configuration rather than this Nix flake. It is a recovery
+workaround for the observed stalled frame update, not a permanent fix:
+
+```lua
+o.bind("SUPER + CTRL + SHIFT + D", "Recover LG display", [[
+  sleep 0.2
+  hyprctl dispatch 'hl.dsp.dpms({ action = "disable", monitor = "DP-2" })'
+  sleep 2
+  hyprctl dispatch 'hl.dsp.dpms({ action = "enable", monitor = "DP-2" })'
+]], { locked = true })
+```
+
 ## Dicklesworthstone AI Agent Tooling
 
 Tools from [Jeffrey Emanuel](https://github.com/Dicklesworthstone) included in this config:
