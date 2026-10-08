@@ -196,6 +196,9 @@
       omarchyExtraPackages = pkgs: [
         pkgs.playerctl
         pkgs.thunderbird
+        # Google Drive/OneDrive sync client (unfree, x86_64-linux only, so mba
+        # cannot carry it). Darwin hosts get the insync cask instead.
+        pkgs.insync
         # Local-inference helper. CPU-only, no CUDA linkage: Nix-built CUDA
         # binaries cannot reach Arch's driver libs without nixGL, so the GPU
         # runtimes (ollama-cuda, nvidia-container-toolkit) come from pacman.
