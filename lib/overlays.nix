@@ -1688,14 +1688,18 @@ in
           };
 
           # hermes - Hermes Agent CLI/TUI (NousResearch), from the flake input.
-          # `minimal` (not `default`) is the core agent: `default` is the `full`
-          # variant that pre-builds every optional integration (messaging, voice,
-          # matrix, bedrock, ...), which is far more closure than a coding-agent
-          # CLI needs on every machine. The messaging gateway deployments on
-          # bali/hermes-fu use the upstream NixOS module, not this package.
+          # Keep the minimal closure, adding only the native Anthropic transport.
+          # Optional SDKs cannot be lazy-installed into the read-only Nix store.
+          # The full variant also includes messaging, voice, matrix, bedrock, ...
+          # Gateway deployments on bali/hermes-fu use the upstream NixOS module.
           # No x86_64-darwin output upstream; null there and filtered by callers.
           hermes-agent =
-            (inputs.hermes-agent.packages.${prev.stdenv.hostPlatform.system} or { }).minimal or null;
+            let
+              minimal = (inputs.hermes-agent.packages.${prev.stdenv.hostPlatform.system} or { }).minimal or null;
+            in
+            if minimal == null then null else minimal.override {
+              extraDependencyGroups = [ "anthropic" ];
+            };
 
           # pt - process triage (intelligent process termination with Bayesian scoring)
           process-triage = if ptSource != null then prev.stdenv.mkDerivation {

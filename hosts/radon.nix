@@ -46,4 +46,11 @@
   # through the cua.ai relay. The app itself is built by
   # scripts/build-cua-bots.sh.
   environment.systemPackages = [ pkgs.cua ];
+
+  # Headless tailscaled does not install a domain resolver when the tailnet
+  # supplies default DNS servers. Delegate only this tailnet to MagicDNS.
+  environment.etc."resolver/buri-hoki.ts.net".text = ''
+    # Managed by nix-darwin for Radon's Tailscale domain.
+    nameserver 100.100.100.100
+  '';
 }

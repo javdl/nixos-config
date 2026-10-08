@@ -575,7 +575,7 @@ All dev servers include the following AI agent tooling. Run `ntm deps -v` to che
 | omp | `omp` | oh-my-pi: terminal coding agent with LSP/DAP and hash-anchored edits |
 | opencode | `opencode` | Terminal coding agent (SST) |
 | grok | `grok` | xAI Grok Build CLI: coding agent harness + TUI |
-| hermes | `hermes` | Hermes Agent CLI/TUI (NousResearch), `minimal` variant of the flake input |
+| hermes | `hermes` | Hermes Agent CLI/TUI (NousResearch), minimal package with native Anthropic support |
 | am | `am` | Agent Mail: MCP HTTP server for async multi-agent coordination (systemd service) |
 | ru | `ru` | Repo Updater: parallel GitHub repo clone/pull sync |
 
@@ -608,10 +608,11 @@ changing any of it.
 - **cass** index is rebuilt on each `make switch` via activation script
 - **agent-mail** runs as a systemd user service (`systemctl --user status agent-mail`)
 - **hermes** comes from the `hermes-agent` flake input, not a release binary. The overlay
-  exposes `pkgs.hermes-agent` = `packages.<system>.minimal`, deliberately **not** `default`:
-  upstream's `default` is the `full` variant that pre-builds every optional integration
-  (messaging, voice, matrix, bedrock, …), which is far more closure than a per-machine CLI
-  needs. This is the interactive `hermes` CLI/TUI only — the messaging-gateway deployments on
+  uses `packages.<system>.minimal` with only `extraDependencyGroups = [ "anthropic" ]`.
+  Native Anthropic transports need that SDK; lazy installation cannot write to the Nix
+  store. Upstream's `default` is the `full` variant, including messaging, voice, matrix
+  and bedrock integrations that a per-machine CLI does not need. This is the interactive
+  `hermes` CLI/TUI only — the messaging-gateway deployments on
   `bali`/`hermes-fu` are separate, driven by `services.hermes-agent` from the upstream NixOS
   module. Upstream ships no `x86_64-darwin` output, so the attribute is `null` there and the
   profiles guard it with `lib.optional`.
