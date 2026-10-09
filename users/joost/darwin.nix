@@ -84,6 +84,7 @@ let
     "beeper"
     "caffeine"
     "brave-browser"
+    "brave-origin" # default browser (see postActivation below)
     "chatgpt"
     "claude"
     "cleanshot"
@@ -282,21 +283,28 @@ in
       echo "Skipping Zed default-app associations: /Applications/Zed.app not found"
     fi
 
-    # Pin Brave Browser as the default for HTML files and http(s) URL clicks.
-    if [ -d "/Applications/Brave Browser.app" ]; then
+    # Pin Brave Origin as the default for HTML files and http(s) URL clicks,
+    # falling back to Brave Browser on hosts without it (minimal casks).
+    braveBundleId=""
+    if [ -d "/Applications/Brave Origin.app" ]; then
+      braveBundleId=com.brave.Browser.origin
+    elif [ -d "/Applications/Brave Browser.app" ]; then
+      braveBundleId=com.brave.Browser
+    fi
+
+    if [ -n "$braveBundleId" ]; then
       braveDutiFailed=0
-      for handler in \
-        public.html \
-        public.url-scheme.http \
-        public.url-scheme.https; do
-        ${pkgs.duti}/bin/duti -s com.brave.Browser "$handler" all >/dev/null 2>&1 || braveDutiFailed=1
+      ${pkgs.duti}/bin/duti -s "$braveBundleId" public.html all >/dev/null 2>&1 || braveDutiFailed=1
+      # URL schemes take no role argument (public.url-scheme.* is not a UTI).
+      for scheme in http https; do
+        ${pkgs.duti}/bin/duti -s "$braveBundleId" "$scheme" >/dev/null 2>&1 || braveDutiFailed=1
       done
 
       if [ "$braveDutiFailed" -ne 0 ]; then
         echo "Some Brave default-handler associations could not be applied; continuing."
       fi
     else
-      echo "Skipping Brave default-handler associations: /Applications/Brave Browser.app not found"
+      echo "Skipping Brave default-handler associations: neither Brave Origin nor Brave Browser found in /Applications"
     fi
   '';
 }
