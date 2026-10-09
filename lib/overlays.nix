@@ -2085,6 +2085,62 @@ in
             };
           };
 
+          # tokscale - token usage tracker across AI coding agents (pre-built
+          # binary from npm). GitHub releases carry no assets; the binaries live
+          # in the @tokscale/cli-<platform> npm packages. Linux uses the static
+          # musl builds so no patchelf is needed. Hashes are npm's dist.integrity.
+          tokscale = let
+            tokscaleVersion = "4.18.0";
+            tokscaleSources = {
+              "x86_64-linux" = {
+                platform = "linux-x64-musl";
+                hash = "sha512-DLlpSZpTU2cpG5OK4rfErASLCnBMLk5EzCTAfdyFeD3unO80zBDqTyGmQQpJs5Mx1urPHXt30D9mzQIt+6KBnw==";
+              };
+              "aarch64-linux" = {
+                platform = "linux-arm64-musl";
+                hash = "sha512-+IISSkQAEF7Eb3wH8WpLdeIX1t7RQ05vedMLMP/caMT2vUNshjwIr4ZKqoTQgivqiKyUfh35q+xm4Gv2g76y9Q==";
+              };
+              "x86_64-darwin" = {
+                platform = "darwin-x64";
+                hash = "sha512-eNXeQ47QsAKZUL1bWdRQ5dSSc037jpytTCFnNQP7QTu84QYyPMXtTnKJTBG32l3fezAY6C7uzEnMObYNtPXoyQ==";
+              };
+              "aarch64-darwin" = {
+                platform = "darwin-arm64";
+                hash = "sha512-1ILrvDJjLmTs+CZ8EYrzqh74QRAGiKDQmqU8HOo+juZ3wTmL/1B7uFsqBL8/+nv5rJCRq4/V7pvT39ZvauJ37g==";
+              };
+            };
+            source = tokscaleSources.${prev.stdenv.hostPlatform.system};
+          in prev.stdenv.mkDerivation {
+            pname = "tokscale";
+            version = tokscaleVersion;
+
+            src = prev.fetchurl {
+              url = "https://registry.npmjs.org/@tokscale/cli-${source.platform}/-/cli-${source.platform}-${tokscaleVersion}.tgz";
+              inherit (source) hash;
+            };
+
+            sourceRoot = ".";
+
+            unpackPhase = ''
+              tar xzf $src
+            '';
+
+            # The darwin packages also ship libFoundationModels.dylib next to the
+            # binary (loaded at runtime), so copy the whole bin/ directory.
+            installPhase = ''
+              mkdir -p $out/bin
+              cp package/bin/* $out/bin/
+              chmod +x $out/bin/tokscale
+            '';
+
+            meta = with prev.lib; {
+              description = "Track token usage across AI coding agents";
+              homepage = "https://github.com/junhoyeo/tokscale";
+              license = licenses.mit;
+              platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+            };
+          };
+
           # gemini-cli - Google Gemini coding agent CLI (pre-built JS bundle)
           gemini-cli = prev.stdenv.mkDerivation {
             pname = "gemini-cli";

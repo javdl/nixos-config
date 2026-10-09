@@ -269,6 +269,7 @@ in
       beads-viewer # TUI for beads issue tracking (bv command)
       caam # Instant auth switching for AI coding subscriptions
       codex
+      tokscale # Token usage tracker across AI coding agents
       destructive-command-guard # Safety hook for AI agents (dcg command)
       herdr # Terminal workspace manager for AI coding agents (overlay pins 0.9.0)
       grok-build # xAI Grok Build CLI (grok command; overlay pins 1.0.5)
