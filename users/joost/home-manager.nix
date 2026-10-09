@@ -252,7 +252,7 @@ in
       # libheif
       # lmstudio — macOS via brew cask (lm-studio), Linux via nixpkgs-unstable overlay
       # ollama
-      omp # oh-my-pi coding agent (overlay pins 18.1.14)
+      omp # oh-my-pi coding agent
       opencode
       oxlint
       railway
@@ -280,8 +280,8 @@ in
       codex
       tokscale # Token usage tracker across AI coding agents
       destructive-command-guard # Safety hook for AI agents (dcg command)
-      herdr # Terminal workspace manager for AI coding agents (overlay pins 0.9.0)
-      grok-build # xAI Grok Build CLI (grok command; overlay pins 1.0.5)
+      herdr # Terminal workspace manager for AI coding agents
+      grok-build # xAI Grok Build CLI (grok command)
       gws # Google Workspace CLI
       repo-updater # GitHub repo sync tool (ru command)
       csctf # Convert AI chat share links to Markdown/HTML transcripts
