@@ -232,6 +232,7 @@ in
       gdk
       # google-cloud-sdk # See above, gdk with components list
       htop
+      dnsutils # dig, host, nslookup (repo checks and DNS debugging)
       httpie
       imagemagick
       jq
@@ -437,9 +438,15 @@ in
       # users/joost/darwin.nix. Nsight from the newest CUDA 13 set so the GUIs
       # open reports from the Spark's CUDA 13 nsys/ncu.
       nvidia-sync # NVIDIA Sync desktop app + nvsync CLI (lib/overlays.nix)
-      # Both ship a top-level LICENSE; hiPrio settles the buildEnv collision.
-      (lib.hiPrio cudaPackages_13_3.nsight_systems) # nsys, nsys-ui
-      cudaPackages_13_3.nsight_compute # ncu, ncu-ui
+      cudaPackages_13_3.nsight_systems # nsys, nsys-ui
+      # nsight_compute's bin/ also holds host/, sections/ and target/ data
+      # dirs, which buildEnv links into ~/.nix-profile/bin; that `host`
+      # directory made every `host` (DNS lookup) call fail with EACCES.
+      # Expose only the two CLIs; ncu resolves its real path to find target/.
+      (runCommand "nsight-compute-bin" { } ''
+        mkdir -p $out/bin
+        ln -s ${cudaPackages_13_3.nsight_compute}/bin/ncu ${cudaPackages_13_3.nsight_compute}/bin/ncu-ui $out/bin/
+      '') # ncu, ncu-ui
     ])
   );
 
