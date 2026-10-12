@@ -60,8 +60,12 @@ in
         # 2. Journal vacuum
         journalctl --vacuum-size=${cfg.journalMaxSize} 2>/dev/null || true
 
-        # 3. Stale tmp dirs (worktrees, scans, build artifacts)
-        find /tmp -mindepth 1 -maxdepth 1 -mtime +7 -exec rm -rf {} + 2>/dev/null || true
+        # 3. Stale tmp dirs (worktrees, scans, build artifacts). Skip
+        #    systemd-private-*: each is the live /tmp of a PrivateTmp service
+        #    and keeps its creation mtime, so a long-running service (the
+        #    GitHub runners) would lose /tmp until restarted. systemd-tmpfiles
+        #    excludes them for the same reason.
+        find /tmp -mindepth 1 -maxdepth 1 -mtime +7 ! -name 'systemd-private-*' -exec rm -rf {} + 2>/dev/null || true
         echo "Cleaned old tmp files"
 
         # 4. Docker prune (if running)
