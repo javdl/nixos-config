@@ -40,8 +40,17 @@ in
   # Override the profile's command names while retaining the pinned packages
   # as offline/bootstrap fallbacks. Do not change the shared server toolset.
   home.packages = [ updater ] ++ map lib.hiPrio (builtins.attrValues launchers);
+  # force: Claude's native installer leaves ~/.local/bin/claude as a symlink
+  # into ~/.local/share/claude/versions. Home Manager stopped at that link
+  # ("would be clobbered") and aborted every radon auto-update from
+  # 2026-10-08 on. The launcher already prefers the updater's binary, so
+  # replacing the link loses nothing.
   home.file = lib.mapAttrs' (
-    tool: package: lib.nameValuePair ".local/bin/${tool}" { source = "${package}/bin/${tool}"; }
+    tool: package:
+    lib.nameValuePair ".local/bin/${tool}" {
+      source = "${package}/bin/${tool}";
+      force = true;
+    }
   ) (launchers // { agent-cli-update = updater; });
 
   home.activation.updateAgentClis = lib.hm.dag.entryAfter [ "writeBoundary" "chezmoiSync" ] ''

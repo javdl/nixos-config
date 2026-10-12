@@ -1,4 +1,18 @@
-{ config, pkgs, ... }: {
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
+let
+  # Family Hermes agent (javdl/joost docs/plans/active/hermes-family-mac-mini.md).
+  # Everything the `hermes` user writes lives on the encrypted `Agent` APFS
+  # volume on the external disk, never on the internal SSD.
+  agentVolumeUUID = "B1E4C91E-5FF3-4FF7-B66E-18F5E6D877DD";
+  agentRoot = "/Volumes/Agent";
+  hermesHome = "${agentRoot}/hermes";
+in
+{
   # nix-darwin stateVersion. Host runs macOS Tahoe.
   system.stateVersion = 6;
 
@@ -59,6 +73,48 @@
     # Managed by nix-darwin for Radon's Tailscale domain.
     nameserver 100.100.100.100
   '';
+
+  # Headless server: never sleep, come back after a power cut or a freeze.
+  power.sleep.computer = "never";
+  power.restartAfterPowerFailure = true;
+  power.restartAfterFreeze = true;
+
+  # Service account for the family Hermes gateway. Standard (non-admin), no
+  # login shell; its home is on the Agent volume.
+  users.knownUsers = [ "hermes" ];
+  users.users.hermes = {
+    uid = 506;
+    gid = 20; # staff
+    home = hermesHome;
+    shell = "/usr/bin/false";
+    description = "Hermes family agent";
+  };
+
+  # Mount external volumes at boot, before anyone logs in, so the daemons
+  # below find them on a headless restart.
+  system.activationScripts.postActivation.text = lib.mkAfter ''
+    /usr/bin/defaults write /Library/Preferences/SystemConfiguration/autodiskmount \
+      AutomountDisksWithoutUserLogin -bool true
+  '';
+
+  # Unlock the encrypted Agent volume at boot with the root-only key
+  # (/etc/hermes/agent-volume.key, mode 0400, on the FileVault-encrypted
+  # internal disk) and create the directories the hermes user writes to.
+  launchd.daemons.agent-volume-unlock = {
+    script = ''
+      if ! /sbin/mount | /usr/bin/grep -q ' on ${agentRoot} '; then
+        /usr/sbin/diskutil apfs unlockVolume ${agentVolumeUUID} -stdinpassphrase \
+          < /etc/hermes/agent-volume.key
+      fi
+      /usr/bin/install -d -o hermes -g staff -m 0700 \
+        ${hermesHome} ${agentRoot}/logs ${agentRoot}/tmp
+    '';
+    serviceConfig = {
+      RunAtLoad = true;
+      StandardOutPath = "/var/log/agent-volume-unlock.log";
+      StandardErrorPath = "/var/log/agent-volume-unlock.log";
+    };
+  };
 
   # OpenSSH for bali on port 2222. bali reaches radon from the work tailnet
   # (declarative sharing, tag://work/herdr grant in javdl/joost
