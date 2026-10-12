@@ -46,6 +46,9 @@
   # through the cua.ai relay. The app itself is built by
   # scripts/build-cua-bots.sh.
   environment.systemPackages = [ pkgs.cua ];
+  # Usage telemetry off for the CLI and for the Cua Bots app started from a
+  # shell (scripts/build-cua-bots.sh --run inherits it).
+  environment.variables.CUA_TELEMETRY = "0";
 
   # Headless tailscaled does not install a domain resolver when the tailnet
   # supplies default DNS servers. Delegate only this tailnet to MagicDNS.

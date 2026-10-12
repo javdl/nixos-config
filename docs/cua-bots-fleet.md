@@ -153,7 +153,15 @@ NixOS already restarts `cua-daemon`.
 - **bali's joost account is signed in** to cua.ai as an enrolled client. That
   lets agents on bali create Spaces on the fleet. `cua auth logout` and
   `cua devices revoke <id>` undo it.
-- **Telemetry** is on by default in the cua programs (`cua telemetry off` per
-  account).
+- **Telemetry is off everywhere we control it.** NixOS hosts set
+  `CUA_TELEMETRY=0` for shells and every user manager and write
+  `[telemetry] enabled = "off"` to the `cua` account's `config.toml`. fu137
+  writes joost's `config.toml` on activation; radon sets the variable, and
+  `build-cua-bots.sh` turns it off for the app. After the first deploy to a
+  host, run `sudo systemctl --user -M cua@ daemon-reexec` and restart
+  `cua-spacesd-host`; otherwise the running user manager keeps its old
+  environment. Check with `sudo -u cua -H cua telemetry status`. The
+  `cua-spacesd` inside each Space container comes from upstream's image, and
+  this config does not reach it.
 - **Rules are not enforcement.** Inside its Space, a bot's harness approves its
   own tool calls (an upstream limit).

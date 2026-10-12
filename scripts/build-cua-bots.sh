@@ -19,6 +19,10 @@ PATCH="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/patches/cua-bots-host-pl
 
 [ "$(uname -s)" = Darwin ] || { echo "Cua Bots is a macOS app; run this on the Mac" >&2; exit 1; }
 
+# Usage telemetry off for this account (every cua program, the app included).
+export CUA_TELEMETRY=0
+command -v cua >/dev/null && cua telemetry off >/dev/null
+
 if [ ! -d "$SRC/.git" ]; then
   git clone --filter=blob:none https://github.com/trycua/cua "$SRC"
 fi

@@ -57,6 +57,11 @@ lib.mkIf enable {
     Install.WantedBy = [ "default.target" ];
   };
 
+  # Usage telemetry off. Omarchy owns bash, so Home Manager session variables
+  # never reach the shell: the config.toml switch (activation below) covers
+  # every cua program run as joost, the env covers the user units.
+  systemd.user.sessionVariables.CUA_TELEMETRY = "0";
+
   # `cua host setup --driver-bin` copies the binary unless the destination
   # already resolves to it; the link keeps upstream's unit on the current
   # generation. That unit is not Home Manager's, so restart it here when the
@@ -65,6 +70,7 @@ lib.mkIf enable {
     run install -d -m 700 "$HOME/.cua" "$HOME/.cua/host"
     run install -d -m 755 "$HOME/.cua/host/bin"
     run ln -sfn ${lib.escapeShellArg spacesdBin} "$HOME/.cua/host/bin/cua-spacesd"
+    run ${pkgs.cua}/bin/cua telemetry off
     stamp="$HOME/.cua/host/bin/.nix-spacesd"
     if [ "$(cat "$stamp" 2>/dev/null)" != "${pkgs.cua-spacesd}" ]; then
       run /usr/bin/systemctl --user try-restart cua-spacesd-host.service || true

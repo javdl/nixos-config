@@ -45,6 +45,7 @@ let
       uid="$(id -u ${user})"
       as_cua() {
         sudo -u ${user} -H env \
+          CUA_TELEMETRY=0 \
           XDG_RUNTIME_DIR="/run/user/$uid" \
           DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$uid/bus" \
           "$@"
@@ -104,6 +105,14 @@ in
       setupScript
     ];
 
+    # Usage telemetry off for every cua program here (docs: CUA_TELEMETRY=0
+    # covers the CLI, daemon and cua-spacesd). The env reaches shells and
+    # every user manager, so upstream's cua-spacesd-host unit too; the
+    # config.toml switch below also covers `sudo -u cua cua ...`, which
+    # resets the environment.
+    environment.sessionVariables.CUA_TELEMETRY = "0";
+    systemd.user.extraConfig = "DefaultEnvironment=CUA_TELEMETRY=0";
+
     systemd.tmpfiles.rules = [
       "d ${home}/.cua 0700 ${user} ${user} - -"
       "d ${home}/.cua/host 0700 ${user} ${user} - -"
@@ -122,6 +131,7 @@ in
       wantedBy = [ "default.target" ];
       path = [ pkgs.docker ];
       serviceConfig = {
+        ExecStartPre = "${pkgs.cua}/bin/cua telemetry off";
         # Keep the default loopback listener: env passthrough into Spaces
         # (agent API keys) refuses to work without it.
         ExecStart = "${pkgs.cua}/bin/cua daemon start --foreground";
