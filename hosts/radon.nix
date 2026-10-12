@@ -59,4 +59,35 @@
     # Managed by nix-darwin for Radon's Tailscale domain.
     nameserver 100.100.100.100
   '';
+
+  # OpenSSH for bali on port 2222. bali reaches radon from the work tailnet
+  # (declarative sharing, tag://work/herdr grant in javdl/joost
+  # infra/tailscale), but Tailscale SSH on port 22 cannot admit it: the
+  # policy's ssh section rejects cross-tailnet sources. Key-only, joost only,
+  # bound to radon's tailnet address so it is not reachable on the LAN
+  # (launchd restarts it until tailscaled has brought that address up).
+  environment.etc."ssh/radon-2222-authorized_keys".text = ''
+    ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEfx6qICt/nunP+X3Wv8Y6hhZtGo0AZreAp3QOThy0SD bali-agent-nopass
+  '';
+  launchd.daemons.sshd-bali = {
+    script = ''
+      /usr/bin/ssh-keygen -A
+      exec /usr/sbin/sshd -D -e \
+        -o ListenAddress=100.92.105.21:2222 \
+        -o AuthorizedKeysFile=/etc/ssh/radon-2222-authorized_keys \
+        -o AuthorizedKeysCommand=none \
+        -o PasswordAuthentication=no \
+        -o KbdInteractiveAuthentication=no \
+        -o PermitRootLogin=no \
+        -o AllowUsers=joost \
+        -o PidFile=/var/run/sshd-bali.pid
+    '';
+    serviceConfig = {
+      RunAtLoad = true;
+      KeepAlive = true;
+      ThrottleInterval = 30;
+      StandardOutPath = "/var/log/sshd-bali.log";
+      StandardErrorPath = "/var/log/sshd-bali.log";
+    };
+  };
 }
