@@ -80,7 +80,11 @@ in
   power.restartAfterFreeze = true;
 
   # Service account for the family Hermes gateway. Standard (non-admin), no
-  # login shell; its home is on the Agent volume.
+  # login shell; its home is on the Agent volume. nix-darwin cannot create a
+  # user over SSH without Full Disk Access, so the record was made once by
+  # hand with dscl (UniqueID 506, PrimaryGroupID 20, the home below,
+  # UserShell /usr/bin/false, IsHidden 1, Password "*"). nix-darwin then only
+  # keeps its properties in line.
   users.knownUsers = [ "hermes" ];
   users.users.hermes = {
     uid = 506;
@@ -99,13 +103,16 @@ in
 
   # Unlock the encrypted Agent volume at boot with the root-only key
   # (/etc/hermes/agent-volume.key, mode 0400, on the FileVault-encrypted
-  # internal disk) and create the directories the hermes user writes to.
+  # internal disk), keep ownership enforced (external volumes default to
+  # "ignore ownership", which shows every file as _unknown), and create the
+  # directories the hermes user writes to.
   launchd.daemons.agent-volume-unlock = {
     script = ''
       if ! /sbin/mount | /usr/bin/grep -q ' on ${agentRoot} '; then
         /usr/sbin/diskutil apfs unlockVolume ${agentVolumeUUID} -stdinpassphrase \
           < /etc/hermes/agent-volume.key
       fi
+      /usr/sbin/diskutil enableOwnership ${agentRoot}
       /usr/bin/install -d -o hermes -g staff -m 0700 \
         ${hermesHome} ${agentRoot}/logs ${agentRoot}/tmp
     '';
