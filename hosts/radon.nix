@@ -39,6 +39,9 @@
     # tailnet and see peers' real addresses; userspace networking allows
     # neither.
     tun = "utun";
+    # bali is shared in from the FashionUnited tailnet; resolve it by its
+    # full name (bali.stargazer-duck.ts.net) through MagicDNS.
+    magicDNSDomains = [ "stargazer-duck.ts.net" ];
   };
 
   # Cua Bots controller (docs/cua-bots-fleet.md): `cua auth login` and

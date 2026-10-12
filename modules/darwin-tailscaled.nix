@@ -123,6 +123,19 @@ in
         advertised subnet routes in the OS routing table.
       '';
     };
+
+    magicDNSDomains = mkOption {
+      type = types.listOf types.str;
+      default = [ ];
+      example = [ "stargazer-duck.ts.net" ];
+      description = ''
+        Extra DNS suffixes to send to MagicDNS (100.100.100.100) through
+        /etc/resolver/<domain>. tailscaled only routes its own tailnet's
+        suffix, so names of nodes shared in from another tailnet (resolvable
+        only by their full name, e.g. bali.stargazer-duck.ts.net) otherwise
+        never reach MagicDNS on macOS.
+      '';
+    };
   };
 
   config = mkIf cfg.enable (mkMerge [
@@ -146,6 +159,15 @@ in
           StandardErrorPath = "/var/log/tailscaled.log";
         };
       };
+    }
+
+    {
+      environment.etc = lib.listToAttrs (
+        map (domain: {
+          name = "resolver/${domain}";
+          value.text = "nameserver 100.100.100.100\n";
+        }) cfg.magicDNSDomains
+      );
     }
 
     (mkIf (cfg.authKeyFile != null) {
