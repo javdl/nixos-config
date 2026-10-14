@@ -161,4 +161,36 @@ in
       StandardErrorPath = "/var/log/sshd-bali.log";
     };
   };
+
+  # Hermes WebUI (~/hermes-webui checkout) from login, restarted on exit.
+  # FileVault unlock at boot logs joost in, so this starts with the machine.
+  # start.sh --foreground execs into server.py, so launchd tracks the real
+  # server PID instead of the daemonising ctl.sh path (docs/supervisor.md).
+  # The Label is ctl.sh's default HERMES_WEBUI_LAUNCHD_LABEL: `./ctl.sh start`
+  # then refuses to spawn a second instance on 8787. Restart with
+  # `launchctl kickstart -k gui/$(id -u)/com.parantoux.hermes-webui`.
+  launchd.user.agents.hermes-webui = {
+    serviceConfig = {
+      Label = "com.parantoux.hermes-webui";
+      ProgramArguments = [
+        "/bin/bash"
+        "/Users/joost/hermes-webui/start.sh"
+        "--foreground"
+      ];
+      WorkingDirectory = "/Users/joost/hermes-webui";
+      EnvironmentVariables = {
+        HOME = "/Users/joost";
+        # git/hermes from the Nix profile; python3 resolves to /usr/bin/python3,
+        # and bootstrap.py hands off to the agent venv interpreter.
+        PATH = "/etc/profiles/per-user/joost/bin:/run/current-system/sw/bin:/nix/var/nix/profiles/default/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin";
+        HERMES_WEBUI_STATE_DIR = "/Users/joost/.hermes/webui";
+      };
+      RunAtLoad = true;
+      KeepAlive = true;
+      ThrottleInterval = 30;
+      # Same file ctl.sh writes, so `./ctl.sh logs` keeps working.
+      StandardOutPath = "/Users/joost/.hermes/webui.log";
+      StandardErrorPath = "/Users/joost/.hermes/webui.log";
+    };
+  };
 }
