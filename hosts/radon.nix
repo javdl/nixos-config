@@ -1,4 +1,10 @@
-{ config, pkgs, ... }: {
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
+{
   # nix-darwin stateVersion. Host runs macOS Tahoe.
   system.stateVersion = 6;
 
@@ -20,11 +26,36 @@
     ../modules/darwin-tailscaled.nix
   ];
 
-  # Stay current: rebuild from the GitHub flake daily (launchd equivalent of
-  # the colleague Linux servers' services.nixosAutoUpdate at 04:00).
+  # Compact worker: native Blender, two browsers, and CLI-only containers.
+  # Keep remote access, credentials and the existing PAIR cluster integration.
+  # No uninstall/zap here: application data is retained until reviewed.
+  homebrew.casks = lib.mkForce [
+    "bitwarden"
+    "blender"
+    "brave-origin"
+    "google-chrome"
+    "nvidia-pair"
+  ];
+  homebrew.brews = lib.mkForce [
+    "podman"
+    "tailscale"
+  ];
+  homebrew.onActivation.cleanup = lib.mkForce "none";
+  homebrew.onActivation.upgrade = lib.mkForce false;
+
+  # Check agent releases weekly, not at every login or every six hours.
+  # The manual updater and activation-time bootstrap remain available.
+  home-manager.users.joost.launchd.agents.agent-cli-update.config = {
+    RunAtLoad = lib.mkForce false;
+    StartInterval = lib.mkForce 604800;
+  };
+
+  # Weekly maintenance rather than daily system activation. This does not
+  # change Apple's own macOS/security-update settings.
   services.darwinAutoUpdate = {
     enable = true;
     flake = "github:javdl/nixos-config#radon";
+    weekday = 0; # Sunday, launchd convention
   };
 
   # Hardened headless Tailscale (replaces the inline launchd daemon). Persistent

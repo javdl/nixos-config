@@ -35,6 +35,12 @@ in
       description = "Flake URI to rebuild from, e.g. github:javdl/nixos-config#<hostname>.";
     };
 
+    weekday = mkOption {
+      type = types.nullOr (types.ints.between 0 7);
+      default = null;
+      description = "Optional launchd weekday (0 or 7 = Sunday); null keeps daily updates.";
+    };
+
     hour = mkOption {
       type = types.int;
       default = 4;
@@ -59,10 +65,15 @@ in
       serviceConfig = {
         RunAtLoad = false;
         StartCalendarInterval = [
-          {
-            Hour = cfg.hour;
-            Minute = cfg.minute;
-          }
+          (
+            {
+              Hour = cfg.hour;
+              Minute = cfg.minute;
+            }
+            // lib.optionalAttrs (cfg.weekday != null) {
+              Weekday = cfg.weekday;
+            }
+          )
         ];
         StandardOutPath = "/var/log/darwin-auto-update.log";
         StandardErrorPath = "/var/log/darwin-auto-update.log";
