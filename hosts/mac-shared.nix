@@ -115,7 +115,7 @@ in
   programs.nix-index-database.comma.enable = true;
 
   # Start VICREO Listener at login (receives keystroke commands from Bitfocus Companion)
-  launchd.user.agents.vicreo-listener = {
+  launchd.user.agents.vicreo-listener = lib.mkIf (currentSystemName != "radon") {
     serviceConfig = {
       ProgramArguments = [
         "/usr/bin/open"
@@ -139,7 +139,7 @@ in
   };
 
   # PAI Voice Server (ElevenLabs TTS on port 8888)
-  launchd.user.agents.pai-voice-server = {
+  launchd.user.agents.pai-voice-server = lib.mkIf (currentSystemName != "radon") {
     serviceConfig = {
       ProgramArguments = [
         "/bin/sh"

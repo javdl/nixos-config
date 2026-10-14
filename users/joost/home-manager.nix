@@ -19,7 +19,10 @@
 let
   isDarwin = pkgs.stdenv.isDarwin;
   isLinux = pkgs.stdenv.isLinux;
-  isMinimal = currentSystemName == "fu146";
+  isMinimal = builtins.elem currentSystemName [
+    "fu146"
+    "radon"
+  ];
 
   anthropicBaseUrlEnv =
     lib.optionalAttrs (aperture ? ${currentSystemName}) {
