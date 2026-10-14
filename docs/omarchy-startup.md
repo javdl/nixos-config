@@ -3,8 +3,8 @@
 Personal desktop startup is composed in `users/joost/omarchy-startup.nix`.
 It is imported by Joost's Home Manager profile and enabled only on Omarchy.
 
-- `hypr/autostart.lua`: Ghostty with the pinned Herdr client, ChatGPT, Zed,
-  Brave Origin and Slack, assigned to workspaces 1–5 at login.
+- `hypr/autostart.lua`: Ghostty with the pinned Herdr client, ChatGPT,
+  Brave Origin and Slack, assigned to workspaces 1, 2, 4 and 5 at login.
 - j9 XDG autostart: native Companion, VICREO Listener and JetBrains Toolbox.
   Their existing installation paths are retained; TryExec skips missing apps.
 - fu137 Companion/VICREO packaging and autostart: composed through

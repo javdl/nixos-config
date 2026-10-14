@@ -28,7 +28,6 @@
               hl.on("hyprland.start", function()
                 hl.exec_cmd("/usr/bin/ghostty --gtk-single-instance=false", { workspace = "1 silent" })
                 hl.exec_cmd("/usr/bin/chatgpt", { workspace = "2 silent" })
-                hl.exec_cmd("/usr/bin/zeditor --new", { workspace = "3 silent" })
                 hl.exec_cmd("/usr/bin/brave-origin", { workspace = "4 silent" })
                 hl.exec_cmd("/usr/bin/slack --gtk-version=3", { workspace = "5 silent" })
               end)
