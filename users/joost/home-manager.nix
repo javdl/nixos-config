@@ -457,6 +457,14 @@ in
   # Cargo-installed binaries (caut, ft, etc.)
   home.sessionPath = [ "$HOME/.cargo/bin" ];
 
+  # fu137 sends Anthropic inference through Tailscale Aperture (see
+  # hosts/bali.nix). It resolves the gateway via MagicDNS on stargazer-duck.
+  # Omarchy disables the bash module, so the variable also goes to
+  # environment.d for the systemd/uwsm graphical session.
+  systemd.user.sessionVariables = lib.mkIf (currentSystemName == "fu137") {
+    ANTHROPIC_BASE_URL = "http://ai.stargazer-duck.ts.net";
+  };
+
   home.sessionVariables =
     shared.sessionVariables
     // {
@@ -470,6 +478,9 @@ in
 
       # Default GCP project — read by gemini CLI, gcloud client libs (ADC), terraform-google, etc.
       GOOGLE_CLOUD_PROJECT = "kubernetes-164514";
+    }
+    // lib.optionalAttrs (currentSystemName == "fu137") {
+      ANTHROPIC_BASE_URL = "http://ai.stargazer-duck.ts.net";
     }
     // lib.optionalAttrs isDarwin {
       # Bitwarden SSH agent socket
