@@ -123,21 +123,29 @@ in
     };
   };
 
-  # OpenSSH for bali on port 2222. bali reaches radon from the work tailnet
-  # (declarative sharing, tag://work/herdr grant in javdl/joost
-  # infra/tailscale), but Tailscale SSH on port 22 cannot admit it: the
-  # policy's ssh section rejects cross-tailnet sources. Key-only, joost only,
-  # bound to radon's tailnet address so it is not reachable on the LAN
-  # (launchd restarts it until tailscaled has brought that address up).
+  # OpenSSH on port 2222: bali's path (it reaches radon from the work
+  # tailnet via declarative sharing, tag://work/herdr grant in javdl/joost
+  # infra/tailscale, and Tailscale SSH on 22 rejects cross-tailnet sources)
+  # and Joost's key-only fallback when Tailscale SSH is unavailable (ssh
+  # alias radon-fb in chezmoi). Key-only, joost only, bound to radon's
+  # tailnet address so it is not reachable on the LAN (launchd restarts it
+  # until tailscaled has brought that address up).
   environment.etc."ssh/radon-2222-authorized_keys".text = ''
     ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEfx6qICt/nunP+X3Wv8Y6hhZtGo0AZreAp3QOThy0SD bali-agent-nopass
+    ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEx6MK8mQ22KWCA0uDV6uBNvMw/NeBl70Mu4hxrX9SJ9 ssh-key-joost
   '';
+  # /etc/ssh/radon-2222-authorized_keys is a symlink into /nix/store, whose
+  # group-writable parent fails sshd's StrictModes ("bad ownership or modes
+  # for directory /nix/store"), so every login was refused. Copy it to a
+  # root-owned 0644 file at start.
   launchd.daemons.sshd-bali = {
     script = ''
       /usr/bin/ssh-keygen -A
+      /usr/bin/install -o root -g wheel -m 0644 \
+        /etc/ssh/radon-2222-authorized_keys /var/db/sshd-bali-authorized_keys
       exec /usr/sbin/sshd -D -e \
         -o ListenAddress=100.92.105.21:2222 \
-        -o AuthorizedKeysFile=/etc/ssh/radon-2222-authorized_keys \
+        -o AuthorizedKeysFile=/var/db/sshd-bali-authorized_keys \
         -o AuthorizedKeysCommand=none \
         -o PasswordAuthentication=no \
         -o KbdInteractiveAuthentication=no \
