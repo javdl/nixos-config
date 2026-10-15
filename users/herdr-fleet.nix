@@ -15,12 +15,17 @@ let
   sessionName = "agents";
   baliFleetPublicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEfx6qICt/nunP+X3Wv8Y6hhZtGo0AZreAp3QOThy0SD bali-herdr-command-center";
   isFu137 = currentSystemName == "fu137";
-  isFleetMachine = controller || isFu137 || provisionAgentRuntime;
+  # radon is the macOS fleet worker; its server runs as a launchd agent.
+  isRadon = currentSystemName == "radon";
+  isFleetMachine = controller || isFu137 || isRadon || provisionAgentRuntime;
 
   # Single fleet inventory consumed by both hosts.toml and herdctl. Bali has
   # Tailscale DNS disabled, so tailnet targets use their stable IPs. The
   # exe.dev worker uses Bali's dotless team-account SSH alias so the personal
-  # `*.exe.xyz` identity cannot win OpenSSH's first-value resolution.
+  # `*.exe.xyz` identity cannot win OpenSSH's first-value resolution. radon
+  # and the Sparks sit in the personal tailnet, whose Tailscale SSH cannot
+  # admit bali; their aliases in Bali's chezmoi SSH config select OpenSSH on
+  # port 2222 (docs/herdr-command-center.md).
   fleetNodes = [
     {
       name = "runner03";
@@ -65,6 +70,33 @@ let
       target = "fu-herdr-dev";
       prefix = "exe";
       remoteBin = "/home/exedev/.local/bin/herdr";
+      alwaysControl = true;
+    }
+    {
+      name = "radon";
+      role = "mac";
+      user = "joost";
+      target = "radon";
+      prefix = "rad";
+      remoteBin = "/etc/profiles/per-user/joost/bin/herdr";
+      alwaysControl = true;
+    }
+    {
+      name = "spark";
+      role = "gpu";
+      user = "joost";
+      target = "spark";
+      prefix = "sp1";
+      remoteBin = "/home/joost/.local/bin/herdr";
+      alwaysControl = true;
+    }
+    {
+      name = "spark2";
+      role = "gpu";
+      user = "joost";
+      target = "spark2";
+      prefix = "sp2";
+      remoteBin = "/home/joost/.local/bin/herdr";
       alwaysControl = true;
     }
   ];
@@ -274,7 +306,7 @@ lib.mkIf isFleetMachine {
     ''
   );
 
-  systemd.user.services.herdr-agents = {
+  systemd.user.services.herdr-agents = lib.mkIf pkgs.stdenv.isLinux {
     Unit = {
       Description = "Persistent Herdr agents session";
       After = [ "network-online.target" ];
@@ -291,6 +323,28 @@ lib.mkIf isFleetMachine {
       RestartSec = 5;
     };
     Install.WantedBy = [ "default.target" ];
+  };
+
+  # macOS worker (radon): a login-session LaunchAgent, so agents keep access
+  # to the login keychain (Claude Code stores its credentials there).
+  launchd.agents.herdr-agents = lib.mkIf pkgs.stdenv.isDarwin {
+    enable = true;
+    config = {
+      ProgramArguments = [
+        "${pkgs.herdr}/bin/herdr"
+        "--session"
+        sessionName
+        "server"
+      ];
+      EnvironmentVariables = {
+        HERDR_CONFIG_PATH = "${activeHerdrConfig}";
+        HERDR_SESSION = sessionName;
+        PATH = "${config.home.homeDirectory}/.local/bin:/etc/profiles/per-user/${config.home.username}/bin:/run/current-system/sw/bin:/nix/var/nix/profiles/default/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin";
+      };
+      RunAtLoad = true;
+      KeepAlive = true;
+      ThrottleInterval = 5;
+    };
   };
 
   # Ensure every fleet machine publishes Claude and Codex lifecycle state to

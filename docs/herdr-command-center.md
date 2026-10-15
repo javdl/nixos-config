@@ -2,8 +2,8 @@
 
 `bali` is the persistent Herdr command center. It runs the named `agents`
 session and uses `herdr-mirror` to present workspaces from three regular
-runners, the fu137 GPU workstation, and a maximum-size exe.dev development VM
-in one sidebar.
+runners, the fu137 GPU workstation, a maximum-size exe.dev development VM,
+radon (Mac Studio) and the two DGX Sparks in one sidebar.
 
 ```text
 operator
@@ -15,7 +15,10 @@ bali: Herdr session "agents" + herdr-mirror
    |-- r04 --> github-runner-04 (regular)
    |-- r05 --> github-runner-05 (regular)
    |-- gpu --> fu137            (GPU, watch-first)
-   `-- exe --> fu-herdr-dev     (exe.dev, 4 vCPU / 16 GB)
+   |-- exe --> fu-herdr-dev     (exe.dev, 4 vCPU / 16 GB)
+   |-- rad --> radon            (macOS, personal tailnet)
+   |-- sp1 --> spark            (DGX Spark, personal tailnet)
+   `-- sp2 --> spark2           (DGX Spark, personal tailnet)
 ```
 
 Herdr remains host-local on every machine. Mirror streams the remote terminal
@@ -31,6 +34,9 @@ operator's SSH client therefore leaves every server-owned pane running.
 | `runner05` | `github-runner-05` | regular | `100.108.96.124` | `r05` | control |
 | `gpu` | fu137 Omarchy boot | GPU | `fu137` SSH alias | `gpu` | watch-first |
 | `exedev` | `fu-herdr-dev` | dev | `fu-herdr-dev` SSH alias | `exe` | control |
+| `radon` | radon (nix-darwin) | mac | `radon` SSH alias, port 2222 | `rad` | control |
+| `spark` | DGX Spark (Ubuntu) | gpu | `spark` SSH alias, port 2222 | `sp1` | control |
+| `spark2` | DGX Spark (Ubuntu) | gpu | `spark2` SSH alias, port 2222 | `sp2` | control |
 
 Bali runs Tailscale with DNS acceptance disabled. The runner inventory uses
 stable tailnet IPs, while Bali's chezmoi-owned SSH config maps `fu137` to
@@ -38,6 +44,16 @@ stable tailnet IPs, while Bali's chezmoi-owned SSH config maps `fu137` to
 `fu-herdr-dev` SSH alias, which selects Bali's FashionUnited team key without
 matching its personal `*.exe.xyz` block. If a tailnet machine is re-enrolled
 and its IP changes, update the matching inventory or SSH-config entry.
+
+radon and the Sparks are in the personal tailnet and reach Bali through
+declarative node sharing (`fuww/fashionunited` and `javdl/joost`,
+`infra/tailscale/policy.hujson`). Their Tailscale SSH cannot admit Bali:
+the `ssh` policy section rejects cross-tailnet sources. Bali's chezmoi SSH
+config therefore maps their aliases to the tailnet IP and OpenSSH on port
+2222, which accepts Bali's `id_ed25519_nopass` key. On radon that sshd is the
+`sshd-bali` launchd daemon in `hosts/radon.nix`; the Herdr server there is a
+Home Manager LaunchAgent (login keychain access for Claude Code), so radon
+needs a logged-in user session.
 
 The GPU mirror sets `always_control = false`: it observes without changing the
 visible fu137 terminal geometry until somebody types into the mirrored pane.
@@ -60,14 +76,16 @@ the mirror package, `hosts.toml`, and plugin activation are all gated on
   a NixOS node while leaving the `github-runner` CI account isolated.
 - `users/herdr-mirror-plugin.toml` is the local plugin manifest. The upstream
   network build step is removed because Nix supplies the verified binary.
-- `scripts/bootstrap-herdr-exe-node.sh` installs the checksum-pinned Herdr
-  binary, integrations, config, and lingering user service on an Ubuntu node.
+- `scripts/bootstrap-herdr-node.sh` installs the checksum-pinned Herdr
+  binary (x86_64 or aarch64), integrations, config, and lingering user service
+  on a non-Nix Ubuntu node (exe.dev worker, Sparks).
 - `hosts/github-runner-{03,04,05}.nix` import the node module.
 - `users/joost/home-manager-server.nix` enables controller mode only on Bali.
-- `users/joost/home-manager.nix` enables node mode on fu137 without touching
+- `users/joost/home-manager.nix` enables node mode on fu137 and radon without touching
   Omarchy-owned desktop, terminal, Hyprland, or package configuration.
 
-The repo pins Herdr `0.9.0` in `lib/overlays.nix` and herdr-mirror `0.4.1` in
+The repo pins Herdr `0.9.3` in `lib/overlays.nix` (and the same release in
+the bootstrap script) and herdr-mirror `0.4.1` in
 `users/herdr-fleet.nix`. The mirror release checksum is verified by Nix. Stable
 Herdr 0.8.2 exposes the terminal session streams the mirror uses.
 
@@ -101,11 +119,13 @@ reusing the platform key already pinned to the fingerprint documented by
 exe.dev. Bootstrap or refresh the worker by streaming the reviewed script:
 
 ```bash
-ssh fu-herdr-dev 'bash -s' < scripts/bootstrap-herdr-exe-node.sh
+ssh fu-herdr-dev 'bash -s' < scripts/bootstrap-herdr-node.sh
+ssh spark 'bash -s' < scripts/bootstrap-herdr-node.sh
+ssh spark2 'bash -s' < scripts/bootstrap-herdr-node.sh
 ```
 
-The bootstrap is idempotent, installs Herdr 0.8.2 from its checksum-pinned
-release binary, enables linger for `exedev`, and verifies a representative
+The bootstrap is idempotent, installs the pinned Herdr release, enables linger
+(via sudo, only when it is not already on), and verifies a representative
 workspace command after starting the `agents` service.
 
 ## First rollout

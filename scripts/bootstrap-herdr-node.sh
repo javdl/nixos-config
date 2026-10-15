@@ -1,19 +1,30 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-readonly herdr_version="0.8.2"
-readonly herdr_sha256="976150a14d490c94b243ea2e1a7eb2dfb67f12e36b182db90936f6728e6aecf4"
-readonly herdr_url="https://github.com/herdrdev/herdr/releases/download/v${herdr_version}/herdr-linux-x86_64"
+# Bootstrap a non-Nix Linux Herdr fleet worker (exe.dev VM, DGX Sparks).
+# Version and hashes match the herdr overlay in lib/overlays.nix.
+readonly herdr_version="0.9.3"
+case "$(uname -s)-$(uname -m)" in
+  Linux-x86_64)
+    herdr_asset="herdr-linux-x86_64"
+    herdr_sha256="18a8dc65f1c2fa485884344356dea1cfd911c6f06cf46fa78e193f4087f4dba7"
+    ;;
+  Linux-aarch64)
+    herdr_asset="herdr-linux-aarch64"
+    herdr_sha256="4de7aa3e25678812e92960de64f7c2aaa1bca1f0f80a3c5e559837e231e1f5c0"
+    ;;
+  *)
+    echo "bootstrap-herdr-node supports Linux x86_64 and aarch64 only" >&2
+    exit 1
+    ;;
+esac
+readonly herdr_asset herdr_sha256
+readonly herdr_url="https://github.com/herdrdev/herdr/releases/download/v${herdr_version}/${herdr_asset}"
 readonly install_dir="${HOME}/.local/bin"
 readonly config_dir="${HOME}/.config/herdr"
 readonly unit_dir="${HOME}/.config/systemd/user"
 runtime_dir="/run/user/$(id -u)"
 readonly runtime_dir
-
-if [[ "$(uname -s)" != "Linux" || "$(uname -m)" != "x86_64" ]]; then
-  echo "bootstrap-herdr-exe-node supports Linux x86_64 only" >&2
-  exit 1
-fi
 
 for command in curl install loginctl sha256sum systemctl; do
   command -v "$command" >/dev/null || {
@@ -61,10 +72,14 @@ EOF
 install -Dm644 "$tmp_dir/herdr-agents.service" \
   "$unit_dir/herdr-agents.service"
 
+# Same as the Nix fleet module: hooks install even before first login.
+mkdir -p "$HOME/.claude" "$HOME/.codex"
 "$install_dir/herdr" integration install claude
 "$install_dir/herdr" integration install codex
 
-sudo loginctl enable-linger "$(id -un)"
+if [[ "$(loginctl show-user "$(id -un)" -p Linger --value 2>/dev/null)" != "yes" ]]; then
+  sudo loginctl enable-linger "$(id -un)"
+fi
 export XDG_RUNTIME_DIR="$runtime_dir"
 export DBUS_SESSION_BUS_ADDRESS="unix:path=${runtime_dir}/bus"
 systemctl --user daemon-reload
