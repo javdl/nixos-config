@@ -55,6 +55,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Browser UI package; Darwin startup is managed by our launchd module.
+    hermes-webui = {
+      url = "github:nesquena/hermes-webui/master";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     nix-index-database.url = "github:nix-community/nix-index-database";
     nix-index-database.inputs.nixpkgs.follows = "nixpkgs";
 

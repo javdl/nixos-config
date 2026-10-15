@@ -273,6 +273,27 @@
         "type": "github"
       }
     },
+    "hermes-webui": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1792005153,
+        "narHash": "sha256-6xxK2Hl7gTUrK8R4cgL6r+6/uS/Bnt7vOHNl9kwhkao=",
+        "owner": "nesquena",
+        "repo": "hermes-webui",
+        "rev": "1e2e4dde6520e5d96bb5b20dfb2f65aa890eeb5e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nesquena",
+        "ref": "master",
+        "repo": "hermes-webui",
+        "type": "github"
+      }
+    },
     "home-manager": {
       "inputs": {
         "nixpkgs": [
@@ -642,6 +663,7 @@
         "determinate": "determinate",
         "disko": "disko",
         "hermes-agent": "hermes-agent",
+        "hermes-webui": "hermes-webui",
         "home-manager": "home-manager_2",
         "neovim-nightly-overlay": "neovim-nightly-overlay",
         "nix-index-database": "nix-index-database",

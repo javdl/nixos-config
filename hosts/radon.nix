@@ -24,6 +24,7 @@
     ./mac-shared.nix
     ../modules/darwin-auto-update.nix
     ../modules/darwin-tailscaled.nix
+    ../modules/darwin-hermes-webui.nix
   ];
 
   # Compact worker: native Blender, two browsers, and CLI-only containers.
