@@ -2,10 +2,12 @@
 
 fu137 (RTX 3090), j9 (RTX 4090) and radon (Mac) run
 [NVIDIA Personal AI Router](https://github.com/NVIDIA/Personal-AI-Router)
-(PAIR) as one cluster. Each node's local proxy sends every request to a node
-that holds the requested model, so an app on any member can use all of them
-through `http://127.0.0.1:11434` (Ollama API) or `http://127.0.0.1:1234`
-(OpenAI API).
+(PAIR) as one cluster, together with the two DGX Spark-class boxes `spark`
+and `spark2` (Ubuntu, not Nix-managed; PAIR runs there as a user unit in
+tmux). Each node's local proxy sends every request to a node that holds the
+requested model, so an app on any member can use all of them through
+`http://127.0.0.1:11434` (Ollama API), `http://127.0.0.1:1234` (OpenAI API)
+or, since PAIR 1.0.0, `http://127.0.0.1:8080` (llama.cpp, OpenAI API).
 
 ## What Nix manages
 
@@ -23,7 +25,11 @@ in-app updater is disabled because the store is read-only.
 
 Upstream does not support a cluster with mixed PAIR versions. Homebrew sets
 radon's version, so when the cask moves, bump `nvpairVersion` to match and
-switch all three nodes.
+update every node: switch fu137 and j9, and install the same `.deb` on spark
+and spark2. From 1.0.0 the cask installs `NVIDIA PAIR.app`; remove an old
+`PAIR.app` with
+`sudo /Applications/PAIR.app/Contents/Resources/installer-tools/uninstall-macos.sh`,
+which keeps settings and cluster membership.
 
 Do not run `nvpair` (the TUI) while the desktop app is running. Each one starts
 its own services, and the two sets fight over the same ports.
@@ -64,7 +70,8 @@ nvpair-omarchy-setup   # re-execs itself with sudo
 It does two things:
 
 1. **Firewall.** Omarchy's ufw denies all incoming traffic. The script allows
-   tcp `11434`, `1234` and `14318-14323` on `tailscale0` and `tailmix0`.
+   tcp `11434`, `1234`, `8080` and `14318-14323` on `tailscale0` and `tailmix0`.
+   Re-run it after updating to PAIR 1.0.0 to open `8080` (llama.cpp proxy).
    Peers on the machine's own tailnet arrive on `tailscale0`; peers on the
    other tailnet come in through tailmix on `tailmix0`. PAIR answers plaintext
    proxy requests from loopback only, so peers must use mutual TLS with pinned

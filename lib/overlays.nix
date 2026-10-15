@@ -624,15 +624,15 @@ in
           # requests across paired machines. Electron .deb from GitHub releases;
           # the bundled Go services are static. SHA256s are the release asset
           # digests. See users/nvpair-omarchy.nix and docs/nvpair-omarchy.md.
-          nvpairVersion = "0.1.1";
+          nvpairVersion = "1.0.0";
           nvpairSources = {
             "x86_64-linux" = {
               arch = "amd64";
-              sha256 = "1b23nm08nmjxjzfinxcsqz2i93zzrz540azh0mpz5ydznlbc77w7";
+              sha256 = "16g4ija8rcax9rwv0fdfd4f1b1jzq01065qbp0cz75xvmmvfjxqs";
             };
             "aarch64-linux" = {
               arch = "arm64";
-              sha256 = "0a928i442mph8rcab3rk9k7hpapmqzp9zazk7rz53lpvk4fb4r4z";
+              sha256 = "1vnvvnjcq8gsm931br6y6x6j8igcm3pymd86jh8lp9zdb67cx41q";
             };
           };
           nvpairSource = nvpairSources.${prev.stdenv.hostPlatform.system} or null;
