@@ -127,12 +127,14 @@ in
   # tailnet via declarative sharing, tag://work/herdr grant in javdl/joost
   # infra/tailscale, and Tailscale SSH on 22 rejects cross-tailnet sources)
   # and Joost's key-only fallback when Tailscale SSH is unavailable (ssh
-  # alias radon-fb in chezmoi). Key-only, joost only, bound to radon's
+  # alias radon-fb in chezmoi), plus the exe.dev Herdr command pane
+  # (users/herdr-fleet-keys.nix). Key-only, joost only, bound to radon's
   # tailnet address so it is not reachable on the LAN (launchd restarts it
   # until tailscaled has brought that address up).
   environment.etc."ssh/radon-2222-authorized_keys".text = ''
     ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEfx6qICt/nunP+X3Wv8Y6hhZtGo0AZreAp3QOThy0SD bali-agent-nopass
     ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEx6MK8mQ22KWCA0uDV6uBNvMw/NeBl70Mu4hxrX9SJ9 ssh-key-joost
+    ${(import ../users/herdr-fleet-keys.nix).cmdpane}
   '';
   # /etc/ssh/radon-2222-authorized_keys is a symlink into /nix/store, whose
   # group-writable parent fails sshd's StrictModes ("bad ownership or modes

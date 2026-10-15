@@ -71,7 +71,11 @@ the mirror package, `hosts.toml`, and plugin activation are all gated on
 ## Declarative pieces
 
 - `users/herdr-fleet.nix` is the fleet source of truth. It generates the node
-  service, Bali's controller config, `hosts.toml`, and the `herdctl` helper.
+  service, both controllers' configs, `hosts.toml`, and the `herdctl` helper.
+  Each node carries one SSH destination per controller (`fromBali`,
+  `fromCmdpane`).
+- `users/herdr-fleet-keys.nix` holds the controllers' public keys; fu137, the
+  runners (2222) and radon (2222) authorize them from there.
 - `modules/herdr-fleet-node.nix` adds a minimal `joost` Home Manager profile to
   a NixOS node while leaving the `github-runner` CI account isolated.
 - `users/herdr-mirror-plugin.toml` is the local plugin manifest. The upstream
@@ -127,6 +131,54 @@ ssh spark2 'bash -s' < scripts/bootstrap-herdr-node.sh
 The bootstrap is idempotent, installs the pinned Herdr release, enables linger
 (via sudo, only when it is not already on), and verifies a representative
 workspace command after starting the `agents` service.
+
+## exe.dev command pane
+
+A second controller on an exe.dev VM in the personal exe.dev account
+(j@jlnw.nl), Home Manager output `homeConfigurations.herdr-cmdpane` (user
+`exedev`). It mirrors every node except the team-account exe.dev worker (that
+needs the FashionUnited team key) and except Bali itself (Bali's session
+already holds mirrored workspaces; mirroring a mirror would duplicate them).
+
+The VM joins the personal tailnet through exe.dev's Tailscale workload
+identity federation, so no auth key sits on it, and gets `tag:cmdpane`. A
+tagged node cannot use Tailscale SSH into user-owned devices, and the
+work-tailnet nodes are cross-tailnet, so every destination is OpenSSH:
+
+| Node | Destination | Policy |
+|---|---|---|
+| runner03–05 | tailnet IP, port 2222 (`modules/herdr-fleet-node.nix`) | fuww: `tag://personal/cmdpane` → `tag:github-runner` tcp:2222 |
+| fu137 | `100.92.74.63`, port 22 | fuww: `tag://personal/cmdpane` → `herdr-fu137` tcp:22 |
+| radon | `100.92.105.21`, port 2222 (`sshd-bali`) | javdl/joost: `tag:cmdpane` → own devices, `tag:hermes` tcp:2222 |
+| spark, spark2 | tailnet IP, port 2222 | same grant |
+
+Its key is `~/.ssh/herdr-cmdpane` (public half in
+`users/herdr-fleet-keys.nix`). The Sparks are not Nix-managed: their
+`~/.ssh/authorized_keys` carries the key by hand.
+
+Set it up once:
+
+1. Create the VM in the personal account (`ssh exe new --name herdr-cmdpane`).
+2. In the personal tailnet's admin console, add a trust credential (OpenID
+   Connect, custom issuer) with the Issuer and Subject from an exe.dev
+   **Identity Federation → Tailscale** integration named `tailscale-wif`
+   attached to the VM. Scope: Auth Keys write; tag: `tag:cmdpane`. Paste the
+   Client ID back into the integration.
+3. From a workstation (it reaches both Bali and the personal exe.dev
+   account), move the private key from Bali, where it was generated, to the
+   VM, delete Bali's copy, and run the bootstrap:
+
+   ```bash
+   ssh bali 'cat ~/.ssh/herdr-cmdpane' \
+     | ssh herdr-cmdpane.exe.xyz 'umask 077; mkdir -p ~/.ssh; cat > ~/.ssh/herdr-cmdpane'
+   ssh bali 'rm ~/.ssh/herdr-cmdpane ~/.ssh/herdr-cmdpane.pub'
+   ssh herdr-cmdpane.exe.xyz 'bash -s' < scripts/bootstrap-herdr-cmdpane.sh
+   ```
+
+The bootstrap installs Tailscale and joins (not ephemeral, so a paused VM
+keeps its node), installs Nix, enables linger, applies the Home Manager
+output, and runs `herdctl <node> workspace list` against every node. Attach
+with `ssh herdr-cmdpane.exe.xyz` and `herdr session attach agents`.
 
 ## First rollout
 

@@ -498,6 +498,29 @@
         ];
       };
 
+      # Herdr command pane on an exe.dev VM (personal account, user exedev),
+      # joined to the personal tailnet as tag:cmdpane: a second controller
+      # next to bali. See docs/herdr-command-center.md and
+      # scripts/bootstrap-herdr-cmdpane.sh.
+      homeConfigurations."herdr-cmdpane" = home-manager.lib.homeManagerConfiguration {
+        pkgs = import nixpkgs {
+          system = "x86_64-linux";
+          overlays = overlays;
+          config.allowUnfree = true;
+        };
+        modules = [
+          (import ./users/herdr-fleet.nix {
+            currentSystemName = "herdr-cmdpane";
+            cmdpane = true;
+          })
+          {
+            home.username = "exedev";
+            home.homeDirectory = "/home/exedev";
+            programs.home-manager.enable = true;
+          }
+        ];
+      };
+
       # Omarchy Quattro package manifests live in /usr/share/omarchy/install.
       # gum, tldr, mpv, localsend, inxi and mise are Quattro core packages, so
       # they stay out of the Nix layer. Three real Omarchy hosts, fu137, j9 and

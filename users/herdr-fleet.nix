@@ -1,6 +1,10 @@
 {
   currentSystemName,
   controller ? false,
+  # The exe.dev command pane: a second controller in the personal tailnet
+  # (tag:cmdpane) that reaches every node over OpenSSH instead of through
+  # Bali's SSH aliases. Implies controller.
+  cmdpane ? false,
   provisionAgentRuntime ? false,
 }:
 
@@ -13,25 +17,33 @@
 
 let
   sessionName = "agents";
-  baliFleetPublicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEfx6qICt/nunP+X3Wv8Y6hhZtGo0AZreAp3QOThy0SD bali-herdr-command-center";
+  fleetKeys = import ./herdr-fleet-keys.nix;
+  isController = controller || cmdpane;
   isFu137 = currentSystemName == "fu137";
   # radon is the macOS fleet worker; its server runs as a launchd agent.
   isRadon = currentSystemName == "radon";
-  isFleetMachine = controller || isFu137 || isRadon || provisionAgentRuntime;
+  isFleetMachine = isController || isFu137 || isRadon || provisionAgentRuntime;
 
-  # Single fleet inventory consumed by both hosts.toml and herdctl. Bali has
-  # Tailscale DNS disabled, so tailnet targets use their stable IPs. The
-  # exe.dev worker uses Bali's dotless team-account SSH alias so the personal
-  # `*.exe.xyz` identity cannot win OpenSSH's first-value resolution. radon
-  # and the Sparks sit in the personal tailnet, whose Tailscale SSH cannot
-  # admit bali; their aliases in Bali's chezmoi SSH config select OpenSSH on
-  # port 2222 (docs/herdr-command-center.md).
+  # Single fleet inventory consumed by both hosts.toml and herdctl, with one
+  # SSH destination per controller (null = not mirrored from there).
+  #  - fromBali: Bali has Tailscale DNS disabled, so tailnet targets use their
+  #    stable IPs and reach the runners through Tailscale SSH. The exe.dev
+  #    worker uses Bali's dotless team-account SSH alias so the personal
+  #    `*.exe.xyz` identity cannot win OpenSSH's first-value resolution.
+  #    radon and the Sparks sit in the personal tailnet, whose Tailscale SSH
+  #    cannot admit bali; their aliases in Bali's chezmoi SSH config select
+  #    OpenSSH on port 2222.
+  #  - fromCmdpane: the command pane is in the personal tailnet, so every
+  #    work-tailnet node is cross-tailnet and Tailscale SSH cannot admit it
+  #    either: OpenSSH on 2222 (22 on fu137, which runs no Tailscale SSH).
+  #    The exe.dev team worker would need the team account's key; skipped.
+  # See docs/herdr-command-center.md.
   fleetNodes = [
     {
       name = "runner03";
       role = "regular";
-      user = "joost";
-      target = "100.126.150.43";
+      fromBali = "ssh://joost@100.126.150.43";
+      fromCmdpane = "ssh://joost@100.126.150.43:2222";
       prefix = "r03";
       remoteBin = "/etc/profiles/per-user/joost/bin/herdr";
       alwaysControl = true;
@@ -39,8 +51,8 @@ let
     {
       name = "runner04";
       role = "regular";
-      user = "joost";
-      target = "100.97.77.46";
+      fromBali = "ssh://joost@100.97.77.46";
+      fromCmdpane = "ssh://joost@100.97.77.46:2222";
       prefix = "r04";
       remoteBin = "/etc/profiles/per-user/joost/bin/herdr";
       alwaysControl = true;
@@ -48,8 +60,8 @@ let
     {
       name = "runner05";
       role = "regular";
-      user = "joost";
-      target = "100.108.96.124";
+      fromBali = "ssh://joost@100.108.96.124";
+      fromCmdpane = "ssh://joost@100.108.96.124:2222";
       prefix = "r05";
       remoteBin = "/etc/profiles/per-user/joost/bin/herdr";
       alwaysControl = true;
@@ -57,8 +69,8 @@ let
     {
       name = "gpu";
       role = "gpu";
-      user = "joost";
-      target = "fu137";
+      fromBali = "ssh://joost@fu137";
+      fromCmdpane = "ssh://joost@100.92.74.63";
       prefix = "gpu";
       remoteBin = "/home/joost/.nix-profile/bin/herdr";
       alwaysControl = false;
@@ -66,8 +78,8 @@ let
     {
       name = "exedev";
       role = "dev";
-      user = "exedev";
-      target = "fu-herdr-dev";
+      fromBali = "ssh://exedev@fu-herdr-dev";
+      fromCmdpane = null;
       prefix = "exe";
       remoteBin = "/home/exedev/.local/bin/herdr";
       alwaysControl = true;
@@ -75,8 +87,8 @@ let
     {
       name = "radon";
       role = "mac";
-      user = "joost";
-      target = "radon";
+      fromBali = "ssh://joost@radon";
+      fromCmdpane = "ssh://joost@100.92.105.21:2222";
       prefix = "rad";
       remoteBin = "/etc/profiles/per-user/joost/bin/herdr";
       alwaysControl = true;
@@ -84,8 +96,8 @@ let
     {
       name = "spark";
       role = "gpu";
-      user = "joost";
-      target = "spark";
+      fromBali = "ssh://joost@spark";
+      fromCmdpane = "ssh://joost@100.114.192.43:2222";
       prefix = "sp1";
       remoteBin = "/home/joost/.local/bin/herdr";
       alwaysControl = true;
@@ -93,13 +105,17 @@ let
     {
       name = "spark2";
       role = "gpu";
-      user = "joost";
-      target = "spark2";
+      fromBali = "ssh://joost@spark2";
+      fromCmdpane = "ssh://joost@100.109.106.44:2222";
       prefix = "sp2";
       remoteBin = "/home/joost/.local/bin/herdr";
       alwaysControl = true;
     }
   ];
+
+  controllerNodes = map (node: node // { uri = if cmdpane then node.fromCmdpane else node.fromBali; }) (
+    builtins.filter (node: !cmdpane || node.fromCmdpane != null) fleetNodes
+  );
 
   herdrFleetConfig = pkgs.writeText "herdr-fleet-config.toml" ''
     onboarding = false
@@ -147,7 +163,7 @@ let
     command = "mirror.new-workspace-pick"
   '';
 
-  activeHerdrConfig = if controller then herdrControllerConfig else herdrFleetConfig;
+  activeHerdrConfig = if isController then herdrControllerConfig else herdrFleetConfig;
 
   herdrMirrorHosts = pkgs.writeText "herdr-mirror-hosts.toml" ''
     autostart = true
@@ -158,12 +174,12 @@ let
 
     ${lib.concatMapStringsSep "\n" (node: ''
       [hosts.${node.name}]
-      target = "ssh://${node.user}@${node.target}"
+      target = "${node.uri}"
       prefix = "${node.prefix}"
       session = "${sessionName}"
       remote_bin = "${node.remoteBin}"
       ${lib.optionalString (!node.alwaysControl) "always_control = false"}
-    '') fleetNodes}
+    '') controllerNodes}
   '';
 
   herdrMirrorBinary = pkgs.fetchurl {
@@ -203,7 +219,7 @@ let
 
       usage() {
         echo "usage: herdctl hosts | herdctl <${
-          lib.concatMapStringsSep "|" (node: node.name) fleetNodes
+          lib.concatMapStringsSep "|" (node: node.name) controllerNodes
         }> <herdr arguments...>" >&2
         exit 2
       }
@@ -215,16 +231,16 @@ let
       if [ "$node" = "hosts" ]; then
         printf '%-10s %-15s %s\n' NODE ROLE TARGET
         ${lib.concatMapStringsSep "\n" (
-          node: "printf '%-10s %-15s %s\\n' ${node.name} ${node.role} ${node.target}"
-        ) fleetNodes}
+          node: "printf '%-10s %-15s %s\\n' ${node.name} ${node.role} ${node.uri}"
+        ) controllerNodes}
         exit 0
       fi
 
       [ "$#" -ge 1 ] || usage
       case "$node" in
         ${lib.concatMapStringsSep "\n" (node: ''
-          ${node.name}) target="${node.user}@${node.target}"; remote_bin="${node.remoteBin}" ;;
-        '') fleetNodes}
+          ${node.name}) target="${node.uri}"; remote_bin="${node.remoteBin}" ;;
+        '') controllerNodes}
         *) usage ;;
       esac
 
@@ -243,7 +259,7 @@ lib.mkIf isFleetMachine {
 
   # Bali and fu137 already receive Herdr/Codex from their existing profiles;
   # fu137's socat is owned by Omarchy/pacman. Only the new runner operator
-  # profiles need these base packages added here.
+  # profiles and the command pane need these base packages added here.
   home.packages =
     lib.optionals provisionAgentRuntime [
       pkgs.bubblewrap
@@ -251,7 +267,8 @@ lib.mkIf isFleetMachine {
       pkgs.herdr
       pkgs.socat
     ]
-    ++ lib.optionals controller [
+    ++ lib.optionals cmdpane [ pkgs.herdr ]
+    ++ lib.optionals isController [
       herdctl
       herdrMirror
     ];
@@ -263,29 +280,43 @@ lib.mkIf isFleetMachine {
 
   xdg.configFile."herdr/fleet.toml".source = herdrFleetConfig;
 
-  xdg.configFile."herdr/config.toml" = lib.mkIf controller {
+  xdg.configFile."herdr/config.toml" = lib.mkIf isController {
     source = herdrControllerConfig;
   };
 
-  xdg.configFile."herdr-mirror/hosts.toml" = lib.mkIf controller {
+  xdg.configFile."herdr-mirror/hosts.toml" = lib.mkIf isController {
     source = herdrMirrorHosts;
   };
 
   # Upstream's installer creates this compatibility link and `status` checks
   # it even though plugin actions run relative to the plugin root.
-  home.file.".local/bin/herdr-mirror" = lib.mkIf controller {
+  home.file.".local/bin/herdr-mirror" = lib.mkIf isController {
     source = "${herdrMirror}/bin/herdr-mirror";
   };
 
+  # The command pane is a dedicated VM: nothing else owns its SSH config.
+  # Every fleet destination is a tailnet IP; trust each host key on first use
+  # (the mirror cannot answer a prompt) and offer only the pane's own key.
+  home.file.".ssh/config" = lib.mkIf cmdpane {
+    text = ''
+      Host 100.*
+        IdentitiesOnly yes
+        IdentityFile ~/.ssh/herdr-cmdpane
+        StrictHostKeyChecking accept-new
+        ServerAliveInterval 30
+        ServerAliveCountMax 3
+    '';
+  };
+
   # Bali is a tagged device while fu137 deliberately remains user-owned, so
-  # Tailscale SSH cannot authorize this direction. Append Bali's fleet key to
-  # the user-owned file instead of declaring home.file: a Home Manager symlink
-  # would replace every other key already trusted by this workstation.
+  # Tailscale SSH cannot authorize this direction; the command pane is in
+  # another tailnet altogether. Append the controller keys to the user-owned
+  # file instead of declaring home.file: a Home Manager symlink would replace
+  # every other key already trusted by this workstation.
   home.activation.herdrFleetAuthorizedKey = lib.mkIf isFu137 (
     lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       auth_dir="$HOME/.ssh"
       auth_file="$auth_dir/authorized_keys"
-      fleet_key=${lib.escapeShellArg baliFleetPublicKey}
 
       $DRY_RUN_CMD ${pkgs.coreutils}/bin/install -d -m 0700 "$auth_dir"
       if [ -L "$auth_file" ]; then
@@ -295,13 +326,15 @@ lib.mkIf isFleetMachine {
       if [ ! -e "$auth_file" ]; then
         $DRY_RUN_CMD ${pkgs.coreutils}/bin/install -m 0600 /dev/null "$auth_file"
       fi
-      if ! ${pkgs.gnugrep}/bin/grep -qxF "$fleet_key" "$auth_file" 2>/dev/null; then
-        if [ -n "$DRY_RUN_CMD" ]; then
-          echo "Would append Bali's Herdr fleet key to $auth_file"
-        else
-          printf '%s\n' "$fleet_key" >> "$auth_file"
+      for fleet_key in ${lib.escapeShellArgs (builtins.attrValues fleetKeys)}; do
+        if ! ${pkgs.gnugrep}/bin/grep -qxF "$fleet_key" "$auth_file" 2>/dev/null; then
+          if [ -n "$DRY_RUN_CMD" ]; then
+            echo "Would append a Herdr controller key to $auth_file"
+          else
+            printf '%s\n' "$fleet_key" >> "$auth_file"
+          fi
         fi
-      fi
+      done
       $DRY_RUN_CMD ${pkgs.coreutils}/bin/chmod 0600 "$auth_file"
     ''
   );
@@ -366,7 +399,7 @@ lib.mkIf isFleetMachine {
 
   # Linking is local and network-free: the Nix package already contains the
   # verified release binary and a manifest without upstream's download step.
-  home.activation.herdrMirrorPlugin = lib.mkIf controller (
+  home.activation.herdrMirrorPlugin = lib.mkIf isController (
     lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       $DRY_RUN_CMD ${pkgs.herdr}/bin/herdr plugin link \
         ${herdrMirror}/share/herdr-mirror --enabled
