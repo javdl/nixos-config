@@ -2169,6 +2169,57 @@ in
             };
           };
 
+          # grok-bot-cli - CLI for xAI Grok Bot agents and groups (gbot command)
+          # npm tarball ships a self-contained rspack bundle with no runtime
+          # dependencies; needs node >= 22.19 and the Grok Bot desktop app's
+          # signed-in session (grok-bot cask on radon, users/joost/darwin.nix).
+          grok-bot-cli = prev.stdenv.mkDerivation rec {
+            pname = "grok-bot-cli";
+            version = "0.12.4";
+
+            src = prev.fetchurl {
+              url = "https://registry.npmjs.org/grok-bot-cli/-/grok-bot-cli-${version}.tgz";
+              sha256 = "0mbf5l3cpd8bxq52nmm1rj9z0jjaxj0rgxnpf5l7k27x01aldac0";
+            };
+
+            nativeBuildInputs = [ prev.makeWrapper ];
+
+            # Grok Bot desktop >= 0.68 writes gateway-descriptor.json version 3
+            # (v2 layout plus savedAtMs), which 0.12.4 rejects with "Unsupported
+            # Grok Bot gateway descriptor version 3". Same two-line change as
+            # upstream PR #143 (issue #149); drop once a release includes it.
+            postPatch = ''
+              for f in dist/bin/gbot.mjs dist/bin/gbot-flight.mjs \
+                       dist/mcp/mcp-grok-bot-b8c2461e.mjs \
+                       dist/mcp/mcp-grok-bot-b8c2461e-flight.mjs \
+                       dist/scripts/gbot-relay.mjs; do
+                substituteInPlace "$f" \
+                  --replace-fail 'wrapped.version !== 1 && wrapped.version !== 2)' \
+                                 'wrapped.version !== 1 && wrapped.version !== 2 && wrapped.version !== 3)' \
+                  --replace-fail 'if (wrapped.version === 2) {' \
+                                 'if (wrapped.version === 2 || wrapped.version === 3) {'
+              done
+            '';
+
+            installPhase = ''
+              mkdir -p $out/lib $out/bin
+              cp -r . $out/lib/grok-bot-cli
+              makeWrapper ${prev.nodejs}/bin/node $out/bin/gbot \
+                --add-flags "$out/lib/grok-bot-cli/dist/bin/gbot.mjs"
+              ln -s gbot $out/bin/grok-bot
+              makeWrapper ${prev.nodejs}/bin/node $out/bin/gbot-install \
+                --add-flags "$out/lib/grok-bot-cli/dist/bin/gbot-install.js"
+            '';
+
+            meta = with prev.lib; {
+              description = "CLI for xAI Grok Bot agents and groups";
+              homepage = "https://github.com/ScriptedAlchemy/grok-bot-cli";
+              license = licenses.mit;
+              mainProgram = "gbot";
+              platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+            };
+          };
+
           # cco - Claude Code sandbox (bubblewrap on Linux, sandbox-exec on macOS)
           cco = prev.stdenv.mkDerivation {
             pname = "cco";

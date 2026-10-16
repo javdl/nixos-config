@@ -233,7 +233,6 @@ in
       "podman"
       "protobuf"
       "tailscale"
-      "vercel-cli"
     ];
     casks = withoutServerCasks (
       (
@@ -244,6 +243,8 @@ in
       )
       ++ extraCasks
       ++ lib.optionals (!builtins.elem currentSystemName serversMacos) dgxSparkCasks
+      # Vercel CLI; Homebrew moved it from the vercel-cli formula to this cask.
+      ++ [ "vercel" ]
     );
     masApps = {
       # to find ID, App Store > Share > Copy link
