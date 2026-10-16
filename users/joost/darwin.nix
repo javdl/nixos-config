@@ -201,6 +201,15 @@ let
 in
 {
 
+  imports = [
+    ../../modules/darwin-fleet-health.nix
+  ];
+
+  # Radon-only. hosts/radon.nix is left unchanged so this does not collide
+  # with the open worker-profile edit (PR #79). The agent runs as the
+  # logged-in user and writes one JSON file; see docs/radon-fleet-health.md.
+  services.darwinFleetHealth.enable = currentSystemName == "radon";
+
   homebrew = {
     enable = true;
     # Nobody runs brew by hand on the headless servers, so Homebrew never
