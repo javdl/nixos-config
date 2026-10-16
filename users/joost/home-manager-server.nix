@@ -173,7 +173,6 @@ in
       flyctl
       git-crypt
       lazydocker
-      # vercel CLI installed via npm in activation script (removed from nixpkgs)
       railway
 
       # Shell
@@ -234,14 +233,6 @@ in
   # both assume these exist before anything has cloned into them.
   home.activation.createCodeDirs = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     $DRY_RUN_CMD mkdir -p "$HOME/code/fuww" "$HOME/code/javdl"
-  '';
-
-  # Install/update Vercel CLI via npm (removed from nixpkgs)
-  home.activation.installVercel = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    if ! command -v vercel &>/dev/null; then
-      echo "Installing Vercel CLI..."
-      $DRY_RUN_CMD ${pkgs.nodejs_22}/bin/npm install -g vercel@latest 2>/dev/null || echo "Vercel CLI install failed"
-    fi
   '';
 
   # Install Claude Code CLI using native installer (always gets latest version)
