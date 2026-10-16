@@ -18,6 +18,7 @@ let
   # Per-host extra casks layered on top of the base set.
   extraCasks = lib.optionals (currentSystemName == "radon") [
     "rouvy"
+    "grok-bot" # xAI Grok Bot desktop app (always-on agents)
     # NVIDIA PAIR node alongside fu137 and j9; see docs/nvpair-omarchy.md.
     # Homebrew sets this version; PAIR clusters need every node on the same
     # release, so bump nvpairVersion in lib/overlays.nix to match.
