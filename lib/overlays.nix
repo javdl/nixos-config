@@ -2262,6 +2262,11 @@ in
           # gh CLI on stable has bugs.
           gh = pkgs-unstable.gh;
 
+          # nixos-26.05 macmon is 0.6.1, which panics on startup on
+          # aarch64-darwin (NixOS/nixpkgs#562942), so CPU/GPU temperatures
+          # never get read. Unstable has 0.8.2.
+          macmon = pkgs-unstable.macmon;
+
           # Want the latest version of these
           nushell = pkgs-unstable.nushell;
           google-cloud-sdk = pkgs-unstable.google-cloud-sdk;

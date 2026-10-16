@@ -62,7 +62,14 @@ in
   # `cua devices enroll` for the app, which reaches the fleet's Spaces
   # through the cua.ai relay. The app itself is built by
   # scripts/build-cua-bots.sh.
-  environment.systemPackages = [ pkgs.cua ];
+  # macmon is the sudo-less Apple Silicon monitor (CPU/GPU temperatures).
+  # Same place as cua: a radon-only CLI from nixpkgs, not the shared
+  # homebrew.brews list. The hand-installed Homebrew formula is left alone
+  # because homebrew.onActivation.cleanup stays at its default, "none".
+  environment.systemPackages = [
+    pkgs.cua
+    pkgs.macmon
+  ];
   # Usage telemetry off for the CLI and for the Cua Bots app started from a
   # shell (scripts/build-cua-bots.sh --run inherits it).
   environment.variables.CUA_TELEMETRY = "0";
