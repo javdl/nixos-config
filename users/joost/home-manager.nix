@@ -298,8 +298,8 @@ in
     ++ (lib.optional (pkgs.cross-agent-session-resumer != null) pkgs.cross-agent-session-resumer)
     ++ (lib.optional (pkgs.process-triage != null) pkgs.process-triage)
     ++ (lib.optional (pkgs.remote-compilation-helper != null) pkgs.remote-compilation-helper)
-    # gbot drives the Grok Bot desktop app, which only radon installs (cask in
-    # users/joost/darwin.nix).
+    # Keep the gbot automation CLI radon-only; the desktop app is also in the
+    # standard Mac cask set (users/joost/darwin.nix).
     ++ (lib.optional (currentSystemName == "radon") pkgs.grok-bot-cli)
     # Heavyweight AI tooling: local-model / embedding search, GPU cloud, LLM
     # benchmarking, multi-agent orchestration and session indexes. Skipped on

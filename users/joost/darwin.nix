@@ -106,6 +106,7 @@ let
     "ghostty" # broken in nixpkgs
     "github" # desktop
     "google-chrome"
+    "grok-bot" # xAI Grok Bot desktop app (always-on agents)
     "google-drive"
     "gpg-suite"
     "granola"

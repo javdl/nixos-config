@@ -2140,7 +2140,7 @@ in
           # grok-bot-cli - CLI for xAI Grok Bot agents and groups (gbot command)
           # npm tarball ships a self-contained rspack bundle with no runtime
           # dependencies; needs node >= 22.19 and the Grok Bot desktop app's
-          # signed-in session (grok-bot cask on radon, users/joost/darwin.nix).
+          # signed-in session (grok-bot cask, users/joost/darwin.nix).
           grok-bot-cli = prev.stdenv.mkDerivation rec {
             pname = "grok-bot-cli";
             version = "0.12.4";

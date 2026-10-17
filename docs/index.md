@@ -43,6 +43,7 @@ directory in older guidance do not describe the current layout.
 | Task | Start here | Guidance |
 | --- | --- | --- |
 | Install or configure coding-agent CLIs | [Agent CLI module](../users/agent-clis.nix), [overlays](../lib/overlays.nix) | [Tool inventory](../AGENTS.md#ntm-flywheel-tools), [installation notes](../AGENTS.md#installation-notes) |
+| Install Grok Bot desktop | [Mac application lists](../users/joost/darwin.nix) | `grok-bot` is included on non-minimal Macs and radon; other minimal hosts stay unchanged. The separate `gbot` CLI remains radon-only in [Joost's profile](../users/joost/home-manager.nix). Sign in through the app after installation. |
 | Automatically update workstation Codex and Claude | [Workstation updater](../users/joost/agent-cli-updates.nix) | [Ownership, schedules, and operation](agent-cli-updates.md) |
 | Operate or extend the Herdr fleet | [Fleet inventory](../users/herdr-fleet.nix), [node module](../modules/herdr-fleet-node.nix) | [Command center runbook](herdr-command-center.md) |
 | Run Cua Bots on the fleet (Spaces hosts, controller Mac) | [Host module](../modules/cua-spaces-host.nix), [fu137 profile](../users/cua-spaces-host-omarchy.nix), [app build](../scripts/build-cua-bots.sh) | [Cua Bots fleet](cua-bots-fleet.md) |
