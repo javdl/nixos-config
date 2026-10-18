@@ -21,18 +21,28 @@ under `/Volumes/Agent`.
 
 ## What it checks
 
-curl (`/usr/bin/curl`, connect timeout 3s, total 5s, body discarded, no
-credentials, `~/.curlrc` ignored):
+curl (`/usr/bin/curl`, connect timeout 3s, total 5s, no credentials,
+`~/.curlrc` ignored). The body is discarded, except the three remote PAIR
+`:11434` checks read it only to recognise a loopback-only 403. That body is
+not stored.
 
 | Check | Target | ok means |
 | --- | --- | --- |
-| `spark_ollama` | `http://spark.buri-hoki.ts.net:11434/v1/models` | HTTP 2xx |
+| `spark_ollama` | `http://spark.buri-hoki.ts.net:11434/v1/models` | HTTP 2xx, or HTTP 403 with JSON `code` `loopback-only` |
 | `spark_vllm` | `https://spark.buri-hoki.ts.net:8443/health` | HTTP 2xx |
-| `spark2_ollama` | `http://spark2.buri-hoki.ts.net:11434/v1/models` | HTTP 2xx |
-| `j9_ollama` | `http://j9.buri-hoki.ts.net:11434/v1/models` | HTTP 2xx |
+| `spark2_ollama` | `http://spark2.buri-hoki.ts.net:11434/v1/models` | HTTP 2xx, or HTTP 403 with JSON `code` `loopback-only` |
+| `j9_ollama` | `http://j9.buri-hoki.ts.net:11434/v1/models` | HTTP 2xx, or HTTP 403 with JSON `code` `loopback-only` |
 | `radon_hermes_webui` | `http://127.0.0.1:8787/` | any HTTP status |
 | `radon_ollama` | `http://127.0.0.1:11434/v1/models` | HTTP 2xx |
 | `aperture` | `https://ai.buri-hoki.ts.net/v1/models` | any HTTP status; the code is recorded and no token is sent |
+
+`spark_ollama`, `spark2_ollama`, and `j9_ollama` hit PAIR's nvpair-proxy.
+Plaintext from another machine is refused with HTTP 403 and
+`{"code":"loopback-only","error":"plaintext requests are accepted only from loopback; cluster peers must use the mTLS ingress"}`.
+That response means the proxy is up: `ok` is true, `status` stays 403,
+`error` is null, and `detail` is `up (PAIR proxy, loopback-only for plaintext)`.
+Any other 403, a timeout, or a connect failure stays not ok. `radon_ollama`
+is loopback on this machine and still requires HTTP 2xx.
 
 Local checks, still read-only:
 
