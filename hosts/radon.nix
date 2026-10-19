@@ -146,12 +146,15 @@ in
   # /etc/ssh/radon-2222-authorized_keys is a symlink into /nix/store, whose
   # group-writable parent fails sshd's StrictModes ("bad ownership or modes
   # for directory /nix/store"), so every login was refused. Copy it to a
-  # root-owned 0644 file at start.
+  # root-owned 0644 file at start. Copy from the store path, not /etc: the
+  # path changes with the keys, so the plist changes and nix-darwin restarts
+  # the daemon. Copying from /etc left a new key unread until a manual restart.
   launchd.daemons.sshd-bali = {
     script = ''
       /usr/bin/ssh-keygen -A
       /usr/bin/install -o root -g wheel -m 0644 \
-        /etc/ssh/radon-2222-authorized_keys /var/db/sshd-bali-authorized_keys
+        ${config.environment.etc."ssh/radon-2222-authorized_keys".source} \
+        /var/db/sshd-bali-authorized_keys
       exec /usr/sbin/sshd -D -e \
         -o ListenAddress=100.92.105.21:2222 \
         -o AuthorizedKeysFile=/var/db/sshd-bali-authorized_keys \
