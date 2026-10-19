@@ -71,7 +71,11 @@ It does two things:
 
 1. **Firewall.** Omarchy's ufw denies all incoming traffic. The script allows
    tcp `11434`, `1234`, `8080` and `14318-14323` on `tailscale0` and `tailmix0`.
-   Re-run it after updating to PAIR 1.0.0 to open `8080` (llama.cpp proxy).
+   On j9 the same ports are also allowed from source `172.20.0.0/16` (the home
+   LAN) and from no other source. ufw skips a rule that already exists, so
+   re-running the script does not duplicate rules. Re-run it after updating to
+   PAIR 1.0.0 to open `8080` (llama.cpp proxy), and on j9 after switching so
+   the LAN rules are installed (`nvpair-omarchy-setup`).
    Peers on the machine's own tailnet arrive on `tailscale0`; peers on the
    other tailnet come in through tailmix on `tailmix0`. PAIR answers plaintext
    proxy requests from loopback only, so peers must use mutual TLS with pinned
