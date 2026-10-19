@@ -81,14 +81,16 @@ runtime_dir="/run/user/$(id -u)"
 export XDG_RUNTIME_DIR="$runtime_dir"
 export DBUS_SESSION_BUS_ADDRESS="unix:path=${runtime_dir}/bus"
 
-nix run home-manager/master -- switch -b pre-herdr --flake "$flake"
+# --refresh: a github: flake ref is otherwise served from a cached tarball.
+nix run home-manager/master -- switch --refresh -b pre-herdr --flake "$flake"
 
 export PATH="${HOME}/.nix-profile/bin:${PATH}"
 herdctl hosts
 status=0
 while read -r node _; do
   [[ "$node" == NODE ]] && continue
-  if herdctl "$node" workspace list >/dev/null; then
+  # </dev/null: ssh would otherwise swallow the rest of the node list.
+  if herdctl "$node" workspace list >/dev/null </dev/null; then
     echo "ok      $node"
   else
     echo "FAILED  $node" >&2
