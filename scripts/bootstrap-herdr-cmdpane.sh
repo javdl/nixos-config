@@ -40,6 +40,14 @@ done
 if ! command -v tailscale >/dev/null; then
   curl -fsSL https://tailscale.com/install.sh | sh
 fi
+# The installer does not always start the daemon (exe.dev images do not).
+sudo systemctl enable --now tailscaled
+for _ in $(seq 1 30); do
+  tailscale status --json >/dev/null 2>&1 && break
+  # NeedsLogin also exits non-zero; the socket existing is enough to proceed.
+  [[ -S /run/tailscale/tailscaled.sock ]] && break
+  sleep 1
+done
 if ! tailscale status --json 2>/dev/null | jq -e '.BackendState == "Running"' >/dev/null; then
   wif_url="https://${wif_name}.int.exe.xyz"
   meta="$(curl -fsS "${wif_url}/metadata")"
