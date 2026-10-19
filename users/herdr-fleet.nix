@@ -35,7 +35,8 @@ let
   #    OpenSSH on port 2222.
   #  - fromCmdpane: the command pane is in the personal tailnet, so every
   #    work-tailnet node is cross-tailnet and Tailscale SSH cannot admit it
-  #    either: OpenSSH on 2222 (22 on fu137, which runs no Tailscale SSH).
+  #    either: OpenSSH on 2222 everywhere. fu137 keeps Tailscale SSH on 22
+  #    for its owner, so Bali uses its 2222 too.
   #    The exe.dev team worker would need the team account's key; skipped.
   # See docs/herdr-command-center.md.
   fleetNodes = [
@@ -69,8 +70,8 @@ let
     {
       name = "fu137";
       role = "gpu";
-      fromBali = "ssh://joost@fu137";
-      fromCmdpane = "ssh://joost@100.92.74.63";
+      fromBali = "ssh://joost@fu137:2222";
+      fromCmdpane = "ssh://joost@100.92.74.63:2222";
       prefix = "fu137";
       remoteBin = "/home/joost/.nix-profile/bin/herdr";
       alwaysControl = false;

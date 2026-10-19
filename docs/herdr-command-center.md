@@ -32,7 +32,7 @@ operator's SSH client therefore leaves every server-owned pane running.
 | `runner03` | `github-runner-03` | regular | `100.126.150.43` | `r03` | control |
 | `runner04` | `github-runner-04` | regular | `100.97.77.46` | `r04` | control |
 | `runner05` | `github-runner-05` | regular | `100.108.96.124` | `r05` | control |
-| `fu137` | fu137 Omarchy boot | GPU | `fu137` SSH alias | `fu137` | watch-first |
+| `fu137` | fu137 Omarchy boot | GPU | `fu137` SSH alias, port 2222 | `fu137` | watch-first |
 | `exedev` | `fu-herdr-dev` | dev | `fu-herdr-dev` SSH alias | `exe` | control |
 | `radon` | radon (nix-darwin) | mac | `radon` SSH alias, port 2222 | `rad` | control |
 | `spark` | DGX Spark (Ubuntu) | gpu | `spark` SSH alias, port 2222 | `sp1` | control |
@@ -63,8 +63,9 @@ pane size.
 The three runners and fu137 accept Bali over OpenSSH carried by Tailscale.
 fu137 remains a user-owned Arch/Omarchy workstation; because Bali is tagged
 `tag:devboxes`, Tailscale SSH cannot connect from Bali to fu137. Regular
-OpenSSH preserves fu137's user identity while the tailnet policy and its
-interface-scoped firewall rule keep port 22 private. fu137 is a worker only:
+OpenSSH on port 2222 (fu137 keeps Tailscale SSH on 22 for its owner) preserves
+fu137's user identity while the tailnet policy and its interface-scoped
+firewall rule keep 2222 private. fu137 is a worker only:
 the mirror package, `hosts.toml`, and plugin activation are all gated on
 `controller`, which fu137 does not set.
 
@@ -148,7 +149,7 @@ work-tailnet nodes are cross-tailnet, so every destination is OpenSSH:
 | Node | Destination | Policy |
 |---|---|---|
 | runner03–05 | tailnet IP, port 2222 (`modules/herdr-fleet-node.nix`) | fuww: `tag://personal/cmdpane` → `tag:github-runner` tcp:2222 |
-| fu137 | `100.92.74.63`, port 22 | fuww: `tag://personal/cmdpane` → `herdr-fu137` tcp:22 |
+| fu137 | `100.92.74.63`, port 2222 (`sshd_config.d` drop-in) | fuww: `tag://personal/cmdpane` → `herdr-fu137` tcp:2222 |
 | radon | `100.92.105.21`, port 2222 (`sshd-bali`) | javdl/joost: `tag:cmdpane` → own devices, `tag:hermes` tcp:2222 |
 | spark, spark2 | tailnet IP, port 2222 | same grant |
 
@@ -211,23 +212,28 @@ make switch NIXNAME=fu137
 ```
 
 That activation starts the `agents` Herdr user service and idempotently appends
-Bali's fleet public key to the existing user-owned `authorized_keys` file. It
-does not replace the file or remove other trusted keys.
+the controllers' public keys to the existing user-owned `authorized_keys`
+file. It does not replace the file or remove other trusted keys.
+
+fu137 keeps Tailscale SSH on port 22 for Joost's own devices. The
+controllers (Bali, tagged; the command pane, cross-tailnet) cannot use it, so
+OpenSSH also listens on 2222, reachable only over `tailscale0`:
 
 ```bash
-sudo tailscale set --ssh=false
-sudo ufw allow in on tailscale0 to any port 22 proto tcp \
-  comment 'Herdr command center'
-sudo systemctl enable --now sshd
+printf 'Port 22\nPort 2222\n' | sudo tee /etc/ssh/sshd_config.d/50-herdr-2222.conf
+sudo sshd -t && sudo systemctl enable --now sshd && sudo systemctl restart sshd
+sudo ufw allow in on tailscale0 to any port 2222 proto tcp \
+  comment 'Herdr controllers'
 sudo loginctl enable-linger joost
 loginctl show-user joost -p Linger
 ```
 
-The tailnet policy must grant Bali (`100.113.194.113`) access to fu137
-(`100.92.74.63`) on TCP 22. Do not add a Tailscale `ssh` rule for this path:
-that section controls Tailscale SSH, whose tagged-to-user-owned restriction is
-why OpenSSH is used. Do not add a global firewall rule either; the
-`tailscale0` rule leaves the public interface under UFW's default-deny policy.
+The work tailnet policy grants Bali (`herdr-bali`) and the command pane
+(`tag://personal/cmdpane`) TCP 2222 on fu137 (`herdr-fu137`). Do not add a
+Tailscale `ssh` rule for this path: that section controls Tailscale SSH, whose
+tagged-to-user-owned restriction is why OpenSSH is used. Do not add a global
+firewall rule either; the `tailscale0` rule leaves the public interface under
+UFW's default-deny policy.
 
 `loginctl enable-linger` is what keeps `herdr-agents` running across logout and
 reboot, independently of SSH sessions.
