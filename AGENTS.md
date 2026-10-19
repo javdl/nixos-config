@@ -282,7 +282,7 @@ standalone Home Manager outputs in `flake.nix`, not as NixOS hosts:
 
 | Host | Hardware | Output | Notes |
 |---|---|---|---|
-| `fu137` | Ryzen 9 7950X, RTX 3090, 30 GiB | `homeConfigurations."fu137"` | Herdr fleet `gpu` worker (see `users/herdr-fleet.nix`) |
+| `fu137` | Ryzen 9 7950X, RTX 3090, 30 GiB | `homeConfigurations."fu137"` | Herdr fleet `fu137` worker (GPU role) (see `users/herdr-fleet.nix`) |
 | `j9` | Ryzen 9 9950X3D, RTX 4090, 60 GiB | `homeConfigurations."j9"` | Not a Herdr fleet node |
 | `mba` | MacBook Air M1, 16 GiB (Asahi, aarch64) | `homeConfigurations."mba"` | Lite profile; the macOS install keeps `darwinConfigurations."macbook-air-m1"` |
 

@@ -67,11 +67,11 @@ let
       alwaysControl = true;
     }
     {
-      name = "gpu";
+      name = "fu137";
       role = "gpu";
       fromBali = "ssh://joost@fu137";
       fromCmdpane = "ssh://joost@100.92.74.63";
-      prefix = "gpu";
+      prefix = "fu137";
       remoteBin = "/home/joost/.nix-profile/bin/herdr";
       alwaysControl = false;
     }

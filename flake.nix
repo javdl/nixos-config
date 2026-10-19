@@ -214,7 +214,7 @@
         pkgs.tailmix
       ];
 
-      # fu137: Ryzen 9 7950X / RTX 3090 / 30 GiB. Herdr fleet "gpu" worker —
+      # fu137: Ryzen 9 7950X / RTX 3090 / 30 GiB. Herdr fleet "fu137" worker (GPU role) —
       # users/herdr-fleet.nix keys that role off currentSystemName == "fu137".
       omarchyHome = mkOmarchyHome {
         hostName = "fu137";

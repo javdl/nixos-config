@@ -14,7 +14,7 @@ bali: Herdr session "agents" + herdr-mirror
    |-- r03 --> github-runner-03 (regular)
    |-- r04 --> github-runner-04 (regular)
    |-- r05 --> github-runner-05 (regular)
-   |-- gpu --> fu137            (GPU, watch-first)
+   |-- fu137 --> fu137          (GPU, watch-first)
    |-- exe --> fu-herdr-dev     (exe.dev, 4 vCPU / 16 GB)
    |-- rad --> radon            (macOS, personal tailnet)
    |-- sp1 --> spark            (DGX Spark, personal tailnet)
@@ -32,7 +32,7 @@ operator's SSH client therefore leaves every server-owned pane running.
 | `runner03` | `github-runner-03` | regular | `100.126.150.43` | `r03` | control |
 | `runner04` | `github-runner-04` | regular | `100.97.77.46` | `r04` | control |
 | `runner05` | `github-runner-05` | regular | `100.108.96.124` | `r05` | control |
-| `gpu` | fu137 Omarchy boot | GPU | `fu137` SSH alias | `gpu` | watch-first |
+| `fu137` | fu137 Omarchy boot | GPU | `fu137` SSH alias | `fu137` | watch-first |
 | `exedev` | `fu-herdr-dev` | dev | `fu-herdr-dev` SSH alias | `exe` | control |
 | `radon` | radon (nix-darwin) | mac | `radon` SSH alias, port 2222 | `rad` | control |
 | `spark` | DGX Spark (Ubuntu) | gpu | `spark` SSH alias, port 2222 | `sp1` | control |
@@ -55,7 +55,7 @@ config therefore maps their aliases to the tailnet IP and OpenSSH on port
 Home Manager LaunchAgent (login keychain access for Claude Code), so radon
 needs a logged-in user session.
 
-The GPU mirror sets `always_control = false`: it observes without changing the
+The fu137 mirror sets `always_control = false`: it observes without changing the
 visible fu137 terminal geometry until somebody types into the mirrored pane.
 The headless runners and exe.dev worker stay writable and follow the controller
 pane size.
@@ -326,7 +326,7 @@ Useful non-interactive commands:
 
 ```bash
 herdctl hosts
-herdctl gpu workspace list
+herdctl fu137 workspace list
 herdctl exedev workspace list
 herdctl runner04 agent list
 herdctl runner05 agent read reviewer --source recent-unwrapped --lines 120
