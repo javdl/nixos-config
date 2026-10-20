@@ -17,7 +17,7 @@
 #          mdadm --zero-superblock --force "$d" 2>/dev/null || true; wipefs -af "$d"; done
 #        [ -d /sys/firmware/efi ] && echo UEFI || echo BIOS
 #   3. Run: make hetzner/provision NIXADDR=178.63.233.19 NIXNAME=github-runner-04
-#   4. SOPS re-key (host age key changes from loom's placeholder to real):
+#   4. SOPS re-key (host age key changes from bali's bootstrap to real):
 #        ssh-keyscan 178.63.233.19 | grep ed25519 | ssh-to-age
 #        # Replace the github-runner-04 anchor in .sops.yaml with the new key
 #        sops updatekeys secrets/github-runner-04.yaml
@@ -42,10 +42,15 @@
     ../modules/nixos-auto-update.nix
     ../modules/security-audit.nix
     ../modules/ghostty-terminfo.nix
-    ../modules/mosh.nix
     ../modules/netdata.nix
     ../modules/ci-disk-cleanup.nix
+    ../modules/herdr-fleet-node.nix
+    ../modules/cua-spaces-host.nix
   ];
+
+  # Cua Bots Spaces (docs/cua-bots-fleet.md). CI jobs share this Docker
+  # daemon, so any fuww workflow can reach these Spaces.
+  services.cuaSpacesHost.enable = true;
 
   # Enable the GitHub Actions runner packages module
   services.github-actions-runner.enable = true;
@@ -70,8 +75,6 @@
     package = pkgs.nixVersions.latest;
     extraOptions = ''
       experimental-features = nix-command flakes
-      keep-outputs = true
-      keep-derivations = true
     '';
   };
 
@@ -142,7 +145,7 @@
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEx6MK8mQ22KWCA0uDV6uBNvMw/NeBl70Mu4hxrX9SJ9 j8 mac studio"
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKiS5X4s5jEKzgpaRMX7gIxKCGcRGSF9qUAlUkOUdFbW j@jlnw.nl"
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIy0FO1ta1djvSamjM1Ph/YZpMhMtXSeuFE1Zl9GHhkQ joost+agent@fashionunited.com"
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEfx6qICt/nunP+X3Wv8Y6hhZtGo0AZreAp3QOThy0SD loom-agent-nopass"
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEfx6qICt/nunP+X3Wv8Y6hhZtGo0AZreAp3QOThy0SD bali-agent-nopass"
     ];
   };
 
@@ -288,9 +291,9 @@
 
       if [ "$AVAIL_GB" -lt 40 ]; then
         echo "Low disk — running emergency cleanup before job"
-        docker system prune --all --force --filter "until=4h" 2>/dev/null || true
+        docker system prune --all --force --filter "until=4h" --filter "label!=ai.cua.managed=true" 2>/dev/null || true
         docker builder prune --all --force 2>/dev/null || true
-        docker volume prune --force 2>/dev/null || true
+        docker volume prune --force --filter "label!=ai.cua.managed=true" 2>/dev/null || true
         for dir in /var/lib/github-runner-work/fuww-runner-*/*/; do
           [ -d "$dir" ] || continue
           case "$(basename "$dir")" in

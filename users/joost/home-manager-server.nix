@@ -32,7 +32,13 @@ let
   chezmoiMemorySync = import ../../lib/chezmoi-memory-sync.nix pkgs;
 in
 {
-  imports = [ ./cachix-daemon.nix ]; # auto-push locally-built paths to javdl-nixos-config cachix
+  imports = [
+    ./cachix-daemon.nix # auto-push locally-built paths to javdl-nixos-config cachix
+    (import ../herdr-fleet.nix {
+      inherit currentSystemName;
+      controller = currentSystemName == "bali";
+    })
+  ];
 
   # Home-manager state version
   home.stateVersion = "25.11";
@@ -76,6 +82,8 @@ in
       fd
       fzf
       gh
+      hcloud
+      posthog-cli
       git
       git-lfs
       htop
@@ -106,12 +114,17 @@ in
       caam # Instant auth switching for AI coding subscriptions
       claude-code-router
       codex
+      tokscale # Token usage tracker across AI coding agents
+      bubblewrap # bwrap on PATH: Codex's Linux sandbox (cco only bundles it privately)
       gemini-cli
       destructive-command-guard # Safety hook for AI agents (dcg command)
       cco # Sandbox wrapper for Claude Code (bubblewrap)
       grepai # Semantic code search for AI coding assistants
+      herdr # Terminal workspace manager for AI coding agents
+      grok-build # xAI Grok Build CLI (grok command)
       gws # Google Workspace CLI
       ntm # Named Tmux Manager for AI agent coordination
+      omp # oh-my-pi coding agent
       opencode
       repo-updater # GitHub repo sync tool (ru command)
       brenner # Sydney Brenner research platform CLI
@@ -125,8 +138,7 @@ in
     ]
     ++ (lib.optional (pkgs.giil != null) pkgs.giil)
     ++ (lib.optional (pkgs.pi-agent != null) pkgs.pi-agent)
-    ++ [ pkgs.pi-coding-agent ] # upstream `pi`
-    ++ (lib.optional (pkgs.oh-my-pi != null) pkgs.oh-my-pi) # `omp`
+    ++ (lib.optional (pkgs.hermes-agent != null) pkgs.hermes-agent) # hermes CLI/TUI
     ++ (lib.optional (pkgs.xf != null) pkgs.xf)
     ++ (lib.optional (pkgs.mcp-agent-mail != null) pkgs.mcp-agent-mail)
     ++ (lib.optional (pkgs.cross-agent-session-resumer != null) pkgs.cross-agent-session-resumer)
@@ -161,7 +173,6 @@ in
       flyctl
       git-crypt
       lazydocker
-      # vercel CLI installed via npm in activation script (removed from nixpkgs)
       railway
 
       # Shell
@@ -224,14 +235,6 @@ in
     $DRY_RUN_CMD mkdir -p "$HOME/code/fuww" "$HOME/code/javdl"
   '';
 
-  # Install/update Vercel CLI via npm (removed from nixpkgs)
-  home.activation.installVercel = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    if ! command -v vercel &>/dev/null; then
-      echo "Installing Vercel CLI..."
-      $DRY_RUN_CMD ${pkgs.nodejs_22}/bin/npm install -g vercel@latest 2>/dev/null || echo "Vercel CLI install failed"
-    fi
-  '';
-
   # Install Claude Code CLI using native installer (always gets latest version)
   home.activation.installClaudeCode = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     if [ ! -f "$HOME/.local/bin/claude" ]; then
@@ -248,19 +251,43 @@ in
     if ! $HOME/.rustup/toolchains/stable-*/bin/cargo --version &>/dev/null 2>&1; then
       $DRY_RUN_CMD ${pkgs.rustup}/bin/rustup default stable
     fi
+
+    # Repair the toolchain's linker shim. nixpkgs' rustup rewrites each
+    # toolchain's gcc-ld/ld.lld into a two-line shim that calls ld-wrapper.sh
+    # by ABSOLUTE store path. That shim lives under ~/.rustup, outside the
+    # store, so a rustup rebuild (new hash) plus a GC of the old path leaves it
+    # dangling and every Rust link fails with "cannot find 'ld'".
+    #
+    # The cargo --version guard above cannot detect this: cargo runs fine, it
+    # just cannot link. So the breakage is silent until something builds.
+    # Re-point the shims at the current rustup on every activation; a no-op
+    # when they are already correct.
+    wrapper="${pkgs.rustup}/nix-support/ld-wrapper.sh"
+    for shim in $HOME/.rustup/toolchains/*/lib/rustlib/*/bin/gcc-ld/ld.lld; do
+      [ -e "$shim" ] || continue
+      # Already correct: nothing to do. Checked first so a healthy toolchain is
+      # a true no-op rather than a rewrite of the file to itself.
+      ${pkgs.gnugrep}/bin/grep -qF "$wrapper" "$shim" && continue
+      # Not a rustup-patched shim at all -- an unpatched toolchain ships the
+      # real ELF ld.lld at this path. Leave binaries alone.
+      ${pkgs.gnugrep}/bin/grep -qE "/nix/store/[a-z0-9]{32}-rustup-[^/]*/nix-support/ld-wrapper\.sh" "$shim" || continue
+      $DRY_RUN_CMD ${pkgs.gnused}/bin/sed -i -E \
+        "s#/nix/store/[a-z0-9]{32}-rustup-[^/]*/nix-support/ld-wrapper\.sh#$wrapper#" \
+        "$shim"
+    done
   '';
 
   # Install caut (coding agent usage tracker) via cargo nightly
   home.activation.installCaut = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     if ! $HOME/.cargo/bin/caut --version &>/dev/null; then
       echo "Installing caut (coding agent usage tracker)..."
-      $DRY_RUN_CMD bash -c "PKG_CONFIG_PATH='${pkgs.sqlite.dev}/lib/pkgconfig' LIBRARY_PATH='${pkgs.sqlite.out}/lib' ${pkgs.rustup}/bin/rustup run nightly cargo install --git https://github.com/Dicklesworthstone/coding_agent_usage_tracker" || echo "caut install failed (requires rustup nightly + sqlite)"
+      $DRY_RUN_CMD bash -c "PATH='${pkgs.gcc}/bin:${pkgs.pkg-config}/bin:$PATH' PKG_CONFIG_PATH='${pkgs.sqlite.dev}/lib/pkgconfig' LIBRARY_PATH='${pkgs.sqlite.out}/lib' ${pkgs.rustup}/bin/rustup run nightly cargo install --git https://github.com/Dicklesworthstone/coding_agent_usage_tracker && ${pkgs.patchelf}/bin/patchelf --add-rpath '${pkgs.sqlite.out}/lib' '$HOME/.cargo/bin/caut'" || echo "caut install failed (requires rustup nightly + sqlite)"
     fi
   '';
 
   # Install tokei (lines-of-code counter) via cargo stable
   home.activation.installTokei = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    if ! $HOME/.cargo/bin/tokei --version &>/dev/null; then
+    if ! ${pkgs.tokei}/bin/tokei --version &>/dev/null; then
       echo "Installing tokei (lines-of-code counter)..."
       $DRY_RUN_CMD bash -c "${pkgs.rustup}/bin/rustup run stable cargo install tokei" || echo "tokei install failed"
     fi
@@ -277,19 +304,21 @@ in
   # Bitwarden vault is unlocked.
   home.activation.chezmoiSync = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     CHEZMOI_SOURCE="$HOME/.local/share/chezmoi"
-    if [ ! -d "$CHEZMOI_SOURCE" ]; then
-      echo "Chezmoi source missing — bootstrapping from javdl/dotfiles..."
+    if [ ! -d "$CHEZMOI_SOURCE/.git" ]; then
+      echo "Chezmoi checkout missing — bootstrapping from javdl/dotfiles..."
       $DRY_RUN_CMD env PATH="${pkgs.bitwarden-cli}/bin:${pkgs.git}/bin:$PATH" GIT_TERMINAL_PROMPT=0 ${pkgs.chezmoi}/bin/chezmoi init https://github.com/javdl/dotfiles.git || echo "chezmoi clone failed (check git auth); will retry on next switch."
     fi
-    if [ -d "$CHEZMOI_SOURCE" ]; then
+    if [ -d "$CHEZMOI_SOURCE/.git" ]; then
       echo "Syncing dotfiles from chezmoi repo..."
-      $DRY_RUN_CMD env PATH="${pkgs.bitwarden-cli}/bin:${pkgs.git}/bin:$PATH" ${pkgs.chezmoi}/bin/chezmoi update || echo "chezmoi apply incomplete (unlock Bitwarden, then re-run rebuild)."
+      # moshi-hook first on PATH: dot_claude/settings.json.tmpl resolves its
+      # store path for the Moshi hooks (see users/agent-clis.nix).
+      $DRY_RUN_CMD env PATH="${pkgs.moshi-hook}/bin:${pkgs.bitwarden-cli}/bin:${pkgs.git}/bin:$PATH" ${pkgs.chezmoi}/bin/chezmoi update || echo "chezmoi apply incomplete (unlock Bitwarden, then re-run rebuild)."
       # `chezmoi update` renders ALL templates up front and aborts its apply on
       # the first Bitwarden-backed one when the vault is locked (headless hosts),
       # which leaves PAI (~/.claude: hooks, skills, settings.json) unmanaged. That
       # subtree has no bw templates, so apply it explicitly — it always succeeds
       # and keeps PAI in sync regardless of Bitwarden state.
-      $DRY_RUN_CMD env PATH="${pkgs.git}/bin:$PATH" ${pkgs.chezmoi}/bin/chezmoi apply "$HOME/.claude" || echo "chezmoi apply ~/.claude failed."
+      $DRY_RUN_CMD env PATH="${pkgs.moshi-hook}/bin:${pkgs.git}/bin:$PATH" ${pkgs.chezmoi}/bin/chezmoi apply "$HOME/.claude" || echo "chezmoi apply ~/.claude failed."
     fi
   '';
 
@@ -430,7 +459,7 @@ in
     secureSocket = false;
     mouse = true;
     # Persist window/pane layout so a dead tmux server doesn't lose the session.
-    # loom connects over Tailscale SSH (hosts/loom.nix "--ssh"), so a tmux server
+    # bali connects over Tailscale SSH (hosts/bali.nix "--ssh"), so a tmux server
     # started from an ssh login lives in tailscaled.service's cgroup and is killed
     # whenever a nixos switch restarts tailscaled. continuum auto-saves every 15
     # min and auto-restores on the next server start (also covers reboot/OOM).
@@ -443,7 +472,7 @@ in
           # Relaunch claude (with its args) in restored panes, not just a bare
           # shell. "~" matches the saved command line by prefix, so e.g.
           # `claude --dangerously-skip-permissions` is re-run. pane_current_command
-          # reports "claude" (verified on loom), so ~claude matches; resurrect only
+          # reports "claude" (the process name), so ~claude matches; resurrect only
           # records full command lines for processes in this list.
           set -g @resurrect-processes '"~claude"'
         '';
@@ -472,7 +501,7 @@ in
 
       # OSC 52 clipboard: copies in tmux go to the connecting machine's clipboard over SSH
       set -s set-clipboard on
-      set -ga terminal-overrides ",xterm-256color:Ms=\\E]52;c;%p2%s\\7"
+      set -ga terminal-overrides ",xterm*:Ms=\\E]52;c%p1%.0s;%p2%s\\7"
 
       # Propagate SSH agent socket into new tmux sessions
       set -g update-environment "SSH_AUTH_SOCK SSH_CONNECTION DISPLAY"
@@ -668,6 +697,9 @@ in
     initContent = ''
       export GPG_TTY=$(tty)
 
+      # API keys rendered by chezmoi from Bitwarden (TYPESAFE_API_KEY, OPENROUTER_API_KEY, ...)
+      [[ -r ~/.env ]] && { set -a; source ~/.env; set +a; }
+
       # SSH agent: find best working agent and update symlink
       _update_ssh_agent() {
         local sock best=""
@@ -777,61 +809,44 @@ in
 
   # chezmoi-memory-sync — Linux counterpart of the Darwin launchd agent in
   # hosts/mac-shared.nix. Runs every 5 minutes to re-add ~/.claude/MEMORY into
-  # the chezmoi source and push via jj. Script body shared via
+  # the chezmoi source and push via git. Script body shared via
   # lib/chezmoi-memory-sync.nix so both platforms stay in lockstep.
   #
-  # Gated on bali. Linger is enabled there (hosts/bali.nix via
-  # users.users.joost.linger = true),
-  # so the timer fires even when no interactive session is open.
+  # Enabled on bali. Bali enables linger in
+  # hosts/bali.nix, so the timer fires without an interactive session.
   #
   # To enable after the next switch:
   #   systemctl --user daemon-reload
   #   systemctl --user enable --now chezmoi-memory-sync.timer
   #   systemctl --user list-timers chezmoi-memory-sync.timer
-  systemd.user.services.chezmoi-memory-sync =
-    lib.mkIf
-      (
-        isLinux
-        && builtins.elem currentSystemName [
-          "bali"
-        ]
-      )
-      {
-        Unit = {
-          Description = "Auto-sync ~/.claude/MEMORY to chezmoi git remote";
-          Documentation = [ "https://github.com/javdl/nixos-config/blob/main/lib/chezmoi-memory-sync.nix" ];
-          After = [ "network-online.target" ];
-          Wants = [ "network-online.target" ];
-        };
-        Service = {
-          Type = "oneshot";
-          ExecStart = "${chezmoiMemorySync}";
-          # journalctl --user -u chezmoi-memory-sync -n 30 to inspect output.
-        };
-      };
+  systemd.user.services.chezmoi-memory-sync = lib.mkIf (isLinux && currentSystemName == "bali") {
+    Unit = {
+      Description = "Auto-sync ~/.claude/MEMORY to chezmoi git remote";
+      Documentation = [ "https://github.com/javdl/nixos-config/blob/main/lib/chezmoi-memory-sync.nix" ];
+      After = [ "network-online.target" ];
+      Wants = [ "network-online.target" ];
+    };
+    Service = {
+      Type = "oneshot";
+      ExecStart = "${chezmoiMemorySync}";
+      # journalctl --user -u chezmoi-memory-sync -n 30 to inspect output.
+    };
+  };
 
-  systemd.user.timers.chezmoi-memory-sync =
-    lib.mkIf
-      (
-        isLinux
-        && builtins.elem currentSystemName [
-          "bali"
-        ]
-      )
-      {
-        Unit = {
-          Description = "Run chezmoi-memory-sync every 5 minutes";
-        };
-        Timer = {
-          OnBootSec = "2min"; # don't fight first-boot home-manager activation
-          OnUnitActiveSec = "5min"; # match Darwin's StartInterval = 300
-          AccuracySec = "30s"; # tighter than systemd default for predictable cadence
-          Persistent = false; # rolling cadence, no catch-up after suspend
-        };
-        Install.WantedBy = [ "timers.target" ];
-      };
+  systemd.user.timers.chezmoi-memory-sync = lib.mkIf (isLinux && currentSystemName == "bali") {
+    Unit = {
+      Description = "Run chezmoi-memory-sync every 5 minutes";
+    };
+    Timer = {
+      OnBootSec = "2min"; # don't fight first-boot home-manager activation
+      OnUnitActiveSec = "5min"; # match Darwin's StartInterval = 300
+      AccuracySec = "30s"; # tighter than systemd default for predictable cadence
+      Persistent = false; # rolling cadence, no catch-up after suspend
+    };
+    Install.WantedBy = [ "timers.target" ];
+  };
 
-  # Keep the tmux server alive across tailscaled restarts. Because loom uses
+  # Keep the tmux server alive across tailscaled restarts. Because bali uses
   # Tailscale SSH, a tmux server started from an ssh login lives in
   # tailscaled.service's cgroup and dies when a nixos switch restarts tailscaled.
   # Running it under the (linger-protected) user manager keeps the server in
@@ -845,33 +860,25 @@ in
   # the literal path ~/.config/systemd/user/tmux.service and, with
   # @continuum-boot unset, disables/removes any unit found there every time the
   # tmux server starts — which silently deleted this unit minutes after every
-  # home-manager activation (observed on both loom and bali).
-  systemd.user.services.tmux-server =
-    lib.mkIf
-      (
-        isLinux
-        && builtins.elem currentSystemName [
-          "bali"
-        ]
-      )
-      {
-        Unit = {
-          Description = "Persistent tmux server (under user manager, not tailscaled)";
-        };
-        Service = {
-          Type = "oneshot";
-          RemainAfterExit = true;
-          # has-session guard: idempotent and headless-safe. `new-session -A` would
-          # try to *attach* (needs a TTY) when the session exists and fail with
-          # "open terminal failed: not a terminal" in this no-TTY service context.
-          ExecStart = "${pkgs.bash}/bin/bash -c '${pkgs.tmux}/bin/tmux has-session -t ${currentSystemName} 2>/dev/null || ${pkgs.tmux}/bin/tmux new-session -d -s ${currentSystemName}'";
-          ExecStop = "${pkgs.tmux}/bin/tmux kill-server";
-        };
-        Install.WantedBy = [ "default.target" ];
-      };
+  # home-manager activation (observed on bali).
+  systemd.user.services.tmux-server = lib.mkIf (isLinux && currentSystemName == "bali") {
+    Unit = {
+      Description = "Persistent tmux server (under user manager, not tailscaled)";
+    };
+    Service = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      # has-session guard: idempotent and headless-safe. `new-session -A` would
+      # try to *attach* (needs a TTY) when the session exists and fail with
+      # "open terminal failed: not a terminal" in this no-TTY service context.
+      ExecStart = "${pkgs.bash}/bin/bash -c '${pkgs.tmux}/bin/tmux has-session -t ${currentSystemName} 2>/dev/null || ${pkgs.tmux}/bin/tmux new-session -d -s ${currentSystemName}'";
+      ExecStop = "${pkgs.tmux}/bin/tmux kill-server";
+    };
+    Install.WantedBy = [ "default.target" ];
+  };
 
   # Hermes Agent: replaced by upstream `services.hermes-agent` system module
-  # in hosts/loom.nix. See Plans/migrate-hermes-to-nix-module.md.
+  # in hosts/bali.nix. See Plans/migrate-hermes-to-nix-module.md.
 
   programs.zellij = {
     enable = true;

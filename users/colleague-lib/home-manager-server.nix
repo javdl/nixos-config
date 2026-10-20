@@ -160,16 +160,18 @@ in
       gemini-cli
       cco # Sandbox wrapper for Claude Code (bubblewrap)
       grepai # Semantic code search for AI coding assistants
+      herdr # Terminal workspace manager for AI coding agents
+      grok-build # xAI Grok Build CLI (grok command)
       gws # Google Workspace CLI
       ntm # Named Tmux Manager for AI agent coordination
+      omp # oh-my-pi coding agent
       opencode
       repo-updater # GitHub repo sync tool (ru command)
       ubs # AI-native code quality scanner
     ]
     ++ (lib.optional (pkgs.giil != null) pkgs.giil)
     ++ (lib.optional (pkgs.pi-agent != null) pkgs.pi-agent)
-    ++ [ pkgs.pi-coding-agent ] # upstream `pi`
-    ++ (lib.optional (pkgs.oh-my-pi != null) pkgs.oh-my-pi) # `omp`
+    ++ (lib.optional (pkgs.hermes-agent != null) pkgs.hermes-agent) # hermes CLI/TUI
     ++ (lib.optional (pkgs.xf != null) pkgs.xf)
     ++ (lib.optional (pkgs.mcp-agent-mail != null) pkgs.mcp-agent-mail)
     ++ (lib.optional (pkgs.cross-agent-session-resumer != null) pkgs.cross-agent-session-resumer)
@@ -227,19 +229,43 @@ in
     if ! $HOME/.rustup/toolchains/stable-*/bin/cargo --version &>/dev/null 2>&1; then
       $DRY_RUN_CMD ${pkgs.rustup}/bin/rustup default stable
     fi
+
+    # Repair the toolchain's linker shim. nixpkgs' rustup rewrites each
+    # toolchain's gcc-ld/ld.lld into a two-line shim that calls ld-wrapper.sh
+    # by ABSOLUTE store path. That shim lives under ~/.rustup, outside the
+    # store, so a rustup rebuild (new hash) plus a GC of the old path leaves it
+    # dangling and every Rust link fails with "cannot find 'ld'".
+    #
+    # The cargo --version guard above cannot detect this: cargo runs fine, it
+    # just cannot link. So the breakage is silent until something builds.
+    # Re-point the shims at the current rustup on every activation; a no-op
+    # when they are already correct.
+    wrapper="${pkgs.rustup}/nix-support/ld-wrapper.sh"
+    for shim in $HOME/.rustup/toolchains/*/lib/rustlib/*/bin/gcc-ld/ld.lld; do
+      [ -e "$shim" ] || continue
+      # Already correct: nothing to do. Checked first so a healthy toolchain is
+      # a true no-op rather than a rewrite of the file to itself.
+      ${pkgs.gnugrep}/bin/grep -qF "$wrapper" "$shim" && continue
+      # Not a rustup-patched shim at all -- an unpatched toolchain ships the
+      # real ELF ld.lld at this path. Leave binaries alone.
+      ${pkgs.gnugrep}/bin/grep -qE "/nix/store/[a-z0-9]{32}-rustup-[^/]*/nix-support/ld-wrapper\.sh" "$shim" || continue
+      $DRY_RUN_CMD ${pkgs.gnused}/bin/sed -i -E \
+        "s#/nix/store/[a-z0-9]{32}-rustup-[^/]*/nix-support/ld-wrapper\.sh#$wrapper#" \
+        "$shim"
+    done
   '';
 
   # Install caut (coding agent usage tracker) via cargo nightly
   home.activation.installCaut = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     if ! $HOME/.cargo/bin/caut --version &>/dev/null; then
       echo "Installing caut (coding agent usage tracker)..."
-      $DRY_RUN_CMD bash -c "PKG_CONFIG_PATH='${pkgs.sqlite.dev}/lib/pkgconfig' LIBRARY_PATH='${pkgs.sqlite.out}/lib' ${pkgs.rustup}/bin/rustup run nightly cargo install --git https://github.com/Dicklesworthstone/coding_agent_usage_tracker" || echo "caut install failed (requires rustup nightly + sqlite)"
+      $DRY_RUN_CMD bash -c "PATH='${pkgs.gcc}/bin:${pkgs.pkg-config}/bin:$PATH' PKG_CONFIG_PATH='${pkgs.sqlite.dev}/lib/pkgconfig' LIBRARY_PATH='${pkgs.sqlite.out}/lib' ${pkgs.rustup}/bin/rustup run nightly cargo install --git https://github.com/Dicklesworthstone/coding_agent_usage_tracker && ${pkgs.patchelf}/bin/patchelf --add-rpath '${pkgs.sqlite.out}/lib' '$HOME/.cargo/bin/caut'" || echo "caut install failed (requires rustup nightly + sqlite)"
     fi
   '';
 
   # Install tokei (lines-of-code counter) via cargo stable
   home.activation.installTokei = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    if ! $HOME/.cargo/bin/tokei --version &>/dev/null; then
+    if ! ${pkgs.tokei}/bin/tokei --version &>/dev/null; then
       echo "Installing tokei (lines-of-code counter)..."
       $DRY_RUN_CMD bash -c "${pkgs.rustup}/bin/rustup run stable cargo install tokei" || echo "tokei install failed"
     fi
@@ -379,7 +405,7 @@ in
 
       # OSC 52 clipboard: copies in tmux go to the connecting machine's clipboard over SSH
       set -s set-clipboard on
-      set -ga terminal-overrides ",xterm-256color:Ms=\\E]52;c;%p2%s\\7"
+      set -ga terminal-overrides ",xterm*:Ms=\\E]52;c%p1%.0s;%p2%s\\7"
 
       # Propagate SSH agent socket into new tmux sessions
       set -g update-environment "SSH_AUTH_SOCK SSH_CONNECTION DISPLAY"
@@ -738,7 +764,7 @@ in
   # Named tmux-server, NOT tmux: tmux-continuum's automatic-start handler owns
   # the literal path ~/.config/systemd/user/tmux.service and, with
   # @continuum-boot unset, disables/removes any unit found there every time
-  # the tmux server starts (observed on loom and bali — see
+  # the tmux server starts (observed on bali — see
   # users/joost/home-manager-server.nix).
   systemd.user.services = lib.optionalAttrs persistentTmuxServer {
     tmux-server = lib.mkIf isLinux {

@@ -1,118 +1,261 @@
 { inputs }:
+let
+  supportedSystems = [
+    "x86_64-linux"
+    "aarch64-linux"
+    "x86_64-darwin"
+    "aarch64-darwin"
+  ];
+
+  # Import unstable once per platform for the entire flake evaluation. Keeping
+  # this outside the overlay callback lets every host on a platform share it.
+  pkgsUnstableForSystem = inputs.nixpkgs.lib.genAttrs supportedSystems (
+    system:
+    import inputs.nixpkgs-unstable {
+      inherit system;
+      config.allowUnfree = true;
+      overlays = [ ];
+    }
+  );
+in
 [
       # inputs.jujutsu.overlays.default
       # inputs.zig.overlays.default
 
       (final: prev:
         let
-          # Import nixpkgs-unstable with allowUnfree enabled
-          pkgs-unstable = import inputs.nixpkgs-unstable {
-            system = prev.stdenv.hostPlatform.system;
-            config.allowUnfree = true;
-          };
+          pkgs-unstable =
+            pkgsUnstableForSystem.${prev.stdenv.hostPlatform.system}
+              or (throw "Unsupported system for unstable packages: ${prev.stdenv.hostPlatform.system}");
 
           # grepai - semantic code search CLI tool
-          grepaiVersion = "0.35.0";
+          grepaiVersion = "0.37.0";
           grepaiSources = {
             "x86_64-linux" = {
               url = "https://github.com/yoanbernabeu/grepai/releases/download/v${grepaiVersion}/grepai_${grepaiVersion}_linux_amd64.tar.gz";
-              sha256 = "1cirq9gy4k5fb53n86xmkxkq0835l7z4yxq7hb4v17bxgazy0c58";
+              sha256 = "1y36ci4axwvdw77aw52nghp8iiaas5lp5nfkw7hpqpyl76wjz1pl";
             };
             "aarch64-linux" = {
               url = "https://github.com/yoanbernabeu/grepai/releases/download/v${grepaiVersion}/grepai_${grepaiVersion}_linux_arm64.tar.gz";
-              sha256 = "0jmamir89h6l2wjznpj4x3mamn6kdajiyxjzhbpxbdvcycchw25s";
+              sha256 = "0f2lza1b9msycp1893cd8yp6hb9jz4a3x9zwvccjyylp783icnym";
             };
             "x86_64-darwin" = {
               url = "https://github.com/yoanbernabeu/grepai/releases/download/v${grepaiVersion}/grepai_${grepaiVersion}_darwin_amd64.tar.gz";
-              sha256 = "0mwwya2r0yl6njfq72h9s9ivnn67hjfk4rl2dcyxn06xsm1fx9nv";
+              sha256 = "1zfclz5lwasgb5xbyc82a8s3xmv7ihp5z5nlgips2g46vbyl4azf";
             };
             "aarch64-darwin" = {
               url = "https://github.com/yoanbernabeu/grepai/releases/download/v${grepaiVersion}/grepai_${grepaiVersion}_darwin_arm64.tar.gz";
-              sha256 = "1zdwqm2bi5bxnz45vy7vzggv5914b4za2yrr21dbkl44p71blwz8";
+              sha256 = "09rlsymy14rx1mhy214d7n2jjzc8gh9rkihikwr6acliz1qxg9vw";
             };
           };
           grepaiSource = grepaiSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for grepai: ${prev.stdenv.hostPlatform.system}");
 
-          # beads_viewer (bv) - TUI for beads issue tracking
-          bvVersion = "0.20.0";
-          bvSources = {
+          # grok - xAI Grok Build CLI (coding agent harness + TUI)
+          # Bare static-PIE binary; runs on NixOS with no patchelf needed (verified).
+          # Version endpoint: https://x.ai/cli/stable
+          grokVersion = "1.0.62";
+          grokSources = {
             "x86_64-linux" = {
-              url = "https://github.com/Dicklesworthstone/beads_viewer/releases/download/v${bvVersion}/bv_linux_amd64.tar.gz";
-              sha256 = "0cjvx94g48z7qhwqqmyyhji7fad2f9dj4cx7kln1pkydnp3gxhfq";
+              url = "https://x.ai/cli/grok-${grokVersion}-linux-x86_64";
+              sha256 = "1ak9i49gpc804j19g96j3prdbnhr9dqicmzryz7skmzbszjdjiia";
             };
             "aarch64-linux" = {
-              url = "https://github.com/Dicklesworthstone/beads_viewer/releases/download/v${bvVersion}/bv_linux_arm64.tar.gz";
-              sha256 = "041w9g821j25sbr9bsnrawjfh17k5kpp09ici2jvkw2188hmwl2k";
+              url = "https://x.ai/cli/grok-${grokVersion}-linux-aarch64";
+              sha256 = "1q9gq7gfgfcqfvf7xz5950av8q6l8qcfld3wwg98i1vj14i8m00b";
             };
             "x86_64-darwin" = {
-              url = "https://github.com/Dicklesworthstone/beads_viewer/releases/download/v${bvVersion}/bv_darwin_amd64.tar.gz";
-              sha256 = "0a3a5pys7bq6mgfrdq5f9x1d55kayb2kxy2sdab87hr4dihalgqx";
+              url = "https://x.ai/cli/grok-${grokVersion}-macos-x86_64";
+              sha256 = "0x8bna9nl3jk25crs5yh6v8yg85bzvk9286yc20qs8sjrv90bkbk";
             };
             "aarch64-darwin" = {
-              url = "https://github.com/Dicklesworthstone/beads_viewer/releases/download/v${bvVersion}/bv_darwin_arm64.tar.gz";
-              sha256 = "1q01jrmdmvpanfmxwwj124g7s88z717vjpd3k23gn4g5gvigls7l";
+              url = "https://x.ai/cli/grok-${grokVersion}-macos-aarch64";
+              sha256 = "0kjsc09mvmvaf68s95nym2jgh79bfgyiaa0gg23wxkzx3a1lwhzc";
+            };
+          };
+          grokSource = grokSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for grok: ${prev.stdenv.hostPlatform.system}");
+
+          # herdr - terminal workspace manager / multiplexer for AI coding agents
+          # Bare static-PIE binary (verified `file`: static-pie linked), so it
+          # runs on NixOS without patchelf, same as grok above.
+          herdrVersion = "0.9.5";
+          herdrSources = {
+            "x86_64-linux" = {
+              url = "https://github.com/herdrdev/herdr/releases/download/v${herdrVersion}/herdr-linux-x86_64";
+              sha256 = "17cjb6gxh2wna8vv4bil82dz0qflfrpjcckwswc037jaifyfin8l";
+            };
+            "aarch64-linux" = {
+              url = "https://github.com/herdrdev/herdr/releases/download/v${herdrVersion}/herdr-linux-aarch64";
+              sha256 = "0z49850w8bkcvbl6zr7l6nif9j6azyfjgvw06r95j2555mpm7mqp";
+            };
+            "x86_64-darwin" = {
+              url = "https://github.com/herdrdev/herdr/releases/download/v${herdrVersion}/herdr-macos-x86_64";
+              sha256 = "0s8k3z8fmysm14yap4f3j5iw8mmdpw38nws5wbilarvzxh4akc2z";
+            };
+            "aarch64-darwin" = {
+              url = "https://github.com/herdrdev/herdr/releases/download/v${herdrVersion}/herdr-macos-aarch64";
+              sha256 = "1qm7qdbh2afh7npli3m17174w5zlj91qjb1q45a07a0558iw4xzv";
+            };
+          };
+          herdrSource = herdrSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for herdr: ${prev.stdenv.hostPlatform.system}");
+
+          # posthog-cli - PostHog CLI (API/MCP tool catalog, source maps, tasks).
+          # Linux uses the musl tarballs (verified `file`: static-pie linked), so
+          # no patchelf. The tarball ships lib/posthog-api-cli.mjs next to the
+          # binary for `posthog-cli api`; keep the layout and put node on PATH.
+          posthogCliVersion = "0.18.10";
+          posthogCliSources = {
+            "x86_64-linux" = {
+              target = "x86_64-unknown-linux-musl";
+              sha256 = "d4507f08a29e8e89e79c3430841f9da5e2216983e231c219f30c69f4c7ac8c97";
+            };
+            "aarch64-linux" = {
+              target = "aarch64-unknown-linux-musl";
+              sha256 = "5b0b26378a3edc4b2de0250c924606f559cfba4f5f2898d8e89b76c8624f1863";
+            };
+            "x86_64-darwin" = {
+              target = "x86_64-apple-darwin";
+              sha256 = "31340b1936e36e93fbb6759a506f9cf2b55057bcdf5d18113d67f90d9ebe7e58";
+            };
+            "aarch64-darwin" = {
+              target = "aarch64-apple-darwin";
+              sha256 = "ac3610273be3c7bfd31b0e7f81d8b35119543bf66b99f669d1ec50abbb36d0da";
+            };
+          };
+          posthogCliSource = posthogCliSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for posthog-cli: ${prev.stdenv.hostPlatform.system}");
+
+          # moshi-hook - daemon + CLI for the Moshi mobile app (Easy Pair SSH/mosh,
+          # agent hooks, approval round-trips). Statically linked Go binary
+          # (verified `file`: statically linked), so no patchelf on NixOS.
+          # Version endpoint: https://cdn.getmoshi.app/hook/latest/version.txt
+          # Checksums: https://cdn.getmoshi.app/hook/v<version>/checksums.txt
+          # The CDN keeps only recent releases; old versions 404, so bump promptly.
+          moshiHookVersion = "0.4.33";
+          moshiHookSources = {
+            "x86_64-linux" = {
+              url = "https://cdn.getmoshi.app/hook/v${moshiHookVersion}/moshi-hook_Linux_x86_64.tar.gz";
+              sha256 = "1xcaydygwv1rfzs9i5hxalq4ypgqw609x17mbi07gyjsgx6zdjgj";
+            };
+            "aarch64-linux" = {
+              url = "https://cdn.getmoshi.app/hook/v${moshiHookVersion}/moshi-hook_Linux_arm64.tar.gz";
+              sha256 = "0yyg0m6dqxnf1ria7lqalr3ikxw9p2ipykz82f1k2b05d7jpnxdj";
+            };
+            "x86_64-darwin" = {
+              url = "https://cdn.getmoshi.app/hook/v${moshiHookVersion}/moshi-hook_Darwin_x86_64.tar.gz";
+              sha256 = "14dscw1gbhl232fqrid9l7z4y6xdq1mk77wq4cqbx3kbcz9cj4k9";
+            };
+            "aarch64-darwin" = {
+              url = "https://cdn.getmoshi.app/hook/v${moshiHookVersion}/moshi-hook_Darwin_arm64.tar.gz";
+              sha256 = "01rirvrdi0bhf3h7zf466g1pr2m2nh7sgza9bijjr3hxdpz0imd4";
+            };
+          };
+          moshiHookSource = moshiHookSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for moshi-hook: ${prev.stdenv.hostPlatform.system}");
+
+          # tailmix - joins several tailnets at once by running one tsnet client
+          # per tailnet behind a single TUN, remapping peers into a local IPv4
+          # range and answering MagicDNS with those addresses. Used on bali to
+          # reach personal-tailnet machines; node sharing cannot do this because
+          # bali is a tagged device and tagged machines cannot accept shares.
+          tailmixVersion = "0.1.17";
+          tailmixSources = {
+            "x86_64-linux" = {
+              url = "https://github.com/maisem/tailmix/releases/download/v${tailmixVersion}/tailmix_linux_amd64.tar.gz";
+              sha256 = "1x19rb5ny6bvhlk5lcbbrg58k4pqy0zsp0b2vm9cnh4zi0hw89vw";
+            };
+            "aarch64-linux" = {
+              url = "https://github.com/maisem/tailmix/releases/download/v${tailmixVersion}/tailmix_linux_arm64.tar.gz";
+              sha256 = "1h0xc94dli87b8x79wccn9rg3bjrvf8vjffby4i0yk3zs06wbmw9";
+            };
+            "x86_64-darwin" = {
+              url = "https://github.com/maisem/tailmix/releases/download/v${tailmixVersion}/tailmix_darwin_amd64.tar.gz";
+              sha256 = "0gndl1cgkks4zs13gbpmqc4ji2qk7z1jy22hv34q61ks8436z8f1";
+            };
+            "aarch64-darwin" = {
+              url = "https://github.com/maisem/tailmix/releases/download/v${tailmixVersion}/tailmix_darwin_arm64.tar.gz";
+              sha256 = "1mm7r333ngavi117d8lg0v3y2myi55cf1j6xdpzsxf56l3g0hp4n";
+            };
+          };
+          tailmixSource = tailmixSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for tailmix: ${prev.stdenv.hostPlatform.system}");
+
+          # beads_viewer (bv) - TUI for beads issue tracking
+          bvVersion = "0.25.2";
+          bvSources = {
+            "x86_64-linux" = {
+              url = "https://github.com/Dicklesworthstone/beads_viewer/releases/download/v${bvVersion}/bv_${bvVersion}_linux_amd64.tar.gz";
+              sha256 = "16g1n5hc4f0c0c17nvfj4hv1dc3xvx6cn2anhbvdw3bsmy3r09jc";
+            };
+            "aarch64-linux" = {
+              url = "https://github.com/Dicklesworthstone/beads_viewer/releases/download/v${bvVersion}/bv_${bvVersion}_linux_arm64.tar.gz";
+              sha256 = "03mfyfv381xxnc2w03q8nnmjk3zhf8wp4m5rz7jarbaik2w68zx5";
+            };
+            "x86_64-darwin" = {
+              url = "https://github.com/Dicklesworthstone/beads_viewer/releases/download/v${bvVersion}/bv_${bvVersion}_darwin_amd64.tar.gz";
+              sha256 = "0aky4r29gc6xpmmdvl65dv34f87ssb49vndb1nsib1vzkm8ibv3k";
+            };
+            "aarch64-darwin" = {
+              url = "https://github.com/Dicklesworthstone/beads_viewer/releases/download/v${bvVersion}/bv_${bvVersion}_darwin_arm64.tar.gz";
+              sha256 = "0n1asczrjh17kinrmdn0afyas5yvd7gkxcrhmdv1yxcaclgrbswc";
             };
           };
           bvSource = bvSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for bv: ${prev.stdenv.hostPlatform.system}");
 
           # cass - coding agent session search
-          cassVersion = "0.6.25";
+          cassVersion = "0.10.0";
           cassSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/coding_agent_session_search/releases/download/v${cassVersion}/cass-linux-amd64.tar.gz";
-              sha256 = "1m7cl92nsmrm7f3il7pn4lw5kbcam4sf8lnn6lhkxvvky2043i29";
+              sha256 = "10a6dia5n86aycdfh1phkjw1h4hrws9871pqdc22wg02m6lai3k3";
             };
             "aarch64-linux" = {
               url = "https://github.com/Dicklesworthstone/coding_agent_session_search/releases/download/v${cassVersion}/cass-linux-arm64.tar.gz";
-              sha256 = "0y3x3dksky4x2kir5725gchclpqk5s29qp04gf8x56hpcr4467np";
+              sha256 = "02dg9d5khqvg52zqvmmcv07ajp5n0hbdlpsyiwn5lpzqw7ki552j";
             };
             "aarch64-darwin" = {
               url = "https://github.com/Dicklesworthstone/coding_agent_session_search/releases/download/v${cassVersion}/cass-darwin-arm64.tar.gz";
-              sha256 = "0qyr7plp0qvhlyc94y730x0zx2arw05l6x58j9n8lk87sif8y8s9";
+              sha256 = "100541lv303j1bn8qshxp82zbhh781gcxnv3mysc6ar5kgajz4hx";
             };
           };
           cassSource = cassSources.${prev.stdenv.hostPlatform.system} or null;
 
           # slb - Shannon Language Benchmark for LLM evaluation
-          slbVersion = "0.4.0";
+          slbVersion = "0.5.2";
           slbSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/slb/releases/download/v${slbVersion}/slb_${slbVersion}_linux_amd64.tar.gz";
-              sha256 = "d46a5e3005f30575b0cadc02915dea9070c39d20b8dd4747a80eaddd316ee95c";
+              sha256 = "18ff0daf113d2432538e46f3ad21c41a97c8891966da4febcf18d717a5b826ed";
             };
             "aarch64-linux" = {
               url = "https://github.com/Dicklesworthstone/slb/releases/download/v${slbVersion}/slb_${slbVersion}_linux_arm64.tar.gz";
-              sha256 = "b4d14f2f32f90fcfe167431c9135ff1df3084134db8bca1288b7718bd653645f";
+              sha256 = "ff315e57f1c43ebc1acfb7cc26c1cfe8c6b2157300f77f5478c4c6ce59ba4967";
             };
             "x86_64-darwin" = {
               url = "https://github.com/Dicklesworthstone/slb/releases/download/v${slbVersion}/slb_${slbVersion}_darwin_amd64.tar.gz";
-              sha256 = "da70f60c5fc153a23f809179c77346ce414593ebc8bfec85d3382b89a7a19ab5";
+              sha256 = "23ae548fc44b8a4df3aa9c0dd72151316443051252152864e18e9c42d20c21bc";
             };
             "aarch64-darwin" = {
               url = "https://github.com/Dicklesworthstone/slb/releases/download/v${slbVersion}/slb_${slbVersion}_darwin_arm64.tar.gz";
-              sha256 = "65f50cee8d60a6e8ed4e73915387733f326810fe500d8866ec9d76f5f79219de";
+              sha256 = "e6e425605df4ea01fef10c701a139d282613aab22a3a7f49e8e5eb32d6e2f933";
             };
           };
           slbSource = slbSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for slb: ${prev.stdenv.hostPlatform.system}");
 
           # csctf - Chat Shared Conversation To File
-          csctfVersion = "0.4.5";
+          csctfVersion = "0.4.6";
           csctfSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/chat_shared_conversation_to_file/releases/download/v${csctfVersion}/csctf-linux-x64";
-              sha256 = "bb58bbd35de1d408b5fede47c61a7ff89038983043d8f735888d72a095b7fef3";
+              sha256 = "9f60035bee944f65e86ee9789d7dca49269af1036c5cf6d6352dfeb6a13b5091";
             };
             "aarch64-linux" = {
               url = "https://github.com/Dicklesworthstone/chat_shared_conversation_to_file/releases/download/v${csctfVersion}/csctf-linux-arm64";
-              sha256 = "3dc185dd7eb466fc6c6f77d388fd6e76628a1e1ddd3248869ae9b6792df76875";
+              sha256 = "88dde8c81e738bec6a9fccd387685366415b254918e4ceb0181a4c1bc05a7566";
             };
             "x86_64-darwin" = {
               url = "https://github.com/Dicklesworthstone/chat_shared_conversation_to_file/releases/download/v${csctfVersion}/csctf-macos-x64";
-              sha256 = "42075d7ef82c3b17a6419a4033b7a219478ce162fb605668f0048843b06a5265";
+              sha256 = "54b59297a55be14fe0fef45108ad1b88902fe3717776a2973d75c1e564580fc0";
             };
             "aarch64-darwin" = {
               url = "https://github.com/Dicklesworthstone/chat_shared_conversation_to_file/releases/download/v${csctfVersion}/csctf-macos-arm64";
-              sha256 = "d5d88aeb20c13bded9e186b89a3c0d7f00705fbc658ee5a41766a84f7da90e7c";
+              sha256 = "8ec85133b495b932c62b82e005f58d8e270650a4ead17811064a966ebff09183";
             };
           };
           csctfSource = csctfSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for csctf: ${prev.stdenv.hostPlatform.system}");
@@ -140,41 +283,39 @@
           brennerSource = brennerSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for brenner: ${prev.stdenv.hostPlatform.system}");
 
           # toon - Token-Optimized Object Notation converter (JSON <-> TOON)
-          toonVersion = "0.2.3";
+          toonVersion = "0.2.5";
           toonSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/toon_rust/releases/download/v${toonVersion}/toon-linux-amd64.tar.xz";
-              sha256 = "069e4b7f4a10c46f0f06fcf85f8511638a831b931579edf6cae606d27d11f0bf";
+              sha256 = "585dcae65d56a30f93ce06cf4952ce60b94d45a7808a223241eff7bb9100ecc7";
             };
             "aarch64-linux" = {
               url = "https://github.com/Dicklesworthstone/toon_rust/releases/download/v${toonVersion}/toon-linux-arm64.tar.xz";
-              sha256 = "41b6cbae1358e62508e3833d84b16593e04716b4f1ee1fbd832655c632ad8877";
+              sha256 = "c593477387d0381ad8cb00aaf3e94dfce7840f515a0e4ae1c064badc0fd182f2";
             };
             "x86_64-darwin" = {
               url = "https://github.com/Dicklesworthstone/toon_rust/releases/download/v${toonVersion}/toon-darwin-amd64.tar.xz";
-              sha256 = "9f60a8b9ae75a890412b16fe5e4e2b2966dddac145b7c98b9490e7f66ad922f1";
+              sha256 = "52dea87af5f6665b776eb1ebb302b4c8e896acc653ecdf6fe7400ab71df5b66f";
             };
             "aarch64-darwin" = {
               url = "https://github.com/Dicklesworthstone/toon_rust/releases/download/v${toonVersion}/toon-darwin-arm64.tar.xz";
-              sha256 = "f5727108b549e135cace95b916c9d1b1f8ceb2cbd8b18ec3c6e3bbee9369590f";
+              sha256 = "901662e3a07ddb4c31507ad750ddd0ab413e100c980d4ae86f0ecd9c645db49f";
             };
           };
           toonSource = toonSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for toon: ${prev.stdenv.hostPlatform.system}");
 
           # ms - Meta Skill manager with Thompson sampling optimization
-          msVersion = "0.1.5";
+          # ms 0.2.2 stopped publishing an aarch64-unknown-linux-gnu asset;
+          # msSource falls back to null and meta-skill guards on it.
+          msVersion = "0.2.3";
           msSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/meta_skill/releases/download/v${msVersion}/ms-${msVersion}-x86_64-unknown-linux-gnu.tar.gz";
-              sha256 = "bc9ae8eb0a4dbd1270827f216d8c7cf09ae39a5f364d2e4242db84e457fe134a";
-            };
-            "aarch64-linux" = {
-              url = "https://github.com/Dicklesworthstone/meta_skill/releases/download/v${msVersion}/ms-${msVersion}-aarch64-unknown-linux-gnu.tar.gz";
-              sha256 = "53b5ae6d51db531514fe5117236890b3016663690887c73cda4621850c47709b";
+              sha256 = "5b3058a4e98231cd38f903bd3f8da8bdf52d245eed6c4a09a6b32eec9e71c4fe";
             };
             "aarch64-darwin" = {
               url = "https://github.com/Dicklesworthstone/meta_skill/releases/download/v${msVersion}/ms-${msVersion}-aarch64-apple-darwin.tar.gz";
-              sha256 = "afb22c7f361ec00db82ac096ce0205a473127c97de76ab4fa0f032aa25d89d7a";
+              sha256 = "4b91e220ce1f366a934b0a124f2b33b8b8e3b4bba953c0b4350cf3f14ffa4946";
             };
           };
           msSource = msSources.${prev.stdenv.hostPlatform.system} or null;
@@ -206,185 +347,163 @@
           gwsSource = gwsSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for gws: ${prev.stdenv.hostPlatform.system}");
 
           # beads_rust (br) - fast Rust port of beads issue tracker
-          brVersion = "0.3.2";
+          brVersion = "0.7.6";
           brSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/beads_rust/releases/download/v${brVersion}/br-${brVersion}-linux_amd64.tar.gz";
-              sha256 = "123j404fabh707ccaag7f78i0li02ff3wpm68h74j4p9fw75cz76";
+              sha256 = "1vxkbss115hbn5hrqr82xdf9sahrc3sxapz06xjnzk77ylnsxfjn";
             };
             "aarch64-linux" = {
               url = "https://github.com/Dicklesworthstone/beads_rust/releases/download/v${brVersion}/br-${brVersion}-linux_arm64.tar.gz";
-              sha256 = "1dpdfxyl63fpcvyzqd7jydf1q09b4sz3nhf5mwlpcdm2bq7hdrjm";
+              sha256 = "1arg3frs32b5yjzmv6a8vjyfzh6jh55rgirjsp9675pbgh1prhi2";
             };
             "x86_64-darwin" = {
               url = "https://github.com/Dicklesworthstone/beads_rust/releases/download/v${brVersion}/br-${brVersion}-darwin_amd64.tar.gz";
-              sha256 = "0cmc69lqgclsbyddyqw24q4rmdnp8l54z37pgsdh1jxacrxxvs7d";
+              sha256 = "0vn454mr9m87kj0k7b9jdsjbh5i4ydqs1b9212zmkxalm6zsackp";
             };
             "aarch64-darwin" = {
               url = "https://github.com/Dicklesworthstone/beads_rust/releases/download/v${brVersion}/br-${brVersion}-darwin_arm64.tar.gz";
-              sha256 = "00dahsp0zh6gsq8jxkxga0z1ihmqw6k1lbmhm31cpz6y4c25sq1w";
+              sha256 = "1xp67mh3hjy8s5nv58bdsppxzdppvrw1nj665wal1kd5dbv4w6nh";
             };
           };
           brSource = brSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for br: ${prev.stdenv.hostPlatform.system}");
 
           # ntm - Named Tmux Manager for AI coding agent coordination
-          ntmVersion = "1.29.3";
+          ntmVersion = "1.37.2";
           ntmSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/ntm/releases/download/v${ntmVersion}/ntm_${ntmVersion}_linux_amd64.tar.gz";
-              sha256 = "0d2ykz2k0dvr9yfy5aizyzqqfc56xhdqhsld6wn5z5v9bsli0v5d";
+              sha256 = "0wjfvh6ssxkv5ry6qkycaxs9kxgq7xm7rnc366a5ggf29sip9nas";
             };
             "aarch64-linux" = {
               url = "https://github.com/Dicklesworthstone/ntm/releases/download/v${ntmVersion}/ntm_${ntmVersion}_linux_arm64.tar.gz";
-              sha256 = "03nigfwwwynl3wnifxcrqgadi78x3qqxxb05wiqghrrbf128h544";
+              sha256 = "0c6kmf3svz7hckygc90y8qh1pc8qn308b2pi97rm76c0pz0h7qda";
             };
             "x86_64-darwin" = {
               url = "https://github.com/Dicklesworthstone/ntm/releases/download/v${ntmVersion}/ntm_${ntmVersion}_darwin_amd64.tar.gz";
-              sha256 = "012slq8r4qwbp6acmpmz8lrb6rnbsd6hynv6vwkydr00k26ml5fs";
+              sha256 = "1xj03lgp1gd51lzxh4psb94vz4dzq29vdj0q7296m1lzayj6p71s";
             };
             "aarch64-darwin" = {
               url = "https://github.com/Dicklesworthstone/ntm/releases/download/v${ntmVersion}/ntm_${ntmVersion}_darwin_arm64.tar.gz";
-              sha256 = "1i80gvzp3jscmindx3i3230pxib7zyhqlahcfnrdrz4zj0z0mib1";
+              sha256 = "1bj2fy34dvv6p0hds19lyrl1bn0ki7rskjfjxy2almhdqmiyd9gg";
             };
           };
           ntmSource = ntmSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for ntm: ${prev.stdenv.hostPlatform.system}");
 
           # dcg - destructive command guard
-          dcgVersion = "0.11.1";
+          dcgVersion = "0.15.3";
           dcgSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/destructive_command_guard/releases/download/v${dcgVersion}/dcg-x86_64-unknown-linux-musl.tar.xz";
-              sha256 = "a56fd772b31badbe5836efe407bb4719e46ee2a6320a7ecec21504867436b2db";
+              sha256 = "dc7dcec9679f74ac3e6990959771ca0c84168eba658eff64fe9e63f917a84cc4";
             };
             "aarch64-linux" = {
               url = "https://github.com/Dicklesworthstone/destructive_command_guard/releases/download/v${dcgVersion}/dcg-aarch64-unknown-linux-gnu.tar.xz";
-              sha256 = "9917fc9a9872844ebcb12ab1a5e7a3b4899c6396f66150a63fd5199c81479bea";
+              sha256 = "361765877ef5fc2aa89e3d07b189a4abba4368441125fb5f67b5728d26e5b271";
             };
             "x86_64-darwin" = {
               url = "https://github.com/Dicklesworthstone/destructive_command_guard/releases/download/v${dcgVersion}/dcg-x86_64-apple-darwin.tar.xz";
-              sha256 = "0a9bde67e7825a8a0c7e2ddcd30424efc868f67b14c6e373e084599103ecfdbc";
+              sha256 = "ec548b61a14c29dd2fc9ae54b1512d99cd3a370911e82639ed1fac71eec91585";
             };
             "aarch64-darwin" = {
               url = "https://github.com/Dicklesworthstone/destructive_command_guard/releases/download/v${dcgVersion}/dcg-aarch64-apple-darwin.tar.xz";
-              sha256 = "397152e113aa051506097819f7d0eb5643417b31b18033d832c696814bf89526";
+              sha256 = "50a1a50762299c7e4b5ebaf3f932f45066c8e7c86a1d5d419b01babd1e2698d7";
             };
           };
           dcgSource = dcgSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for dcg: ${prev.stdenv.hostPlatform.system}");
 
           # caam - coding agent account manager (instant auth switching)
-          caamVersion = "0.1.16";
+          caamVersion = "0.1.23";
           caamSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/coding_agent_account_manager/releases/download/v${caamVersion}/caam_${caamVersion}_linux_amd64.tar.gz";
-              sha256 = "31cce532da6170c713178f438d29107eb459a2f251b4cfcd7554bf2d52169057";
+              sha256 = "ec78fb3eee2a6c2b087af4cfb13954c702289888c9e9547927e943465eab21b1";
             };
             "aarch64-linux" = {
               url = "https://github.com/Dicklesworthstone/coding_agent_account_manager/releases/download/v${caamVersion}/caam_${caamVersion}_linux_arm64.tar.gz";
-              sha256 = "9f28acb5266dcd2cbb00e2a97409699f526f2e91bf8601cf7f778e94651b4bed";
+              sha256 = "eb10fcda4a5b13eb349284990752ebe1e2fbc54a16b91516c8759fa7e488381c";
             };
             "x86_64-darwin" = {
               url = "https://github.com/Dicklesworthstone/coding_agent_account_manager/releases/download/v${caamVersion}/caam_${caamVersion}_darwin_amd64.tar.gz";
-              sha256 = "d30b9e4d12c3247380fd5f603dd97386296368a56822c8e6eea9acc38b26634e";
+              sha256 = "b83f458fd8a2499905ef7301d3e022fcba37dc70315cf3b7f37e25e8b42693da";
             };
             "aarch64-darwin" = {
               url = "https://github.com/Dicklesworthstone/coding_agent_account_manager/releases/download/v${caamVersion}/caam_${caamVersion}_darwin_arm64.tar.gz";
-              sha256 = "5eb00eee2a035b13f2db782327cec2072727c3d558a546c7e3a75574df991e8e";
+              sha256 = "6c5f7426e8c1f24c3d616fb1e5dfeec5b6b423a352b9135b5ccde9b48cfc22d0";
             };
           };
           caamSource = caamSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for caam: ${prev.stdenv.hostPlatform.system}");
 
           # agent-browser - browser automation CLI for AI agents
-          agentBrowserVersion = "0.34.0";
+          agentBrowserVersion = "0.39.1";
           agentBrowserSources = {
             "x86_64-linux" = {
               url = "https://github.com/vercel-labs/agent-browser/releases/download/v${agentBrowserVersion}/agent-browser-linux-x64";
-              sha256 = "12cpj28lwcrc2a892nikw57pbiv1nbmi9yfjbima00v0imfxzsk9";
+              sha256 = "1z7n9navnb83ssr1g9jj18zkfchi7pjrjgd96acq01bvlsid61k9";
             };
             "aarch64-linux" = {
               url = "https://github.com/vercel-labs/agent-browser/releases/download/v${agentBrowserVersion}/agent-browser-linux-arm64";
-              sha256 = "1j6pqfms5bb4giv39kx1ia5jbf5pxxdvdjr470mib6i65mybyw6a";
+              sha256 = "0cqxb79ayi2mbqbqg8nfa8dzjfn8axhidbi7g5s6bpsnc1cdr3wx";
             };
             "x86_64-darwin" = {
               url = "https://github.com/vercel-labs/agent-browser/releases/download/v${agentBrowserVersion}/agent-browser-darwin-x64";
-              sha256 = "1rq1250yx2ibcc1cd684i9b7n6n621sq964afr5a94bpwvwwklys";
+              sha256 = "1yc5m38lzc8iprbw4zymvxhrqxxlsd6g73ckrxb4hh7xdnmbk71k";
             };
             "aarch64-darwin" = {
               url = "https://github.com/vercel-labs/agent-browser/releases/download/v${agentBrowserVersion}/agent-browser-darwin-arm64";
-              sha256 = "173winf89b6mpcaff7ddh8vfjqdp34lv2wdmsawrlvmqdalsg06n";
+              sha256 = "1vydfjlg35mpf5bd6kacah2ym1ijcip162il30cq5jcx3p2gl66c";
             };
           };
           agentBrowserSource = agentBrowserSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for agent-browser: ${prev.stdenv.hostPlatform.system}");
 
-          # pi - prompt injection detection agent (Rust)
-          piVersion = "0.1.23";
+          # pi - coding agent CLI (Rust port of Mario Zechner's pi)
+          piVersion = "0.8.0";
           piSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/pi_agent_rust/releases/download/v${piVersion}/pi-linux-amd64.tar.xz";
-              sha256 = "1ywsl4i3hxix34bm4n47j4nz0jalnj8famkb6qjdabk6zsav2v9q";
+              sha256 = "0v8574yvlw48x921cdm8npgk2wknzp848xgcn5yb3v0v763pykn0";
             };
             "aarch64-darwin" = {
               url = "https://github.com/Dicklesworthstone/pi_agent_rust/releases/download/v${piVersion}/pi-darwin-arm64.tar.xz";
-              sha256 = "0q2xsh4jq6mma0nx9vx20kgbb0y17k167w6szmlmgxvvdjcf4r6b";
+              sha256 = "1n85bnp1lkncsvqnrjld1zzv4dpzz6fp6bqnfyr7jfi80mdyx6cr";
             };
           };
           piSource = piSources.${prev.stdenv.hostPlatform.system} or null;
 
-          # oh-my-pi (omp) - coding agent fork of pi with LSP/DAP/subagents (omp.sh)
-          ompVersion = "17.4.0";
-          ompSources = {
-            "x86_64-linux" = {
-              url = "https://github.com/can1357/oh-my-pi/releases/download/v${ompVersion}/omp-linux-x64";
-              sha256 = "6d5431c69fd6db9771abd51ac76df8820fd718ae33ac654a805fd7fb44b685c7";
-            };
-            "aarch64-linux" = {
-              url = "https://github.com/can1357/oh-my-pi/releases/download/v${ompVersion}/omp-linux-arm64";
-              sha256 = "b5b054cca197651d3dd0b7fae0bf6fe0d2cd653e8cbedb623d26faced404aee6";
-            };
-            "aarch64-darwin" = {
-              url = "https://github.com/can1357/oh-my-pi/releases/download/v${ompVersion}/omp-darwin-arm64";
-              sha256 = "861ac3d7a76499dbc36e6ec8769b58b61a962daac2b4775ce545474d9030e6ba";
-            };
-            "x86_64-darwin" = {
-              url = "https://github.com/can1357/oh-my-pi/releases/download/v${ompVersion}/omp-darwin-x64";
-              sha256 = "1efd3695430dfddd824e431f9b968bde151a1880ea9d9b5870e3631d58d4d927";
-            };
-          };
-          ompSource = ompSources.${prev.stdenv.hostPlatform.system} or null;
-
           # xf - cross-format file converter
-          xfVersion = "0.4.1";
+          xfVersion = "0.4.3";
           xfSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/xf/releases/download/v${xfVersion}/xf-x86_64-unknown-linux-gnu.tar.gz";
-              sha256 = "3855142061320cf8669ad0ad698b4762e2002f8fadde6befa717f0eede336e63";
+              sha256 = "5e9ec5e42aa8de46158463a54d2256039102cefa7bd26c5c21b32dc99f91d2e8";
             };
             "aarch64-darwin" = {
               url = "https://github.com/Dicklesworthstone/xf/releases/download/v${xfVersion}/xf-aarch64-apple-darwin.tar.gz";
-              sha256 = "68b9c59fe03ea180ae64e26d076d615e9a462c8d27430f8e0a1d010c74199ebc";
+              sha256 = "9f584106a3261a2fc05cb4d7dbabf47a654a00c393323fd6e5fbe4ac50ef799d";
             };
           };
           xfSource = xfSources.${prev.stdenv.hostPlatform.system} or null;
 
           # mcp-agent-mail - Rust replacement for Python mcp_agent_mail
-          mcpAgentMailVersion = "0.3.29";
+          mcpAgentMailVersion = "0.3.39";
           mcpAgentMailSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/mcp_agent_mail_rust/releases/download/v${mcpAgentMailVersion}/mcp-agent-mail-x86_64-unknown-linux-gnu.tar.xz";
-              sha256 = "0ys9pyxlvkz6x5cbxznp81zxy933dxbalrprrhqy0g4yih9n7k7m";
+              sha256 = "03j3al5wi6pn1zmz3mvklcdsnsiqjdf6ygszac1b4p51fxzdjw1f";
             };
             "aarch64-darwin" = {
               url = "https://github.com/Dicklesworthstone/mcp_agent_mail_rust/releases/download/v${mcpAgentMailVersion}/mcp-agent-mail-aarch64-apple-darwin.tar.xz";
-              sha256 = "1i83mv1fmbq844cld5nn824nysg1pki60b1nh7spwbhwd5yp7y81";
+              sha256 = "1wkxdb7sl6dba2zksrxcc94dwhygg5i688l83zkz26h1jc0gxxcp";
             };
           };
           mcpAgentMailSource = mcpAgentMailSources.${prev.stdenv.hostPlatform.system} or null;
 
           # casr - cross agent session resumer
-          casrVersion = "0.3.1";
+          casrVersion = "0.4.1";
           casrSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/cross_agent_session_resumer/releases/download/v${casrVersion}/casr-x86_64-unknown-linux-musl.tar.xz";
-              sha256 = "c4cde811105b0350df8a9c120eb3fa57933eebacc9c6a45b6ecc7853673f2ae3";
+              sha256 = "616c619f2efacbcc18729ab3d5fbc94135c2cc2844249e4a63164c21ea28972f";
             };
           };
           casrSource = casrSources.${prev.stdenv.hostPlatform.system} or null;
@@ -411,25 +530,148 @@
           };
           s2pSource = s2pSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for s2p: ${prev.stdenv.hostPlatform.system}");
 
+          # omp - oh-my-pi coding agent (fork of pi with LSP/DAP and hashline edits)
+          # Bare bun-compiled binary. Unlike grok/herdr these are *dynamically*
+          # linked against glibc (verified `file` on omp-linux-x64), so the Linux
+          # builds need autoPatchelfHook. Upstream also ships musl variants; the
+          # glibc ones are used because autoPatchelfHook handles them natively.
+          ompVersion = "18.12.3";
+          ompSources = {
+            "x86_64-linux" = {
+              url = "https://github.com/can1357/oh-my-pi/releases/download/v${ompVersion}/omp-linux-x64";
+              sha256 = "1v3x5nkqs7kazfsvfb3ar9lzbw7812l5p4qwjryvgxjzsrwm0nq6";
+            };
+            "aarch64-linux" = {
+              url = "https://github.com/can1357/oh-my-pi/releases/download/v${ompVersion}/omp-linux-arm64";
+              sha256 = "14qhkxkz2br3zsjlam9jayrch80qlc3xm6h4j8hhi6vjkdgc5xsq";
+            };
+            "x86_64-darwin" = {
+              url = "https://github.com/can1357/oh-my-pi/releases/download/v${ompVersion}/omp-darwin-x64";
+              sha256 = "1jdjyycpjscwk5dihmafz47585h7p57cw788hq3bqqzs4pi8m4bk";
+            };
+            "aarch64-darwin" = {
+              url = "https://github.com/can1357/oh-my-pi/releases/download/v${ompVersion}/omp-darwin-arm64";
+              sha256 = "1ibf1mkks09qi0ajlhg1ahr8ssmj8l598lsh0lizmjhg6armg9pj";
+            };
+          };
+          ompSource = ompSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for omp: ${prev.stdenv.hostPlatform.system}");
+
           # pt - process triage (intelligent process termination)
-          ptVersion = "2.1.0";
+          ptVersion = "2.3.0";
           ptSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/process_triage/releases/download/v${ptVersion}/pt-core-linux-x86_64-${ptVersion}.tar.gz";
-              sha256 = "15xsyfhdr34wbpqqwv30nw57chms29s9abq8yrg0hd9c8c1wbn41";
+              sha256 = "02g9fkql05x9p6zjclgrm686gvhy9640izzgcbdcxaklz0jvp2gg";
             };
           };
           ptSource = ptSources.${prev.stdenv.hostPlatform.system} or null;
 
           # rch - remote compilation helper
-          rchVersion = "1.0.57";
+          rchVersion = "2.1.34";
           rchSources = {
             "x86_64-linux" = {
               url = "https://github.com/Dicklesworthstone/remote_compilation_helper/releases/download/v${rchVersion}/rch-v${rchVersion}-x86_64-unknown-linux-gnu.tar.gz";
-              sha256 = "17b0sw1kn6inii93fzd1x0yqqggdp400waad9ffw0a35p2rshl3w";
+              sha256 = "0bcbp2irby03d4nb4p1ii1s61zffqdf2s962ih6p037kj274nr1k";
             };
           };
           rchSource = rchSources.${prev.stdenv.hostPlatform.system} or null;
+
+          # cua - Cua CLI (sandboxes, Spaces, `cua host`, the cua daemon) and
+          # cua-spacesd, the host service that provides Spaces to Cua Bots
+          # (modules/cua-spaces-host.nix). Both are glibc-linked Rust binaries.
+          # Match the daemon pin in the CLI release's libs/cua-spacesd/VERSION:
+          # CLI 0.5.0 pins spacesd 0.5.3.
+          cuaVersion = "0.5.0";
+          cuaSources = {
+            "x86_64-linux" = {
+              url = "https://github.com/trycua/cua/releases/download/cua-sdk-v${cuaVersion}/cua-cli-${cuaVersion}-linux-x64.tar.gz";
+              sha256 = "01hk00h3f5g4i3wh1aq6hdfz0ir0mkklc4r4ghwzl1i1cqazfyva";
+            };
+            "aarch64-darwin" = {
+              url = "https://github.com/trycua/cua/releases/download/cua-sdk-v${cuaVersion}/cua-cli-${cuaVersion}-darwin-arm64.tar.gz";
+              sha256 = "1c7hk108nl0hhadxyad623qs9f4vwxlqc1qm9x84d529n1bc8gwn";
+            };
+          };
+          cuaSource = cuaSources.${prev.stdenv.hostPlatform.system} or null;
+          cuaSpacesdVersion = "0.5.3";
+          cuaSpacesdSources = {
+            "x86_64-linux" = {
+              url = "https://github.com/trycua/cua/releases/download/cua-spacesd-v${cuaSpacesdVersion}/cua-spacesd-linux-x86_64.tar.gz";
+              sha256 = "068blq7vxxk9qma4bljkgc7p4ml1d35938p4z9a8xf61ck9q924w";
+            };
+          };
+          cuaSpacesdSource = cuaSpacesdSources.${prev.stdenv.hostPlatform.system} or null;
+
+          # nvidia-sync - NVIDIA Sync, the desktop client for DGX Spark (SSH
+          # tunnels, app launching, Tailscale connections, Cluster Assistant).
+          # Linux only: NVIDIA ships it as an Electron .deb in its AI Workbench
+          # apt repo; macOS gets the `nvidia-sync` cask (users/joost/darwin.nix).
+          # Versions and SHA256s: dists/default/proprietary/binary-{amd64,arm64}/Packages
+          # under https://workbench.download.nvidia.com/stable/linux/debian.
+          nvidiaSyncVersion = "0.117.3-12";
+          nvidiaSyncSources = {
+            "x86_64-linux" = {
+              arch = "amd64";
+              sha256 = "0bx9hqzr9gyp1x6bin9i985bvikll3a84dz181xq54nyal55f9x2";
+            };
+            "aarch64-linux" = {
+              arch = "arm64";
+              sha256 = "0h5dszz58855nay2ydz7dhjqvfp60nkirs9yc121pycgzabypymc";
+            };
+          };
+          nvidiaSyncSource = nvidiaSyncSources.${prev.stdenv.hostPlatform.system} or null;
+
+          # nvpair - NVIDIA Personal AI Router (PAIR): routes Ollama/OpenAI
+          # requests across paired machines. Electron .deb from GitHub releases;
+          # the bundled Go services are static. SHA256s are the release asset
+          # digests. See users/nvpair-omarchy.nix and docs/nvpair-omarchy.md.
+          nvpairVersion = "1.0.0";
+          nvpairSources = {
+            "x86_64-linux" = {
+              arch = "amd64";
+              sha256 = "16g4ija8rcax9rwv0fdfd4f1b1jzq01065qbp0cz75xvmmvfjxqs";
+            };
+            "aarch64-linux" = {
+              arch = "arm64";
+              sha256 = "1vnvvnjcq8gsm931br6y6x6j8igcm3pymd86jh8lp9zdb67cx41q";
+            };
+          };
+          nvpairSource = nvpairSources.${prev.stdenv.hostPlatform.system} or null;
+
+          # Libraries the Electron .deb apps above (nvidia-sync, nvpair) link
+          # against, and the ones Chromium dlopens at runtime.
+          electronDebLibs = with prev; [
+            alsa-lib
+            at-spi2-atk
+            at-spi2-core
+            cairo
+            cups
+            dbus
+            expat
+            glib
+            gtk3
+            libdrm
+            libgbm
+            libnotify
+            libsecret
+            libuuid
+            libxkbcommon
+            nspr
+            nss
+            pango
+            libx11
+            libxcomposite
+            libxdamage
+            libxext
+            libxfixes
+            libxrandr
+            libxscrnsaver
+            libxtst
+            libxcb
+            libxshmfence
+            stdenv.cc.cc.lib
+          ];
+          electronDebRuntimeDeps = with prev; [ libGL (lib.getLib systemd) libnotify libsecret ];
         in {
           # grepai - semantic code search for AI coding assistants
           grepai = prev.stdenv.mkDerivation {
@@ -462,6 +704,157 @@
               platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
             };
           };
+          # grok-build - xAI Grok Build CLI
+          # Overrides the nixpkgs package, which lags badly: nixos-26.05 ships
+          # 0.2.93 and nixpkgs-unstable 1.0.0, against 1.0.5 upstream (2026-08-20).
+          # Drop this block once nixpkgs catches up.
+          grok-build = prev.stdenv.mkDerivation {
+            pname = "grok-build";
+            version = grokVersion;
+
+            src = prev.fetchurl {
+              url = grokSource.url;
+              sha256 = grokSource.sha256;
+            };
+
+            dontUnpack = true;
+
+            installPhase = ''
+              mkdir -p $out/bin
+              cp $src $out/bin/grok
+              chmod +x $out/bin/grok
+            '';
+
+            meta = with prev.lib; {
+              description = "xAI Grok Build CLI - coding agent harness and TUI";
+              homepage = "https://github.com/xai-org/grok-build";
+              license = licenses.asl20;
+              mainProgram = "grok";
+              platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+            };
+          };
+
+          # herdr - terminal workspace manager for AI coding agents
+          herdr = prev.stdenv.mkDerivation {
+            pname = "herdr";
+            version = herdrVersion;
+
+            src = prev.fetchurl {
+              url = herdrSource.url;
+              sha256 = herdrSource.sha256;
+            };
+
+            dontUnpack = true;
+
+            installPhase = ''
+              mkdir -p $out/bin
+              cp $src $out/bin/herdr
+              chmod +x $out/bin/herdr
+            '';
+
+            meta = with prev.lib; {
+              description = "Terminal workspace manager and multiplexer for AI coding agents";
+              homepage = "https://github.com/herdrdev/herdr";
+              license = licenses.asl20;
+              mainProgram = "herdr";
+              platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+            };
+          };
+
+          posthog-cli = prev.stdenv.mkDerivation {
+            pname = "posthog-cli";
+            version = posthogCliVersion;
+
+            src = prev.fetchurl {
+              url = "https://github.com/PostHog/posthog/releases/download/posthog-cli/v${posthogCliVersion}/posthog-cli-${posthogCliSource.target}.tar.gz";
+              sha256 = posthogCliSource.sha256;
+            };
+
+            nativeBuildInputs = [ prev.makeWrapper ];
+
+            installPhase = ''
+              mkdir -p $out/libexec/posthog-cli $out/bin
+              cp -r posthog-cli lib $out/libexec/posthog-cli/
+              # EU Cloud by default; an exported POSTHOG_CLI_HOST still wins.
+              makeWrapper $out/libexec/posthog-cli/posthog-cli $out/bin/posthog-cli \
+                --set-default POSTHOG_CLI_HOST https://eu.posthog.com \
+                --suffix PATH : ${prev.lib.makeBinPath [ prev.nodejs ]}
+            '';
+
+            meta = with prev.lib; {
+              description = "PostHog CLI: API tools, source map uploads and tasks from the terminal";
+              homepage = "https://posthog.com/docs/cli";
+              license = licenses.mit;
+              mainProgram = "posthog-cli";
+              platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+            };
+          };
+
+          # moshi-hook - Moshi mobile app daemon/CLI. The release tarball has
+          # several top-level entries (README.md, docs/, moshi-hook), so
+          # sourceRoot must be "." for stdenv's unpackPhase. Upstream's install
+          # script also drops a `moshi` alias next to the binary; reproduce it as
+          # a symlink so `moshi .` works the same way here.
+          moshi-hook = prev.stdenv.mkDerivation {
+            pname = "moshi-hook";
+            version = moshiHookVersion;
+
+            src = prev.fetchurl {
+              url = moshiHookSource.url;
+              sha256 = moshiHookSource.sha256;
+            };
+
+            sourceRoot = ".";
+
+            installPhase = ''
+              mkdir -p $out/bin
+              cp moshi-hook $out/bin/moshi-hook
+              chmod +x $out/bin/moshi-hook
+              ln -s moshi-hook $out/bin/moshi
+            '';
+
+            meta = with prev.lib; {
+              description = "Daemon and CLI for the Moshi mobile terminal app (Easy Pair, agent hooks)";
+              homepage = "https://getmoshi.app";
+              license = licenses.unfree;
+              mainProgram = "moshi-hook";
+              platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+            };
+          };
+
+          # tailmix - multi-tailnet client. Release tarball holds the bare
+          # binary plus docs, hence sourceRoot ".".
+          tailmix = prev.stdenv.mkDerivation {
+            pname = "tailmix";
+            version = tailmixVersion;
+
+            src = prev.fetchurl {
+              url = tailmixSource.url;
+              sha256 = tailmixSource.sha256;
+            };
+
+            sourceRoot = ".";
+
+            installPhase = ''
+              mkdir -p $out/bin $out/share/tailmix
+              # The release ships the CLI *and* the tailmixd daemon; the daemon
+              # is what modules/tailmix.nix runs. Installing only the CLI leaves
+              # `tailmix status` failing on a missing tailmixd.sock.
+              cp tailmix $out/bin/tailmix
+              cp tailmixd $out/bin/tailmixd
+              chmod +x $out/bin/tailmix $out/bin/tailmixd
+              cp README.md LICENSE $out/share/tailmix/
+            '';
+
+            meta = with prev.lib; {
+              description = "Connect to multiple tailnets at once behind a single TUN";
+              homepage = "https://github.com/maisem/tailmix";
+              license = licenses.bsd3;
+              mainProgram = "tailmix";
+              platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+            };
+          };
+
           # bv - beads viewer TUI for issue tracking
           beads-viewer = prev.stdenv.mkDerivation {
             pname = "beads-viewer";
@@ -496,68 +889,36 @@
 
           # ubs - ultimate bug scanner for AI-assisted code quality
           ubs = let
-            ubsVersion = "5.3.7";
-            ubsBaseUrl = "https://raw.githubusercontent.com/Dicklesworthstone/ultimate_bug_scanner/v${ubsVersion}";
-            # Language modules (pinned to v${ubsVersion})
-            ubsModules = {
-              "ubs-js.sh" = prev.fetchurl { url = "${ubsBaseUrl}/modules/ubs-js.sh"; sha256 = "0zaql20mrixdpqah52hdsyvs3nnw6iia33klzm0yaywh2bjch46l"; };
-              "ubs-python.sh" = prev.fetchurl { url = "${ubsBaseUrl}/modules/ubs-python.sh"; sha256 = "15zbvc4kslnjqmn8jk9jlyscq3s68wxbi4z9z2fygcxfn3gfn52w"; };
-              "ubs-cpp.sh" = prev.fetchurl { url = "${ubsBaseUrl}/modules/ubs-cpp.sh"; sha256 = "01aqm3yq4cb74vqpbj6rcz5jq9rhaihd8669llgyhrmci5qvfm7h"; };
-              "ubs-rust.sh" = prev.fetchurl { url = "${ubsBaseUrl}/modules/ubs-rust.sh"; sha256 = "0h2p6ap0sb99ll86h60cwfrkrrbyb2z4shpddbw7xmyxs0irh916"; };
-              "ubs-golang.sh" = prev.fetchurl { url = "${ubsBaseUrl}/modules/ubs-golang.sh"; sha256 = "0xsgc1df4cnhn6fv57wh23h8n7sp2351gpk52j12x4v1v5k78l52"; };
-              "ubs-java.sh" = prev.fetchurl { url = "${ubsBaseUrl}/modules/ubs-java.sh"; sha256 = "18plk8k04y9cp2q31z1ivmq4khflf6x852i4jym0rhnpf79g4vcx"; };
-              "ubs-ruby.sh" = prev.fetchurl { url = "${ubsBaseUrl}/modules/ubs-ruby.sh"; sha256 = "0isl3hmbwi86wsbwq742gykaqq7lay349q7dj9lbn1frphd2awq9"; };
-              "ubs-swift.sh" = prev.fetchurl { url = "${ubsBaseUrl}/modules/ubs-swift.sh"; sha256 = "1h79j7s5r1g9sf748l9jirhnsjscm9npwxann1fp7am7kzib5f5b"; };
-              "ubs-csharp.sh" = prev.fetchurl { url = "${ubsBaseUrl}/modules/ubs-csharp.sh"; sha256 = "1xk1i2gzxpy3maa8cbzcfc29df6jn8d7wrjavarhqnpq5figljda"; };
-              "ubs-elixir.sh" = prev.fetchurl { url = "${ubsBaseUrl}/modules/ubs-elixir.sh"; sha256 = "1sfanq0nzcbv3524xjnvs269sn4gi442s4lpvg48s3sa8jgr6cd2"; };
-            };
-            # Helper assets (pinned to v${ubsVersion})
-            ubsHelpers = {
-              "helpers/resource_lifecycle_py.py" = prev.fetchurl { url = "${ubsBaseUrl}/modules/helpers/resource_lifecycle_py.py"; sha256 = "0gj8034w6z8by725nwv1vsy4wcz2pmsq73wvkyhsd3wq5ks4z20y"; };
-              "helpers/resource_lifecycle_go.go" = prev.fetchurl { url = "${ubsBaseUrl}/modules/helpers/resource_lifecycle_go.go"; sha256 = "1g9q1qchpfaf1p9vzqahr7qh5mx9k5laaq4wgrd91mrdfwn5s88h"; };
-              "helpers/resource_lifecycle_java.py" = prev.fetchurl { url = "${ubsBaseUrl}/modules/helpers/resource_lifecycle_java.py"; sha256 = "1w9rvy1bgygp4ysw3dwi5x4k1ajai2gzjigsyv6539za34axl1f0"; };
-              "helpers/resource_lifecycle_cpp.py" = prev.fetchurl { url = "${ubsBaseUrl}/modules/helpers/resource_lifecycle_cpp.py"; sha256 = "1a6zyzmwmzb7qvj13l2l4gzd4xd6rv59lc4rjdc4ccm28y0g5jgg"; };
-              "helpers/resource_lifecycle_csharp.py" = prev.fetchurl { url = "${ubsBaseUrl}/modules/helpers/resource_lifecycle_csharp.py"; sha256 = "0a2zx6712dbalq8db58ddgyja6dwi9maahgrrj0nfq9ykl264dba"; };
-              "helpers/resource_lifecycle_ruby.py" = prev.fetchurl { url = "${ubsBaseUrl}/modules/helpers/resource_lifecycle_ruby.py"; sha256 = "1hhxkd1cplb5fnrfm035ykplcy43jvi097pllzdy8cy8r9dwvzxy"; };
-              "helpers/resource_lifecycle_swift.py" = prev.fetchurl { url = "${ubsBaseUrl}/modules/helpers/resource_lifecycle_swift.py"; sha256 = "03xxmzrkd76n3gh0m3brv5fda27lynzl1lh5bg8g1ynzmj1qx9rk"; };
-              "helpers/type_narrowing_ts.js" = prev.fetchurl { url = "${ubsBaseUrl}/modules/helpers/type_narrowing_ts.js"; sha256 = "0ax3sc72d0xqzjjqfg3gmb76s2cnsvjif6qdnmdhd416rjh30vn2"; };
-              "helpers/type_narrowing_rust.py" = prev.fetchurl { url = "${ubsBaseUrl}/modules/helpers/type_narrowing_rust.py"; sha256 = "0zv422w0q6x8cshw7s72674i4il50lvvi70ncdy9myyzwq6dcnim"; };
-              "helpers/type_narrowing_kotlin.py" = prev.fetchurl { url = "${ubsBaseUrl}/modules/helpers/type_narrowing_kotlin.py"; sha256 = "0yddg1nai3f7cxi87vyic4jdvvlky6x5c2c3q9dd2jf3x21483vg"; };
-              "helpers/type_narrowing_swift.py" = prev.fetchurl { url = "${ubsBaseUrl}/modules/helpers/type_narrowing_swift.py"; sha256 = "06ml047rqw5l77j1nddwp7mgzc0iriyx6xwwfzj6869rjbxbll7r"; };
-              "helpers/type_narrowing_csharp.py" = prev.fetchurl { url = "${ubsBaseUrl}/modules/helpers/type_narrowing_csharp.py"; sha256 = "0b51bhgsr60yczfhn8j0d3wllzpg7034vd6wmmwzr3b0cxpw3c5r"; };
-              "helpers/async_task_handles_csharp.py" = prev.fetchurl { url = "${ubsBaseUrl}/modules/helpers/async_task_handles_csharp.py"; sha256 = "08ihkphd7ywrlw21dfh5ac4a8bxxl4wnms8qrspkvard6lrgzvx1"; };
-            };
+            ubsVersion = "5.4.17";
           in prev.stdenv.mkDerivation {
             pname = "ubs";
             version = ubsVersion;
 
-            src = prev.fetchurl {
-              url = "${ubsBaseUrl}/ubs";
-              sha256 = "d9761e408e844a0905de95b1a60736099542be45b4153501383897935f0e8168";
+            # 5.4 ships modules/helpers/ubs_core, a Python package of dozens of
+            # files, so fetch the tagged tree rather than pinning files one by one.
+            src = prev.fetchFromGitHub {
+              owner = "Dicklesworthstone";
+              repo = "ultimate_bug_scanner";
+              rev = "v${ubsVersion}";
+              hash = "sha256-ryDAZImE7KuiP88eDjGPou/70oEta5uEnjeRNf3Zuqw=";
             };
-
-            dontUnpack = true;
 
             nativeBuildInputs = [ prev.makeWrapper ];
 
             installPhase = ''
-              mkdir -p $out/bin
-              mkdir -p $out/share/ubs/modules/helpers
+              # ubs resolves modules/helpers relative to its own path
+              # (dirname BASH_SOURCE), so the script and modules/ share a directory.
+              mkdir -p $out/bin $out/libexec/ubs
 
-              # Install language modules (non-executable to prevent patchShebangs
-              # from rewriting shebangs, which would break UBS checksum verification)
-              ${prev.lib.concatStringsSep "\n" (prev.lib.mapAttrsToList (name: src: ''
-                cp ${src} $out/share/ubs/modules/${name}
-              '') ubsModules)}
+              # Install modules non-executable so patchShebangs leaves them alone;
+              # rewritten shebangs would break UBS checksum verification.
+              cp -r modules $out/libexec/ubs/modules
+              chmod -R u+w $out/libexec/ubs/modules
+              find $out/libexec/ubs/modules -type f -exec chmod a-x {} +
 
-              # Install helper assets
-              ${prev.lib.concatStringsSep "\n" (prev.lib.mapAttrsToList (name: src: ''
-                cp ${src} $out/share/ubs/modules/${name}
-              '') ubsHelpers)}
-
-              cp $src $out/bin/.ubs-unwrapped
-              chmod +x $out/bin/.ubs-unwrapped
-              wrapProgram $out/bin/.ubs-unwrapped \
+              cp ubs $out/libexec/ubs/ubs
+              chmod +x $out/libexec/ubs/ubs
+              wrapProgram $out/libexec/ubs/ubs \
                 --prefix PATH : ${prev.lib.makeBinPath [
                   prev.bash
                   prev.coreutils
@@ -585,15 +946,15 @@
               fi
               WRAPPER
               substituteInPlace $out/bin/ubs \
-                --replace-quiet "PLACEHOLDER_BIN" "$out/bin/.ubs-unwrapped" \
-                --replace-quiet "PLACEHOLDER_DIR" "$out/share/ubs/modules"
+                --replace-quiet "PLACEHOLDER_BIN" "$out/libexec/ubs/ubs" \
+                --replace-quiet "PLACEHOLDER_DIR" "$out/libexec/ubs/modules"
               chmod +x $out/bin/ubs
             '';
 
             # Make modules executable after fixupPhase (patchShebangs) has run,
             # preserving original shebangs so UBS checksum verification passes.
             postFixup = ''
-              chmod +x $out/share/ubs/modules/ubs-*.sh
+              chmod +x $out/libexec/ubs/modules/ubs-*.sh
             '';
 
             meta = with prev.lib; {
@@ -792,7 +1153,7 @@
               description = "Skill management with Thompson sampling optimization";
               homepage = "https://github.com/Dicklesworthstone/meta_skill";
               license = licenses.mit;
-              platforms = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" ];
+              platforms = [ "x86_64-linux" "aarch64-darwin" ];
             };
           } else null;
 
@@ -892,11 +1253,11 @@
           # ru - repo updater for syncing GitHub repositories
           repo-updater = prev.stdenv.mkDerivation {
             pname = "repo-updater";
-            version = "1.3.1";
+            version = "1.6.0";
 
             src = prev.fetchurl {
-              url = "https://github.com/Dicklesworthstone/repo_updater/releases/download/v1.3.1/ru";
-              sha256 = "6ae3ae2d850d26c0ad82e3b5e713338f74f2bfd483691e4d09d9d75e00a79b3a";
+              url = "https://github.com/Dicklesworthstone/repo_updater/releases/download/v1.6.0/ru";
+              sha256 = "f3d5d1197f238c115a98c71c73260fa74b3c34b9e54264d76f9ccfb5be24bfe4";
             };
 
             dontUnpack = true;
@@ -965,13 +1326,13 @@
             src = prev.fetchFromGitHub {
               owner = "Dicklesworthstone";
               repo = "cass_memory_system";
-              rev = "v0.2.12";
-              hash = "sha256-bIMoaOhZZDsw1jaZkMdY3bzO9+M3R1vaVxMVQsk4Gtc=";
+              rev = "v0.2.14";
+              hash = "sha256-25NPzERkqZKBwCKf8apcANkV22bNeg0It7E6brtV1aU=";
             };
             # Fixed-output derivation for bun install (needs network)
             bunDeps = prev.stdenv.mkDerivation {
               pname = "cass-memory-bun-deps";
-              version = "0.2.12";
+              version = "0.2.14";
               inherit src;
               nativeBuildInputs = [ prev.bun prev.cacert ];
               buildPhase = ''
@@ -984,11 +1345,11 @@
               '';
               outputHashAlgo = "sha256";
               outputHashMode = "recursive";
-              outputHash = "sha256-NyfkYUf4Wx4zbMW5WVxjFd0vi2BTT2Eu24BI5f4wAeI=";
+              outputHash = "sha256-ToAnXLcbBDzVmLW/ZM0IbHaSPQ80BcVUgu771qPXgcc=";
             };
           in prev.stdenv.mkDerivation {
             pname = "cass-memory";
-            version = "0.2.12";
+            version = "0.2.14";
             inherit src;
             nativeBuildInputs = [ prev.bun ];
             # Bun standalone binaries embed JS after the ELF section;
@@ -1083,7 +1444,7 @@
             };
           } else null;
 
-          # pi - prompt injection detection agent (Rust)
+          # pi - coding agent CLI (Rust port of Mario Zechner's pi)
           pi-agent = if piSource != null then prev.stdenv.mkDerivation {
             pname = "pi-agent";
             version = piVersion;
@@ -1101,15 +1462,17 @@
 
             installPhase = ''
               mkdir -p $out/bin
-              # 0.1.18+ tarballs extract to a versioned subdir (pi-<ver>-<triple>/pi)
-              cp pi-*/pi $out/bin/pi
+              # 0.8.0 release archives contain the binary at the root.
+              cp pi $out/bin/pi
               chmod +x $out/bin/pi
-              # Stable name that never collides with the upstream TypeScript `pi`
-              ln -s pi $out/bin/pi-rs
+              # Stable name that never collides with the upstream TypeScript `pi`.
+              # Absolute target: a relative `pi` would resolve to the upstream
+              # binary once both packages are joined into one profile bin/.
+              ln -s $out/bin/pi $out/bin/pi-rs
             '';
 
             meta = with prev.lib; {
-              description = "Rust port of the pi coding agent (pi-rs; `pi` yields to pi-coding-agent)";
+              description = "Coding agent CLI in the terminal (Rust port of pi; `pi` yields to pi-coding-agent)";
               homepage = "https://github.com/Dicklesworthstone/pi_agent_rust";
               license = licenses.mit;
               platforms = [ "x86_64-linux" "aarch64-darwin" ];
@@ -1120,37 +1483,6 @@
 
           # pi - upstream TypeScript coding agent (badlogic/pi-mono), tracked on unstable
           pi-coding-agent = pkgs-unstable.pi-coding-agent;
-
-          # oh-my-pi (omp) - pi fork with LSP, DAP, subagents, plan mode (https://omp.sh)
-          oh-my-pi = if ompSource != null then prev.stdenv.mkDerivation {
-            pname = "oh-my-pi";
-            version = ompVersion;
-
-            src = prev.fetchurl {
-              url = ompSource.url;
-              sha256 = ompSource.sha256;
-            };
-
-            dontUnpack = true;
-            dontStrip = true; # bun-compiled single binary; strip would corrupt the embedded bundle
-
-            nativeBuildInputs = prev.lib.optionals prev.stdenv.isLinux [ prev.autoPatchelfHook ];
-            buildInputs = prev.lib.optionals prev.stdenv.isLinux [ prev.stdenv.cc.cc.lib ];
-
-            installPhase = ''
-              mkdir -p $out/bin
-              cp $src $out/bin/omp
-              chmod +x $out/bin/omp
-            '';
-
-            meta = with prev.lib; {
-              description = "Oh My Pi - terminal coding agent with LSP/DAP, subagents and plan mode";
-              homepage = "https://omp.sh";
-              license = licenses.mit;
-              mainProgram = "omp";
-              platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
-            };
-          } else null;
 
           # xf - cross-format file converter
           xf = if xfSource != null then prev.stdenv.mkDerivation {
@@ -1276,6 +1608,77 @@
             };
           };
 
+          # omp - oh-my-pi coding agent.
+          #
+          # Do NOT run autoPatchelfHook on this binary. It is a Bun standalone
+          # executable: the JS payload is appended past the ELF and located
+          # relative to end-of-file, so patchelf's rewrite silently drops it and
+          # the result degrades into a plain Bun runtime. Being dynamically
+          # linked against glibc does not make the rewrite safe -- that was the
+          # reasoning that shipped a patchelf'd build, and the result printed
+          # Bun's own "1.4.0" for `omp --version` and Bun's help for
+          # `omp --help`. Same class of breakage documented for cm below
+          # ("bun cross-compilation doesn't embed scripts").
+          #
+          # Instead keep the file byte-identical and invoke it through the glibc
+          # loader. omp also downloads a pi_natives .node addon into its state
+          # dir at runtime and dlopens it, and that addon needs libz, so
+          # LD_LIBRARY_PATH has to carry zlib as well as libstdc++.
+          omp = prev.stdenv.mkDerivation {
+            pname = "omp";
+            version = ompVersion;
+
+            src = prev.fetchurl {
+              url = ompSource.url;
+              sha256 = ompSource.sha256;
+            };
+
+            dontUnpack = true;
+
+            nativeBuildInputs = [ prev.makeWrapper ];
+
+            # Stripping would rewrite the ELF the same way patchelf does.
+            dontStrip = true;
+            dontPatchELF = true;
+
+            installPhase = ''
+              mkdir -p $out/bin $out/libexec
+              cp $src $out/libexec/omp
+              chmod +x $out/libexec/omp
+            '' + (if prev.stdenv.hostPlatform.isLinux then ''
+              makeWrapper ${prev.stdenv.cc.bintools.dynamicLinker} $out/bin/omp \
+                --add-flags $out/libexec/omp \
+                --prefix LD_LIBRARY_PATH : ${prev.lib.makeLibraryPath [
+                  prev.zlib
+                  prev.stdenv.cc.cc.lib
+                ]}
+            '' else ''
+              makeWrapper $out/libexec/omp $out/bin/omp
+            '');
+
+            meta = with prev.lib; {
+              description = "Coding agent for the terminal with the IDE wired in (oh-my-pi)";
+              homepage = "https://github.com/can1357/oh-my-pi";
+              license = licenses.mit;
+              mainProgram = "omp";
+              platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+            };
+          };
+
+          # hermes - Hermes Agent CLI/TUI (NousResearch), from the flake input.
+          # Keep the minimal closure, adding only the native Anthropic transport.
+          # Optional SDKs cannot be lazy-installed into the read-only Nix store.
+          # The full variant also includes messaging, voice, matrix, bedrock, ...
+          # Gateway deployments on bali/hermes-fu use the upstream NixOS module.
+          # No x86_64-darwin output upstream; null there and filtered by callers.
+          hermes-agent =
+            let
+              minimal = (inputs.hermes-agent.packages.${prev.stdenv.hostPlatform.system} or { }).minimal or null;
+            in
+            if minimal == null then null else minimal.override {
+              extraDependencyGroups = [ "anthropic" ];
+            };
+
           # pt - process triage (intelligent process termination with Bayesian scoring)
           process-triage = if ptSource != null then prev.stdenv.mkDerivation {
             pname = "process-triage";
@@ -1349,6 +1752,188 @@
             };
           } else null;
 
+          # cua - Cua CLI (see cuaVersion above)
+          cua = if cuaSource != null then prev.stdenv.mkDerivation {
+            pname = "cua";
+            version = cuaVersion;
+
+            src = prev.fetchurl {
+              url = cuaSource.url;
+              sha256 = cuaSource.sha256;
+            };
+
+            sourceRoot = ".";
+
+            nativeBuildInputs = prev.lib.optionals prev.stdenv.isLinux [ prev.autoPatchelfHook ];
+            buildInputs = prev.lib.optionals prev.stdenv.isLinux [ prev.stdenv.cc.cc.lib ];
+
+            installPhase = ''
+              install -Dm755 cua $out/bin/cua
+            '';
+
+            meta = with prev.lib; {
+              description = "Cua CLI: sandboxes, Spaces, unattended hosting and the cua daemon";
+              homepage = "https://github.com/trycua/cua";
+              license = licenses.mit;
+              platforms = [ "x86_64-linux" "aarch64-darwin" ];
+              mainProgram = "cua";
+            };
+          } else null;
+
+          # cua-spacesd - Cua host service that provides Spaces (see cuaVersion)
+          cua-spacesd = if cuaSpacesdSource != null then prev.stdenv.mkDerivation {
+            pname = "cua-spacesd";
+            version = cuaSpacesdVersion;
+
+            src = prev.fetchurl {
+              url = cuaSpacesdSource.url;
+              sha256 = cuaSpacesdSource.sha256;
+            };
+
+            sourceRoot = ".";
+
+            nativeBuildInputs = [ prev.autoPatchelfHook ];
+            buildInputs = with prev; [ stdenv.cc.cc.lib libx11 libxi ];
+
+            installPhase = ''
+              install -Dm755 cua-spacesd $out/bin/cua-spacesd
+            '';
+
+            meta = with prev.lib; {
+              description = "Cua host service: provides Spaces to your devices over the cua.ai relay";
+              homepage = "https://github.com/trycua/cua/tree/main/libs/cua-spacesd";
+              license = licenses.fsl11Mit;
+              platforms = [ "x86_64-linux" ];
+              mainProgram = "cua-spacesd";
+            };
+          } else null;
+
+          # nvidia-sync - NVIDIA Sync desktop client (see nvidiaSyncVersion)
+          nvidia-sync = if nvidiaSyncSource != null then prev.stdenv.mkDerivation {
+            pname = "nvidia-sync";
+            version = nvidiaSyncVersion;
+
+            src = prev.fetchurl {
+              url = "https://workbench.download.nvidia.com/stable/linux/debian/pool/proprietary/n/nvidia-sync/nvidia-sync_${nvidiaSyncVersion}_${nvidiaSyncSource.arch}.deb";
+              sha256 = nvidiaSyncSource.sha256;
+            };
+
+            nativeBuildInputs = with prev; [ dpkg autoPatchelfHook makeWrapper ];
+
+            buildInputs = electronDebLibs;
+            runtimeDependencies = electronDebRuntimeDeps;
+            dontStrip = true;
+
+            # The nvsync Go helper segfaults (SEGV_ACCERR) once patchelf adds an
+            # RPATH, so only the Electron files get autoPatchelf; the helper
+            # needs just libc and gets the interpreter alone.
+            dontAutoPatchelf = true;
+            postFixup = ''
+              autoPatchelf --no-recurse -- $out/opt/nvidia-sync
+              patchelf --set-interpreter "$(cat $NIX_CC/nix-support/dynamic-linker)" \
+                $out/opt/nvidia-sync/resources/bin/nvsync-${nvidiaSyncSource.arch}
+            '';
+
+            unpackPhase = ''
+              dpkg-deb -x $src .
+            '';
+
+            installPhase = ''
+              runHook preInstall
+
+              mkdir -p $out/opt $out/bin
+              cp -r "opt/NVIDIA Sync" $out/opt/nvidia-sync
+              # The store is read-only: drop the electron-updater feed so the app
+              # does not try to self-update through dpkg.
+              rm $out/opt/nvidia-sync/resources/app-update.yml
+
+              # Upstream's launcher script forces X11 (XWayland under Hyprland).
+              # ssh/xdg-open are spawned by the app and its nvsync helper.
+              makeWrapper $out/opt/nvidia-sync/nvidia-sync.bin $out/bin/nvidia-sync \
+                --add-flags --ozone-platform=x11 \
+                --suffix PATH : ${prev.lib.makeBinPath [ prev.openssh prev.xdg-utils ]}
+              makeWrapper $out/opt/nvidia-sync/resources/bin/nvsync-${nvidiaSyncSource.arch} $out/bin/nvsync \
+                --suffix PATH : ${prev.lib.makeBinPath [ prev.openssh ]}
+
+              install -Dm644 usr/share/icons/hicolor/512x512/apps/nvidia-sync.png \
+                $out/share/icons/hicolor/512x512/apps/nvidia-sync.png
+              install -Dm644 usr/share/applications/nvidia-sync.desktop \
+                $out/share/applications/nvidia-sync.desktop
+              substituteInPlace $out/share/applications/nvidia-sync.desktop \
+                --replace-fail '"/opt/NVIDIA Sync/nvidia-sync" --ozone-platform=x11' "$out/bin/nvidia-sync"
+
+              runHook postInstall
+            '';
+
+            meta = with prev.lib; {
+              description = "NVIDIA Sync: SSH tunnels and one-click apps on a remote DGX Spark";
+              homepage = "https://docs.nvidia.com/sync/latest/index.html";
+              license = licenses.unfree;
+              sourceProvenance = [ sourceTypes.binaryNativeCode ];
+              platforms = [ "x86_64-linux" "aarch64-linux" ];
+              mainProgram = "nvidia-sync";
+            };
+          } else null;
+
+          # nvpair - NVIDIA Personal AI Router (see nvpairVersion)
+          nvpair = if nvpairSource != null then prev.stdenv.mkDerivation {
+            pname = "nvpair";
+            version = nvpairVersion;
+
+            src = prev.fetchurl {
+              url = "https://github.com/NVIDIA/Personal-AI-Router/releases/download/v${nvpairVersion}/NVPAIR-Setup-${nvpairVersion}-${nvpairSource.arch}.deb";
+              sha256 = nvpairSource.sha256;
+            };
+
+            nativeBuildInputs = with prev; [ dpkg autoPatchelfHook makeWrapper ];
+            buildInputs = electronDebLibs;
+            runtimeDependencies = electronDebRuntimeDeps;
+            # resources/cli-bin/manifest.json pins the SHA256 of every static Go
+            # service binary; stripping would change them.
+            dontStrip = true;
+
+            unpackPhase = ''
+              dpkg-deb -x $src .
+            '';
+
+            installPhase = ''
+              runHook preInstall
+
+              mkdir -p $out/opt $out/bin $out/share
+              cp -r opt/PAIR $out/opt/PAIR
+              # The store is read-only: no electron-updater feed (it would try
+              # to install the next .deb through dpkg). Bump nvpairVersion
+              # instead, on every node at once: mixed-version clusters are
+              # unsupported upstream.
+              rm $out/opt/PAIR/resources/app-update.yml
+
+              # The engine manager installs Ollama with `tar --zstd` and reads
+              # GPU telemetry from nvidia-smi; the host PATH comes first so
+              # Arch's /usr/bin/nvidia-smi stays in use.
+              makeWrapper $out/opt/PAIR/nvpair $out/bin/nvpair-desktop \
+                --suffix PATH : ${prev.lib.makeBinPath [ prev.gnutar prev.zstd prev.xdg-utils ]}
+              # Upstream's `nvpair` command is the terminal UI.
+              ln -s $out/opt/PAIR/resources/cli-bin/nvpair-tui $out/bin/nvpair
+
+              cp -r usr/share/icons $out/share/icons
+              install -Dm644 usr/share/applications/nvpair.desktop \
+                $out/share/applications/nvpair.desktop
+              substituteInPlace $out/share/applications/nvpair.desktop \
+                --replace-fail /opt/PAIR/nvpair $out/bin/nvpair-desktop
+
+              runHook postInstall
+            '';
+
+            meta = with prev.lib; {
+              description = "NVIDIA Personal AI Router: routes local inference across paired machines";
+              homepage = "https://github.com/NVIDIA/Personal-AI-Router";
+              license = licenses.asl20;
+              sourceProvenance = [ sourceTypes.binaryNativeCode ];
+              platforms = [ "x86_64-linux" "aarch64-linux" ];
+              mainProgram = "nvpair-desktop";
+            };
+          } else null;
+
           # agent-browser - browser automation CLI for AI agents (Rust CLI + Node.js Playwright daemon)
           agent-browser = prev.stdenv.mkDerivation {
             pname = "agent-browser";
@@ -1375,28 +1960,69 @@
             };
           };
 
+          # Unpacked browser extension; load the same stable home path in each
+          # Chromium browser. Local patch refreshes the subscription model list.
+          sitegeist = prev.stdenvNoCC.mkDerivation {
+            pname = "sitegeist";
+            version = "1.0.0";
+            src = prev.fetchurl {
+              url = "https://github.com/badlogic/sitegeist/releases/download/v1.0.0/sitegeist.zip";
+              sha256 = "1669gvbrwhs1g6rycp5my8ssiynfghhg1jk86xxyvhi2a2b9rxbn";
+            };
+            nativeBuildInputs = [ prev.unzip prev.python3 prev.nodejs ];
+            sourceRoot = ".";
+            postPatch = ''
+              python ${./sitegeist-models.py} .
+              node --check sidepanel.js
+              node --check debug.js
+            '';
+            installPhase = ''
+              mkdir -p $out/share/sitegeist
+              cp -r . $out/share/sitegeist/
+            '';
+            meta = {
+              description = "Browser sidebar AI assistant with current Codex models";
+              homepage = "https://github.com/badlogic/sitegeist";
+              license = prev.lib.licenses.agpl3Only;
+              platforms = supportedSystems;
+            };
+          };
+
+          # Keep nixpkgs' native packaging, wrappers and sandbox dependencies.
+          claude-code = prev.claude-code.override {
+            manifest = {
+              version = "2.1.295";
+              platforms = {
+                "linux-x64".checksum = "4503bfe11a6c7fcc1e0b39b5e0d347c04248f750b03b0977b3ad6b531fe6f358";
+                "linux-arm64".checksum = "cfb9dc1332fb6f92a683f835823e91b3179a803398ca7852cd2381a3cb1dea3b";
+                "darwin-x64".checksum = "a6066492288585a1ef5e482cb28ad22714ab12cd48e367c0cee988b00cff724c";
+                "darwin-arm64".checksum = "0116ee2e0a513900b633d9951367f18747686478e2b462805b8c31609f047f70";
+              };
+            };
+          };
+
           # codex - OpenAI coding agent CLI (pre-built binary from npm)
           codex = let
-            codexVersion = "0.148.0";
+            codexVersion = "0.163.0";
             codexSources = {
               "x86_64-linux" = {
                 url = "https://registry.npmjs.org/@openai/codex/-/codex-${codexVersion}-linux-x64.tgz";
-                hash = "sha256-UvG49c9m/ndtK9XmijLvaIS35Gb9gGFL+IWARt+pAS8=";
+                hash = "sha256-MO/Jdzi5dZQNeLWam+oRX6NAQLcygH1U7DWua3Uo3pQ=";
                 vendorDir = "x86_64-unknown-linux-musl";
               };
               "aarch64-linux" = {
                 url = "https://registry.npmjs.org/@openai/codex/-/codex-${codexVersion}-linux-arm64.tgz";
-                hash = "sha256-/rpGPzH4zaWJGS1dMzk1nFs1vBNm42kJpi1OSIpoIuU=";
+                hash = "sha256-3G58TW3nHCOg9g0F4ld/9+72FbdvImMNWK04S4R2NSI=";
                 vendorDir = "aarch64-unknown-linux-musl";
               };
               "x86_64-darwin" = {
                 url = "https://registry.npmjs.org/@openai/codex/-/codex-${codexVersion}-darwin-x64.tgz";
-                hash = "sha256-WY8kK8TCnV4NQ7xpPfj1m8I6TJaL0dmPx/ALl6k7JRU=";
+                hash = "sha256-dCZ9e3oYpQKfvvyFsAOixWp7O77hQYFiII2rW2ur8No=";
                 vendorDir = "x86_64-apple-darwin";
               };
               "aarch64-darwin" = {
                 url = "https://registry.npmjs.org/@openai/codex/-/codex-${codexVersion}-darwin-arm64.tgz";
-                hash = "sha256-sgNXgXsbEdq3pmlrBRllqq1DEaaQ8rrH2HZ4qSqovq0=";
+                hash = "sha256-EZP/TOcjh6XWw0ggtUqdxX0AfGepWOistHFZJPrNPDE=";
                 vendorDir = "aarch64-apple-darwin";
               };
             };
@@ -1437,14 +2063,70 @@
             };
           };
 
+          # tokscale - token usage tracker across AI coding agents (pre-built
+          # binary from npm). GitHub releases carry no assets; the binaries live
+          # in the @tokscale/cli-<platform> npm packages. Linux uses the static
+          # musl builds so no patchelf is needed. Hashes are npm's dist.integrity.
+          tokscale = let
+            tokscaleVersion = "4.20.0";
+            tokscaleSources = {
+              "x86_64-linux" = {
+                platform = "linux-x64-musl";
+                hash = "sha512-eeUpS6mP6RLVGrZ5YMNysL/fPXv7n4Dp/DLA0r3eUYkuYm5Md/Rvq4jkHQcj2ZS1bvXPnsFJ3n9NjIDGflpSgQ==";
+              };
+              "aarch64-linux" = {
+                platform = "linux-arm64-musl";
+                hash = "sha512-ip2cU3VEJbCgjeH5dVUGDXcG4AvyahhoM8Jg9wenrgC9+cOU3N5gJ7MMg11mcF4wFQttXJkxntVM2Rcm+7OkVQ==";
+              };
+              "x86_64-darwin" = {
+                platform = "darwin-x64";
+                hash = "sha512-UGa+GakljqaeyMgz+0P9UBSi5Z5SWzuFrUs21DT2TBWabN1e6ETDNXKKn2bu15X+2f/HkPT81HK9K4/GbQ1hHg==";
+              };
+              "aarch64-darwin" = {
+                platform = "darwin-arm64";
+                hash = "sha512-9FQjSubJRDF9eKA/+bMg5pgEseo2dZFcbBVZWKEuTRQDJg+rUD4nrtvQZ1pR8XAhes3gS7BNb0gxdvuodTEKBg==";
+              };
+            };
+            source = tokscaleSources.${prev.stdenv.hostPlatform.system};
+          in prev.stdenv.mkDerivation {
+            pname = "tokscale";
+            version = tokscaleVersion;
+
+            src = prev.fetchurl {
+              url = "https://registry.npmjs.org/@tokscale/cli-${source.platform}/-/cli-${source.platform}-${tokscaleVersion}.tgz";
+              inherit (source) hash;
+            };
+
+            sourceRoot = ".";
+
+            unpackPhase = ''
+              tar xzf $src
+            '';
+
+            # The darwin packages also ship libFoundationModels.dylib next to the
+            # binary (loaded at runtime), so copy the whole bin/ directory.
+            installPhase = ''
+              mkdir -p $out/bin
+              cp package/bin/* $out/bin/
+              chmod +x $out/bin/tokscale
+            '';
+
+            meta = with prev.lib; {
+              description = "Track token usage across AI coding agents";
+              homepage = "https://github.com/junhoyeo/tokscale";
+              license = licenses.mit;
+              platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+            };
+          };
+
           # gemini-cli - Google Gemini coding agent CLI (pre-built JS bundle)
           gemini-cli = prev.stdenv.mkDerivation {
             pname = "gemini-cli";
-            version = "0.56.0";
+            version = "0.64.0";
 
             src = prev.fetchzip {
-              url = "https://github.com/google-gemini/gemini-cli/releases/download/v0.56.0/gemini-cli-bundle.zip";
-              hash = "sha256-uftyJehZ/pDVxq+tC4XNKtLuuHO1RE33LVWpMUU+l8o=";
+              url = "https://github.com/google-gemini/gemini-cli/releases/download/v0.64.0/gemini-cli-bundle.zip";
+              hash = "sha256-4xBGPuIIryOJLBLVlZWLsVmHnJWCsLQVXeSL17ATFQE=";
               stripRoot = false;
             };
 
@@ -1465,16 +2147,67 @@
             };
           };
 
+          # grok-bot-cli - CLI for xAI Grok Bot agents and groups (gbot command)
+          # npm tarball ships a self-contained rspack bundle with no runtime
+          # dependencies; needs node >= 22.19 and the Grok Bot desktop app's
+          # signed-in session (grok-bot cask, users/joost/darwin.nix).
+          grok-bot-cli = prev.stdenv.mkDerivation rec {
+            pname = "grok-bot-cli";
+            version = "0.12.4";
+
+            src = prev.fetchurl {
+              url = "https://registry.npmjs.org/grok-bot-cli/-/grok-bot-cli-${version}.tgz";
+              sha256 = "0mbf5l3cpd8bxq52nmm1rj9z0jjaxj0rgxnpf5l7k27x01aldac0";
+            };
+
+            nativeBuildInputs = [ prev.makeWrapper ];
+
+            # Grok Bot desktop >= 0.68 writes gateway-descriptor.json version 3
+            # (v2 layout plus savedAtMs), which 0.12.4 rejects with "Unsupported
+            # Grok Bot gateway descriptor version 3". Same two-line change as
+            # upstream PR #143 (issue #149); drop once a release includes it.
+            postPatch = ''
+              for f in dist/bin/gbot.mjs dist/bin/gbot-flight.mjs \
+                       dist/mcp/mcp-grok-bot-b8c2461e.mjs \
+                       dist/mcp/mcp-grok-bot-b8c2461e-flight.mjs \
+                       dist/scripts/gbot-relay.mjs; do
+                substituteInPlace "$f" \
+                  --replace-fail 'wrapped.version !== 1 && wrapped.version !== 2)' \
+                                 'wrapped.version !== 1 && wrapped.version !== 2 && wrapped.version !== 3)' \
+                  --replace-fail 'if (wrapped.version === 2) {' \
+                                 'if (wrapped.version === 2 || wrapped.version === 3) {'
+              done
+            '';
+
+            installPhase = ''
+              mkdir -p $out/lib $out/bin
+              cp -r . $out/lib/grok-bot-cli
+              makeWrapper ${prev.nodejs}/bin/node $out/bin/gbot \
+                --add-flags "$out/lib/grok-bot-cli/dist/bin/gbot.mjs"
+              ln -s gbot $out/bin/grok-bot
+              makeWrapper ${prev.nodejs}/bin/node $out/bin/gbot-install \
+                --add-flags "$out/lib/grok-bot-cli/dist/bin/gbot-install.js"
+            '';
+
+            meta = with prev.lib; {
+              description = "CLI for xAI Grok Bot agents and groups";
+              homepage = "https://github.com/ScriptedAlchemy/grok-bot-cli";
+              license = licenses.mit;
+              mainProgram = "gbot";
+              platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+            };
+          };
+
           # cco - Claude Code sandbox (bubblewrap on Linux, sandbox-exec on macOS)
           cco = prev.stdenv.mkDerivation {
             pname = "cco";
-            version = "0-unstable-2026-06-27";
+            version = "0-unstable-2026-09-01";
 
             src = prev.fetchFromGitHub {
               owner = "nikvdp";
               repo = "cco";
-              rev = "8a24b4ff8073e4f8f016d49e6093b85d6eb99a52";
-              sha256 = "1pkby959hgma7aa0qmbsqr1bv7mwan0gdwr59czaqsympim86f10";
+              rev = "68f92e899738f91a2646674c82c7a44946fcf74d";
+              sha256 = "0wqzhk97q0gl2zyj9bc4gvwfdj61l4s8sgndawgp4x4r0y9l0bjl";
             };
 
             nativeBuildInputs = [ prev.makeWrapper ];
@@ -1506,6 +2239,11 @@
 
           # gh CLI on stable has bugs.
           gh = pkgs-unstable.gh;
+
+          # nixos-26.05 macmon is 0.6.1, which panics on startup on
+          # aarch64-darwin (NixOS/nixpkgs#562942), so CPU/GPU temperatures
+          # never get read. Unstable has 0.8.2.
+          macmon = pkgs-unstable.macmon;
 
           # Want the latest version of these
           nushell = pkgs-unstable.nushell;

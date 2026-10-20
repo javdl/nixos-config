@@ -1,5 +1,9 @@
 {
   isWSL,
+  isOmarchy ? false,
+  # Small-laptop profile (mba): skips local-model tooling and the heavyweight
+  # agent infrastructure (agent-mail service, session indexes, cargo builds).
+  isLite ? false,
   inputs,
   currentSystemName,
   ...
@@ -17,6 +21,114 @@ let
   isLinux = pkgs.stdenv.isLinux;
   isMinimal = currentSystemName == "fu146";
 
+  anthropicBaseUrlEnv =
+    lib.optionalAttrs (aperture ? ${currentSystemName}) {
+      ANTHROPIC_BASE_URL = aperture.${currentSystemName};
+    };
+  aperture = {
+    fu137 = "http://ai.stargazer-duck.ts.net";
+    j9 = "http://ai.buri-hoki.ts.net";
+  };
+
+  # Omarchy Quattro owns these packages through pacman. A second copy in the
+  # Home Manager profile can shadow the binaries Omarchy updates as a unit.
+  omarchyManagedPackageNames = [
+    "alacritty"
+    "bat"
+    "baobab"
+    "bitwarden-menu"
+    "btop"
+    "chromium"
+    "dbeaver-bin"
+    "discord"
+    "docker"
+    "docker-compose"
+    "eza"
+    "fastfetch"
+    "fd"
+    "ffmpeg"
+    "firefox-devedition"
+    "fzf"
+    "geekbench"
+    "gum"
+    "imagemagick"
+    "ia-writer-duospace"
+    "ia-writer-mono"
+    "ia-writer-quattro"
+    "libinput"
+    "libwacom"
+    "inxi"
+    "inkscape"
+    "jq"
+    "kitty"
+    "lazydocker"
+    "lazygit"
+    "localsend"
+    "mise"
+    "mpv"
+    "neovim"
+    "nextcloud-client"
+    "noto-fonts"
+    "noto-fonts-cjk-sans"
+    "noto-fonts-color-emoji"
+    "obsidian"
+    "podman-desktop"
+    "postman"
+    "ripgrep"
+    "rofi"
+    "rpi-imager"
+    "signal-desktop"
+    "slack"
+    "socat"
+    "starship"
+    "tldr"
+    "tailscale-systray"
+    "tmux"
+    "transmission"
+    "vscode"
+    "wl-clipboard"
+    "xfce4-terminal"
+    "zathura-with-plugins"
+    "zoxide"
+  ];
+
+  keepPackage =
+    package: !(isOmarchy && builtins.elem (lib.getName package) omarchyManagedPackageNames);
+
+  # Pinentry for services.gpg-agent on Omarchy Quattro.
+  #
+  # pinentry-tty (the default below) prompts on whichever terminal gpg-agent
+  # currently believes is yours. On a Hyprland desktop with a long-lived agent
+  # that TTY goes stale, the prompt lands nowhere, and signing dies with
+  # "gpg: signing failed: Operation cancelled".
+  #
+  # Quattro already ships pinentry via pacman, and /usr/bin/pinentry is Arch's
+  # chooser: it picks a GUI backend when WAYLAND/DISPLAY is set and falls back
+  # to curses/tty otherwise. That fallback is why this beats hardcoding one
+  # backend -- the same config keeps working when you SSH into the box. It
+  # resolves to pinentry-gnome3 here, which needs org.gnome.keyring.SystemPrompter;
+  # Omarchy runs gnome-keyring-daemon, so that prompter is available.
+  #
+  # Symlinked rather than packaged from nixpkgs on purpose: a Nix-built Qt/GTK
+  # pinentry would have to locate its platform plugins inside an Arch Wayland
+  # session, the same impedance mismatch documented for CUDA in
+  # docs/fu137-local-inference.md. Desktop integration stays Omarchy's job.
+  omarchyPinentry = pkgs.runCommand "omarchy-pinentry" { } ''
+    mkdir -p "$out/bin"
+    ln -s /usr/bin/pinentry "$out/bin/pinentry"
+  '';
+
+  # tailmixd unit for the Omarchy boxes, sharing its fields with the NixOS
+  # module bali uses. See lib/tailmix-service.nix for why both exist.
+  tailmixUnit = import ../../lib/tailmix-service.nix { inherit lib; };
+
+  # [Service] keys render in Nix's alphabetical attribute order, which systemd
+  # does not care about; ExecStart is appended rather than folded into the
+  # shared set because only this consumer knows the binary's path.
+  tailmixServiceSection = lib.concatStringsSep "\n" (
+    lib.mapAttrsToList (k: v: "${k}=${toString v}") tailmixUnit.serviceConfig
+  );
+
   # Import shared configuration
   shared = import ../shared-home-manager.nix {
     inherit
@@ -29,61 +141,8 @@ let
       ;
   };
 
-  # Get unstable packages
-  pkgsUnstable = import inputs.nixpkgs-unstable {
-    inherit (pkgs) system;
-    inherit (pkgs.config) allowUnfree;
-    config = {
-      allowUnfree = true;
-      allowUnsupportedSystem = true;
-    };
-  };
-
   # Use shared manpager
   manpager = shared.manpager;
-
-  sshTailscaleHost = hostname: {
-    inherit hostname;
-    user = "joost";
-    # 26.05: raw OpenSSH directives go directly in the block (freeform type);
-    # programs.ssh.matchBlocks.*.extraOptions is deprecated.
-    PreferredAuthentications = "publickey";
-    PubkeyAuthentication = "yes";
-    PasswordAuthentication = "no";
-  };
-
-  sshBuriHokiHost = host: sshTailscaleHost "${host}.buri-hoki.ts.net";
-
-  # One exe.dev account per alias; `name` is both the Host alias and the
-  # basename of the public key installed into ~/.ssh by home.file below.
-  exeHost = name: {
-    hostname = "exe.dev";
-    user = "root";
-    identityFile = "~/.ssh/${name}.pub";
-    identitiesOnly = true;
-  };
-
-  # VM shells (<vm>.exe.xyz), as opposed to the exe.dev control plane above.
-  # Without an explicit identity these match only "*" and offer every key in the
-  # Bitwarden agent; exe.dev then switches the account's "current" key to
-  # whichever one happens to authenticate, so `whoami` and `ls` start reporting a
-  # different account than you meant to use. No `user`: exe.dev routes VM shells
-  # regardless of username.
-  exeVm = name: {
-    identityFile = "~/.ssh/${name}.pub";
-    identitiesOnly = true;
-  };
-
-  # A VM on the FashionUnited team account. Deliberately a dotless alias rather
-  # than a "<vm>.exe.xyz" pattern: ssh keeps the first value it obtains for an
-  # option, but Nix renders attrset keys alphabetically, so "*.exe.xyz" would
-  # sort ahead of any "fu-….exe.xyz" block and win. An alias cannot collide with
-  # that wildcard, so the identity holds regardless of ordering.
-  exeWorkVm = name: {
-    hostname = "${name}.exe.xyz";
-    identityFile = "~/.ssh/exe-work.pub";
-    identitiesOnly = true;
-  };
 
   gdk = pkgs.google-cloud-sdk.withExtraComponents (
     with pkgs.google-cloud-sdk.components;
@@ -112,7 +171,19 @@ let
 
 in
 {
-  imports = [ ./cachix-daemon.nix ]; # auto-push locally-built paths to javdl-nixos-config cachix
+  imports = [
+    (
+      if currentSystemName == "github-runner" then
+        { }
+      else
+        import ./agent-cli-updates.nix { inherit isOmarchy; }
+    )
+    (import ./omarchy-startup.nix { inherit isOmarchy currentSystemName; })
+    ./cachix-daemon.nix # auto-push locally-built paths to javdl-nixos-config cachix
+    (import ../herdr-fleet.nix { inherit currentSystemName; })
+    (import ../cua-spaces-host-omarchy.nix { inherit currentSystemName; })
+    (import ../nvpair-omarchy.nix { inherit currentSystemName; })
+  ];
 
   # Home-manager 22.11 requires this be set. We never set it so we have
   # to use the old state version.
@@ -132,13 +203,12 @@ in
   # not a huge list.
   fonts.fontconfig.enable = true;
 
-  home.packages =
+  home.packages = lib.filter keepPackage (
     with pkgs;
     [
       asciinema
       air # Live reload for Go
       alacritty
-      brev-cli
       btop
       chezmoi
       kitty
@@ -163,12 +233,15 @@ in
       fzf
       gemini-cli
       gh
+      hcloud
+      posthog-cli
       graphite-cli
       # ghostty
       git-lfs
       gdk
       # google-cloud-sdk # See above, gdk with components list
       htop
+      dnsutils # dig, host, nslookup (repo checks and DNS debugging)
       httpie
       imagemagick
       jq
@@ -179,6 +252,7 @@ in
       # libheif
       # lmstudio — macOS via brew cask (lm-studio), Linux via nixpkgs-unstable overlay
       # ollama
+      omp # oh-my-pi coding agent
       opencode
       oxlint
       railway
@@ -191,7 +265,6 @@ in
       actionlint
       zizmor
       pnpm
-      # vercel CLI installed via npm in activation script (removed from nixpkgs)
       supabase-cli
       tree
       watch
@@ -205,32 +278,45 @@ in
       beads-viewer # TUI for beads issue tracking (bv command)
       caam # Instant auth switching for AI coding subscriptions
       codex
+      tokscale # Token usage tracker across AI coding agents
       destructive-command-guard # Safety hook for AI agents (dcg command)
-      grepai # Semantic code search for AI coding assistants
+      herdr # Terminal workspace manager for AI coding agents
+      grok-build # xAI Grok Build CLI (grok command)
       gws # Google Workspace CLI
-      ntm # Named Tmux Manager for AI agent coordination
       repo-updater # GitHub repo sync tool (ru command)
-      brenner # Sydney Brenner research platform CLI
       csctf # Convert AI chat share links to Markdown/HTML transcripts
       toon # Token-Optimized Object Notation converter
     ]
     ++ (lib.optional (pkgs.meta-skill != null) pkgs.meta-skill)
     ++ [
-      slb # Shannon Language Benchmark for LLM evaluation
       ubs # AI-native code quality scanner
       # caut: install via `cargo install --git https://github.com/Dicklesworthstone/coding_agent_usage_tracker`
     ]
     ++ (lib.optional (pkgs.giil != null) pkgs.giil)
     ++ (lib.optional (pkgs.pi-agent != null) pkgs.pi-agent)
-    ++ [ pkgs.pi-coding-agent ] # upstream `pi`
-    ++ (lib.optional (pkgs.oh-my-pi != null) pkgs.oh-my-pi) # `omp`
     ++ (lib.optional (pkgs.xf != null) pkgs.xf)
-    ++ (lib.optional (pkgs.mcp-agent-mail != null) pkgs.mcp-agent-mail)
     ++ (lib.optional (pkgs.cross-agent-session-resumer != null) pkgs.cross-agent-session-resumer)
     ++ (lib.optional (pkgs.process-triage != null) pkgs.process-triage)
     ++ (lib.optional (pkgs.remote-compilation-helper != null) pkgs.remote-compilation-helper)
-    ++ (lib.optional (pkgs.cass != null) pkgs.cass)
-    ++ (lib.optional (pkgs.cass-memory != null) pkgs.cass-memory)
+    # Keep the gbot automation CLI radon-only; the desktop app is also in the
+    # standard Mac cask set (users/joost/darwin.nix).
+    ++ (lib.optional (currentSystemName == "radon") pkgs.grok-bot-cli)
+    # Heavyweight AI tooling: local-model / embedding search, GPU cloud, LLM
+    # benchmarking, multi-agent orchestration and session indexes. Skipped on
+    # the lite laptop profile (mba).
+    ++ (lib.optionals (!isLite) (
+      [
+        brev-cli
+        grepai # Semantic code search for AI coding assistants
+        ntm # Named Tmux Manager for AI agent coordination
+        brenner # Sydney Brenner research platform CLI
+        slb # Shannon Language Benchmark for LLM evaluation
+      ]
+      ++ (lib.optional (pkgs.hermes-agent != null) pkgs.hermes-agent) # hermes CLI/TUI
+      ++ (lib.optional (pkgs.mcp-agent-mail != null) pkgs.mcp-agent-mail)
+      ++ (lib.optional (pkgs.cass != null) pkgs.cass)
+      ++ (lib.optional (pkgs.cass-memory != null) pkgs.cass-memory)
+    ))
     ++ [
       s2p # Turn code projects into LLM prompts with a TUI
 
@@ -245,8 +331,6 @@ in
       pre-commit
       # worktrunk: installed via cargo in activation script below
       wasm-pack
-      # pkgsUnstable.fermyon-spin  # Use unstable version
-
       uv
       ruff # Python linter/formatter
       ty # Python type checker
@@ -337,13 +421,12 @@ in
     ])
     ++ (lib.optionals (isLinux && !isWSL) [
       bubblewrap
-      code-cursor # Cursor IDE (macOS gets the homebrew cask instead)
       chromium
       firefox-devedition
       # brave
       rofi
       zathura
-      xfce.xfce4-terminal
+      xfce4-terminal
       libwacom
       libinput
       xclip # X11 clipboard
@@ -361,7 +444,22 @@ in
       tailscale-systray
       # windsurf  # Replaced with VS Code
       baobab # Disk usage, gnome only
-    ]);
+
+      # DGX Spark client software; Macs get the same set as casks in
+      # users/joost/darwin.nix. Nsight from the newest CUDA 13 set so the GUIs
+      # open reports from the Spark's CUDA 13 nsys/ncu.
+      nvidia-sync # NVIDIA Sync desktop app + nvsync CLI (lib/overlays.nix)
+      cudaPackages_13_3.nsight_systems # nsys, nsys-ui
+      # nsight_compute's bin/ also holds host/, sections/ and target/ data
+      # dirs, which buildEnv links into ~/.nix-profile/bin; that `host`
+      # directory made every `host` (DNS lookup) call fail with EACCES.
+      # Expose only the two CLIs; ncu resolves its real path to find target/.
+      (runCommand "nsight-compute-bin" { } ''
+        mkdir -p $out/bin
+        ln -s ${cudaPackages_13_3.nsight_compute}/bin/ncu ${cudaPackages_13_3.nsight_compute}/bin/ncu-ui $out/bin/
+      '') # ncu, ncu-ui
+    ])
+  );
 
   #---------------------------------------------------------------------
   # Env vars and dotfiles
@@ -369,6 +467,12 @@ in
 
   # Cargo-installed binaries (caut, ft, etc.)
   home.sessionPath = [ "$HOME/.cargo/bin" ];
+
+  # Omarchy boxes send Anthropic inference through their tailnet's Tailscale
+  # Aperture gateway (see hosts/bali.nix), resolved via MagicDNS: fu137 is on
+  # stargazer-duck, j9 on buri-hoki. Omarchy disables the bash module, so the
+  # variable also goes to environment.d for the systemd/uwsm graphical session.
+  systemd.user.sessionVariables = anthropicBaseUrlEnv;
 
   home.sessionVariables =
     shared.sessionVariables
@@ -384,6 +488,7 @@ in
       # Default GCP project — read by gemini CLI, gcloud client libs (ADC), terraform-google, etc.
       GOOGLE_CLOUD_PROJECT = "kubernetes-164514";
     }
+    // anthropicBaseUrlEnv
     // lib.optionalAttrs isDarwin {
       # Bitwarden SSH agent socket
       SSH_AUTH_SOCK = "$HOME/.bitwarden-ssh-agent.sock";
@@ -399,17 +504,6 @@ in
       # '';
     };
 
-  # Install/update Vercel CLI via npm (removed from nixpkgs).
-  # On Darwin, vercel-cli is managed by homebrew (see darwin.nix), so skip there.
-  home.activation.installVercel = lib.mkIf (!isDarwin) (
-    lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      if ! command -v vercel &>/dev/null || [ "$(vercel --version 2>/dev/null | head -1)" != "$(${pkgs.nodejs_22}/bin/npm view vercel version 2>/dev/null)" ]; then
-        echo "Installing/updating Vercel CLI..."
-        $DRY_RUN_CMD ${pkgs.nodejs_22}/bin/npm install -g vercel@latest 2>/dev/null || echo "Vercel CLI install failed"
-      fi
-    ''
-  );
-
   # Install Claude Code CLI if not present
   home.activation.installClaudeCode = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     if [ ! -f "$HOME/.local/bin/claude" ]; then
@@ -419,7 +513,7 @@ in
 
   # Install worktrunk via cargo. Recent versions require rustc >= 1.93,
   # so make sure the stable toolchain is up-to-date before installing.
-  home.activation.installWorktrunk = lib.mkIf (!isMinimal) (
+  home.activation.installWorktrunk = lib.mkIf (!isMinimal && !isLite) (
     lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       if ! $HOME/.cargo/bin/worktrunk --version &>/dev/null; then
         echo "Installing worktrunk..."
@@ -430,11 +524,16 @@ in
 
   # Install caut (coding agent usage tracker) via cargo nightly.
   # Ensures the nightly toolchain is installed before invoking it.
-  home.activation.installCaut = lib.mkIf (!isMinimal) (
+  home.activation.installCaut = lib.mkIf (!isMinimal && !isLite) (
     lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       if ! $HOME/.cargo/bin/caut --version &>/dev/null; then
         echo "Installing caut (coding agent usage tracker)..."
-        $DRY_RUN_CMD bash -c "${pkgs.rustup}/bin/rustup toolchain install nightly --profile minimal && ${pkgs.rustup}/bin/rustup run nightly cargo install --git https://github.com/Dicklesworthstone/coding_agent_usage_tracker" || echo "caut install failed (requires rustup nightly)"
+        ${
+          if isLinux then
+            ''$DRY_RUN_CMD bash -c "PATH='${pkgs.gcc}/bin:${pkgs.pkg-config}/bin:$PATH' PKG_CONFIG_PATH='${pkgs.sqlite.dev}/lib/pkgconfig' LIBRARY_PATH='${pkgs.sqlite.out}/lib' ${pkgs.rustup}/bin/rustup toolchain install nightly --profile minimal && ${pkgs.rustup}/bin/rustup run nightly cargo install --git https://github.com/Dicklesworthstone/coding_agent_usage_tracker && ${pkgs.patchelf}/bin/patchelf --add-rpath '${pkgs.sqlite.out}/lib' '$HOME/.cargo/bin/caut'"''
+          else
+            ''$DRY_RUN_CMD bash -c "${pkgs.rustup}/bin/rustup toolchain install nightly --profile minimal && ${pkgs.rustup}/bin/rustup run nightly cargo install --git https://github.com/Dicklesworthstone/coding_agent_usage_tracker"''
+        } || echo "caut install failed (requires rustup nightly + sqlite)"
       fi
     ''
   );
@@ -442,7 +541,7 @@ in
   # Install tokei (lines-of-code counter) via cargo stable.
   home.activation.installTokei = lib.mkIf (!isMinimal) (
     lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      if ! $HOME/.cargo/bin/tokei --version &>/dev/null; then
+      if ! ${pkgs.tokei}/bin/tokei --version &>/dev/null; then
         echo "Installing tokei (lines-of-code counter)..."
         $DRY_RUN_CMD bash -c "${pkgs.rustup}/bin/rustup run stable cargo install tokei" || echo "tokei install failed"
       fi
@@ -463,19 +562,43 @@ in
   # a missing key or locked vault never breaks the switch.
   # Recover from detached HEAD before update so `chezmoi update`'s git pull
   # has a branch to rebase against.
+  # The Bitwarden agent is named explicitly for git: ~/.ssh/config, which
+  # carries IdentityAgent, is itself written by this chezmoi run, so a fresh
+  # host has none yet, and Omarchy sets no SSH_AUTH_SOCK.
   home.activation.chezmoiSync = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     CHEZMOI_SOURCE="$HOME/.local/share/chezmoi"
-    if [ ! -d "$CHEZMOI_SOURCE" ]; then
-      echo "Chezmoi source missing — bootstrapping from javdl/dotfiles..."
-      $DRY_RUN_CMD env PATH="${pkgs.bitwarden-cli}/bin:${pkgs.git}/bin:$PATH" GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=15" GIT_TERMINAL_PROMPT=0 ${pkgs.chezmoi}/bin/chezmoi init git@github.com:javdl/dotfiles.git || echo "chezmoi clone failed (check git auth); will retry on next switch."
+    sshAgentOpt=
+    if [ -S "$HOME/.bitwarden-ssh-agent.sock" ]; then
+      sshAgentOpt="-o IdentityAgent=$HOME/.bitwarden-ssh-agent.sock"
     fi
-    if [ -d "$CHEZMOI_SOURCE" ]; then
+    if [ ! -d "$CHEZMOI_SOURCE/.git" ]; then
+      echo "Chezmoi checkout missing — bootstrapping from javdl/dotfiles..."
+      $DRY_RUN_CMD env PATH="${pkgs.bitwarden-cli}/bin:${pkgs.git}/bin:$PATH" GIT_SSH_COMMAND="ssh $sshAgentOpt -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=15" GIT_TERMINAL_PROMPT=0 ${pkgs.chezmoi}/bin/chezmoi init git@github.com:javdl/dotfiles.git || echo "chezmoi clone failed (check git auth); will retry on next switch."
+    fi
+    if [ -d "$CHEZMOI_SOURCE/.git" ]; then
       if ! ${pkgs.git}/bin/git -C "$CHEZMOI_SOURCE" symbolic-ref -q HEAD >/dev/null; then
         echo "chezmoi repo is in detached HEAD; checking out main before sync..."
         $DRY_RUN_CMD ${pkgs.git}/bin/git -C "$CHEZMOI_SOURCE" checkout main || true
       fi
+      # One-time takeover: Home Manager used to link ~/.ssh/config into the
+      # store. chezmoi reads that link as a local edit and would prompt, which
+      # fails without a TTY, and linkGeneration then removes the stale link,
+      # leaving no ssh config. A store link is never a user edit, so force it.
+      sshConfig="$HOME/.ssh/config"
+      if [ -L "$sshConfig" ] && [[ "$(readlink "$sshConfig")" == /nix/store/* ]]; then
+        $DRY_RUN_CMD ${pkgs.chezmoi}/bin/chezmoi apply --force "$sshConfig" || \
+          echo "chezmoi: could not take over ~/.ssh/config"
+      fi
       echo "Syncing dotfiles from chezmoi repo..."
-      $DRY_RUN_CMD env PATH="${pkgs.bitwarden-cli}/bin:${pkgs.git}/bin:$PATH" ${pkgs.chezmoi}/bin/chezmoi update || echo "chezmoi apply incomplete (unlock Bitwarden, then re-run 'make switch')."
+      # moshi-hook first on PATH: dot_claude/settings.json.tmpl resolves its
+      # store path for the Moshi hooks (see users/agent-clis.nix).
+      if ! $DRY_RUN_CMD env ''${sshAgentOpt:+"GIT_SSH_COMMAND=ssh $sshAgentOpt"} PATH="${pkgs.moshi-hook}/bin:${pkgs.bitwarden-cli}/bin:${pkgs.git}/bin:$PATH" ${pkgs.chezmoi}/bin/chezmoi update; then
+        echo "chezmoi apply incomplete (unlock Bitwarden, then re-run 'make switch')."
+        # A locked vault aborts the whole apply, but ~/.ssh/config needs no
+        # secrets and nothing else writes it, so apply that target on its own.
+        $DRY_RUN_CMD ${pkgs.chezmoi}/bin/chezmoi apply "$sshConfig" || \
+          echo "chezmoi: ~/.ssh/config not applied"
+      fi
     fi
   '';
 
@@ -491,12 +614,53 @@ in
   );
 
   home.file = {
+    # Shared workstation profile: Macs, Omarchy and NixOS desktops. Servers
+    # use separate profiles, except the legacy github-runner output.
+    ".local/share/sitegeist" = lib.mkIf (currentSystemName != "github-runner") {
+      source = "${pkgs.sitegeist}/share/sitegeist";
+    };
+    # tailmix on Omarchy: reach a second tailnet without moving tailscaled.
+    #
+    # tailscaled serves one tailnet at a time. j9 must stay on buri-hoki,
+    # because the "j9" SSH alias below resolves to j9.buri-hoki.ts.net for every
+    # other personal machine. tailmix supplies the other tailnet instead: one
+    # tsnet client per tailnet behind a single TUN, peers remapped into a local
+    # IPv4 range so the two overlapping 100.64.0.0/10 spaces stop colliding. It
+    # is the same daemon bali runs, for the mirror-image reason
+    # (modules/tailmix.nix).
+    #
+    # tailmixd needs a TUN device, so it cannot be a Home Manager user service.
+    # This only renders the unit; linking and starting it is a one-time root
+    # step, and each tailnet profile consumes an auth key that must never reach
+    # the store. Both are documented in docs/tailmix-omarchy.md.
+    ".config/tailmix/tailmixd.service" = lib.mkIf isOmarchy {
+      text = ''
+        [Unit]
+        Description=${tailmixUnit.description}
+        Documentation=${tailmixUnit.documentation}
+        Wants=network-online.target
+        After=network-online.target
+
+        [Service]
+        ExecStart=${
+          tailmixUnit.execStart {
+            tailmixd = "${config.home.homeDirectory}/.nix-profile/bin/tailmixd";
+          }
+        }
+        ${tailmixServiceSection}
+
+        [Install]
+        WantedBy=multi-user.target
+      '';
+    };
+
     ".config/zellij/layouts/devops.kdl".source = ../zellij-monitor-runners.kdl;
     ".config/zellij/layouts/fun.kdl".source = ./zellij-fun.kdl;
     ".config/zellij/layouts/frontend.kdl".source = ../zellij-frontend-fuww.kdl;
     ".config/zellij/layouts/backend.kdl".source = ../zellij-backend-fuww.kdl;
     # Public halves of the Bitwarden-held exe.dev keys, used purely as
-    # identity selectors for the `exe` / `exe-work` SSH aliases.
+    # identity selectors by the exe.dev entries in the chezmoi-owned
+    # ~/.ssh/config (javdl/dotfiles private_dot_ssh/config).
     ".ssh/exe.pub".source = ./ssh/exe.pub;
     ".ssh/exe-work.pub".source = ./ssh/exe-work.pub;
     ".gdbinit".source = ./gdbinit;
@@ -742,7 +906,7 @@ in
       { }
   )
   // (
-    if isLinux then
+    if isLinux && !isOmarchy then
       {
         "ghostty/config".text =
           builtins.replaceStrings [ "command = zsh" ] [ "command = ${pkgs.zsh}/bin/zsh" ]
@@ -790,7 +954,7 @@ in
   #---------------------------------------------------------------------
 
   programs.vscode = {
-    enable = true;
+    enable = !isOmarchy;
     package = pkgs.vscode;
     profiles.default = {
       extensions = with pkgs.vscode-extensions; [
@@ -821,7 +985,7 @@ in
   programs.gpg.enable = !isDarwin;
 
   programs.bash = {
-    enable = true;
+    enable = !isOmarchy;
     shellOptions = [ ];
     historyControl = [
       "ignoredups"
@@ -910,6 +1074,9 @@ in
       }
 
       export GPG_TTY=$(tty)
+
+      # API keys rendered by chezmoi from Bitwarden (TYPESAFE_API_KEY, OPENROUTER_API_KEY, ...)
+      [[ -r ~/.env ]] && { set -a; source ~/.env; set +a; }
 
       # Force block cursor (escape sequence)
       # \e[2 q = steady block, \e[1 q = blinking block
@@ -1053,7 +1220,7 @@ in
   };
 
   programs.git = {
-    enable = true;
+    enable = !isOmarchy;
     signing = {
       key = "ACAFA950";
       signByDefault = true;
@@ -1087,67 +1254,11 @@ in
   };
 
   programs.delta = {
-    enable = true;
+    enable = !isOmarchy;
     enableGitIntegration = true;
     options = {
       line-numbers = true;
       side-by-side = true;
-    };
-  };
-
-  programs.ssh = {
-    enable = true;
-    enableDefaultConfig = false;
-
-    includes = [
-      "~/.ssh/brev-ssh-config" # Brev CLI manages this file for GPU cloud instances
-    ];
-
-    settings = {
-      "*" = {
-        compression = true;
-        serverAliveInterval = 60;
-        serverAliveCountMax = 3;
-        identityAgent = "~/.bitwarden-ssh-agent.sock";
-      };
-
-      "hetzner-work" = {
-        hostname = "2a01:4f8:1c1f:ad3c::1";
-        user = "root";
-        identityFile = "~/.ssh/id_ed25519_hetzner_work";
-        identitiesOnly = true;
-      };
-
-      # exe.dev accounts. Private keys live in Bitwarden and are served by its
-      # SSH agent (identityAgent in the "*" block); identityFile points at the
-      # *public* key so identitiesOnly can pick exactly one identity out of the
-      # agent instead of offering all of them.
-      "exe" = exeHost "exe";
-      "exe-work" = exeHost "exe-work";
-
-      # FashionUnited team VMs, reached by alias so the wildcard below cannot
-      # shadow their identity: `ssh fu-developer`, `ssh fu-handbook`.
-      "fu-developer" = exeWorkVm "fu-developer";
-      "fu-handbook" = exeWorkVm "fu-handbook";
-
-      # Every other VM shell belongs to the personal account.
-      "*.exe.xyz" = exeVm "exe";
-
-      "argon" = sshTailscaleHost "100.106.10.12";
-      "bali" = sshTailscaleHost "100.113.194.113";
-      "j8" = sshTailscaleHost "100.99.236.94";
-      "j9" = sshBuriHokiHost "j9";
-      "pikvm" = (sshTailscaleHost "100.121.9.3") // {
-        user = "root";
-      };
-      "radon" = sshTailscaleHost "100.101.199.29";
-      "router" = (sshTailscaleHost "100.97.154.115") // {
-        user = "root";
-      };
-
-      "nas" = sshBuriHokiHost "nas";
-      "terra" = sshBuriHokiHost "terra";
-
     };
   };
 
@@ -1215,7 +1326,7 @@ in
   # };
 
   programs.tmux = {
-    enable = true;
+    enable = !isOmarchy;
     terminal = "xterm-256color";
     shortcut = "b";
     secureSocket = false;
@@ -1282,7 +1393,7 @@ in
   };
 
   programs.alacritty = {
-    enable = !isWSL;
+    enable = !isWSL && !isOmarchy;
 
     settings = {
       env.TERM = "xterm-256color";
@@ -1396,12 +1507,12 @@ in
   };
 
   programs.kitty = {
-    enable = !isWSL;
+    enable = !isWSL && !isOmarchy;
     extraConfig = builtins.readFile ./kitty;
   };
 
   programs.i3status = {
-    enable = isLinux && !isWSL;
+    enable = isLinux && !isWSL && !isOmarchy;
 
     general = {
       colors = true;
@@ -1418,7 +1529,7 @@ in
   };
 
   programs.neovim = {
-    enable = true;
+    enable = !isOmarchy;
     package = inputs.neovim-nightly-overlay.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
     withPython3 = false;
@@ -1502,7 +1613,7 @@ in
   };
 
   programs.zoxide = {
-    enable = true;
+    enable = !isOmarchy;
     enableBashIntegration = true;
     enableZshIntegration = true;
     enableFishIntegration = true;
@@ -1776,7 +1887,7 @@ in
   };
 
   programs.starship = {
-    enable = true;
+    enable = !isOmarchy;
     enableBashIntegration = true;
     enableZshIntegration = true;
     enableFishIntegration = true;
@@ -2266,7 +2377,9 @@ in
 
   services.gpg-agent = {
     enable = isLinux;
-    pinentry.package = pkgs.pinentry-tty;
+    # Omarchy borrows Quattro's pacman pinentry (see omarchyPinentry above);
+    # every other Linux host, servers included, keeps the tty prompt.
+    pinentry.package = if isOmarchy then omarchyPinentry else pkgs.pinentry-tty;
 
     # cache the keys forever so we don't get asked for a password
     defaultCacheTtl = 31536000;
@@ -2274,7 +2387,7 @@ in
   };
 
   # Agent Mail - MCP HTTP server for async agent coordination (Rust binary)
-  systemd.user.services.agent-mail = lib.mkIf (isLinux && !isWSL) {
+  systemd.user.services.agent-mail = lib.mkIf (isLinux && !isWSL && !isLite) {
     Unit = {
       Description = "MCP Agent Mail HTTP Server";
       After = [ "network.target" ];
@@ -2289,10 +2402,10 @@ in
     Install.WantedBy = [ "default.target" ];
   };
 
-  xresources.extraConfig = builtins.readFile ./Xresources;
+  xresources.extraConfig = lib.mkIf (!isOmarchy) (builtins.readFile ./Xresources);
 
   # Make cursor not tiny on HiDPI screens
-  home.pointerCursor = lib.mkIf (isLinux && !isWSL) {
+  home.pointerCursor = lib.mkIf (isLinux && !isWSL && !isOmarchy) {
     name = "Vanilla-DMZ";
     package = pkgs.vanilla-dmz;
     size = 128;

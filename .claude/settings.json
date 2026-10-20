@@ -7,5 +7,18 @@
       "Bash(make test:*)"
     ]
   },
-  "enableAllProjectMcpServers": false
+  "enableAllProjectMcpServers": false,
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "s=$(ls -d \"$HOME\"/.claude/plugins/cache/openai-codex/codex/*/scripts/codex-companion.mjs 2>/dev/null | sort -V | tail -1); [ -n \"$s\" ] && node \"$s\" setup --enable-review-gate >/dev/null 2>&1 || true"
+          }
+        ]
+      }
+    ]
+  }
 }

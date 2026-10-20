@@ -1,0 +1,170 @@
+{
+  "env": {
+    "torch": "2.13.0+cu130",
+    "cuda_runtime": "13.0",
+    "driver": "610.57.04",
+    "gpu": "NVIDIA GeForce RTX 3090",
+    "sm": "sm_86",
+    "vram_total_gib": 23.55517578125,
+    "sms": 82,
+    "gpu_state_before": {
+      "sm_clock_mhz": "210",
+      "temp_c": "37",
+      "power_w": "19.89",
+      "util_pct": "0"
+    }
+  },
+  "embeddings": {
+    "model": "BAAI/bge-small-en-v1.5",
+    "dtype": "fp16",
+    "load_s": 4.292860449000727,
+    "runs": [
+      {
+        "batch": 1,
+        "seq_len": 128,
+        "best_ms": 2.2563019883818924,
+        "median_ms": 2.3060759995132685,
+        "docs_per_s": 443.20308413908293,
+        "tokens_per_s": 56729.994769802615,
+        "vram_gib": 0.0724940299987793
+      },
+      {
+        "batch": 8,
+        "seq_len": 128,
+        "best_ms": 2.285777998622507,
+        "median_ms": 2.3211840307340026,
+        "docs_per_s": 3499.902442328648,
+        "tokens_per_s": 447987.5126180669,
+        "vram_gib": 0.07967042922973633
+      },
+      {
+        "batch": 32,
+        "seq_len": 128,
+        "best_ms": 5.463813024107367,
+        "median_ms": 5.477299040649086,
+        "docs_per_s": 5856.715787822534,
+        "tokens_per_s": 749659.6208412844,
+        "vram_gib": 0.10427522659301758
+      },
+      {
+        "batch": 128,
+        "seq_len": 128,
+        "best_ms": 18.539569980930537,
+        "median_ms": 18.558777985163033,
+        "docs_per_s": 6904.1515057608385,
+        "tokens_per_s": 883731.3927373873,
+        "vram_gib": 0.20269441604614258
+      },
+      {
+        "batch": 256,
+        "seq_len": 128,
+        "best_ms": 34.6746010472998,
+        "median_ms": 34.84442998887971,
+        "docs_per_s": 7382.925607443589,
+        "tokens_per_s": 945014.4777527794,
+        "vram_gib": 0.3339200019836426
+      }
+    ],
+    "gpu_state_after": {
+      "sm_clock_mhz": "1830",
+      "temp_c": "51",
+      "power_w": "323.87",
+      "util_pct": "99"
+    }
+  },
+  "vision": {
+    "model": "openai/clip-vit-base-patch32",
+    "dtype": "fp16",
+    "load_s": 8.794722716032993,
+    "runs": [
+      {
+        "batch": 1,
+        "resolution": "224x224",
+        "best_ms": 1.574691035784781,
+        "median_ms": 1.593747001606971,
+        "images_per_s": 635.0452103143069,
+        "vram_gib": 0.18252229690551758
+      },
+      {
+        "batch": 8,
+        "resolution": "224x224",
+        "best_ms": 2.7246029931120574,
+        "median_ms": 2.727418002905324,
+        "images_per_s": 2936.2075943630794,
+        "vram_gib": 0.18963336944580078
+      },
+      {
+        "batch": 32,
+        "resolution": "224x224",
+        "best_ms": 7.654573011677712,
+        "median_ms": 8.127662993501872,
+        "images_per_s": 4180.50751507383,
+        "vram_gib": 0.22378253936767578
+      },
+      {
+        "batch": 128,
+        "resolution": "224x224",
+        "best_ms": 25.40306595619768,
+        "median_ms": 25.427177490200847,
+        "images_per_s": 5038.761865229554,
+        "vram_gib": 0.3612642288208008
+      },
+      {
+        "batch": 256,
+        "resolution": "224x224",
+        "best_ms": 49.94433297542855,
+        "median_ms": 49.97431402443908,
+        "images_per_s": 5125.706656768167,
+        "vram_gib": 0.5455904006958008
+      }
+    ],
+    "gpu_state_after": {
+      "sm_clock_mhz": "1995",
+      "temp_c": "51",
+      "power_w": "298.62",
+      "util_pct": "100"
+    }
+  },
+  "coder": {
+    "model": "Qwen/Qwen2.5-Coder-1.5B-Instruct",
+    "dtype": "fp16",
+    "params_b": 1.543714304,
+    "load_s": 48.83117356704315,
+    "weights_vram_gib": 2.8762474060058594,
+    "runs": [
+      {
+        "ctx": 512,
+        "prefill_ms": 33.632702950853854,
+        "prefill_tok_per_s": 15223.27838913707,
+        "new_tokens": 128,
+        "decode_total_ms": 1155.032264010515,
+        "decode_tok_per_s": 114.1430801694331,
+        "vram_gib": 3.044464111328125
+      },
+      {
+        "ctx": 2048,
+        "prefill_ms": 119.89330797223374,
+        "prefill_tok_per_s": 17081.854147141385,
+        "new_tokens": 128,
+        "decode_total_ms": 1200.3614329732955,
+        "decode_tok_per_s": 118.46716903367623,
+        "vram_gib": 3.524822235107422
+      },
+      {
+        "ctx": 8192,
+        "prefill_ms": 529.5645949663594,
+        "prefill_tok_per_s": 15469.312106335954,
+        "new_tokens": 128,
+        "decode_total_ms": 1584.1586600290611,
+        "decode_tok_per_s": 121.37371548017356,
+        "vram_gib": 5.444789886474609
+      }
+    ],
+    "gpu_state_after": {
+      "sm_clock_mhz": "1980",
+      "temp_c": "60",
+      "power_w": "327.89",
+      "util_pct": "95"
+    }
+  }
+}

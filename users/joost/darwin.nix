@@ -16,7 +16,15 @@ let
   ];
 
   # Per-host extra casks layered on top of the base set.
-  extraCasks = lib.optionals (currentSystemName == "radon") [ "rouvy" ];
+  extraCasks = lib.optionals (currentSystemName == "radon") [
+    "rouvy"
+    "cursor" # Desktop app required by Grok Bot
+    "grok-bot" # xAI Grok Bot desktop app (always-on agents)
+    # NVIDIA PAIR node alongside fu137 and j9; see docs/nvpair-omarchy.md.
+    # Homebrew sets this version; PAIR clusters need every node on the same
+    # release, so bump nvpairVersion in lib/overlays.nix to match.
+    "nvidia-pair"
+  ];
 
   # Machines without audio production tools
   noAudio = builtins.elem currentSystemName [ "macbook-air-m4" ];
@@ -34,7 +42,6 @@ let
     # Essential tools
     "codexbar" # steipete/tap - Codex menu bar app
     "companion" # Bitfocus companion, Streamdeck extension and emulation software
-    "cursor" # Cursor IDE
     "google-drive"
     "insync"
     "istat-menus"
@@ -61,6 +68,15 @@ let
     else
       casks;
 
+  # DGX Spark client software, on every Mac workstation (fu146 included) but
+  # not the headless servers. Linux workstations get the same set from
+  # users/joost/home-manager.nix.
+  dgxSparkCasks = [
+    "nvidia-sync" # SSH tunnels and one-click apps on a remote DGX Spark
+    "nvidia-nsight-systems" # timeline profiler GUI for nsys reports
+    "nvidia-nsight-compute" # CUDA kernel profiler GUI
+  ];
+
   # Core casks installed on all non-minimal machines
   coreCasks = [
     # "bitwarden" Must be installed via Mac App Store for browser integration to work
@@ -70,13 +86,14 @@ let
     "beeper"
     "caffeine"
     "brave-browser"
+    "brave-origin" # default browser (see postActivation below)
     "chatgpt"
     "claude"
     "cleanshot"
     "codex-app" # OpenAI Codex desktop app
     "codexbar" # steipete/tap - Codex menu bar app
     "companion" # Bitfocus companion, Streamdeck extension and emulation software
-    "cursor" # Cursor IDE
+    "cursor" # Desktop app required by Grok Bot
     "datagrip"
     "dataspell"
     "dbeaver-community" # dbeaver-bin doesnt work on MacOS?
@@ -91,6 +108,7 @@ let
     "ghostty" # broken in nixpkgs
     "github" # desktop
     "google-chrome"
+    "grok-bot" # xAI Grok Bot desktop app (always-on agents)
     "google-drive"
     "gpg-suite"
     "granola"
@@ -187,8 +205,22 @@ let
 in
 {
 
+  imports = [
+    ../../modules/darwin-fleet-health.nix
+  ];
+
+  # Radon-only. hosts/radon.nix is left unchanged so this does not collide
+  # with the open worker-profile edit (PR #79). The agent runs as the
+  # logged-in user and writes one JSON file; see docs/radon-fleet-health.md.
+  services.darwinFleetHealth.enable = currentSystemName == "radon";
+
   homebrew = {
     enable = true;
+    # Nobody runs brew by hand on the headless servers, so Homebrew never
+    # updated itself there and failed on the next macOS release (radon on
+    # macOS 27: "unknown or unsupported macOS version: :dunno"). Update it
+    # before each bundle on those hosts only; it slows activation.
+    onActivation.autoUpdate = builtins.elem currentSystemName serversMacos;
     taps = [
       "dicklesworthstone/tap"
       "steipete/tap"
@@ -204,7 +236,6 @@ in
       "podman"
       "protobuf"
       "tailscale"
-      "vercel-cli"
     ];
     casks = withoutServerCasks (
       (
@@ -214,6 +245,7 @@ in
           coreCasks ++ personalCasks ++ lib.optionals (!noAudio) audioCasks
       )
       ++ extraCasks
+      ++ lib.optionals (!builtins.elem currentSystemName serversMacos) dgxSparkCasks
     );
     masApps = {
       # to find ID, App Store > Share > Copy link
@@ -263,21 +295,28 @@ in
       echo "Skipping Zed default-app associations: /Applications/Zed.app not found"
     fi
 
-    # Pin Brave Browser as the default for HTML files and http(s) URL clicks.
-    if [ -d "/Applications/Brave Browser.app" ]; then
+    # Pin Brave Origin as the default for HTML files and http(s) URL clicks,
+    # falling back to Brave Browser on hosts without it (minimal casks).
+    braveBundleId=""
+    if [ -d "/Applications/Brave Origin.app" ]; then
+      braveBundleId=com.brave.Browser.origin
+    elif [ -d "/Applications/Brave Browser.app" ]; then
+      braveBundleId=com.brave.Browser
+    fi
+
+    if [ -n "$braveBundleId" ]; then
       braveDutiFailed=0
-      for handler in \
-        public.html \
-        public.url-scheme.http \
-        public.url-scheme.https; do
-        ${pkgs.duti}/bin/duti -s com.brave.Browser "$handler" all >/dev/null 2>&1 || braveDutiFailed=1
+      ${pkgs.duti}/bin/duti -s "$braveBundleId" public.html all >/dev/null 2>&1 || braveDutiFailed=1
+      # URL schemes take no role argument (public.url-scheme.* is not a UTI).
+      for scheme in http https; do
+        ${pkgs.duti}/bin/duti -s "$braveBundleId" "$scheme" >/dev/null 2>&1 || braveDutiFailed=1
       done
 
       if [ "$braveDutiFailed" -ne 0 ]; then
         echo "Some Brave default-handler associations could not be applied; continuing."
       fi
     else
-      echo "Skipping Brave default-handler associations: /Applications/Brave Browser.app not found"
+      echo "Skipping Brave default-handler associations: neither Brave Origin nor Brave Browser found in /Applications"
     fi
   '';
 }

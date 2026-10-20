@@ -1,3 +1,5 @@
+sandbox_mode = "workspace-write"
+
 [mcp_servers.context7]
 command = "/bin/sh"
 args = [
