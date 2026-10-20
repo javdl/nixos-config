@@ -5,11 +5,9 @@
 # Manager configs in flake.nix, which have no system layer to inherit from.
 #
 # The set is deliberately the intersection of what Herdr and moshi-hook can
-# drive: claude, codex, opencode, cursor, grok and omp. Herdr also offers a
-# `pi` integration, but it targets Mario Zechner's TypeScript Pi harness
-# (~/.pi/agent/extensions/*.ts), which is a different tool from the Rust
-# pi-agent this repo packages. Installing it would drop an extension nothing
-# loads, so pi ships as a binary here without a Herdr integration.
+# drive: claude, codex, opencode, cursor, grok and omp. pi ships two ways: the
+# upstream TypeScript pi-coding-agent owns `pi`, and the Rust pi-agent port is
+# `pi-rs`. Both install as plain binaries; no Herdr `pi` integration yet.
 {
   config,
   pkgs,
@@ -66,7 +64,8 @@ in
     pkgs.moshi-hook
   ]
   ++ optionalPkg pkgs.omp
-  ++ optionalPkg pkgs.pi-agent;
+  ++ optionalPkg pkgs.pi-agent
+  ++ [ pkgs.pi-coding-agent ];
 
   # Publish agent lifecycle state to Herdr on every machine. Authentication for
   # each agent stays an explicit, machine-local interactive step; this only

@@ -11,9 +11,9 @@
 #   scripts/build-cua-bots.sh --run      # build, then start the app
 set -euo pipefail
 
-# The upstream commit the patch applies to: tag cua-sdk-v0.4.1, the same
+# The upstream commit the patch applies to: tag cua-sdk-v0.5.0, the same
 # release as the `cua` CLI in lib/overlays.nix (cuaVersion). Bump together.
-CUA_REV="ed22ad958a5ab6d764c98261b24d65f80f3a6f95"
+CUA_REV="b689ad499ab0704d3efbcac926b3eba36bdd284d"
 SRC="${CUA_BOTS_SRC:-$HOME/src/cua}"
 PATCH="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/patches/cua-bots-host-placement.patch"
 
