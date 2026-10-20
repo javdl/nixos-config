@@ -127,24 +127,25 @@ in
           # agent hooks, approval round-trips). Statically linked Go binary
           # (verified `file`: statically linked), so no patchelf on NixOS.
           # Version endpoint: https://cdn.getmoshi.app/hook/latest/version.txt
-          # Checksums: https://cdn.getmoshi.app/hook/<version>/checksums.txt
-          moshiHookVersion = "0.4.22";
+          # Checksums: https://cdn.getmoshi.app/hook/v<version>/checksums.txt
+          # The CDN keeps only recent releases; old versions 404, so bump promptly.
+          moshiHookVersion = "0.4.33";
           moshiHookSources = {
             "x86_64-linux" = {
               url = "https://cdn.getmoshi.app/hook/v${moshiHookVersion}/moshi-hook_Linux_x86_64.tar.gz";
-              sha256 = "03jy5ibf79k527wcjnsk6cgnsd2qvdwmmgzh497qzkln32xildq2";
+              sha256 = "1xcaydygwv1rfzs9i5hxalq4ypgqw609x17mbi07gyjsgx6zdjgj";
             };
             "aarch64-linux" = {
               url = "https://cdn.getmoshi.app/hook/v${moshiHookVersion}/moshi-hook_Linux_arm64.tar.gz";
-              sha256 = "0zkzqjb538hld77if15q1c4353nyk4sxzghijflwn8wmwd6j7v9m";
+              sha256 = "0yyg0m6dqxnf1ria7lqalr3ikxw9p2ipykz82f1k2b05d7jpnxdj";
             };
             "x86_64-darwin" = {
               url = "https://cdn.getmoshi.app/hook/v${moshiHookVersion}/moshi-hook_Darwin_x86_64.tar.gz";
-              sha256 = "1k8s7jnlzqzazxl2zf203m0xim1d8jhv0c5x88mzzfpx65rip6i5";
+              sha256 = "14dscw1gbhl232fqrid9l7z4y6xdq1mk77wq4cqbx3kbcz9cj4k9";
             };
             "aarch64-darwin" = {
               url = "https://cdn.getmoshi.app/hook/v${moshiHookVersion}/moshi-hook_Darwin_arm64.tar.gz";
-              sha256 = "1qkx6i0sg6l31zlizxw2ynmm1m2d5q1z34507d59ixf6cka7prfd";
+              sha256 = "01rirvrdi0bhf3h7zf466g1pr2m2nh7sgza9bijjr3hxdpz0imd4";
             };
           };
           moshiHookSource = moshiHookSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for moshi-hook: ${prev.stdenv.hostPlatform.system}");

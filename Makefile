@@ -75,8 +75,12 @@ ifeq ($(UNAME), Darwin)
 	nix build '.#darwinConfigurations.$(NIXNAME).system' --json \
 		| jq -r '.[].outputs | to_entries[].value' \
 		| cachix push javdl-nixos-config
-else
+else ifeq ($(IS_NIXOS), yes)
 	nix build '.#nixosConfigurations.$(NIXNAME).config.system.build.toplevel' --json \
+		| jq -r '.[].outputs | to_entries[].value' \
+		| cachix push javdl-nixos-config
+else
+	nix build '.#homeConfigurations.$(NIXNAME).activationPackage' --json \
 		| jq -r '.[].outputs | to_entries[].value' \
 		| cachix push javdl-nixos-config
 endif
