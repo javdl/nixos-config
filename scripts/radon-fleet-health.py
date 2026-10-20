@@ -9,6 +9,12 @@ spark's vLLM port is reached through tailscale serve. The personal tailnet
 policy may drop tag:hermes to spark:8443. When spark's Ollama port answers
 and :8443 times out, the check records "not reachable by policy" and leaves
 the policy unchanged.
+
+Remote PAIR proxies on :11434 (spark, spark2, j9) answer plaintext from
+another machine with HTTP 403 and {"code":"loopback-only",...}. That means
+the proxy is up, so those three checks count it as ok. radon's own
+127.0.0.1:11434 check still requires HTTP 2xx. Any other 403, timeout, or
+connect failure stays a failure. The response body is not stored.
 """
 
 from __future__ import annotations
@@ -26,6 +32,9 @@ from pathlib import Path
 
 
 POLICY_ERROR = "not reachable by policy"
+PAIR_LOOPBACK_CODE = "loopback-only"
+PAIR_LOOPBACK_DETAIL = "up (PAIR proxy, loopback-only for plaintext)"
+PAIR_BODY_LIMIT = 4096
 FORBIDDEN_USERS = frozenset({"root", "hermes"})
 CONNECT_TIMEOUT_SECONDS = "3"
 MAX_TIME_SECONDS = "5"
@@ -37,6 +46,7 @@ HTTP_CHECKS = (
         "name": "spark_ollama",
         "url": "http://spark.buri-hoki.ts.net:11434/v1/models",
         "kind": "http_2xx",
+        "pair_proxy": True,
     },
     {
         "name": "spark_vllm",
@@ -47,11 +57,13 @@ HTTP_CHECKS = (
         "name": "spark2_ollama",
         "url": "http://spark2.buri-hoki.ts.net:11434/v1/models",
         "kind": "http_2xx",
+        "pair_proxy": True,
     },
     {
         "name": "j9_ollama",
         "url": "http://j9.buri-hoki.ts.net:11434/v1/models",
         "kind": "http_2xx",
+        "pair_proxy": True,
     },
     {
         "name": "radon_hermes_webui",
@@ -71,8 +83,12 @@ HTTP_CHECKS = (
 )
 
 
-def curl_argv(curl_bin: str, url: str) -> list[str]:
-    """Status and timing only. -q ignores ~/.curlrc so a netrc cannot attach credentials."""
+def curl_argv(curl_bin: str, url: str, *, capture_body: bool = False) -> list[str]:
+    """Status and timing. -q ignores ~/.curlrc so a netrc cannot attach credentials.
+
+    capture_body is only for the remote PAIR :11434 checks, so a 403 body can
+    be classified. The body is not written into the snapshot.
+    """
     return [
         curl_bin,
         "-q",
@@ -80,16 +96,36 @@ def curl_argv(curl_bin: str, url: str) -> list[str]:
         "--show-error",
         "--ipv4",
         "--output",
-        "/dev/null",
+        "-" if capture_body else "/dev/null",
         "--connect-timeout",
         CONNECT_TIMEOUT_SECONDS,
         "--max-time",
         MAX_TIME_SECONDS,
         "--write-out",
-        "%{http_code}",
+        "\n%{http_code}" if capture_body else "%{http_code}",
         "--url",
         url,
     ]
+
+
+def split_status_and_body(stdout: str) -> tuple[str, str]:
+    """Last line is %{http_code}; everything before it is the response body."""
+    body, separator, code = (stdout or "").rpartition("\n")
+    if not separator:
+        return "", stdout or ""
+    return body, code
+
+
+def pair_loopback_only(body: str | None) -> bool:
+    """True only for PAIR's designed plaintext refusal, not any 403 page."""
+    text = (body or "").strip()
+    if not text or len(text) > PAIR_BODY_LIMIT or not text.startswith("{"):
+        return False
+    try:
+        payload = json.loads(text)
+    except json.JSONDecodeError:
+        return False
+    return isinstance(payload, dict) and payload.get("code") == PAIR_LOOPBACK_CODE
 
 
 def check(ok: bool, status, latency: int, error) -> dict:
@@ -101,7 +137,16 @@ def check(ok: bool, status, latency: int, error) -> dict:
     }
 
 
-def interpret_http(kind: str, returncode: int, stdout: str, stderr: str, latency: int) -> dict:
+def interpret_http(
+    kind: str,
+    returncode: int,
+    stdout: str,
+    stderr: str,
+    latency: int,
+    *,
+    body: str | None = None,
+    pair_proxy: bool = False,
+) -> dict:
     code_text = (stdout or "").strip()
     status = int(code_text) if code_text.isdigit() and code_text != "000" else None
     if returncode != 0 or status is None:
@@ -110,6 +155,12 @@ def interpret_http(kind: str, returncode: int, stdout: str, stderr: str, latency
         return check(False, None, latency, error)
     if kind == "http_any" or 200 <= status < 300:
         return check(True, status, latency, None)
+    # PAIR's nvpair-proxy refuses plaintext from non-loopback peers with this
+    # body. The node is up. radon's own loopback check leaves pair_proxy unset.
+    if pair_proxy and status == 403 and pair_loopback_only(body):
+        result = check(True, status, latency, None)
+        result["detail"] = PAIR_LOOPBACK_DETAIL
+        return result
     return check(False, status, latency, f"HTTP {status}")
 
 
@@ -300,9 +351,10 @@ class RealProbes:
             "PATH": "/usr/bin:/bin",
             "HOME": "/var/empty",
         }
+        capture_body = bool(spec.get("pair_proxy"))
         try:
             completed = subprocess.run(
-                curl_argv(self.curl_bin, spec["url"]),
+                curl_argv(self.curl_bin, spec["url"], capture_body=capture_body),
                 capture_output=True,
                 text=True,
                 timeout=8,
@@ -310,12 +362,18 @@ class RealProbes:
                 check=False,
             )
             latency = int((time.monotonic() - started) * 1000)
+            stdout = completed.stdout
+            response_body = None
+            if capture_body:
+                response_body, stdout = split_status_and_body(stdout)
             result = interpret_http(
                 spec["kind"],
                 completed.returncode,
-                completed.stdout,
+                stdout,
                 completed.stderr,
                 latency,
+                body=response_body,
+                pair_proxy=capture_body,
             )
         except (OSError, subprocess.TimeoutExpired) as exc:
             latency = int((time.monotonic() - started) * 1000)
