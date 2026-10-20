@@ -41,11 +41,11 @@ let
   home-manager =
     if darwin then inputs.home-manager.darwinModules else inputs.home-manager.nixosModules;
 in
-systemFunc rec {
+systemFunc {
   inherit system;
 
   # specialArgs is the right channel for values needed during `imports` resolution
-  # (e.g., inputs.hermes-agent.nixosModules.default in hosts/loom.nix). Values set
+  # (e.g., inputs.hermes-agent.nixosModules.default in hosts/bali.nix). Values set
   # via config._module.args below ONLY become available after config evaluates,
   # which is too late for the imports list itself.
   specialArgs = {
@@ -87,8 +87,29 @@ systemFunc rec {
         inputs.nix-index-database.nixosModules.nix-index
     )
 
+    # Mosh on every machine. NixOS gets the shared module (which also opens
+    # UDP 60000-61000); nix-darwin has no programs.mosh option, so Darwin gets
+    # the package directly. Hosts needing a different firewall stance override
+    # programs.mosh.openFirewall themselves (see hosts/bali.nix).
+    (
+      if darwin then
+        ({ pkgs, ... }: { environment.systemPackages = [ pkgs.mosh ]; })
+      else
+        ../modules/mosh.nix
+    )
+
     machineConfig
     userOSConfig
+    # Joost's workstation mise updater installs upstream agent binaries.
+    # Claude's Linux release needs the conventional ELF loader path; nix-ld
+    # provides it without modifying mise's installation. Servers retain their
+    # existing runtime policy, and Omarchy provides its own native loader.
+    (
+      if !darwin && user == "joost" && !server && name != "github-runner" then
+        { programs.nix-ld.enable = true; }
+      else
+        { }
+    )
     home-manager.home-manager
     {
       home-manager.backupFileExtension = "backup";
@@ -105,6 +126,10 @@ systemFunc rec {
         { manual.manpages.enable = false; }
         # mise (dev tool / runtime version manager) on every machine
         ({ pkgs, ... }: { home.packages = [ pkgs.mise ]; })
+        # Agent CLIs (claude, codex, opencode, cursor, grok, omp, pi), Herdr
+        # integrations for them, and the moshi-hook daemon, for every user on
+        # every machine. See users/agent-clis.nix.
+        ../users/agent-clis.nix
         # programs.git manages ~/.config/git/config as a read-only store symlink,
         # so `git config --global ...` fails to lock it. Git writes --global to
         # ~/.gitconfig when it exists, and reads it after (overriding) the XDG
@@ -127,6 +152,7 @@ systemFunc rec {
         currentSystem = system;
         currentSystemName = name;
         currentSystemUser = user;
+        isServer = server;
         isWSL = isWSL;
         inputs = inputs;
       };

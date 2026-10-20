@@ -6,7 +6,7 @@
   ...
 }:
 
-# bali — loom's replacement, on a repurposed EX63 GitHub runner.
+# bali — personal server on a repurposed EX63 GitHub runner.
 # Donor box: github-runner-06 (136.243.104.36). Plain-DHCP networking, so the
 # same config would work on any of the other EX63 runners.
 #
@@ -16,16 +16,15 @@
 #   2. After first boot, re-key secrets (see .sops.yaml bali anchor):
 #      ssh-keygen -R <donor-ip>
 #      ssh-keyscan <donor-ip> 2>/dev/null | grep ed25519 | ssh-to-age
-#      # replace the &bali anchor, then (on loom, which holds the bootstrap key):
+#      # replace the &bali anchor, then (on the machine holding the bootstrap key):
 #      SOPS_AGE_KEY=$(sudo ssh-to-age -private-key -i /etc/ssh/ssh_host_ed25519_key) sops updatekeys secrets/bali.yaml
 #      make hetzner/copy NIXADDR=<donor-ip> NIXUSER=joost
 #      make hetzner/switch NIXADDR=<donor-ip> NIXNAME=bali NIXUSER=joost
 #   3. make hetzner/tailscale-auth NIXADDR=<donor-ip> TAILSCALE_AUTHKEY=tskey-auth-xxx
 
 let
-  # Hermes lives here since the 2026-07-20 cutover (loom's is gated off in
-  # hosts/loom.nix). Running both gateways with the same tokens double-answers
-  # Telegram/Discord/Slack — never enable both.
+  # Hermes lives on bali. Keep the shared platform tokens on a single gateway
+  # to avoid duplicate Telegram/Discord/Slack replies.
   enableHermes = true;
 
   # Personal (javdl/joost) GitHub Actions runners. Gated like enableHermes so a
@@ -41,18 +40,29 @@ in
   imports = [
     ../modules/hetzner-dedicated-hardware.nix
     ../modules/disko-hetzner-dedicated.nix
+    # The dedicated full-flake evaluation runner pilots Determinate Nix's
+    # parallel evaluator and continuous, low-impact Nixd garbage collector.
+    inputs.determinate.nixosModules.default
     ../modules/cachix.nix
     ../modules/secrets.nix
-    ../modules/automatic-nix-gc.nix
     ../modules/nixos-auto-update.nix
     ../modules/security-audit.nix
     ../modules/disk-cleanup.nix
     ../modules/podman.nix
     ../modules/repo-updater.nix
     ../modules/ghostty-terminfo.nix
+    # Reaches personal-tailnet machines (terra, radon) that node sharing cannot
+    # deliver to a tagged device. Profiles are added imperatively; see the
+    # module header.
+    ../modules/tailmix.nix
     ../modules/github-actions-runner.nix
+    # Cua Spaces host; enabled below.
+    ../modules/cua-spaces-host.nix
     inputs.hermes-agent.nixosModules.default
   ];
+
+  # Provides Linux Spaces to the Cua Bots app (docs/cua-bots-fleet.md).
+  services.cuaSpacesHost.enable = true;
 
   # EX63 NVMe enumeration is not stable across boots — the first provision
   # landed on the old disk via duplicate partlabels after a name swap. Pin the
@@ -60,7 +70,7 @@ in
   disko.devices.disk.main.device =
     lib.mkForce "/dev/disk/by-id/nvme-eui.000000000000000100a07525514551f9";
 
-  # Hermes Agent — personal AI gateway (see hosts/loom.nix, the current holder).
+  # Hermes Agent — personal AI gateway on bali.
   # Gated as a whole: with the module disabled the hermes user doesn't exist,
   # so an ungated sops secret with owner "hermes" would fail activation.
   sops.secrets."hermes-env" = lib.mkIf enableHermes {
@@ -94,14 +104,12 @@ in
 
   # The user manager must outlive logins: the chezmoi-memory-sync timer and the
   # persistent tmux service (users/joost/home-manager-server.nix) run under it.
-  # On loom this was enabled imperatively via loginctl; here it's declarative.
   users.users.joost.linger = true;
 
-  # Agent ops from loom: joost's personal key (users/joost/nixos.nix "loom")
-  # is passphrase-locked, so headless Claude Code sessions on loom use this
-  # key instead — the same one every runner host carried for provisioning.
+  # Headless agent access uses the same key as bali's Herdr command center
+  # (users/herdr-fleet.nix) and the runner provisioning hosts.
   users.users.joost.openssh.authorizedKeys.keys = [
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEfx6qICt/nunP+X3Wv8Y6hhZtGo0AZreAp3QOThy0SD loom-agent-nopass"
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEfx6qICt/nunP+X3Wv8Y6hhZtGo0AZreAp3QOThy0SD bali-agent-nopass"
   ];
 
   # Latest kernel for best hardware support
@@ -117,25 +125,6 @@ in
 
   # Timezone (UTC for servers)
   time.timeZone = "UTC";
-
-  # Nix configuration
-  nix = {
-    package = pkgs.nixVersions.latest;
-    extraOptions = ''
-      experimental-features = nix-command flakes
-      keep-outputs = true
-      keep-derivations = true
-    '';
-  };
-
-  # Disk-based garbage collection (only runs when disk space is low)
-  services.automaticNixGC = {
-    enable = true;
-    minFreeGB = 50;
-    maxFreeGB = 100;
-    scheduledThresholdGB = 50;
-    keepDays = 14;
-  };
 
   # Automatic NixOS updates from git repository
   services.nixosAutoUpdate = {
@@ -160,7 +149,7 @@ in
     repos = [
       "fuww/developer"
       "Dicklesworthstone/agent_flywheel_clawdbot_skills_and_integrations"
-      # Cloned on all joost machines (loom, joostclaw too) → code/javdl/joost.
+      # Cloned on all joost machines (joostclaw too) → code/javdl/joost.
       "javdl/joost"
     ];
   };
@@ -168,7 +157,8 @@ in
   # Security auditing — disabled, auditd filled disks on dev servers
   services.securityAudit.enable = false;
 
-  # Weekly disk cleanup (logs, tmp, containers, nix)
+  # Weekly disk cleanup (logs, tmp, and containers). Determinate Nixd owns
+  # incremental Nix store garbage collection on this host.
   services.diskCleanup.enable = true;
 
   # Allow unfree packages
@@ -184,6 +174,16 @@ in
   # interface). Recovery path if tailscale breaks: Hetzner Robot rescue.
   networking.firewall.enable = true;
   networking.firewall.allowedTCPPorts = [ ];
+
+  # Mosh comes from lib/mksystem.nix on every host, but its default
+  # openFirewall would punch UDP 60000-61000 into the public firewall — which
+  # is exactly what the "no public ports" stance above rules out. Mosh still
+  # works over the tailnet, where tailscale0 is a trusted interface.
+  programs.mosh.openFirewall = false;
+
+  # Multi-tailnet daemon (see modules/tailmix.nix). Enabled here only: bali is
+  # the Herdr controller that needs to reach the personal tailnet.
+  services.tailmix.enable = true;
 
   # SSH daemon - key-only auth, tailnet-only (no port is publicly open).
   # Port 2222 additionally allows password auth for clients that can't do
@@ -217,6 +217,74 @@ in
 
   # Docker for containerized development
   virtualisation.docker.enable = true;
+
+  # Independent single-node cluster for SkyPilot's Kubernetes integration.
+  # Do not use modules/k3s.nix here: its firewall rules open public ports.
+  # Registration and private connectivity: docs/bali-skypilot.md.
+  services.k3s = {
+    enable = true;
+    role = "server";
+    manifests.skypilot.source = ./bali-skypilot-rbac.yaml;
+    disable = [
+      "traefik"
+      "servicelb"
+    ];
+    extraFlags = [
+      "--node-ip=100.113.194.113"
+      "--advertise-address=100.113.194.113"
+      "--tls-san=bali.stargazer-duck.ts.net"
+      "--write-kubeconfig-mode=0600"
+      "--secrets-encryption"
+      "--cluster-cidr=10.52.0.0/16"
+      "--service-cidr=10.53.0.0/16"
+      "--cluster-dns=10.53.0.10"
+      # One node needs no inter-host overlay listener.
+      "--flannel-backend=host-gw"
+      "--flannel-iface=tailscale0"
+      # kube-proxy can bypass the host firewall for NodePort services.
+      "--kube-proxy-arg=nodeport-addresses=127.0.0.0/8,100.113.194.113/32"
+    ];
+  };
+  systemd.services.k3s = {
+    after = [ "tailscaled.service" ];
+    wants = [ "tailscaled.service" ];
+  };
+
+  # Reverse forwarding keeps the Kubernetes API private across the two tailnets.
+  # Uses Bali's existing exe.dev key; credentials never enter the Nix store.
+  systemd.services.skypilot-bali-tunnel = {
+    description = "Private Bali Kubernetes API tunnel to SkyPilot";
+    after = [
+      "network-online.target"
+      "k3s.service"
+    ];
+    wants = [
+      "network-online.target"
+      "k3s.service"
+    ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      User = "joost";
+      ExecStart = lib.concatStringsSep " " [
+        "${pkgs.openssh}/bin/ssh -F /dev/null -N -T"
+        "-i /home/joost/.ssh/id_exe_fu_sites"
+        "-o IdentitiesOnly=yes -o BatchMode=yes"
+        "-o StrictHostKeyChecking=yes -o HostKeyAlias=exe.dev"
+        "-o UserKnownHostsFile=/home/joost/.ssh/known_hosts"
+        "-o ExitOnForwardFailure=yes -o ConnectTimeout=15"
+        "-o ServerAliveInterval=30 -o ServerAliveCountMax=3"
+        "-R 127.0.0.1:16443:127.0.0.1:6443"
+        "joost@skypilot.exe.xyz"
+      ];
+      Restart = "always";
+      RestartSec = "10s";
+      NoNewPrivileges = true;
+      PrivateTmp = true;
+      ProtectSystem = "strict";
+      ProtectHome = "read-only";
+      UMask = "0077";
+    };
+  };
 
   # Podman for rootless containers (Docker alternative with better security)
   virtualisation.podmanConfig = {
@@ -337,9 +405,27 @@ in
     ];
   };
 
+  # Tailscale Aperture, the tailnet AI gateway (node `ai`, tag:aperture; the
+  # tailnet policy lets tag:devboxes reach it on tcp:80). bali runs with
+  # --accept-dns=false, so its MagicDNS name is pinned here.
+  networking.hosts."100.126.110.21" = [ "ai.stargazer-duck.ts.net" "ai" ];
+
+  # Anthropic inference (Claude Code, omp, SDKs) goes through Aperture's
+  # `anthropic-sub` provider, which passes each client's own subscription
+  # OAuth token or API key through to api.anthropic.com. OAuth login and
+  # token refresh still go to Anthropic directly. No OPENAI_BASE_URL: Aperture
+  # serves the ChatGPT subscription backend (`openai-sub`), which rejects
+  # platform API keys; Codex and omp point at it in their own config
+  # (javdl/dotfiles, bali only).
+  environment.variables.ANTHROPIC_BASE_URL = "http://ai.stargazer-duck.ts.net";
+
   # Allow Tailscale traffic through firewall
   networking.firewall = {
-    trustedInterfaces = [ "tailscale0" ];
+    trustedInterfaces = [
+      "tailscale0"
+      # Allow K3s pod traffic to the host.
+      "cni0"
+    ];
     allowedUDPPorts = [ config.services.tailscale.port ];
   };
 
@@ -445,9 +531,9 @@ in
       ) javdlRunnerCount
     )
     // {
-      # Dedicated runner for this repo. fh.yml's runner-map sends the
-      # x86_64-linux leg to the "nixos-config" label so it lands here rather
-      # than on a 16 GB GitHub-hosted runner.
+      # Dedicated runner for this repo. flake-checker.yml sends full flake
+      # evaluation to the "nixos-config" label so it lands here rather than on
+      # a memory-constrained GitHub-hosted runner.
       nixos-config = common // {
         name = "bali-nixos-config";
         url = "https://github.com/javdl/nixos-config";

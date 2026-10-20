@@ -1,10 +1,10 @@
 # Agent dev boxes (rondo)
 
-Agent dev boxes run autonomous coding agents — currently
+Agent dev boxes run autonomous coding agents: currently
 [rondo](https://github.com/sandsower/rondo), a Claude Code agent that polls
 Linear for issues, opens an isolated git-worktree workspace per issue, and runs
 `claude` until the work is done. rondo is an engineering preview; we run it in
-the **deps + manual run** model — NixOS provides the dev box, the agent operator
+the **deps + manual run** model: NixOS provides the dev box, and the agent operator
 sets up and launches rondo by hand (mirrors how it is tested on peterbot).
 
 ## Architecture (built for reuse)
@@ -19,7 +19,7 @@ sets up and launches rondo by hand (mirrors how it is tested on peterbot).
 | `hosts/hardware/<agent>-NN.nix` | Per-machine disk/hardware layout. |
 
 The runtime rondo needs (elixir/erlang/node/`@anthropic-ai/claude-code`/gh) is
-**not** baked into Nix — the agent manages it with `mise`, which is on every host
+**not** baked into Nix. The agent manages it with `mise`, which is on every host
 via `lib/mksystem.nix` `sharedModules`. This matches Peter's working setup and
 keeps version bumps out of the system rebuild.
 
@@ -105,7 +105,7 @@ deps via Docker, which is enabled on the box. Once steps 1–4 are done the
 Agent boxes must be **`tag:devboxes`** so the tailnet's devbox grants/ssh rules
 apply (agent mesh, and `group:it`/`group:devbox-users` SSH access as
 `autogroup:nonroot`). `modules/agent-dev-box.nix` self-declares it via
-`--advertise-tags=tag:devboxes`, which only takes effect at first auth — so the
+`--advertise-tags=tag:devboxes`, which only takes effect at first auth, so the
 **provisioning authkey must be authorized for `tag:devboxes`** (tag owners:
 `group:it`, `group:management`). A box reused from another tag (e.g. agent-jay-01
 came from `tag:github-runner`) must be retagged once in the admin console
@@ -116,7 +116,7 @@ correct.
 
 These boxes are reachable only over **Tailscale SSH** (public port 22 is firewalled
 upstream). Tailscale SSH authorizes by the **tailnet ACL `ssh` block**, *not* by
-`authorized_keys` — the local account you land on must be listed in the rule's
+`authorized_keys`. The local account you land on must be listed in the rule's
 `users`, and your device must match `src`. The agent account (`agent-jay`) is a
 service account run by the rondo systemd unit; humans operate it via their own
 login + `sudo -iu agent-jay`.
@@ -166,7 +166,7 @@ Note: if **caam** swaps `~/.claude`, re-check the servers survive the switch. Th
 ## The agent-jay-01 box
 
 Reuses the decommissioned `github-runner-01` Hetzner CCX33 (8 vCPU / 30 GB /
-220 GB, Tailscale `100.78.158.57`). Rebuilt **in place** — the disk layout is
+220 GB, Tailscale `100.78.158.57`). Rebuilt **in place**: the disk layout is
 label-based, so the hostname change does not move any mounts. Admin via
 `ssh joost@100.78.158.57`; the `agent-jay` account is SSH-key-only once a key is
 added to `users/agent-jay/nixos.nix`.

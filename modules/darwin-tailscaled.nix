@@ -15,9 +15,14 @@
 #     user and exits because tailscaled needs root.
 #
 # What this module fixes vs. a bare launchd.daemons.tailscaled block:
-#   --tun=userspace-networking  Required on macOS without macsys — third-party
-#                               apps can't open kernel TUN devices, so without
-#                               this flag tailscaled fails to set up networking.
+#   tun                         userspace-networking by default: nothing is
+#                               routed through the OS, so local apps cannot
+#                               dial tailnet IPs, and inbound tailnet TCP is
+#                               handed to services as a localhost connection.
+#                               "utun" makes this root daemon create a kernel
+#                               utun interface instead, like upstream's
+#                               `tailscaled install-system-daemon` (radon, for
+#                               NVIDIA PAIR).
 #   --state / --statedir        Persistent state dir so auth survives reboots.
 #   --operator                  Lets the named local user run `tailscale ...`
 #                               without sudo (applied via auto-up).
@@ -106,6 +111,31 @@ in
       ];
       description = "Flags passed to `tailscale up` by the auto-up job.";
     };
+
+    tun = mkOption {
+      type = types.str;
+      default = "userspace-networking";
+      example = "utun";
+      description = ''
+        Value for tailscaled's `--tun`. "utun" gives the host real tailnet
+        routes, so local apps can reach peers and see their real source
+        addresses; `extraUpFlags`' `--accept-routes` then also installs
+        advertised subnet routes in the OS routing table.
+      '';
+    };
+
+    magicDNSDomains = mkOption {
+      type = types.listOf types.str;
+      default = [ ];
+      example = [ "stargazer-duck.ts.net" ];
+      description = ''
+        Extra DNS suffixes to send to MagicDNS (100.100.100.100) through
+        /etc/resolver/<domain>. tailscaled only routes its own tailnet's
+        suffix, so names of nodes shared in from another tailnet (resolvable
+        only by their full name, e.g. bali.stargazer-duck.ts.net) otherwise
+        never reach MagicDNS on macOS.
+      '';
+    };
   };
 
   config = mkIf cfg.enable (mkMerge [
@@ -120,7 +150,7 @@ in
             --statedir=${cfg.stateDir} \
             --socket=${cfg.socket} \
             --port=${toString cfg.port} \
-            --tun=userspace-networking
+            --tun=${cfg.tun}
         '';
         serviceConfig = {
           RunAtLoad = true;
@@ -129,6 +159,15 @@ in
           StandardErrorPath = "/var/log/tailscaled.log";
         };
       };
+    }
+
+    {
+      environment.etc = lib.listToAttrs (
+        map (domain: {
+          name = "resolver/${domain}";
+          value.text = "nameserver 100.100.100.100\n";
+        }) cfg.magicDNSDomains
+      );
     }
 
     (mkIf (cfg.authKeyFile != null) {

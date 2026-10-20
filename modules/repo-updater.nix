@@ -22,18 +22,22 @@ let
     mkIf
     ;
 
-  ru = pkgs.stdenvNoCC.mkDerivation rec {
-    pname = "repo-updater";
-    version = "1.2.1";
-    src = pkgs.fetchurl {
-      url = "https://github.com/Dicklesworthstone/repo_updater/releases/download/v${version}/ru";
-      sha256 = "sha256-fcRlzFpHECtoqYMgKxAm1FHXZ9dslp/gPG6sFya/Nwk=";
+  ru =
+    let
+      version = "1.2.1";
+    in
+    pkgs.stdenvNoCC.mkDerivation {
+      pname = "repo-updater";
+      inherit version;
+      src = pkgs.fetchurl {
+        url = "https://github.com/Dicklesworthstone/repo_updater/releases/download/v${version}/ru";
+        sha256 = "sha256-fcRlzFpHECtoqYMgKxAm1FHXZ9dslp/gPG6sFya/Nwk=";
+      };
+      dontUnpack = true;
+      installPhase = ''
+        install -Dm755 $src $out/bin/ru
+      '';
     };
-    dontUnpack = true;
-    installPhase = ''
-      install -Dm755 $src $out/bin/ru
-    '';
-  };
 in
 {
   options.services.repoUpdater = {

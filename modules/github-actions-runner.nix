@@ -5,9 +5,16 @@
   ...
 }:
 
-with lib;
-
 let
+  inherit (lib)
+    mapAttrs'
+    mkEnableOption
+    mkForce
+    mkIf
+    mkOption
+    nameValuePair
+    types
+    ;
   cfg = config.services.github-actions-runner;
 in
 {
