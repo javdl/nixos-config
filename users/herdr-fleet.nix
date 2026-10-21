@@ -22,7 +22,9 @@ let
   isFu137 = currentSystemName == "fu137";
   # radon is the macOS fleet worker; its server runs as a launchd agent.
   isRadon = currentSystemName == "radon";
-  isFleetMachine = isController || isFu137 || isRadon || provisionAgentRuntime;
+  # DGX Sparks are fleet nodes. Home Manager replaces the bootstrap unit.
+  isSpark = currentSystemName == "spark" || currentSystemName == "spark2";
+  isFleetMachine = isController || isFu137 || isRadon || isSpark || provisionAgentRuntime;
 
   # Single fleet inventory consumed by both hosts.toml and herdctl, with one
   # SSH destination per controller (null = not mirrored from there).
@@ -94,13 +96,17 @@ let
       remoteBin = "/etc/profiles/per-user/joost/bin/herdr";
       alwaysControl = true;
     }
+    # Nix profile, same as fu137. The herdr-agents user service on the Spark
+    # execs the store path; this symlink tracks the current generation.
+    # Switch the Sparks before bali or the command pane pick up this path
+    # (docs/dgx-spark.md).
     {
       name = "spark";
       role = "gpu";
       fromBali = "ssh://joost@spark";
       fromCmdpane = "ssh://joost@100.114.192.43:2222";
       prefix = "sp1";
-      remoteBin = "/home/joost/.local/bin/herdr";
+      remoteBin = "/home/joost/.nix-profile/bin/herdr";
       alwaysControl = true;
     }
     {
@@ -109,14 +115,14 @@ let
       fromBali = "ssh://joost@spark2";
       fromCmdpane = "ssh://joost@100.109.106.44:2222";
       prefix = "sp2";
-      remoteBin = "/home/joost/.local/bin/herdr";
+      remoteBin = "/home/joost/.nix-profile/bin/herdr";
       alwaysControl = true;
     }
   ];
 
-  controllerNodes = map (node: node // { uri = if cmdpane then node.fromCmdpane else node.fromBali; }) (
-    builtins.filter (node: !cmdpane || node.fromCmdpane != null) fleetNodes
-  );
+  controllerNodes = map (
+    node: node // { uri = if cmdpane then node.fromCmdpane else node.fromBali; }
+  ) (builtins.filter (node: !cmdpane || node.fromCmdpane != null) fleetNodes);
 
   herdrFleetConfig = pkgs.writeText "herdr-fleet-config.toml" ''
     onboarding = false
@@ -309,12 +315,13 @@ lib.mkIf isFleetMachine {
     '';
   };
 
-  # Bali is a tagged device while fu137 deliberately remains user-owned, so
-  # Tailscale SSH cannot authorize this direction; the command pane is in
-  # another tailnet altogether. Append the controller keys to the user-owned
-  # file instead of declaring home.file: a Home Manager symlink would replace
-  # every other key already trusted by this workstation.
-  home.activation.herdrFleetAuthorizedKey = lib.mkIf isFu137 (
+  # Bali is a tagged device while fu137 and the Sparks deliberately remain
+  # user-owned, so Tailscale SSH cannot authorize this direction; the command
+  # pane is in another tailnet altogether. Append the controller keys to the
+  # user-owned file instead of declaring home.file: a Home Manager symlink
+  # would replace every other key already trusted by this workstation.
+  # Exact-line match, same as fu137. CX7 peer lines are not in the repo.
+  home.activation.herdrFleetAuthorizedKey = lib.mkIf (isFu137 || isSpark) (
     lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       auth_dir="$HOME/.ssh"
       auth_file="$auth_dir/authorized_keys"
@@ -383,7 +390,8 @@ lib.mkIf isFleetMachine {
 
   # Ensure every fleet machine publishes Claude and Codex lifecycle state to
   # Herdr. Authentication remains an explicit, machine-local interactive step.
-  home.activation.herdrAgentIntegrations = lib.mkIf isFleetMachine (
+  # Sparks are the minimal headless profile and do not get this installer.
+  home.activation.herdrAgentIntegrations = lib.mkIf (!isSpark) (
     lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       if [ ! -x "$HOME/.local/bin/claude" ]; then
         $DRY_RUN_CMD ${pkgs.coreutils}/bin/env \

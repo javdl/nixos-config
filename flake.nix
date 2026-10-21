@@ -164,7 +164,7 @@
             # lib/mksystem.nix; this profile has no system layer to inherit it.
             ./users/agent-clis.nix
             (
-              { lib, pkgs, ... }:
+              { lib, ... }:
               {
                 nixpkgs.config.allowUnfree = true;
                 home.username = "joost";
@@ -246,6 +246,38 @@
           pkgs.tailmix
         ];
       };
+
+      # DGX Spark (DGX OS / Ubuntu 24.04, aarch64-linux). A small headless
+      # profile, not mkOmarchyHome: no workstation packages, no agent-clis,
+      # no chezmoi. See users/joost/home-manager-spark.nix and docs/dgx-spark.md.
+      mkSparkHome =
+        { hostName }:
+        let
+          pkgs = import nixpkgs {
+            system = "aarch64-linux";
+            overlays = overlays;
+            config.allowUnfree = true;
+          };
+        in
+        home-manager.lib.homeManagerConfiguration {
+          inherit pkgs;
+          extraSpecialArgs = {
+            inherit inputs;
+          };
+          modules = [
+            (import ./users/joost/home-manager-spark.nix { inherit hostName; })
+            (
+              { lib, ... }:
+              {
+                nixpkgs.config.allowUnfree = true;
+                _module.args.pkgsPath = lib.mkForce nixpkgs;
+              }
+            )
+          ];
+        };
+
+      sparkHome = mkSparkHome { hostName = "spark"; };
+      spark2Home = mkSparkHome { hostName = "spark2"; };
     in
     {
       # `nix fmt` — formats this repo's own Nix sources only. lib/overlays.nix
@@ -361,6 +393,14 @@
             cfg: cfg.config.system.build.toplevel.drvPath
           )
           // mkHostEvalChecks "home" self.homeConfigurations (cfg: cfg.activationPackage.drvPath)
+        )
+        // nixpkgs.lib.optionalAttrs (system == "aarch64-linux") (
+          # spark and spark2 are aarch64-linux homeConfigurations. The
+          # x86_64-linux gate above also evaluates them (every home config).
+          # This gate evaluates those two outputs on aarch64-linux itself.
+          mkHostEvalChecks "home" (nixpkgs.lib.filterAttrs (
+            name: _: name == "spark" || name == "spark2"
+          ) self.homeConfigurations) (cfg: cfg.activationPackage.drvPath)
         )
       );
 
@@ -529,5 +569,10 @@
       homeConfigurations."j9" = j9Home;
       homeConfigurations."mba" = mbaHome;
       homeConfigurations."omarchy" = omarchyHome;
+
+      # DGX OS (Ubuntu 24.04) on the two Grace-Blackwell Sparks. Minimal
+      # headless profile, separate from mkOmarchyHome. See docs/dgx-spark.md.
+      homeConfigurations."spark" = sparkHome;
+      homeConfigurations."spark2" = spark2Home;
     };
 }
