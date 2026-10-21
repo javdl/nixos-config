@@ -4,10 +4,10 @@
 # users/joost/home-manager.nix, users/agent-clis.nix, or chezmoi.
 # The only packages are mosh, tmux, iperf3, and herdr. Herdr's fleet node
 # (service, fleet.toml, controller authorized_keys) comes from
-# users/herdr-fleet.nix. The NAS and CX7 files rendered for a one-time root
-# install come from users/dgx-spark.nix. The dsv41 TP2 cluster is one
-# definition in users/dsv41-cluster.nix: this host runs the unit for its
-# own rank. See docs/dgx-spark.md.
+# users/herdr-fleet.nix. users/dgx-spark.nix renders the NAS and CX7 files
+# for a one-time root install and appends radon's sparks public key.
+# The dsv41 TP2 cluster is one definition in users/dsv41-cluster.nix: this
+# host runs the unit for its own rank. See docs/dgx-spark.md.
 { hostName }:
 { lib, pkgs, ... }:
 {
