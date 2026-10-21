@@ -83,7 +83,10 @@ the mirror package, `hosts.toml`, and plugin activation are all gated on
   network build step is removed because Nix supplies the verified binary.
 - `scripts/bootstrap-herdr-node.sh` installs the checksum-pinned Herdr
   binary (x86_64 or aarch64), integrations, config, and lingering user service
-  on a non-Nix Ubuntu node (exe.dev worker, Sparks).
+  on a non-Nix Ubuntu node (exe.dev worker). The Sparks' user profile is
+  Home Manager (`homeConfigurations.spark` / `spark2`, see
+  [docs/dgx-spark.md](dgx-spark.md)); the script's `~/.local/bin/herdr` is
+  still the binary `remoteBin` and the lingering user unit exec.
 - `hosts/github-runner-{03,04,05}.nix` import the node module.
 - `users/joost/home-manager-server.nix` enables controller mode only on Bali.
 - `users/joost/home-manager.nix` enables node mode on fu137 and radon without touching
@@ -131,7 +134,11 @@ ssh spark2 'bash -s' < scripts/bootstrap-herdr-node.sh
 
 The bootstrap is idempotent, installs the pinned Herdr release, enables linger
 (via sudo, only when it is not already on), and verifies a representative
-workspace command after starting the `agents` service.
+workspace command after starting the `agents` service. On the Sparks, user
+packages and SSH client aliases come from Home Manager (`make switch
+NIXNAME=spark` or `spark2`, [docs/dgx-spark.md](dgx-spark.md)). Re-running
+the bootstrap there refreshes `~/.local/bin/herdr` and the user unit the
+fleet still execs; it does not replace the Home Manager profile.
 
 ## exe.dev command pane
 
@@ -154,8 +161,11 @@ work-tailnet nodes are cross-tailnet, so every destination is OpenSSH:
 | spark, spark2 | tailnet IP, port 2222 | same grant |
 
 Its key is `~/.ssh/herdr-cmdpane` (public half in
-`users/herdr-fleet-keys.nix`). The Sparks are not Nix-managed: their
-`~/.ssh/authorized_keys` carries the key by hand.
+`users/herdr-fleet-keys.nix`). The Spark Home Manager activation appends
+that key, and the other keys already published in this repo, onto the
+existing `~/.ssh/authorized_keys`. It does not replace the file. The CX7
+`from=` lines are not in the repo and stay as they are; see
+[docs/dgx-spark.md](dgx-spark.md).
 
 Set it up once:
 

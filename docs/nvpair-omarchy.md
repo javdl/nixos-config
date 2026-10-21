@@ -3,8 +3,9 @@
 fu137 (RTX 3090), j9 (RTX 4090) and radon (Mac) run
 [NVIDIA Personal AI Router](https://github.com/NVIDIA/Personal-AI-Router)
 (PAIR) as one cluster, together with the two DGX Spark-class boxes `spark`
-and `spark2` (Ubuntu, not Nix-managed; PAIR runs there as a user unit in
-tmux). Each node's local proxy sends every request to a node that holds the
+and `spark2` (Ubuntu; the joost user profile is Home Manager, see
+docs/dgx-spark.md; PAIR runs there as a user unit in tmux and this repo
+does not manage it). Each node's local proxy sends every request to a node that holds the
 requested model, so an app on any member can use all of them through
 `http://127.0.0.1:11434` (Ollama API), `http://127.0.0.1:1234` (OpenAI API)
 or, since PAIR 1.0.0, `http://127.0.0.1:8080` (llama.cpp, OpenAI API).

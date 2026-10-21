@@ -331,6 +331,28 @@ uses via `lib/tailmix-service.nix`, so the two cannot drift. See
 
 Only add CLI tools that complement Omarchy without conflicting. `playerctl` is the one remaining supplemental package from the pre-Quattro list.
 
+### NVIDIA DGX Spark (DGX OS, Ubuntu)
+
+`spark` and `spark2` are Grace-Blackwell DGX Sparks (DGX OS, Ubuntu 24.04,
+aarch64-linux). They use the same flake output as the Omarchy boxes:
+standalone `homeConfigurations`, applied with `make test` / `make switch`
+because the Makefile treats any non-NixOS Linux as Home Manager. There is no
+system-manager (or NixOS) module for non-NixOS hosts, so fstab, sudoers, the
+CX7 link, and apt stay documented system TODOs. Do not invent a second
+mechanism, and do not manage `spark-vllm`, Docker, the NVIDIA driver, CUDA,
+the DGX OS updater, or `dgx-dashboard`.
+
+| Host | Hardware | Output | Notes |
+|---|---|---|---|
+| `spark` | DGX Spark, GB10, 128 GB, `172.20.1.114/23` | `homeConfigurations."spark"` | CX7 via netplan/networkd |
+| `spark2` | DGX Spark, GB10, 128 GB, `172.20.1.125/23` | `homeConfigurations."spark2"` | CX7 via NetworkManager; no networkd netplan |
+
+Both calls go through `mkSparkHome` and `users/joost/home-manager-spark.nix`.
+Give each box its own call. The desktop profile (`users/joost/home-manager.nix`)
+is not imported: its chezmoi activation rewrites `~/.ssh/config`. Apply
+instructions, the exact unmanaged system files, and the CX7 `authorized_keys`
+note are in [`docs/dgx-spark.md`](docs/dgx-spark.md).
+
 ## Code Style
 
 - Two-space indentation for all Nix files

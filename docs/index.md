@@ -15,7 +15,10 @@ target host and current source before running them.
    server profiles default to `home-manager-server.nix`.
 3. For standalone Omarchy, follow `mkOmarchyHome` in the flake and read the
    [Omarchy ownership rules](../AGENTS.md#omarchy-quattro-machines-arch-linux).
-4. Follow imports before editing shared settings; find consumers with
+4. For the DGX Sparks, follow `mkSparkHome` in the flake and the
+   [DGX Spark runbook](dgx-spark.md). That output is user-level Home Manager,
+   same as Omarchy; system files are documented there and are not a NixOS host.
+5. Follow imports before editing shared settings; find consumers with
    `rg -n 'settingOrModuleName' flake.nix lib modules users hosts`.
 
 ## Configure, build, and deploy
@@ -49,6 +52,7 @@ directory in older guidance do not describe the current layout.
 | Run Cua Bots on the fleet (Spaces hosts, controller Mac) | [Host module](../modules/cua-spaces-host.nix), [fu137 profile](../users/cua-spaces-host-omarchy.nix), [app build](../scripts/build-cua-bots.sh) | [Cua Bots fleet](cua-bots-fleet.md) |
 | Change Hermes gateway deployment | [bali](../hosts/bali.nix), [flake inputs](../flake.nix) | [Bali gateway constraints](../AGENTS.md#bali-personal-server); distinguish the gateway from the packaged CLI |
 | Change Omarchy desktop startup | [Startup module](../users/joost/omarchy-startup.nix) | [Startup ownership](omarchy-startup.md), [Omarchy platform boundaries](../AGENTS.md#omarchy-quattro-machines-arch-linux) |
+| Apply or change a DGX Spark (`spark`, `spark2`) | [Spark profile](../users/joost/home-manager-spark.nix), `mkSparkHome` in [flake.nix](../flake.nix) | [DGX Spark runbook](dgx-spark.md): user profile, system-file TODOs, what must not be restarted |
 | Configure a second tailnet | [Shared service definition](../lib/tailmix-service.nix), [NixOS module](../modules/tailmix.nix) | [Tailmix on Omarchy](tailmix-omarchy.md) |
 | Use Bali as SkyPilot compute | [Bali host configuration](../hosts/bali.nix) | [K3s setup and private connectivity](bali-skypilot.md) |
 | Configure Companion or sync buttons | [Omarchy Companion module](../users/companion-omarchy.nix) | [fu137 setup](companion-omarchy.md), [Companion sync](../AGENTS.md#bitfocus-companion-config-sync) |

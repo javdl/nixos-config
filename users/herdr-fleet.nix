@@ -94,6 +94,10 @@ let
       remoteBin = "/etc/profiles/per-user/joost/bin/herdr";
       alwaysControl = true;
     }
+    # remoteBin stays the bootstrap copy in ~/.local/bin. Home Manager also
+    # installs the overlay herdr on PATH (docs/dgx-spark.md); the lingering
+    # user service still execs this path, so the controller must too until
+    # that unit is cut over.
     {
       name = "spark";
       role = "gpu";
@@ -114,9 +118,9 @@ let
     }
   ];
 
-  controllerNodes = map (node: node // { uri = if cmdpane then node.fromCmdpane else node.fromBali; }) (
-    builtins.filter (node: !cmdpane || node.fromCmdpane != null) fleetNodes
-  );
+  controllerNodes = map (
+    node: node // { uri = if cmdpane then node.fromCmdpane else node.fromBali; }
+  ) (builtins.filter (node: !cmdpane || node.fromCmdpane != null) fleetNodes);
 
   herdrFleetConfig = pkgs.writeText "herdr-fleet-config.toml" ''
     onboarding = false

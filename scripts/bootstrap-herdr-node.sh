@@ -1,8 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Bootstrap a non-Nix Linux Herdr fleet worker (exe.dev VM, DGX Sparks).
-# Version and hashes match the herdr overlay in lib/overlays.nix.
+# Bootstrap a non-Nix Linux Herdr fleet worker (exe.dev VM, and the DGX
+# Sparks until their user service is cut over). spark and spark2 also get
+# herdr from Home Manager (homeConfigurations, lib/overlays.nix). This
+# script's ~/.local/bin/herdr is still what the fleet remoteBin and the
+# lingering user unit exec. Do not point those at the Nix profile until
+# the unit is switched; see docs/dgx-spark.md.
+# Version and hashes match the herdr release the Sparks were bootstrapped
+# with. The overlay in lib/overlays.nix may be a newer release.
 readonly herdr_version="0.9.3"
 case "$(uname -s)-$(uname -m)" in
   Linux-x86_64)
