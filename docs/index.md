@@ -28,6 +28,7 @@ target host and current source before running them.
 | --- | --- | --- |
 | Understand system composition | [flake.nix](../flake.nix), [lib/mksystem.nix](../lib/mksystem.nix) | [Architecture](../AGENTS.md#architecture) |
 | Add a host or change its services | [hosts/](../hosts/), [modules/](../modules/) | [Adding configurations](../AGENTS.md#adding-configurations) |
+| Compact radon AI worker | [Radon host](../hosts/radon.nix), [profile test](../tests/radon-worker.nix) | [Scope, verification and cleanup boundaries](radon-ai-worker.md) |
 | Change user packages or settings | [users/](../users/), [shared settings](../users/shared-home-manager.nix) | Confirm the selected user profile and its imports first |
 | Update a package, release binary, or hash | [lib/overlays.nix](../lib/overlays.nix), [flake.lock](../flake.lock) | [Overlay packaging](../AGENTS.md#overlay-packaging-patterns), [update-overlays skill](../skills/update-overlays/SKILL.md) |
 | Build or activate a host | [Makefile](../Makefile) | [Build commands](../AGENTS.md#build-commands), [testing workflow](../AGENTS.md#testing-workflow); pass `NIXNAME` explicitly and check the OS branch |
