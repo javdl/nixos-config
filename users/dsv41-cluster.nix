@@ -72,12 +72,18 @@ let
     healthFailures = 2;
     healthTimeoutSec = 90;
     followEvery = "30s";
-    readyRetries = 40;
+    # 80 * 15s = 20 min. A cold load is ~6.5 min plus pairing.
+    readyRetries = 80;
     readyRetryDelaySec = 15;
     fabricWaitSec = 120;
     masterWaitSec = 180;
     restartSec = 30;
-    timeoutStartSec = "20min";
+    # Head start covers ExecStartPre only. Model load is dsv41-cluster-ready.
+    headTimeoutStartSec = "4min";
+    # Worker ExecStartPre waits for the fabric (120s) and the head (180s).
+    workerTimeoutStartSec = "8min";
+    # ready.sh sleeps about 20 min, plus the /health and /v1/models curls.
+    readyTimeoutStartSec = "25min";
     timeoutStopSec = 90;
     stopTimeoutSec = 60;
     startLimitIntervalSec = 3600;
@@ -206,25 +212,36 @@ let
     Service = {
       Type = "exec";
       Environment = [ "DSV41_CLUSTER_ENV=${nodeEnv}" ];
-      ExecStartPre = [
-        "${scriptDir}/prepare.sh wait-fabric"
-        "${scriptDir}/prepare.sh wait-master"
-        "${scriptDir}/prepare.sh preflight"
-        "${scriptDir}/gid.sh"
-        "-${scriptDir}/prepare.sh docker-rm"
-        "${scriptDir}/prepare.sh drop-caches"
-        "${scriptDir}/prepare.sh api-key"
-      ];
+      ExecStartPre =
+        lib.optionals isHead [
+          # A leftover readiness poll would restart this unit when its
+          # budget runs out. Stop it before replacing the container.
+          "-/usr/bin/systemctl --user stop dsv41-cluster-ready.service"
+        ]
+        ++ [
+          "${scriptDir}/prepare.sh wait-fabric"
+          "${scriptDir}/prepare.sh wait-master"
+          "${scriptDir}/prepare.sh preflight"
+          "${scriptDir}/gid.sh"
+          "-${scriptDir}/prepare.sh docker-rm"
+          "${scriptDir}/prepare.sh drop-caches"
+          "${scriptDir}/prepare.sh api-key"
+        ];
       ExecStart = "${scriptDir}/run.sh";
       ExecStop = "/usr/bin/docker stop -t ${toString cluster.stopTimeoutSec} ${cluster.containerName}";
+      # `docker run --rm` can leave the container behind when the client
+      # is killed. Always remove it once the unit has stopped.
+      ExecStopPost = "-${scriptDir}/prepare.sh docker-rm";
       Restart = "always";
       RestartSec = toString cluster.restartSec;
-      TimeoutStartSec = cluster.timeoutStartSec;
+      TimeoutStartSec = if isHead then cluster.headTimeoutStartSec else cluster.workerTimeoutStartSec;
       TimeoutStopSec = toString cluster.timeoutStopSec;
       KillMode = "mixed";
     }
     // lib.optionalAttrs isHead {
-      ExecStartPost = "${scriptDir}/ready.sh";
+      # Returns immediately. Readiness is a separate oneshot so
+      # home-manager switch does not wait for the cold load.
+      ExecStartPost = "-/usr/bin/systemctl --user start --no-block dsv41-cluster-ready.service";
     };
     Install.WantedBy = [ "default.target" ];
   };
@@ -291,6 +308,17 @@ in
       ${unitName} = clusterService;
     }
     // lib.optionalAttrs isHead {
+      # Not installed into a target. The head starts it with --no-block,
+      # so a switch does not wait on this oneshot.
+      dsv41-cluster-ready = {
+        Unit.Description = "Wait until the dsv41 head serves /health and accepts the API key";
+        Service = {
+          Type = "oneshot";
+          Environment = [ "DSV41_CLUSTER_ENV=${nodeEnv}" ];
+          ExecStart = "${scriptDir}/ready.sh";
+          TimeoutStartSec = cluster.readyTimeoutStartSec;
+        };
+      };
       dsv41-cluster-health = {
         Unit.Description = "Probe the dsv41 cluster and restart the head after repeated chat failures";
         Service = {

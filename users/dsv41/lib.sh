@@ -61,3 +61,10 @@ dsv41_docker() {
   fi
   printf '%s\n' /usr/bin/docker
 }
+
+# Written by ready.sh after /health and an authenticated /v1/models both
+# succeed. health.sh ignores chat failures until this file exists, so the
+# cold load is not two watchdog strikes.
+dsv41_ready_flag() {
+  printf '%s\n' "${XDG_RUNTIME_DIR:?}/dsv41-cluster.ready"
+}

@@ -12,7 +12,7 @@ here=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 dsv41_api_key_reject() {
   local val=$1
   case "$val" in
-    *$'\n'* | *$'\r'* | *'"'* | *'\\'*)
+    *$'\n'* | *$'\r'* | *'"'* | *$'\\'*)
       dsv41_die "VLLM_API_KEY contains a newline, quote, or backslash"
       ;;
   esac
@@ -48,6 +48,9 @@ dsv41_api_key_value() {
   val=${val%$'\r'}
   val=${val%"${val##*[![:space:]]}"}
   val=${val#"${val%%[![:space:]]*}"}
+  # One surrounding pair is file syntax, not part of the key. Both
+  # VLLM_API_KEY=secret and VLLM_API_KEY="secret" (or single quotes) work.
+  # A quote that remains after that strip is rejected below.
   if [ "${#val}" -ge 2 ] && [ "${val#\"}" != "$val" ] && [ "${val%\"}" != "$val" ]; then
     val=${val#\"}
     val=${val%\"}
@@ -55,6 +58,8 @@ dsv41_api_key_value() {
     val=${val#\'}
     val=${val%\'}
   fi
+  val=${val%"${val##*[![:space:]]}"}
+  val=${val#"${val%%[![:space:]]*}"}
   if [ -z "$val" ]; then
     dsv41_die "VLLM_API_KEY in ${file} is empty"
   fi
@@ -76,7 +81,10 @@ case "$cmd" in
     fi
     val=$(dsv41_api_key_value "${DSV41_API_KEY_FILE:?}")
     umask 077
-    printf 'VLLM_API_KEY="%s"\n' "$val" >"$runtime_env"
+    # Docker --env-file keeps quote characters as part of the value
+    # (verified on Docker 29.6.2). A quoted value becomes the vLLM key,
+    # and every request 401s.
+    printf 'VLLM_API_KEY=%s\n' "$val" >"$runtime_env"
     unset val
     ;;
   append-auth)
