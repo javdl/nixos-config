@@ -236,21 +236,43 @@ Aperture profile:
   http://127.0.0.1:8000`. Aperture base URL
   `https://spark.buri-hoki.ts.net:8443`.
 - The key is `VLLM_API_KEY` in `~/.config/spark-vllm/api.env` on spark
-  (mode `600`, not a symlink). It is passed into the container with
-  `docker --env-file` and then as `vllm serve --api-key`. It is not in
-  the repo or the Nix store.
+  (mode `600`, not a symlink). Either `VLLM_API_KEY=secret` or
+  `VLLM_API_KEY="secret"` (one surrounding pair of single or double
+  quotes) is accepted. The file handed to `docker --env-file` is
+  written unquoted: Docker 29 keeps quote characters as part of the
+  value, vLLM then treats them as the key, and every request returns
+  401. The value is passed as `vllm serve --api-key`. It is not in the
+  repo or the Nix store.
 
 `expose = "open"` in the cluster attrset is the previous listener:
 `0.0.0.0:8000`, no key, and this module does not publish Tailscale Serve.
 Set that in `users/dsv41-cluster.nix`, not in only one host. Switching to
 `open` does not clear an existing Serve config.
 
-The head also runs `dsv41-cluster-health.timer` (every 2 minutes, after
-the head is active). The probe is a 1-token `POST /v1/chat/completions`
-to `127.0.0.1:8000` with a 90 second timeout. In the Aperture profile the
-probe sends the key. Two consecutive failures restart
-`dsv41-cluster-head`. Probes while that unit is still activating are
-ignored, so the measured ~6 minute load is not a failure.
+The head unit becomes active when the container process is running.
+`TimeoutStartSec` on spark is 4 minutes and covers `ExecStartPre` (fabric
+address, image check, API key file). Model load is `dsv41-cluster-ready`,
+a oneshot the head starts with `systemctl --user start --no-block`. It is
+not installed into a target, so `home-manager switch` does not wait for
+it. The oneshot polls `GET /health` on `127.0.0.1:8000` (no key) for about
+20 minutes (80 tries, 15 seconds apart). A cold load is about 6.5 minutes
+plus pairing. When `/health` answers, it makes one authenticated
+`GET /v1/models`. Success is a line in that unit's journal. A 401 is a
+key mismatch: fix `api.env`, then
+`systemctl --user restart dsv41-cluster-head`. If `/health` never answers,
+the oneshot restarts the head.
+
+`dsv41-cluster-health.timer` (every 2 minutes) is the watchdog. It skips
+the chat probe until the readiness oneshot has recorded success, so the
+cold load is not two strikes. After that, a 1-token
+`POST /v1/chat/completions` to `127.0.0.1:8000` uses a 90 second timeout.
+In the Aperture profile the chat probe sends the key. `/health` does not.
+Two consecutive chat failures restart `dsv41-cluster-head`. A 401 from
+the chat probe is logged and does not by itself restart the head.
+
+Stopping the head runs `docker stop` and then `ExecStopPost` (`docker rm
+-f`). A killed `docker run --rm` client can leave `dsv41-serve` behind;
+the remove is what clears it. The same stop path is on the worker.
 
 The worker runs `dsv41-cluster-follow.timer` (every 30 seconds). It
 restarts `dsv41-cluster-worker` only when the head goes from up to down.
@@ -282,7 +304,7 @@ Aperture's provider API key. Do not commit it.
 umask 077
 install -d -m 700 ~/.config/spark-vllm
 install -m 600 /dev/null ~/.config/spark-vllm/api.env
-# one line, mode stays 600:
+# one line, mode stays 600. Quotes around the value are optional:
 # VLLM_API_KEY=<the Aperture provider key>
 ```
 
@@ -304,9 +326,10 @@ make switch NIXNAME=spark2
 make switch NIXNAME=spark
 ```
 
-Watch `systemctl --user status dsv41-cluster-head` on spark. The unit
-stays activating until `127.0.0.1:8000/v1/models` answers (the probe
-sends the key). Then check `https://spark.buri-hoki.ts.net:8443/health`.
+`make switch` on spark returns once `dsv41-serve` is launched. It does
+not wait for the weights to load. Follow readiness with
+`journalctl --user -u dsv41-cluster-ready -f`. Then check
+`https://spark.buri-hoki.ts.net:8443/health`.
 
 After this switch, clients of port 8000 on the LAN, the CX7, and the
 tailnet stop working. That is the localhost bind. Use Aperture, or
@@ -333,19 +356,25 @@ Stop the units, then clear Tailscale Serve. The off command removes the
 `:8888`.
 
 ```bash
-# spark
+# spark: stop the readiness poll first so it cannot restart the head
+systemctl --user stop dsv41-cluster-ready.service
 systemctl --user disable --now dsv41-cluster-head dsv41-cluster-serve dsv41-cluster-health.timer
 tailscale serve --https=8443 off
 # spark2
 systemctl --user disable --now dsv41-cluster-worker dsv41-cluster-follow.timer
 ```
 
-The next Home Manager switch enables `WantedBy` units again. A rollback
+`disable --now` removes the Home Manager symlinks under
+`~/.config/systemd/user/` (`default.target.wants/` and `timers.target.wants/`)
+until the next switch. The unit files stay. The next `home-manager switch`
+enables `WantedBy` units again and will start the cluster. A rollback
 that should survive a switch sets `services.dsv41Cluster.enable = false`
 in the shared profile and switches both hosts. To serve on every
 interface again, set `expose = "open"` in `users/dsv41-cluster.nix` and
 switch both hosts. Re-run `dsv41_tp2.sh up` only after the cluster units
 are stopped, or the two will fight over the container name `dsv41-serve`.
+Stopping the head also runs `docker rm -f dsv41-serve`, so a container
+that outlived the unit is removed.
 
 ## Do not manage or restart
 

@@ -70,6 +70,9 @@ case "$cmd" in
     ;;
   docker-rm)
     "$(dsv41_docker)" rm -f "$DSV41_CONTAINER" >/dev/null 2>&1 || true
+    if [ "$DSV41_ROLE" = head ] && [ -n "${XDG_RUNTIME_DIR:-}" ]; then
+      rm -f "$(dsv41_ready_flag)"
+    fi
     ;;
   drop-caches)
     # GB10 CUDA allocations do not reclaim page cache. sudoers is NOPASSWD.
