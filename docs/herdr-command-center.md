@@ -89,9 +89,10 @@ the mirror package, `hosts.toml`, and plugin activation are all gated on
   the new `remoteBin`, or the mirror looks for a binary that is not there yet.
 - `hosts/github-runner-{03,04,05}.nix` import the node module.
 - `users/joost/home-manager-server.nix` enables controller mode only on Bali.
-- `users/joost/home-manager.nix` enables node mode on fu137, radon, and the
-  Sparks without touching Omarchy-owned desktop configuration. On the Sparks
-  the same file is the whole profile (`isDgxSpark`).
+- `users/joost/home-manager.nix` enables node mode on fu137 and radon without touching
+  Omarchy-owned desktop, terminal, Hyprland, or package configuration.
+  `users/joost/home-manager-spark.nix` is the minimal Spark profile and enables
+  the same node service there, without the Claude/Codex integration installer.
 
 The overlay in `lib/overlays.nix` pins Herdr `0.9.5`. The bootstrap script
 still installs `0.9.3` for the exe.dev worker; those hashes are not the
@@ -163,8 +164,9 @@ Its key is `~/.ssh/herdr-cmdpane` (public half in
 `users/herdr-fleet-keys.nix`). The Spark fleet activation appends that key,
 and bali's, onto the existing `~/.ssh/authorized_keys` when the full line
 is absent. It does not replace the file. The CX7 `from=` lines are not in
-the repo. CX7 client aliases are a javdl/dotfiles follow-up: chezmoi owns
-`~/.ssh/config`, so Home Manager does not write them. See
+the repo. The Spark profile does not run chezmoi and does not write
+`~/.ssh/config`, so the hand-added `spark-cx7` / `spark2-cx7` aliases stay
+put. Managing those aliases is a javdl/dotfiles follow-up. See
 [docs/dgx-spark.md](dgx-spark.md).
 
 Set it up once:

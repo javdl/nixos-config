@@ -140,10 +140,6 @@
           # Small laptop profile: drops local-model and heavyweight agent
           # tooling (see isLite in users/joost/home-manager.nix).
           isLite ? false,
-          # Headless DGX OS. Same helper and profile as the Omarchy boxes,
-          # without Quattro's desktop assumptions (hypr guards, startup
-          # autostart, pacman package filter). See docs/dgx-spark.md.
-          isDgxSpark ? false,
         }:
         let
           pkgs = import nixpkgs {
@@ -161,7 +157,7 @@
             (import ./users/joost/home-manager.nix {
               isWSL = false;
               isOmarchy = true;
-              inherit inputs isLite isDgxSpark;
+              inherit inputs isLite;
               currentSystemName = hostName;
             })
             # Same agent CLI toolset the NixOS/Darwin hosts get from
@@ -178,17 +174,14 @@
 
                 # Protect Omarchy-managed directories. Program modules that
                 # generate files below these paths are disabled by isOmarchy in
-                # users/joost/home-manager.nix. Headless Sparks have no Hyprland
-                # or Quattro config tree, so the guards stay off there.
-                home.file = lib.mkIf (!isDgxSpark) {
-                  ".config/omarchy".enable = false;
-                  ".config/hypr".enable = false;
-                  ".config/alacritty".enable = false;
-                  ".config/foot".enable = false;
-                  ".config/ghostty".enable = false;
-                  ".config/kitty".enable = false;
-                  ".config/btop/themes".enable = false;
-                };
+                # users/joost/home-manager.nix.
+                home.file.".config/omarchy".enable = false;
+                home.file.".config/hypr".enable = false;
+                home.file.".config/alacritty".enable = false;
+                home.file.".config/foot".enable = false;
+                home.file.".config/ghostty".enable = false;
+                home.file.".config/kitty".enable = false;
+                home.file.".config/btop/themes".enable = false;
 
                 # Disable nixpkgs module's <nixpkgs> lookup for pure evaluation
                 _module.args.pkgsPath = lib.mkForce nixpkgs;
@@ -254,32 +247,37 @@
         ];
       };
 
-      # Headless CLI the Sparks need on top of the shared profile. tmux is
-      # filtered out of Quattro profiles; bubblewrap is the Codex sandbox and
-      # lives in the Linux desktop block those profiles already install.
-      # mosh matches omarchyExtraPackages. iperf3 is the link check.
-      sparkExtraPackages = pkgs: [
-        pkgs.bubblewrap
-        pkgs.iperf3
-        pkgs.mosh
-        pkgs.tmux
-      ];
+      # DGX Spark (DGX OS / Ubuntu 24.04, aarch64-linux). A small headless
+      # profile, not mkOmarchyHome: no workstation packages, no agent-clis,
+      # no chezmoi. See users/joost/home-manager-spark.nix and docs/dgx-spark.md.
+      mkSparkHome =
+        { hostName }:
+        let
+          pkgs = import nixpkgs {
+            system = "aarch64-linux";
+            overlays = overlays;
+            config.allowUnfree = true;
+          };
+        in
+        home-manager.lib.homeManagerConfiguration {
+          inherit pkgs;
+          extraSpecialArgs = {
+            inherit inputs;
+          };
+          modules = [
+            (import ./users/joost/home-manager-spark.nix { inherit hostName; })
+            (
+              { lib, ... }:
+              {
+                nixpkgs.config.allowUnfree = true;
+                _module.args.pkgsPath = lib.mkForce nixpkgs;
+              }
+            )
+          ];
+        };
 
-      # spark / spark2: DGX OS Ubuntu 24.04, aarch64-linux, GB10. Same helper
-      # as fu137/j9/mba. isDgxSpark drops the desktop assumptions. Per-host
-      # CX7 files come from currentSystemName inside users/dgx-spark.nix.
-      sparkHome = mkOmarchyHome {
-        hostName = "spark";
-        system = "aarch64-linux";
-        isDgxSpark = true;
-        extraPackages = sparkExtraPackages;
-      };
-      spark2Home = mkOmarchyHome {
-        hostName = "spark2";
-        system = "aarch64-linux";
-        isDgxSpark = true;
-        extraPackages = sparkExtraPackages;
-      };
+      sparkHome = mkSparkHome { hostName = "spark"; };
+      spark2Home = mkSparkHome { hostName = "spark2"; };
     in
     {
       # `nix fmt` — formats this repo's own Nix sources only. lib/overlays.nix
@@ -572,9 +570,8 @@
       homeConfigurations."mba" = mbaHome;
       homeConfigurations."omarchy" = omarchyHome;
 
-      # DGX OS (Ubuntu 24.04) on the two Grace-Blackwell Sparks. Same
-      # standalone Home Manager output as the Omarchy boxes, with isDgxSpark.
-      # See docs/dgx-spark.md.
+      # DGX OS (Ubuntu 24.04) on the two Grace-Blackwell Sparks. Minimal
+      # headless profile, separate from mkOmarchyHome. See docs/dgx-spark.md.
       homeConfigurations."spark" = sparkHome;
       homeConfigurations."spark2" = spark2Home;
     };

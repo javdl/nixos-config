@@ -1,19 +1,10 @@
 # DGX Spark (`spark`, `spark2`)
 
-Two NVIDIA DGX Sparks. They are standalone Home Manager outputs, the same
-kind as the Omarchy boxes: `mkOmarchyHome` in `flake.nix` with
-`isDgxSpark = true`, `system = "aarch64-linux"`, and `hostName` `spark` or
-`spark2`. `homeConfigurations."spark"` and `."spark2"` sit next to fu137,
-j9, and mba.
+Two NVIDIA DGX Sparks. They are a **minimal** standalone Home Manager
+profile, built by `mkSparkHome` in `flake.nix` from
+`users/joost/home-manager-spark.nix`. They do not use `mkOmarchyHome`.
 
-`isDgxSpark` is the headless flag. It turns off the Quattro assumptions
-that do not fit DGX OS: the Omarchy startup module (Hyprland autostart,
-walker, mako), the hypr/omarchy file guards, the pacman package filter,
-tailmix, pinentry's `/usr/bin/pinentry` symlink, and the desktop package
-blocks. Shell and git modules stay on, because nothing else owns those
-files. The agent CLI module (`users/agent-clis.nix`) is the one
-`mkOmarchyHome` already imports. `herdr` comes from the overlay in
-`lib/overlays.nix`.
+`homeConfigurations."spark"` and `."spark2"` are aarch64-linux.
 
 | | `spark` | `spark2` |
 |---|---|---|
@@ -28,41 +19,42 @@ files. The agent CLI module (`users/agent-clis.nix`) is the one
 
 OpenSSH on both listens on 22 and 2222 (pubkey only, `PermitRootLogin no`).
 This repo does not manage `sshd`. `tailscaled` stays the DGX OS package.
-Do not install tailmix here: each Spark is on `buri-hoki` only.
 
 Nix may not be installed yet. Use the same Determinate installer as Omarchy,
 then `make test` / `make switch`. The Makefile takes the non-NixOS branch on
 Ubuntu and runs Home Manager.
 
-## What Home Manager manages
+## What this profile contains
 
-User `joost` (`/home/joost`).
+Nothing from the workstation or Omarchy package set. It does not import
+`users/joost/home-manager.nix` or `users/agent-clis.nix`. No chezmoi, no
+`omarchyExtraPackages`, no NVIDIA Sync, no Nsight, no desktop tools.
 
-- The shared headless profile: agent CLIs, `herdr`, git, bash, tmux,
-  neovim, starship, zoxide, delta. Extra packages on top: `mosh`, `tmux`,
-  `iperf3`, `bubblewrap` (Codex sandbox). GUI apps, fonts, NVIDIA Sync,
-  Nsight, browsers, and a Nix `docker` that would shadow DGX OS Docker are
-  left out.
-- `herdr-agents` user service from `users/herdr-fleet.nix` (node mode).
-  `ExecStart` is the store path of the overlay `herdr`. Fleet `remoteBin`
-  is `/home/joost/.nix-profile/bin/herdr`, same shape as fu137. The
-  activation appends the controller public keys in
-  `users/herdr-fleet-keys.nix` to `~/.ssh/authorized_keys` when the full
-  line is absent. It does not remove existing lines.
-- Rendered files under `~/.config/dgx-spark/` (see below). A switch does
-  not copy them into `/etc`.
+The entire managed set:
+
+- Packages: `mosh`, `tmux`, `iperf3`, `herdr` (overlay in `lib/overlays.nix`).
+- Herdr fleet node from `users/herdr-fleet.nix`: `herdr-agents` user service
+  (`ExecStart` is the store path), `~/.config/herdr/fleet.toml`, and
+  `HERDR_SESSION=agents`. Fleet `remoteBin` is
+  `/home/joost/.nix-profile/bin/herdr`.
+- `authorized_keys` activation, the same append fu137 uses. Controller lines
+  from `users/herdr-fleet-keys.nix` are added when the full line is absent.
+  Existing lines are not removed.
+- Rendered files under `~/.config/dgx-spark/` (below). A switch does not
+  copy them into `/etc`.
+
+The Claude/Codex integration installer that other fleet nodes run is
+disabled on the Sparks. A switch does not download Claude.
 
 `scripts/bootstrap-herdr-node.sh` exits immediately on these hostnames.
 The 0.9.3 binary it installs to `~/.local/bin` is the exe.dev pin. The
 overlay is newer. Re-running the script would put the old unit back.
 
-### chezmoi owns `~/.ssh/config`
+### SSH client aliases
 
-`chezmoiSync` in `users/joost/home-manager.nix` bootstraps javdl/dotfiles
-and applies `~/.ssh/config`. Home Manager does not write the CX7 aliases.
-The first switch can replace a hand-edited `~/.ssh/config` and drop them
-until the Host blocks below land in javdl/dotfiles. That repo is the
-follow-up. Do not add a second writer here.
+This profile does not run chezmoi and does not write `~/.ssh/config`. The
+hand-added CX7 aliases stay as they are. If they should be managed, the
+follow-up is javdl/dotfiles, not this repo:
 
 ```
 Host spark-cx7 192.168.100.10
@@ -93,20 +85,13 @@ from="192.168.100.0/24,192.168.101.0/24",no-agent-forwarding,no-X11-forwarding s
 
 ### First switch
 
-`-b backup` backs up files Home Manager replaces. Expect it to:
+`-b backup` backs up files Home Manager replaces. Expect it to install the
+four packages, write `~/.config/herdr/fleet.toml` and
+`~/.config/dgx-spark/`, install and start `herdr-agents` (which restarts
+the `agents` session if the bootstrap unit was already running), and append
+bali and cmdpane keys if the exact line is missing.
 
-- start `moshi-hook` (user service from `users/agent-clis.nix`)
-- replace `~/.config/systemd/user/herdr-agents.service` and restart the
-  `agents` session
-- append bali and cmdpane keys to `authorized_keys` if the exact line is
-  missing
-- run the same non-lite activations as an Omarchy profile (Claude installer
-  if `~/.local/bin/claude` is missing, cargo installs for worktrunk and
-  caut, chezmoi)
-
-`agent-mail` has no aarch64-linux build in the overlay, so that user
-service is absent. Linger has to be on or the user service stops at
-logout:
+Linger has to be on or the user service stops at logout:
 
 ```bash
 loginctl show-user joost -p Linger

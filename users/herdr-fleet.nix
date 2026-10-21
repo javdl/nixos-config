@@ -390,7 +390,8 @@ lib.mkIf isFleetMachine {
 
   # Ensure every fleet machine publishes Claude and Codex lifecycle state to
   # Herdr. Authentication remains an explicit, machine-local interactive step.
-  home.activation.herdrAgentIntegrations = lib.mkIf isFleetMachine (
+  # Sparks are the minimal headless profile and do not get this installer.
+  home.activation.herdrAgentIntegrations = lib.mkIf (!isSpark) (
     lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       if [ ! -x "$HOME/.local/bin/claude" ]; then
         $DRY_RUN_CMD ${pkgs.coreutils}/bin/env \

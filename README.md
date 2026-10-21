@@ -769,9 +769,10 @@ o.bind("SUPER + CTRL + SHIFT + D", "Recover LG display", [[
 ## DGX Spark
 
 `spark` and `spark2` are NVIDIA DGX Sparks running DGX OS (Ubuntu 24.04,
-aarch64-linux, GB10, 128 GB unified memory). They are standalone Home Manager
-outputs from `mkOmarchyHome` with `isDgxSpark = true`, next to the Omarchy
-machines. Nix may not be installed yet. On the Spark, as `joost`:
+aarch64-linux, GB10, 128 GB unified memory). They are a minimal standalone
+Home Manager profile (`mkSparkHome`), not the Omarchy workstation profile.
+The only packages are `mosh`, `tmux`, `iperf3`, and `herdr`. Nix may not be
+installed yet. On the Spark, as `joost`:
 
 ```bash
 curl -fsSL https://install.determinate.systems/nix | sh -s -- install
@@ -789,12 +790,12 @@ runs:
 nix run home-manager/release-26.05 -- switch -b backup --flake ".#spark"
 ```
 
-The switch manages the user profile, including the `herdr-agents` user
-service. It does not install the NAS mount or the ConnectX-7 link: those
-files are rendered under `~/.config/dgx-spark/` and installed once as root.
-The sudoers drop-in is manual. Driver, CUDA, Docker, tailscale, apt, and
-locale stay native. `spark-vllm` is not managed. CX7 SSH aliases belong in
-javdl/dotfiles, because chezmoi owns `~/.ssh/config`. Details:
+The switch installs that package set, the `herdr-agents` user service, and
+appends the Herdr controller keys to `~/.ssh/authorized_keys`. It does not
+install the NAS mount or the ConnectX-7 link: those files are rendered under
+`~/.config/dgx-spark/` and installed once as root. The sudoers drop-in is
+manual. Driver, CUDA, Docker, tailscale, apt, and locale stay native.
+`spark-vllm` is not managed. Details:
 [docs/dgx-spark.md](docs/dgx-spark.md).
 
 ## Dicklesworthstone AI Agent Tooling

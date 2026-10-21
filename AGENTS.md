@@ -334,11 +334,15 @@ Only add CLI tools that complement Omarchy without conflicting. `playerctl` is t
 ### NVIDIA DGX Spark (DGX OS, Ubuntu)
 
 `spark` and `spark2` are Grace-Blackwell DGX Sparks (DGX OS, Ubuntu 24.04,
-aarch64-linux). They use `mkOmarchyHome` with `isDgxSpark = true`, the same
-helper as fu137, j9, and mba. The flag turns off Quattro desktop assumptions
-(startup module, hypr config guards, pacman package filter, tailmix). Apply
-with `make test` / `make switch` and `NIXNAME=spark` or `spark2`. Nix may
-not be installed; use the Determinate installer documented for Omarchy.
+aarch64-linux). They are a minimal headless Home Manager profile
+(`mkSparkHome`, `users/joost/home-manager-spark.nix`), not `mkOmarchyHome`.
+The profile installs only `mosh`, `tmux`, `iperf3`, and `herdr`. It does not
+import the workstation profile, `users/agent-clis.nix`, or chezmoi.
+
+`herdr` is the overlay package, wired as a fleet node (`users/herdr-fleet.nix`):
+the `herdr-agents` user service and the controller `authorized_keys` append.
+`scripts/bootstrap-herdr-node.sh` exits on these hostnames. The Claude/Codex
+integration installer that other fleet nodes run is off here.
 
 Root files follow the tailmix precedent: Home Manager renders them under
 `~/.config/dgx-spark/`, and a one-time root step installs them
@@ -347,18 +351,18 @@ link. The sudoers drop-in stays manual. Driver, CUDA, Docker,
 `nvidia-container-toolkit`, `tailscaled`, apt, and locale stay native.
 `spark-vllm` is not a managed service.
 
-chezmoi owns `~/.ssh/config`. Do not write the `spark-cx7` / `spark2-cx7`
-aliases from Home Manager; they belong in javdl/dotfiles. `herdr` on these
-hosts is the fleet node (`users/herdr-fleet.nix`), which replaces
-`scripts/bootstrap-herdr-node.sh`.
+CX7 SSH aliases are not written by this profile. They belong in javdl/dotfiles
+if they should be managed. Apply with `make test` / `make switch` and
+`NIXNAME=spark` or `spark2`. Nix may not be installed; use the Determinate
+installer documented for Omarchy.
 
 | Host | Hardware | Output | Notes |
 |---|---|---|---|
 | `spark` | DGX Spark, GB10, 128 GB, `172.20.1.114/23` | `homeConfigurations."spark"` | CX7 via rendered netplan/networkd |
 | `spark2` | DGX Spark, GB10, 128 GB, `172.20.1.125/23` | `homeConfigurations."spark2"` | CX7 via rendered NetworkManager script; no networkd netplan |
 
-Give each box its own `mkOmarchyHome` call. Apply instructions and the
-root install are in [`docs/dgx-spark.md`](docs/dgx-spark.md).
+Give each box its own `mkSparkHome` call. Apply instructions and the root
+install are in [`docs/dgx-spark.md`](docs/dgx-spark.md).
 
 ## Code Style
 
