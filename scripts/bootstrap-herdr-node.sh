@@ -1,15 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Bootstrap a non-Nix Linux Herdr fleet worker (exe.dev VM, and the DGX
-# Sparks until their user service is cut over). spark and spark2 also get
-# herdr from Home Manager (homeConfigurations, lib/overlays.nix). This
-# script's ~/.local/bin/herdr is still what the fleet remoteBin and the
-# lingering user unit exec. Do not point those at the Nix profile until
-# the unit is switched; see docs/dgx-spark.md.
-# Version and hashes match the herdr release the Sparks were bootstrapped
-# with. The overlay in lib/overlays.nix may be a newer release.
+# Bootstrap a non-Nix Linux Herdr fleet worker (the exe.dev VM).
+# spark and spark2 are Home Manager fleet nodes: herdr-agents and the
+# Nix-profile binary come from `make switch`. This script would overwrite
+# that unit with ~/.local/bin/herdr. See docs/dgx-spark.md.
+# Version and hashes are the exe.dev pin. The overlay in lib/overlays.nix
+# is a newer release; do not assume they match.
 readonly herdr_version="0.9.3"
+case "$(hostname -s 2>/dev/null || true)" in
+  spark|spark2)
+    echo "spark and spark2 get herdr from Home Manager (make switch NIXNAME=$(hostname -s)). See docs/dgx-spark.md." >&2
+    exit 1
+    ;;
+esac
 case "$(uname -s)-$(uname -m)" in
   Linux-x86_64)
     herdr_asset="herdr-linux-x86_64"

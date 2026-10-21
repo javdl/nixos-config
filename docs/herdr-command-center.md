@@ -76,26 +76,28 @@ the mirror package, `hosts.toml`, and plugin activation are all gated on
   Each node carries one SSH destination per controller (`fromBali`,
   `fromCmdpane`).
 - `users/herdr-fleet-keys.nix` holds the controllers' public keys; fu137, the
-  runners (2222) and radon (2222) authorize them from there.
+  Sparks, the runners (2222) and radon (2222) authorize them from there.
 - `modules/herdr-fleet-node.nix` adds a minimal `joost` Home Manager profile to
   a NixOS node while leaving the `github-runner` CI account isolated.
 - `users/herdr-mirror-plugin.toml` is the local plugin manifest. The upstream
   network build step is removed because Nix supplies the verified binary.
 - `scripts/bootstrap-herdr-node.sh` installs the checksum-pinned Herdr
   binary (x86_64 or aarch64), integrations, config, and lingering user service
-  on a non-Nix Ubuntu node (exe.dev worker). The Sparks' user profile is
-  Home Manager (`homeConfigurations.spark` / `spark2`, see
-  [docs/dgx-spark.md](dgx-spark.md)); the script's `~/.local/bin/herdr` is
-  still the binary `remoteBin` and the lingering user unit exec.
+  on the exe.dev worker. It refuses `spark` and `spark2`: those nodes get
+  `herdr-agents` and `/home/joost/.nix-profile/bin/herdr` from Home Manager
+  ([docs/dgx-spark.md](dgx-spark.md)). Switch the Sparks before bali picks up
+  the new `remoteBin`, or the mirror looks for a binary that is not there yet.
 - `hosts/github-runner-{03,04,05}.nix` import the node module.
 - `users/joost/home-manager-server.nix` enables controller mode only on Bali.
-- `users/joost/home-manager.nix` enables node mode on fu137 and radon without touching
-  Omarchy-owned desktop, terminal, Hyprland, or package configuration.
+- `users/joost/home-manager.nix` enables node mode on fu137, radon, and the
+  Sparks without touching Omarchy-owned desktop configuration. On the Sparks
+  the same file is the whole profile (`isDgxSpark`).
 
-The repo pins Herdr `0.9.3` in `lib/overlays.nix` (and the same release in
-the bootstrap script) and herdr-mirror `0.4.1` in
-`users/herdr-fleet.nix`. The mirror release checksum is verified by Nix. Stable
-Herdr 0.8.2 exposes the terminal session streams the mirror uses.
+The overlay in `lib/overlays.nix` pins Herdr `0.9.5`. The bootstrap script
+still installs `0.9.3` for the exe.dev worker; those hashes are not the
+overlay's. herdr-mirror is `0.4.1` in `users/herdr-fleet.nix`. The mirror
+release checksum is verified by Nix. Stable Herdr 0.8.2 exposes the terminal
+session streams the mirror uses.
 
 All machines use the named `agents` session. A lingering systemd user service
 starts `herdr --session agents server`, so the server is owned by the user
@@ -128,17 +130,14 @@ exe.dev. Bootstrap or refresh the worker by streaming the reviewed script:
 
 ```bash
 ssh fu-herdr-dev 'bash -s' < scripts/bootstrap-herdr-node.sh
-ssh spark 'bash -s' < scripts/bootstrap-herdr-node.sh
-ssh spark2 'bash -s' < scripts/bootstrap-herdr-node.sh
 ```
 
 The bootstrap is idempotent, installs the pinned Herdr release, enables linger
 (via sudo, only when it is not already on), and verifies a representative
-workspace command after starting the `agents` service. On the Sparks, user
-packages and SSH client aliases come from Home Manager (`make switch
-NIXNAME=spark` or `spark2`, [docs/dgx-spark.md](dgx-spark.md)). Re-running
-the bootstrap there refreshes `~/.local/bin/herdr` and the user unit the
-fleet still execs; it does not replace the Home Manager profile.
+workspace command after starting the `agents` service. Do not stream it at
+`spark` or `spark2`. Those hosts are Home Manager nodes (`make switch
+NIXNAME=spark` or `spark2`, [docs/dgx-spark.md](dgx-spark.md)); the script
+exits before it can overwrite `herdr-agents`.
 
 ## exe.dev command pane
 
@@ -161,10 +160,11 @@ work-tailnet nodes are cross-tailnet, so every destination is OpenSSH:
 | spark, spark2 | tailnet IP, port 2222 | same grant |
 
 Its key is `~/.ssh/herdr-cmdpane` (public half in
-`users/herdr-fleet-keys.nix`). The Spark Home Manager activation appends
-that key, and the other keys already published in this repo, onto the
-existing `~/.ssh/authorized_keys`. It does not replace the file. The CX7
-`from=` lines are not in the repo and stay as they are; see
+`users/herdr-fleet-keys.nix`). The Spark fleet activation appends that key,
+and bali's, onto the existing `~/.ssh/authorized_keys` when the full line
+is absent. It does not replace the file. The CX7 `from=` lines are not in
+the repo. CX7 client aliases are a javdl/dotfiles follow-up: chezmoi owns
+`~/.ssh/config`, so Home Manager does not write them. See
 [docs/dgx-spark.md](dgx-spark.md).
 
 Set it up once:

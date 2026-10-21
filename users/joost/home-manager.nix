@@ -4,6 +4,9 @@
   # Small-laptop profile (mba): skips local-model tooling and the heavyweight
   # agent infrastructure (agent-mail service, session indexes, cargo builds).
   isLite ? false,
+  # Headless DGX Spark. isOmarchy stays true so the host still comes from
+  # mkOmarchyHome; isQuattro below is what actually means "Quattro owns this".
+  isDgxSpark ? false,
   inputs,
   currentSystemName,
   ...
@@ -20,6 +23,10 @@ let
   isDarwin = pkgs.stdenv.isDarwin;
   isLinux = pkgs.stdenv.isLinux;
   isMinimal = currentSystemName == "fu146";
+  # Quattro owns pacman packages, shell configs, and the Hyprland session.
+  # A Spark is isOmarchy only because it shares mkOmarchyHome; nothing on
+  # DGX OS owns those files, and the desktop autostart does not apply.
+  isQuattro = isOmarchy && !isDgxSpark;
 
   anthropicBaseUrlEnv =
     lib.optionalAttrs (aperture ? ${currentSystemName}) {
@@ -92,8 +99,24 @@ let
     "zoxide"
   ];
 
+  # DGX OS already ships Docker. GUI terminals and Slack have no session
+  # on a headless Spark. Quattro's pacman filter does not apply there.
+  dgxSparkSkippedPackageNames = [
+    "alacritty"
+    "docker"
+    "docker-compose"
+    "kitty"
+    "slack"
+    "wezterm"
+  ];
+
   keepPackage =
-    package: !(isOmarchy && builtins.elem (lib.getName package) omarchyManagedPackageNames);
+    package:
+    let
+      name = lib.getName package;
+    in
+    !(isQuattro && builtins.elem name omarchyManagedPackageNames)
+    && !(isDgxSpark && builtins.elem name dgxSparkSkippedPackageNames);
 
   # Pinentry for services.gpg-agent on Omarchy Quattro.
   #
@@ -176,13 +199,17 @@ in
       if currentSystemName == "github-runner" then
         { }
       else
-        import ./agent-cli-updates.nix { inherit isOmarchy; }
+        import ./agent-cli-updates.nix { isOmarchy = isQuattro; }
     )
-    (import ./omarchy-startup.nix { inherit isOmarchy currentSystemName; })
+    (import ./omarchy-startup.nix {
+      isOmarchy = isQuattro;
+      inherit currentSystemName;
+    })
     ./cachix-daemon.nix # auto-push locally-built paths to javdl-nixos-config cachix
     (import ../herdr-fleet.nix { inherit currentSystemName; })
     (import ../cua-spaces-host-omarchy.nix { inherit currentSystemName; })
     (import ../nvpair-omarchy.nix { inherit currentSystemName; })
+    (import ../dgx-spark.nix { inherit currentSystemName; })
   ];
 
   # Home-manager 22.11 requires this be set. We never set it so we have
@@ -338,7 +365,7 @@ in
 
       slack
     ]
-    ++ (lib.optionals (!isMinimal) [
+    ++ (lib.optionals (!isMinimal && !isDgxSpark) [
       aichat
       crush
       dbeaver-bin
@@ -354,8 +381,7 @@ in
       # spotify
       # telegram-desktop
     ])
-    ++ [
-
+    ++ (lib.optionals (!isDgxSpark) [
       # Fonts
       font-awesome # waybar icons
       fira-code
@@ -375,7 +401,8 @@ in
       noto-fonts-color-emoji
       rubik
       proggyfonts
-
+    ])
+    ++ [
       bashmount # Easily mount (encrypted/usb) drives
       flyctl
       git-crypt
@@ -419,7 +446,7 @@ in
       # tailscale # do not add here, it will recompile each time
       yabai # tiling window manager
     ])
-    ++ (lib.optionals (isLinux && !isWSL) [
+    ++ (lib.optionals (isLinux && !isWSL && !isDgxSpark) [
       bubblewrap
       chromium
       firefox-devedition
@@ -616,7 +643,7 @@ in
   home.file = {
     # Shared workstation profile: Macs, Omarchy and NixOS desktops. Servers
     # use separate profiles, except the legacy github-runner output.
-    ".local/share/sitegeist" = lib.mkIf (currentSystemName != "github-runner") {
+    ".local/share/sitegeist" = lib.mkIf (currentSystemName != "github-runner" && !isDgxSpark) {
       source = "${pkgs.sitegeist}/share/sitegeist";
     };
     # tailmix on Omarchy: reach a second tailnet without moving tailscaled.
@@ -633,7 +660,7 @@ in
     # This only renders the unit; linking and starting it is a one-time root
     # step, and each tailnet profile consumes an auth key that must never reach
     # the store. Both are documented in docs/tailmix-omarchy.md.
-    ".config/tailmix/tailmixd.service" = lib.mkIf isOmarchy {
+    ".config/tailmix/tailmixd.service" = lib.mkIf isQuattro {
       text = ''
         [Unit]
         Description=${tailmixUnit.description}
@@ -985,7 +1012,7 @@ in
   programs.gpg.enable = !isDarwin;
 
   programs.bash = {
-    enable = !isOmarchy;
+    enable = !isQuattro;
     shellOptions = [ ];
     historyControl = [
       "ignoredups"
@@ -1220,7 +1247,7 @@ in
   };
 
   programs.git = {
-    enable = !isOmarchy;
+    enable = !isQuattro;
     signing = {
       key = "ACAFA950";
       signByDefault = true;
@@ -1254,7 +1281,7 @@ in
   };
 
   programs.delta = {
-    enable = !isOmarchy;
+    enable = !isQuattro;
     enableGitIntegration = true;
     options = {
       line-numbers = true;
@@ -1326,7 +1353,7 @@ in
   # };
 
   programs.tmux = {
-    enable = !isOmarchy;
+    enable = !isQuattro;
     terminal = "xterm-256color";
     shortcut = "b";
     secureSocket = false;
@@ -1529,7 +1556,7 @@ in
   };
 
   programs.neovim = {
-    enable = !isOmarchy;
+    enable = !isQuattro;
     package = inputs.neovim-nightly-overlay.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
     withPython3 = false;
@@ -1613,7 +1640,7 @@ in
   };
 
   programs.zoxide = {
-    enable = !isOmarchy;
+    enable = !isQuattro;
     enableBashIntegration = true;
     enableZshIntegration = true;
     enableFishIntegration = true;
@@ -1887,7 +1914,7 @@ in
   };
 
   programs.starship = {
-    enable = !isOmarchy;
+    enable = !isQuattro;
     enableBashIntegration = true;
     enableZshIntegration = true;
     enableFishIntegration = true;
@@ -2379,7 +2406,7 @@ in
     enable = isLinux;
     # Omarchy borrows Quattro's pacman pinentry (see omarchyPinentry above);
     # every other Linux host, servers included, keeps the tty prompt.
-    pinentry.package = if isOmarchy then omarchyPinentry else pkgs.pinentry-tty;
+    pinentry.package = if isQuattro then omarchyPinentry else pkgs.pinentry-tty;
 
     # cache the keys forever so we don't get asked for a password
     defaultCacheTtl = 31536000;
@@ -2387,20 +2414,25 @@ in
   };
 
   # Agent Mail - MCP HTTP server for async agent coordination (Rust binary)
-  systemd.user.services.agent-mail = lib.mkIf (isLinux && !isWSL && !isLite) {
-    Unit = {
-      Description = "MCP Agent Mail HTTP Server";
-      After = [ "network.target" ];
-    };
-    Service = {
-      Type = "simple";
-      Environment = "AM_INTERFACE_MODE=cli";
-      ExecStart = "${pkgs.mcp-agent-mail}/bin/mcp-agent-mail serve-http";
-      Restart = "on-failure";
-      RestartSec = 5;
-    };
-    Install.WantedBy = [ "default.target" ];
-  };
+  # The overlay has no aarch64-linux mcp-agent-mail (the attribute is null).
+  # mba never reaches this unit (isLite). A non-lite Spark would otherwise
+  # interpolate the null package and fail to evaluate.
+  systemd.user.services.agent-mail =
+    lib.mkIf (isLinux && !isWSL && !isLite && pkgs.mcp-agent-mail != null)
+      {
+        Unit = {
+          Description = "MCP Agent Mail HTTP Server";
+          After = [ "network.target" ];
+        };
+        Service = {
+          Type = "simple";
+          Environment = "AM_INTERFACE_MODE=cli";
+          ExecStart = "${pkgs.mcp-agent-mail}/bin/mcp-agent-mail serve-http";
+          Restart = "on-failure";
+          RestartSec = 5;
+        };
+        Install.WantedBy = [ "default.target" ];
+      };
 
   xresources.extraConfig = lib.mkIf (!isOmarchy) (builtins.readFile ./Xresources);
 

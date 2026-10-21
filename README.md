@@ -770,40 +770,31 @@ o.bind("SUPER + CTRL + SHIFT + D", "Recover LG display", [[
 
 `spark` and `spark2` are NVIDIA DGX Sparks running DGX OS (Ubuntu 24.04,
 aarch64-linux, GB10, 128 GB unified memory). They are standalone Home Manager
-outputs, the same kind of flake output as the Omarchy machines. This repo
-has no system module for non-NixOS Linux, so only the `joost` user profile
-is managed. fstab, sudoers, the ConnectX-7 link, and apt packages are
-written down in [DGX Spark](docs/dgx-spark.md) and applied by hand.
-
-Nothing in this configuration manages or restarts the production
-`spark-vllm` service, Docker, the NVIDIA driver, CUDA, the DGX OS updater,
-or `dgx-dashboard`. The dashboard OTA check
-(`dgx-dashboard-admin` → `check_ota_status.py` → `mstflint`) oopsed spark's
-kernel once after a ConnectX-7 hot-plug. Leave that stack alone.
-
-On the Spark, as `joost`, install Nix the same way as on Omarchy, then apply
-the host that `hostname -s` reports (`spark` or `spark2`):
+outputs from `mkOmarchyHome` with `isDgxSpark = true`, next to the Omarchy
+machines. Nix may not be installed yet. On the Spark, as `joost`:
 
 ```bash
 curl -fsSL https://install.determinate.systems/nix | sh -s -- install
 
 determinate-nixd login
 
-make test NIXNAME=$(hostname -s)
-make switch NIXNAME=$(hostname -s)
+make test NIXNAME=spark
+make switch NIXNAME=spark
 ```
 
-`make switch` on non-NixOS Linux runs:
+Use `NIXNAME=spark2` on the second machine. `make switch` on non-NixOS Linux
+runs:
 
 ```bash
 nix run home-manager/release-26.05 -- switch -b backup --flake ".#spark"
 ```
 
-Use `.#spark2` on the second machine. The first switch backs up files Home
-Manager would replace (`-b backup`). It does not replace `~/.ssh/config` or
-`~/.ssh/authorized_keys`; the CX7 aliases are an `Include`, and missing
-public keys already in this repo are appended. Details, including the
-system files this does not own:
+The switch manages the user profile, including the `herdr-agents` user
+service. It does not install the NAS mount or the ConnectX-7 link: those
+files are rendered under `~/.config/dgx-spark/` and installed once as root.
+The sudoers drop-in is manual. Driver, CUDA, Docker, tailscale, apt, and
+locale stay native. `spark-vllm` is not managed. CX7 SSH aliases belong in
+javdl/dotfiles, because chezmoi owns `~/.ssh/config`. Details:
 [docs/dgx-spark.md](docs/dgx-spark.md).
 
 ## Dicklesworthstone AI Agent Tooling
