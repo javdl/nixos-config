@@ -6,7 +6,8 @@
 # (service, fleet.toml, controller authorized_keys) comes from
 # users/herdr-fleet.nix. Root-owned files (NAS automount, CX7 link, sshd
 # fallback, linger) are synced into /etc on every activation by
-# users/dgx-spark.nix. Both hosts switch to the GitHub flake nightly
+# users/dgx-spark.nix, which also appends radon's sparks public key to
+# authorized_keys. Both hosts switch to the GitHub flake nightly
 # (users/home-auto-update.nix). The dsv41 TP2 cluster is one
 # definition in users/dsv41-cluster.nix, kept off. The production server
 # is Mia in users/dsv41-mia.nix: dsv41-mia.service on spark only. spark2

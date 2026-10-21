@@ -12,6 +12,11 @@
 # on spark2), the OpenSSH fallback on 2222, and linger for joost.
 # Left native: sudoers, apt, the NVIDIA driver and firmware, CUDA, Docker,
 # tailscaled, locale.
+#
+# Also appends radon's sparks key to ~/.ssh/authorized_keys. That file is
+# append-only (lib/append-authorized-keys.nix): the Sparks also hold keys
+# that are not in this repo (NVIDIA Sync, ssh-spark-joost-personal, the CX7
+# peer lines).
 { currentSystemName }:
 
 {
@@ -24,6 +29,8 @@ let
   isSpark = currentSystemName == "spark";
   isSpark2 = currentSystemName == "spark2";
   enable = isSpark || isSpark2;
+  sparkKeys = import ./dgx-spark-keys.nix;
+  appendAuthorizedKeys = import ../lib/append-authorized-keys.nix { inherit lib pkgs; };
 
   # Files written into /etc: destination, mode, content, and what to run
   # after the file changed.
@@ -263,6 +270,14 @@ let
   '';
 in
 {
+  # Spark-only: enable is false for any other currentSystemName.
+  home.activation.radonSparksAuthorizedKey = lib.mkIf enable (
+    lib.hm.dag.entryAfter [ "writeBoundary" ] (appendAuthorizedKeys {
+      keys = builtins.attrValues sparkKeys;
+      label = "the radon-sparks key";
+    })
+  );
+
   home.activation.dgxSparkRootSync = lib.mkIf enable (
     lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       if ! /usr/bin/sudo -n true 2>/dev/null; then
