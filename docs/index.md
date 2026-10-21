@@ -55,6 +55,7 @@ directory in older guidance do not describe the current layout.
 | Change Hermes gateway deployment | [bali](../hosts/bali.nix), [flake inputs](../flake.nix) | [Bali gateway constraints](../AGENTS.md#bali-personal-server); distinguish the gateway from the packaged CLI |
 | Change Omarchy desktop startup | [Startup module](../users/joost/omarchy-startup.nix) | [Startup ownership](omarchy-startup.md), [Omarchy platform boundaries](../AGENTS.md#omarchy-quattro-machines-arch-linux) |
 | Apply or change a DGX Spark (`spark`, `spark2`) | [Spark profile](../users/joost/home-manager-spark.nix), `mkSparkHome` in [flake.nix](../flake.nix), [rendered units](../users/dgx-spark.nix) | [DGX Spark runbook](dgx-spark.md): minimal package set, one-time root install, what stays native |
+| Change the dsv41 TP2 cluster (spark head, spark2 worker) | [Cluster definition](../users/dsv41-cluster.nix) | [dsv41 cluster](dgx-spark.md#dsv41-cluster): one endpoint, CX7 pairing, Aperture exposure, planned switch |
 | Configure a second tailnet | [Shared service definition](../lib/tailmix-service.nix), [NixOS module](../modules/tailmix.nix) | [Tailmix on Omarchy](tailmix-omarchy.md) |
 | Use Bali as SkyPilot compute | [Bali host configuration](../hosts/bali.nix) | [K3s setup and private connectivity](bali-skypilot.md) |
 | Configure Companion or sync buttons | [Omarchy Companion module](../users/companion-omarchy.nix) | [fu137 setup](companion-omarchy.md), [Companion sync](../AGENTS.md#bitfocus-companion-config-sync) |

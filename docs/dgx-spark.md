@@ -42,6 +42,9 @@ The entire managed set:
   Existing lines are not removed.
 - Rendered files under `~/.config/dgx-spark/` (below). A switch does not
   copy them into `/etc`.
+- The dsv41 cluster, one definition in `users/dsv41-cluster.nix`. spark
+  runs `dsv41-cluster-head`. spark2 runs `dsv41-cluster-worker`. See
+  [dsv41 cluster](#dsv41-cluster).
 
 The Claude/Codex integration installer that other fleet nodes run is
 disabled on the Sparks. A switch does not download Claude.
@@ -204,11 +207,153 @@ the user PATH. That does not remove the apt copies. As of 2026-10-21,
 present on both; `iperf3` was listening on spark and missing on spark2
 (that box had iperf 2.1.9 only).
 
+## dsv41 cluster
+
+One cluster, two ranks. The definition is `users/dsv41-cluster.nix`.
+Changing the image digest, weights path, DSpark table, served name, port,
+API key path, or the CX7 rendezvous is a one-line edit in that file and
+applies to both machines. Each home imports it and runs the unit for its
+own node:
+
+| Node | Role | Unit | CX7 address | Declared RoCE GID |
+|---|---|---|---|---|
+| spark | head, rank 0 | `dsv41-cluster-head` | `192.168.100.10` | 3 |
+| spark2 | worker, rank 1 | `dsv41-cluster-worker` | `192.168.100.11` | 5 |
+
+The ranks pair on the CX7. The vLLM TCPStore and NCCL rendezvous is
+`192.168.100.10:25000` (`rocep1s0f0` / `enp1s0f0np0`). The GID index is
+detected at start from sysfs (RoCE v2 GID for that interface's IPv4,
+indexes 0–15). The declared index is only the fallback. This path does
+not follow the HTTP bind address.
+
+There is one API endpoint, on the head. The default exposure is the
+Aperture profile:
+
+- Process bind `127.0.0.1:8000` on spark. Served model name `dsv41`.
+- `GET /health` does not use an API key. `/v1/*`, including a 1-token
+  chat, does.
+- Tailscale Serve on spark: `tailscale serve --bg --https=8443
+  http://127.0.0.1:8000`. Aperture base URL
+  `https://spark.buri-hoki.ts.net:8443`.
+- The key is `VLLM_API_KEY` in `~/.config/spark-vllm/api.env` on spark
+  (mode `600`, not a symlink). It is passed into the container with
+  `docker --env-file` and then as `vllm serve --api-key`. It is not in
+  the repo or the Nix store.
+
+`expose = "open"` in the cluster attrset is the previous listener:
+`0.0.0.0:8000`, no key, and this module does not publish Tailscale Serve.
+Set that in `users/dsv41-cluster.nix`, not in only one host. Switching to
+`open` does not clear an existing Serve config.
+
+The head also runs `dsv41-cluster-health.timer` (every 2 minutes, after
+the head is active). The probe is a 1-token `POST /v1/chat/completions`
+to `127.0.0.1:8000` with a 90 second timeout. In the Aperture profile the
+probe sends the key. Two consecutive failures restart
+`dsv41-cluster-head`. Probes while that unit is still activating are
+ignored, so the measured ~6 minute load is not a failure.
+
+The worker runs `dsv41-cluster-follow.timer` (every 30 seconds). It
+restarts `dsv41-cluster-worker` only when the head goes from up to down.
+In the Aperture profile the watch is a connect/close on
+`192.168.100.10:25000`, because spark2 cannot open `127.0.0.1:8000` on
+spark. In `open` mode the watch is `http://192.168.100.10:8000/health`
+(no key). The first sample only records state.
+
+`dsv41-cluster-head` sets `Conflicts=spark-vllm.service` and
+`Conflicts=nvpair.service`. A user unit cannot stop a system unit, so
+the head also refuses to start while either of those system units is
+active. Stop and disable them before the switch. This module does not
+enable, disable, or restart `spark-vllm`, `nvpair`, Docker, the driver,
+or the DGX dashboard.
+
+Tailnet ACLs are unchanged. They live in `javdl/joost`.
+
+### Switch during a planned window
+
+A switch replaces the hand-launched `dsv41-serve` containers. `docker rm
+-f` runs before the new foreground `docker run --rm`. Do this while the
+model can be down for the cold start (measured 6 minutes 23 seconds, plus
+the switch itself).
+
+On spark, before the switch, create the key file. Use the same value as
+Aperture's provider API key. Do not commit it.
+
+```bash
+umask 077
+install -d -m 700 ~/.config/spark-vllm
+install -m 600 /dev/null ~/.config/spark-vllm/api.env
+# one line, mode stays 600:
+# VLLM_API_KEY=<the Aperture provider key>
+```
+
+Confirm on both machines: the pinned image is already local (`docker
+image inspect` on the digest in `users/dsv41-cluster.nix`; the unit uses
+`--pull=never`), `/home/joost/models/dsv41-1017-exl3` exists, `sudo -n
+true` works, `loginctl show-user joost -p Linger` is `yes`, and `id -nG`
+includes `docker`. On spark, `/usr/bin/tailscale` is the DGX OS binary.
+
+Stop the radon launcher (`dsv41_tp2.sh` in tmux `dsv41`) so it does not
+recreate the old containers.
+
+Build first, then switch the worker and the head close together:
+
+```bash
+make test NIXNAME=spark2
+make test NIXNAME=spark
+make switch NIXNAME=spark2
+make switch NIXNAME=spark
+```
+
+Watch `systemctl --user status dsv41-cluster-head` on spark. The unit
+stays activating until `127.0.0.1:8000/v1/models` answers (the probe
+sends the key). Then check `https://spark.buri-hoki.ts.net:8443/health`.
+
+After this switch, clients of port 8000 on the LAN, the CX7, and the
+tailnet stop working. That is the localhost bind. Use Aperture, or
+`https://spark.buri-hoki.ts.net:8443`, with model name `dsv41`.
+
+These failure modes were not tested on the hand-launched pair. The units
+treat them as fail and restart (`Restart=always`, `RestartSec=30`,
+`StartLimitBurst=5` per hour), but the underlying vLLM behavior is still
+unknown:
+
+- Worker-before-head: how long a headless worker keeps retrying
+  `192.168.100.10:25000` if it starts minutes earlier.
+- Head with no worker: how long the head waits for a missing rank.
+- Peer death: the surviving rank may hang for up to 30 minutes
+  (`VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS=1800`) instead of exiting.
+
+`systemctl --user reset-failed dsv41-cluster-head` clears the start
+limit after that burst. The same command works for the worker unit.
+
+### Roll back
+
+Stop the units, then clear Tailscale Serve. The off command removes the
+`:8443` publication; it does not restore the previous mapping to
+`:8888`.
+
+```bash
+# spark
+systemctl --user disable --now dsv41-cluster-head dsv41-cluster-serve dsv41-cluster-health.timer
+tailscale serve --https=8443 off
+# spark2
+systemctl --user disable --now dsv41-cluster-worker dsv41-cluster-follow.timer
+```
+
+The next Home Manager switch enables `WantedBy` units again. A rollback
+that should survive a switch sets `services.dsv41Cluster.enable = false`
+in the shared profile and switches both hosts. To serve on every
+interface again, set `expose = "open"` in `users/dsv41-cluster.nix` and
+switch both hosts. Re-run `dsv41_tp2.sh up` only after the cluster units
+are stopped, or the two will fight over the container name `dsv41-serve`.
+
 ## Do not manage or restart
 
 - `spark-vllm` on spark (Docker vLLM serving Hermes on `:8888`, container
-  `spark-qwen36-nvfp4`). A later opt-in could wrap it. It is not a service
-  in this flake.
+  `spark-qwen36-nvfp4`). It is not a service in this flake. The dsv41
+  head refuses to start while `spark-vllm.service` or `nvpair.service`
+  is active. Stop those system units before switching the cluster; this
+  module does not do it.
 - Docker, the NVIDIA driver, and CUDA.
 - The DGX OS updater and `dgx-dashboard` (`dgx-dashboard.service`,
   `dgx-dashboard-admin.service`, `/opt/nvidia/dgx-dashboard/dashboard-admin`).
