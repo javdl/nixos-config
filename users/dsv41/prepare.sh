@@ -72,6 +72,7 @@ case "$cmd" in
     "$(dsv41_docker)" rm -f "$DSV41_CONTAINER" >/dev/null 2>&1 || true
     if [ "$DSV41_ROLE" = head ] && [ -n "${XDG_RUNTIME_DIR:-}" ]; then
       rm -f "$(dsv41_ready_flag)"
+      dsv41_clear_health_state
     fi
     ;;
   drop-caches)

@@ -63,8 +63,23 @@ dsv41_docker() {
 }
 
 # Written by ready.sh after /health and an authenticated /v1/models both
-# succeed. health.sh ignores chat failures until this file exists, so the
-# cold load is not two watchdog strikes.
+# succeed. health.sh does not probe until this file exists and is older
+# than the startup grace, so the cold load is not a watchdog strike.
 dsv41_ready_flag() {
   printf '%s\n' "${XDG_RUNTIME_DIR:?}/dsv41-cluster.ready"
+}
+
+# Failure streak and the worker TCPStore baseline. Cleared when the head
+# container is removed and while the ready flag is absent, so a streak
+# from the previous generation cannot restart the next one.
+dsv41_health_fail_file() {
+  printf '%s\n' "${XDG_RUNTIME_DIR:?}/dsv41-cluster-health.fails"
+}
+
+dsv41_health_peer_file() {
+  printf '%s\n' "${XDG_RUNTIME_DIR:?}/dsv41-cluster-health.peer"
+}
+
+dsv41_clear_health_state() {
+  rm -f "$(dsv41_health_fail_file)" "$(dsv41_health_peer_file)"
 }

@@ -1,9 +1,20 @@
 #!/usr/bin/env bash
-# One 1-token chat probe against 127.0.0.1. The timer runs this every 2 min.
-# Two consecutive failures restart the head. Until ready.sh has recorded
-# success, /health failures are a cold load, not strikes. /health needs no
-# key; this chat probe does.
+# Watchdog for the dsv41 head.
+#
+# Skip while dsv41-cluster-ready has not succeeded, and for one startup
+# grace after it has, so the cold load is not a strike.
+#
+# Two signals restart the head:
+# - The spark2 TCPStore source port on the CX7 changes, or the connection
+#   drops, on N consecutive ticks. A worker-container restart looks like
+#   this while /health is still 200. Those ticks do not wait on a chat call.
+# - An authenticated 1-token chat (max_tokens 1) fails N times. The curl
+#   timeout is short. The timer interval is shorter than that timeout, so
+#   a hung probe is followed immediately by the next one.
+#
+# The API key is read the same way as the other units. It is never printed.
 set -euo pipefail
+set +x
 
 here=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 # shellcheck source=lib.sh
@@ -12,9 +23,31 @@ dsv41_source_cluster
 dsv41_require_runtime
 
 unit=dsv41-cluster-head
-state="${XDG_RUNTIME_DIR}/dsv41-cluster-health.fails"
-failures=${DSV41_HEALTH_FAILURES:-2}
-timeout=${DSV41_HEALTH_TIMEOUT_SEC:-90}
+state=$(dsv41_health_fail_file)
+peer_file=$(dsv41_health_peer_file)
+failures=${DSV41_HEALTH_FAILURES:-5}
+timeout=${DSV41_HEALTH_TIMEOUT_SEC:-20}
+grace=${DSV41_HEALTH_GRACE_SEC:-60}
+peer_confirms=${DSV41_HEALTH_PEER_CONFIRMS:-2}
+
+case "$failures" in
+  ''|*[!0-9]*) failures=5 ;;
+esac
+case "$timeout" in
+  ''|*[!0-9]*) timeout=20 ;;
+esac
+case "$grace" in
+  ''|*[!0-9]*) grace=60 ;;
+esac
+case "$peer_confirms" in
+  ''|*[!0-9]*) peer_confirms=2 ;;
+esac
+
+restart_head() {
+  printf '%s\n' 0 >"$state"
+  rm -f "$peer_file"
+  "$(dsv41_systemctl)" --user restart --no-block "$unit"
+}
 
 note_failure() {
   local n
@@ -26,8 +59,139 @@ note_failure() {
   printf '%s\n' "$n" >"$state"
   if [ "$n" -ge "$failures" ]; then
     echo "dsv41 cluster: ${n} failed probes; restarting ${unit}" >&2
-    printf '%s\n' 0 >"$state"
-    "$(dsv41_systemctl)" --user restart --no-block "$unit"
+    restart_head
+  fi
+}
+
+# Little-endian hex, the form /proc/net/tcp uses. Empty or invalid input
+# fails the caller so a bad address cannot look like "worker down".
+dsv41_ipv4_le_hex() {
+  local ip=$1 a b c d
+  case "$ip" in
+    *.*.*.*) ;;
+    *) return 1 ;;
+  esac
+  IFS=. read -r a b c d <<EOF
+$ip
+EOF
+  a=$((10#$a))
+  b=$((10#$b))
+  c=$((10#$c))
+  d=$((10#$d))
+  if [ "$a" -gt 255 ] || [ "$b" -gt 255 ] || [ "$c" -gt 255 ] || [ "$d" -gt 255 ]; then
+    return 1
+  fi
+  printf '%02X%02X%02X%02X' "$d" "$c" "$b" "$a"
+}
+
+# Established TCPStore client ports on the worker, comma-separated.
+# Prints "down" when the table is readable and no matching socket exists.
+# Returns 1 when the table or the worker address cannot be read, so the
+# caller leaves the saved baseline alone.
+dsv41_worker_tcpstore_identity() {
+  local table=${DSV41_PROC_NET_TCP:-/proc/net/tcp}
+  local worker_hex port_hex ports
+  [ -r "$table" ] || return 1
+  worker_hex=$(dsv41_ipv4_le_hex "${DSV41_WORKER_IP:-}") || return 1
+  case "${DSV41_MASTER_PORT:-}" in
+    ''|*[!0-9]*) return 1 ;;
+  esac
+  port_hex=$(printf '%04X' "$DSV41_MASTER_PORT")
+  ports=$(
+    awk -v worker="$worker_hex" -v port="$port_hex" '
+      NR == 1 { next }
+      {
+        split(toupper($2), local, ":")
+        split(toupper($3), remote, ":")
+        if (local[2] != port) next
+        if (remote[1] != worker) next
+        if (toupper($4) != "01") next
+        print remote[2]
+      }
+    ' "$table" | sort -u | paste -sd, -
+  )
+  if [ -z "$ports" ]; then
+    printf '%s\n' down
+  else
+    printf '%s\n' "$ports"
+  fi
+}
+
+# True when any saved source port is still established. An extra NCCL
+# socket on the same master port is not a worker restart.
+dsv41_ports_overlap() {
+  local saved=$1 current=$2 p
+  [ "$saved" = down ] && return 1
+  [ "$current" = down ] && return 1
+  [ -z "$saved" ] || [ -z "$current" ] && return 1
+  local IFS=,
+  for p in $saved; do
+    case ",${current}," in
+      *",${p},"*) return 0 ;;
+    esac
+  done
+  return 1
+}
+
+peer_read() {
+  peer_id=
+  peer_streak=0
+  [ -f "$peer_file" ] || return 0
+  peer_id=$(sed -n '1s/^id=//p' "$peer_file")
+  peer_streak=$(sed -n '2s/^streak=//p' "$peer_file")
+  case "$peer_streak" in
+    ''|*[!0-9]*) peer_streak=0 ;;
+  esac
+}
+
+peer_write() {
+  printf 'id=%s\nstreak=%s\n' "$1" "$2" >"$peer_file"
+}
+
+# Restart when the worker's TCPStore identity has been gone for N ticks.
+# A single sample can be a parse glitch or a socket that has not finished
+# closing. Returns 0 when the caller should continue with the chat probe.
+observe_peer() {
+  local current saved
+  if ! current=$(dsv41_worker_tcpstore_identity); then
+    return 0
+  fi
+  peer_read
+  saved=$peer_id
+  if [ -z "$saved" ]; then
+    return 0
+  fi
+  if dsv41_ports_overlap "$saved" "$current"; then
+    peer_write "$saved" 0
+    return 0
+  fi
+  peer_streak=$((peer_streak + 1))
+  peer_write "$saved" "$peer_streak"
+  if [ "$peer_streak" -ge "$peer_confirms" ]; then
+    echo "dsv41 cluster: worker ${DSV41_WORKER_IP} TCPStore peer changed (${saved} -> ${current}) on ${peer_streak} ticks; restarting ${unit}" >&2
+    restart_head
+    exit 0
+  fi
+  echo "dsv41 cluster: worker ${DSV41_WORKER_IP} TCPStore peer changed (${saved} -> ${current}); confirming ${peer_streak}/${peer_confirms}" >&2
+  exit 0
+}
+
+arm_peer_baseline() {
+  local current saved
+  if ! current=$(dsv41_worker_tcpstore_identity); then
+    return 0
+  fi
+  case "$current" in
+    down | "") ;;
+    *)
+      peer_write "$current" 0
+      return 0
+      ;;
+  esac
+  peer_read
+  saved=$peer_id
+  if [ -n "$saved" ]; then
+    peer_write "$saved" 0
   fi
 }
 
@@ -37,16 +201,27 @@ fi
 
 ready_flag=$(dsv41_ready_flag)
 health_url="http://127.0.0.1:${DSV41_PORT}/health"
-if ! "$(dsv41_curl)" --connect-timeout 5 --max-time 10 -sf -o /dev/null "$health_url"; then
-  if [ ! -f "$ready_flag" ]; then
+if [ ! -f "$ready_flag" ]; then
+  dsv41_clear_health_state
+  if ! "$(dsv41_curl)" --connect-timeout 5 --max-time 10 -sf -o /dev/null "$health_url"; then
     echo "dsv41 cluster: /health is not up yet; skipping the chat probe" >&2
-    exit 0
+  else
+    echo "dsv41 cluster: /health is up; chat probe waits for dsv41-cluster-ready" >&2
   fi
-  note_failure
   exit 0
 fi
-if [ ! -f "$ready_flag" ]; then
-  echo "dsv41 cluster: /health is up; chat probe waits for dsv41-cluster-ready" >&2
+
+ready_age=$(($(date +%s) - $(stat -c %Y "$ready_flag")))
+if [ "$ready_age" -ge 0 ] && [ "$ready_age" -lt "$grace" ]; then
+  dsv41_clear_health_state
+  echo "dsv41 cluster: ready flag is ${ready_age}s old; skipping probes during the ${grace}s startup grace" >&2
+  exit 0
+fi
+
+observe_peer
+
+if ! "$(dsv41_curl)" --connect-timeout 5 --max-time 10 -sf -o /dev/null "$health_url"; then
+  note_failure
   exit 0
 fi
 
@@ -59,14 +234,21 @@ trap 'rm -f "$cfg" "$body_file"' EXIT
 printf '%s' "$body" >"$body_file"
 printf 'header = "Content-Type: application/json"\n' >>"$cfg"
 
-if ! "$here/api-key.sh" append-auth "$cfg"; then
+# bash rather than the shebang so a caller with bash on PATH can run this
+# where /usr/bin/env is absent (the flake check sandbox).
+if ! bash "$here/api-key.sh" append-auth "$cfg"; then
   note_failure
   exit 0
 fi
 
-code=$("$(dsv41_curl)" --config "$cfg" --data-binary "@${body_file}" --max-time "$timeout" -s -o /dev/null -w '%{http_code}' "$url" || true)
+code=$(
+  "$(dsv41_curl)" --config "$cfg" --data-binary "@${body_file}" \
+    --connect-timeout 5 --max-time "$timeout" -s -o /dev/null -w '%{http_code}' \
+    "$url" || true
+)
 if [ "$code" = 200 ]; then
   printf '%s\n' 0 >"$state"
+  arm_peer_baseline
   exit 0
 fi
 if [ "$code" = 401 ]; then
