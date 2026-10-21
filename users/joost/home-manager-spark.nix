@@ -5,13 +5,16 @@
 # The only packages are mosh, tmux, iperf3, and herdr. Herdr's fleet node
 # (service, fleet.toml, controller authorized_keys) comes from
 # users/herdr-fleet.nix. The NAS and CX7 files rendered for a one-time root
-# install come from users/dgx-spark.nix. See docs/dgx-spark.md.
+# install come from users/dgx-spark.nix. The dsv41 TP2 cluster is one
+# definition in users/dsv41-cluster.nix: this host runs the unit for its
+# own rank. See docs/dgx-spark.md.
 { hostName }:
 { lib, pkgs, ... }:
 {
   imports = [
     (import ../herdr-fleet.nix { currentSystemName = hostName; })
     (import ../dgx-spark.nix { currentSystemName = hostName; })
+    (import ../dsv41-cluster.nix { inherit hostName; })
   ];
 
   assertions = [

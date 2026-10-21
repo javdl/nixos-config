@@ -336,8 +336,10 @@ Only add CLI tools that complement Omarchy without conflicting. `playerctl` is t
 `spark` and `spark2` are Grace-Blackwell DGX Sparks (DGX OS, Ubuntu 24.04,
 aarch64-linux). They are a minimal headless Home Manager profile
 (`mkSparkHome`, `users/joost/home-manager-spark.nix`), not `mkOmarchyHome`.
-The profile installs only `mosh`, `tmux`, `iperf3`, and `herdr`. It does not
-import the workstation profile, `users/agent-clis.nix`, or chezmoi.
+The profile installs only `mosh`, `tmux`, `iperf3`, and `herdr`, plus the
+dsv41 cluster user units from `users/dsv41-cluster.nix` (one definition:
+head on spark, worker on spark2). It does not import the workstation
+profile, `users/agent-clis.nix`, or chezmoi.
 
 `herdr` is the overlay package, wired as a fleet node (`users/herdr-fleet.nix`):
 the `herdr-agents` user service and the controller `authorized_keys` append.
@@ -349,7 +351,9 @@ Root files follow the tailmix precedent: Home Manager renders them under
 (`docs/dgx-spark.md`). That covers the NAS automount and the per-host CX7
 link. The sudoers drop-in stays manual. Driver, CUDA, Docker,
 `nvidia-container-toolkit`, `tailscaled`, apt, and locale stay native.
-`spark-vllm` is not a managed service.
+`spark-vllm` is not a managed service. The dsv41 head unit conflicts with
+`spark-vllm.service` and `nvpair.service` and refuses to start while
+either system unit is active.
 
 CX7 SSH aliases are not written by this profile. They belong in javdl/dotfiles
 if they should be managed. Apply with `make test` / `make switch` and
