@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Exercise users/dsv41/health.sh without a cluster. curl, systemctl, and
-# /proc/net/tcp are fixtures. The API key must not appear in the output.
+# Exercise users/dsv41/health.sh without a cluster. curl, systemctl,
+# /proc/net/tcp, and /proc/net/tcp6 are fixtures. The API key must not
+# appear in the output.
 set -euo pipefail
 
 script_dir=$(CDPATH= cd -- "${1:-$(dirname "$0")/../users/dsv41}" && pwd)
@@ -48,12 +49,34 @@ write_tcp() {
   } >"$tcp"
 }
 
+# IPv4-mapped worker is 0000000000000000FFFF00000B64A8C0 (the tcp4 address
+# with the ::ffff: prefix the kernel prints in tcp6). Noise: a wildcard
+# listen, a native IPv6 client, a TIME_WAIT mapped socket, an established
+# socket to a different IPv4, and an established mapped socket on the
+# wrong local port.
+write_tcp6() {
+  local p i=6
+  {
+    printf '%s\n' "  sl  local_address                         remote_address                        st tx_queue rx_queue tr tm->when retrnsmt   uid  timeout inode"
+    printf '%s\n' "   0: 00000000000000000000000000000000:61A8 00000000000000000000000000000000:0000 0A 00000000:00000000 00:00000000 00000000     0        0 1 1 0000000000000000 100 0 0 10 0"
+    printf '%s\n' "   1: 00000000000000000000000000000000:61A8 20010DB8000000000000000000000001:ABCD 01 00000000:00000000 00:00000000 00000000     0        0 2 1 0000000000000000 100 0 0 10 0"
+    printf '%s\n' "   2: 0000000000000000FFFF00000A64A8C0:61A8 0000000000000000FFFF00000B64A8C0:1111 06 00000000:00000000 00:00000000 00000000     0        0 3 1 0000000000000000 100 0 0 10 0"
+    printf '%s\n' "   3: 0000000000000000FFFF00000A64A8C0:61A8 0000000000000000FFFF00000C64A8C0:9C40 01 00000000:00000000 00:00000000 00000000     0        0 4 1 0000000000000000 100 0 0 10 0"
+    printf '%s\n' "   4: 0000000000000000FFFF00000A64A8C0:0050 0000000000000000FFFF00000B64A8C0:9C42 01 00000000:00000000 00:00000000 00000000     0        0 5 1 0000000000000000 100 0 0 10 0"
+    for p in "$@"; do
+      printf '   %s: 0000000000000000FFFF00000A64A8C0:61A8 0000000000000000FFFF00000B64A8C0:%s 01 00000000:00000000 00:00000000 00000000     0        0 %s 1 0000000000000000 100 0 0 10 0\n' "$i" "$p" "$i"
+      i=$((i + 1))
+    done
+  } >"$tcp6"
+}
+
 new_case() {
   runtime=$(mktemp -d)
   work=$(mktemp -d)
   keyfile=$work/api.env
   envfile=$work/cluster.env
   tcp=$work/net.tcp
+  tcp6=$work/net.tcp6
   restarts=$work/restarts
   curl_log=$work/curl.log
   auth_log=$work/auth.log
@@ -135,6 +158,90 @@ case "$url" in
     printf '%s' "$code"
     exit 0
     ;;
+  */metrics)
+    prev= max= cfg= out=
+    for a in "$@"; do
+      if [ "$prev" = "--max-time" ]; then
+        max=$a
+      fi
+      if [ "$prev" = "--config" ]; then
+        cfg=$a
+      fi
+      if [ "$prev" = "-o" ]; then
+        out=$a
+      fi
+      prev=$a
+    done
+    if [ "$max" != "5" ]; then
+      printf 'expected metrics max-time 5, got %s\n' "${max:-none}" >&2
+      exit 1
+    fi
+    if [ -n "${cfg:-}" ] && [ -n "${DSV41_TEST_KEY:-}" ]; then
+      if grep -q -F "Authorization: Bearer ${DSV41_TEST_KEY}" "$cfg"; then
+        printf '%s\n' saw-auth >>"${DSV41_TEST_AUTH_LOG:?}"
+      fi
+    fi
+    mode=${DSV41_TEST_METRICS:-fail}
+    if [ "$mode" = fail ]; then
+      printf '%s' 000
+      exit 1
+    fi
+    n=0
+    if [ -n "${DSV41_TEST_METRICS_STATE:-}" ] && [ -f "$DSV41_TEST_METRICS_STATE" ]; then
+      n=$(cat "$DSV41_TEST_METRICS_STATE")
+    fi
+    n=$((n + 1))
+    if [ -n "${DSV41_TEST_METRICS_STATE:-}" ]; then
+      printf '%s\n' "$n" >"$DSV41_TEST_METRICS_STATE"
+    fi
+    running=1
+    prompt=1000
+    gen=50
+    case "$mode" in
+      frozen) ;;
+      advance-prompt)
+        prompt=$((n * 30000))
+        ;;
+      advance-gen)
+        gen=$((n * 8))
+        ;;
+      drop)
+        if [ "$n" -ge 2 ]; then
+          prompt=10
+          gen=1
+        else
+          prompt=5000
+          gen=100
+        fi
+        ;;
+      idle)
+        running=0
+        ;;
+      *)
+        printf 'unknown metrics mode %s\n' "$mode" >&2
+        exit 1
+        ;;
+    esac
+    if [ -z "$out" ]; then
+      printf 'metrics curl missing -o\n' >&2
+      exit 1
+    fi
+    {
+      printf '%s\n' '# HELP vllm:num_requests_running Number of requests running.'
+      printf '%s\n' '# TYPE vllm:num_requests_running gauge'
+      printf 'vllm:num_requests_running{model_name="dsv41"} %s\n' "$running"
+      # A later 0 must be summed, not overwrite the gauge above.
+      printf '%s\n' 'num_requests_running{model_name="other"} 0'
+      # Unprefixed prompt counter. A bucket that grows must not count.
+      printf 'prompt_tokens_total{model_name="dsv41"} %s\n' "$prompt"
+      printf 'prompt_tokens_total{model_name="draft"} 5\n'
+      printf 'vllm:generation_tokens_total{model_name="dsv41"} %s\n' "$gen"
+      printf 'vllm:prompt_tokens_total_bucket{le="+Inf"} %s\n' "$((n * 1000000))"
+      printf 'prompt_tokens_created %s\n' "$((n * 1000000))"
+    } >"$out"
+    printf '%s' 200
+    exit 0
+    ;;
 esac
 printf 'unexpected url %s\n' "$url" >&2
 exit 1
@@ -145,18 +252,21 @@ exit 0
 EOF
   chmod 755 "$work/systemctl" "$work/curl" "$work/docker"
   write_tcp 9C40
+  write_tcp6
   export XDG_RUNTIME_DIR=$runtime
   export DSV41_CLUSTER_ENV=$envfile
   export DSV41_SYSTEMCTL_BIN=$work/systemctl
   export DSV41_CURL_BIN=$work/curl
   export DSV41_DOCKER_BIN=$work/docker
   export DSV41_PROC_NET_TCP=$tcp
+  export DSV41_PROC_NET_TCP6=$tcp6
   export DSV41_TEST_SYSTEMCTL_LOG=$sys_log
   export DSV41_TEST_RESTARTS=$restarts
   export DSV41_TEST_CURL_LOG=$curl_log
   export DSV41_TEST_AUTH_LOG=$auth_log
   export DSV41_TEST_KEY=$key_value
-  unset DSV41_TEST_HEAD_DOWN DSV41_TEST_HEALTH_CODE DSV41_TEST_CHAT_CODE
+  export DSV41_TEST_METRICS_STATE=$work/metrics.n
+  unset DSV41_TEST_HEAD_DOWN DSV41_TEST_HEALTH_CODE DSV41_TEST_CHAT_CODE DSV41_TEST_METRICS
 }
 
 ready_old() {
@@ -196,6 +306,7 @@ unset DSV41_TEST_HEAD_DOWN
 new_case
 export DSV41_TEST_HEALTH_CODE=000
 printf '%s\n' 4 >"$runtime/dsv41-cluster-health.fails"
+printf 'prompt=1\ngeneration=1\n' >"$runtime/dsv41-cluster-health.metrics"
 run_health
 assert_eq "$rc" 0 "not ready rc"
 assert_eq "$(restart_count)" 0 "not ready restarts"
@@ -203,7 +314,7 @@ grep -q 'skipping the chat probe' "$work/err"
 if grep -q chat/completions "$curl_log"; then
   fail "chat probe ran before ready"
 fi
-if [ -e "$runtime/dsv41-cluster-health.fails" ]; then
+if [ -e "$runtime/dsv41-cluster-health.fails" ] || [ -e "$runtime/dsv41-cluster-health.metrics" ]; then
   fail "failure streak survived the not-ready skip"
 fi
 
@@ -220,12 +331,13 @@ new_case
 ready_now
 printf '%s\n' 4 >"$runtime/dsv41-cluster-health.fails"
 printf 'id=9C40\nstreak=1\n' >"$runtime/dsv41-cluster-health.peer"
+printf 'prompt=1\ngeneration=1\n' >"$runtime/dsv41-cluster-health.metrics"
 run_health
 assert_eq "$rc" 0 "grace rc"
 assert_eq "$(restart_count)" 0 "grace restarts"
 grep -q 'startup grace' "$work/err"
 assert_eq "$(wc -c <"$curl_log" | tr -d ' ')" 0 "grace made no HTTP call"
-if [ -e "$runtime/dsv41-cluster-health.fails" ] || [ -e "$runtime/dsv41-cluster-health.peer" ]; then
+if [ -e "$runtime/dsv41-cluster-health.fails" ] || [ -e "$runtime/dsv41-cluster-health.peer" ] || [ -e "$runtime/dsv41-cluster-health.metrics" ]; then
   fail "grace did not clear a streak from the previous generation"
 fi
 
@@ -240,6 +352,9 @@ assert_eq "$(restart_count)" 0 "chat 200 restarts"
 assert_eq "$(cat "$runtime/dsv41-cluster-health.fails")" 0 "chat 200 clears failures"
 assert_eq "$(sed -n '1p' "$runtime/dsv41-cluster-health.peer")" "id=9C40" "baseline port"
 grep -q saw-auth "$auth_log"
+if grep -q '/metrics' "$curl_log"; then
+  fail "chat 200 scraped /metrics"
+fi
 assert_clean_secret
 
 # --- four chat timeouts are not a restart; the fifth is. A 200 in between clears. ---
@@ -255,6 +370,7 @@ while [ "$i" -lt 4 ]; do
 done
 assert_eq "$(restart_count)" 0 "four timeouts restarted"
 assert_eq "$(cat "$runtime/dsv41-cluster-health.fails")" 4 "four timeouts counted"
+grep -q '/metrics' "$curl_log"
 assert_eq "$(sed -n '1p' "$runtime/dsv41-cluster-health.peer")" "id=9C40" "timeouts kept the baseline"
 export DSV41_TEST_CHAT_CODE=200
 run_health
@@ -284,6 +400,9 @@ assert_eq "$rc" 1 "401 rc"
 assert_eq "$(restart_count)" 0 "401 restarts"
 assert_eq "$(cat "$runtime/dsv41-cluster-health.fails")" 2 "401 did not count a strike"
 grep -q 'returned 401' "$work/err"
+if grep -q '/metrics' "$curl_log"; then
+  fail "401 scraped /metrics"
+fi
 assert_clean_secret
 
 # --- /health down counts, and five downs restart ---
@@ -298,6 +417,9 @@ done
 assert_eq "$(restart_count)" 0 "four /health failures restarted"
 if grep -q chat/completions "$curl_log"; then
   fail "chat probe ran when /health was down"
+fi
+if grep -q '/metrics' "$curl_log"; then
+  fail "metrics scraped when /health was down"
 fi
 run_health
 assert_eq "$(restart_count)" 1 "fifth /health failure restarts"
@@ -348,12 +470,13 @@ run_health
 assert_eq "$(restart_count)" 0 "peer flap restarted"
 assert_eq "$(sed -n '2p' "$runtime/dsv41-cluster-health.peer")" "streak=0" "flap cleared the streak"
 
-# --- unreadable tcp table does not arm or restart ---
+# --- unreadable tcp and tcp6 tables do not arm or restart ---
 new_case
 ready_old
-rm -f "$tcp"
+rm -f "$tcp" "$tcp6"
 printf '%s\n' "not a table" >"$tcp"
-chmod 000 "$tcp"
+printf '%s\n' "not a table" >"$tcp6"
+chmod 000 "$tcp" "$tcp6"
 export DSV41_TEST_CHAT_CODE=200
 run_health
 assert_eq "$rc" 0 "unreadable tcp rc"
@@ -361,7 +484,7 @@ assert_eq "$(restart_count)" 0 "unreadable tcp restarts"
 if [ -e "$runtime/dsv41-cluster-health.peer" ]; then
   fail "unreadable tcp armed a baseline"
 fi
-chmod 644 "$tcp" || true
+chmod 644 "$tcp" "$tcp6" || true
 
 # --- open exposure probes without a key file ---
 new_case
@@ -382,9 +505,150 @@ ready_old
 export DSV41_TEST_CHAT_CODE=200
 run_health
 printf '%s\n' 3 >"$runtime/dsv41-cluster-health.fails"
+printf 'prompt=9\ngeneration=9\n' >"$runtime/dsv41-cluster-health.metrics"
 bash "$script_dir/prepare.sh" docker-rm
-if [ -e "$runtime/dsv41-cluster.ready" ] || [ -e "$runtime/dsv41-cluster-health.fails" ] || [ -e "$runtime/dsv41-cluster-health.peer" ]; then
+if [ -e "$runtime/dsv41-cluster.ready" ] || [ -e "$runtime/dsv41-cluster-health.fails" ] || [ -e "$runtime/dsv41-cluster-health.peer" ] || [ -e "$runtime/dsv41-cluster-health.metrics" ]; then
   fail "docker-rm left watchdog state behind"
 fi
+
+# --- tcp4 still arms when tcp6 is absent ---
+new_case
+rm -f "$tcp6"
+ready_old
+export DSV41_TEST_CHAT_CODE=200
+run_health
+assert_eq "$rc" 0 "tcp6 absent rc"
+assert_eq "$(sed -n '1p' "$runtime/dsv41-cluster-health.peer")" "id=9C40" "tcp4 baseline without tcp6"
+assert_eq "$(restart_count)" 0 "tcp6 absent restarts"
+
+# --- IPv4-mapped tcp6 socket is the worker, including lowercase hex ---
+new_case
+ready_old
+write_tcp
+write_tcp6 9C40
+sed -i 's/0000000000000000FFFF00000B64A8C0/0000000000000000ffff00000b64a8c0/g' "$tcp6"
+export DSV41_TEST_CHAT_CODE=200
+run_health
+assert_eq "$rc" 0 "tcp6 arm rc"
+assert_eq "$(restart_count)" 0 "tcp6 arm restarts"
+assert_eq "$(sed -n '1p' "$runtime/dsv41-cluster-health.peer")" "id=9C40" "tcp6 baseline port"
+if grep -q chat/completions "$curl_log"; then
+  :
+else
+  fail "tcp6 arm skipped the chat probe"
+fi
+# The same port moving from tcp6 to tcp4 is not a restart.
+write_tcp 9C40
+write_tcp6
+run_health
+assert_eq "$(restart_count)" 0 "tcp6 to tcp4 restarted"
+assert_eq "$(sed -n '1p' "$runtime/dsv41-cluster-health.peer")" "id=9C40" "tcp4 kept the baseline"
+if ! grep -q chat/completions "$curl_log"; then
+  fail "tcp6 to tcp4 skipped the chat probe"
+fi
+write_tcp
+write_tcp6 9C41
+export DSV41_TEST_CHAT_CODE=timeout
+run_health
+assert_eq "$(restart_count)" 0 "first tcp6 peer change restarted"
+assert_eq "$(sed -n '1p' "$runtime/dsv41-cluster-health.peer")" "id=9C40" "tcp6 baseline held"
+assert_eq "$(sed -n '2p' "$runtime/dsv41-cluster-health.peer")" "streak=1" "tcp6 first change streak"
+if grep -q chat/completions "$curl_log"; then
+  fail "tcp6 peer change waited on a chat probe"
+fi
+grep -q 'confirming 1/2' "$work/err"
+run_health
+assert_eq "$(restart_count)" 1 "second tcp6 peer change restarts"
+grep -q 'TCPStore peer changed' "$work/err"
+
+# --- a long prefill: running > 0 and prompt tokens advancing is not a strike ---
+# 8 timeouts stand in for the measured 146.6s TTFT (five would restart).
+new_case
+ready_old
+export DSV41_TEST_CHAT_CODE=timeout
+export DSV41_TEST_METRICS=advance-prompt
+i=0
+while [ "$i" -lt 8 ]; do
+  run_health
+  i=$((i + 1))
+done
+assert_eq "$rc" 0 "advancing prompt rc"
+assert_eq "$(restart_count)" 0 "advancing prompt restarted"
+assert_eq "$(cat "$runtime/dsv41-cluster-health.fails")" 0 "advancing prompt streak"
+grep -q 'token counters advanced' "$work/err"
+grep -q saw-auth "$auth_log"
+assert_clean_secret
+prompt_now=$(sed -n 's/^prompt=//p' "$runtime/dsv41-cluster-health.metrics")
+if [ "${prompt_now:-0}" -le 30000 ]; then
+  fail "advancing prompt baseline did not move (${prompt_now:-missing})"
+fi
+
+# --- generation tokens advancing, prompt frozen, is the same veto ---
+new_case
+ready_old
+export DSV41_TEST_CHAT_CODE=timeout
+export DSV41_TEST_METRICS=advance-gen
+i=0
+while [ "$i" -lt 8 ]; do
+  run_health
+  i=$((i + 1))
+done
+assert_eq "$(restart_count)" 0 "advancing generation restarted"
+assert_eq "$(cat "$runtime/dsv41-cluster-health.fails")" 0 "advancing generation streak"
+grep -q 'token counters advanced' "$work/err"
+assert_clean_secret
+
+# --- frozen counters: the first busy scrape arms, the next five restart ---
+# 6 * 20s probes, plus up to one 15s tick, stays under 2.5 min.
+new_case
+ready_old
+export DSV41_TEST_CHAT_CODE=timeout
+export DSV41_TEST_METRICS=frozen
+run_health
+assert_eq "$(restart_count)" 0 "frozen baseline restarted"
+assert_eq "$(cat "$runtime/dsv41-cluster-health.fails")" 0 "frozen baseline is not a strike"
+grep -q 'recording the token baseline' "$work/err"
+assert_eq "$(sed -n 's/^prompt=//p' "$runtime/dsv41-cluster-health.metrics")" "1005" "frozen prompt sums every series"
+i=0
+while [ "$i" -lt 4 ]; do
+  run_health
+  i=$((i + 1))
+done
+assert_eq "$(restart_count)" 0 "four frozen samples restarted"
+assert_eq "$(cat "$runtime/dsv41-cluster-health.fails")" 4 "four frozen samples counted"
+run_health
+assert_eq "$(restart_count)" 1 "fifth frozen sample restarts"
+assert_eq "$(cat "$runtime/dsv41-cluster-health.fails")" 0 "frozen restart resets the streak"
+if [ -e "$runtime/dsv41-cluster-health.metrics" ]; then
+  fail "frozen restart left the metrics baseline in place"
+fi
+assert_clean_secret
+
+# --- running == 0 counts immediately, even on the first scrape ---
+new_case
+ready_old
+export DSV41_TEST_CHAT_CODE=timeout
+export DSV41_TEST_METRICS=idle
+run_health
+assert_eq "$(restart_count)" 0 "idle metrics restarted"
+assert_eq "$(cat "$runtime/dsv41-cluster-health.fails")" 1 "idle metrics counted"
+if grep -q 'recording the token baseline' "$work/err"; then
+  fail "idle metrics was treated as a live prefill"
+fi
+
+# --- a counter reset records a new baseline and does not count ---
+new_case
+ready_old
+export DSV41_TEST_CHAT_CODE=timeout
+export DSV41_TEST_METRICS=drop
+run_health
+assert_eq "$(cat "$runtime/dsv41-cluster-health.fails")" 0 "drop baseline is not a strike"
+run_health
+assert_eq "$(restart_count)" 0 "counter reset restarted"
+assert_eq "$(cat "$runtime/dsv41-cluster-health.fails")" 0 "counter reset counted"
+grep -q 'went backwards' "$work/err"
+assert_eq "$(sed -n 's/^prompt=//p' "$runtime/dsv41-cluster-health.metrics")" "15" "counter reset baseline"
+run_health
+assert_eq "$(cat "$runtime/dsv41-cluster-health.fails")" 1 "frozen after reset counted"
 
 printf 'dsv41 health watchdog checks passed.\n'

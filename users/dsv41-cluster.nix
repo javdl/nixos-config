@@ -71,13 +71,18 @@ let
     # The timer is shorter than the chat timeout. A hung probe therefore
     # runs back to back: an OnUnitActiveSec elapse that lands while this
     # oneshot is still running is acted on as soon as the oneshot exits.
-    # Five 20s chat timeouts are about 100s, plus up to one 15s tick.
-    # A ~70s prefill can time out at most four of those probes; the probe
-    # still in flight when the prefill finishes returns 200 and clears the
-    # streak. Two ticks that see the spark2 TCPStore source port change
-    # restart sooner (about 15-30s). That is the worker-restart hang,
-    # where /health stays 200. Probes wait until ready.sh has been
-    # successful for healthGraceSec, so the cold load is not a strike.
+    # Five 20s chat timeouts are about 100s, plus up to one 15s tick, when
+    # /metrics is idle, unreadable, or its token counters are frozen. A
+    # live prefill (measured 146.6s TTFT at 252K tokens; maxModelLen is
+    # 262144) does not count while num_requests_running > 0 and prompt or
+    # generation tokens advance between scrapes. The first busy scrape
+    # only records a baseline, so a frozen engine is one extra 20s sample
+    # and still under 2.5 min. Two ticks that see the spark2 TCPStore
+    # source port change, in /proc/net/tcp or as an IPv4-mapped socket in
+    # /proc/net/tcp6, restart sooner (about 15-30s). That is the
+    # worker-restart hang, where /health stays 200. Probes wait until
+    # ready.sh has been successful for healthGraceSec, so the cold load
+    # is not a strike.
     healthEvery = "15s";
     healthFailures = 5;
     healthTimeoutSec = 20;
@@ -340,9 +345,9 @@ in
           Type = "oneshot";
           Environment = [ "DSV41_CLUSTER_ENV=${nodeEnv}" ];
           ExecStart = "${scriptDir}/health.sh";
-          # One tick is a 10s /health curl plus a 20s chat curl. A stuck
-          # curl must not hold the oneshot for the old 3 minute cap, or
-          # the next tick cannot run.
+          # One tick is a 10s /health curl, a 20s chat curl, and on chat
+          # failure a 5s /metrics scrape. A stuck curl must not hold the
+          # oneshot for the old 3 minute cap, or the next tick cannot run.
           TimeoutStartSec = "1min";
         };
       };

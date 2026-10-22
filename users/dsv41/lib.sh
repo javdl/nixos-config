@@ -69,9 +69,10 @@ dsv41_ready_flag() {
   printf '%s\n' "${XDG_RUNTIME_DIR:?}/dsv41-cluster.ready"
 }
 
-# Failure streak and the worker TCPStore baseline. Cleared when the head
-# container is removed and while the ready flag is absent, so a streak
-# from the previous generation cannot restart the next one.
+# Failure streak, the worker TCPStore baseline, and the /metrics token
+# baseline. Cleared when the head container is removed and while the
+# ready flag is absent, so a streak from the previous generation cannot
+# restart the next one.
 dsv41_health_fail_file() {
   printf '%s\n' "${XDG_RUNTIME_DIR:?}/dsv41-cluster-health.fails"
 }
@@ -80,6 +81,10 @@ dsv41_health_peer_file() {
   printf '%s\n' "${XDG_RUNTIME_DIR:?}/dsv41-cluster-health.peer"
 }
 
+dsv41_health_metrics_file() {
+  printf '%s\n' "${XDG_RUNTIME_DIR:?}/dsv41-cluster-health.metrics"
+}
+
 dsv41_clear_health_state() {
-  rm -f "$(dsv41_health_fail_file)" "$(dsv41_health_peer_file)"
+  rm -f "$(dsv41_health_fail_file)" "$(dsv41_health_peer_file)" "$(dsv41_health_metrics_file)"
 }

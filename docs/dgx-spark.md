@@ -268,27 +268,45 @@ that success is at least 60 seconds old, so the cold load (~6.5 minutes)
 and the first minute of serving are not strikes.
 
 After that, each tick looks at the worker's TCPStore connection first.
-`/proc/net/tcp` is read for an established socket on `192.168.100.10:25000`
-whose remote address is spark2's CX7 address. The identity is that
-socket's source port. An extra socket on the same port does not count:
-the previous port has to be gone. Two consecutive ticks with a new port,
-or with the connection gone, restart `dsv41-cluster-head` without waiting
-on a chat call. That is the fast path for a spark2 worker restart, about
-15-30 seconds. A worker restart is the hang that left `/health` at 200
-while chat timed out.
+The head listens dual-stack, so spark2's connection to
+`192.168.100.10:25000` is an IPv4-mapped socket in `/proc/net/tcp6`
+(`0000000000000000FFFF0000` plus the little-endian IPv4), not a row in
+`/proc/net/tcp`. Both tables are read. The identity is the source port of
+an established socket whose remote address is spark2's CX7 address. An
+extra socket on the same port does not count: the previous port has to be
+gone. Two consecutive ticks with a new port, or with the connection gone,
+restart `dsv41-cluster-head` without waiting on a chat call. That is the
+fast path for a spark2 worker restart, about 15-30 seconds. Before tcp6
+was parsed, that path never armed. On the hardware the same restart was
+detected only by the chat probe, in 2 minutes 5 seconds, and the cluster
+was back 8 minutes 28 seconds after the worker restart. The rest of that
+interval is the cold load.
 
 Otherwise the tick checks `GET /health` (no key, 10 seconds) and then one
 authenticated 1-token `POST /v1/chat/completions` to `127.0.0.1:8000`
 (`max_tokens` 1, 20 second curl timeout). In the Aperture profile the chat
 probe sends the key. The timer interval is shorter than that timeout, so
-a hung probe is followed immediately by the next one. Five consecutive
-chat failures are about 100 seconds, plus up to 15 seconds if the hang
-starts just after a successful probe. A single ~70 second prefill can
-time out at most four of those probes; the probe still in flight when the
-prefill finishes returns 200 and clears the streak, so normal load
-(`max_num_seqs` 2) does not restart the head. A 401 from the chat probe
-is logged and does not by itself restart the head. The key is read from
-`~/.config/spark-vllm/api.env` and is not logged.
+a hung probe is followed immediately by the next one. A chat timeout also
+scrapes `GET /metrics` with the same key. If `num_requests_running` is
+above zero and `prompt_tokens_total` or `generation_tokens_total` has
+increased since the previous scrape, the engine is in a prefill and the
+timeout is not a strike. The first busy scrape only records the baseline.
+A measured 120K-token prompt took 65.9 seconds to first token and caused
+three probe timeouts. A 252K-token prompt took 146.6 seconds, long enough
+to reach five strikes. `max_model_len` is 262144, so a prefill of that
+length can happen in production. Those timeouts do not restart the head
+while the counters move. Chunked prefill is 2048 tokens, about a second
+at the measured rate, so a 20 second gap should see the prompt counter
+advance. If a build only increments those counters when the request
+finishes, a max-context prefill still looks frozen.
+
+Five chat failures while the counters are frozen, or while no request is
+running, or while `/metrics` cannot be scraped, are about 100 seconds of
+probes. The frozen case spends one extra probe recording the baseline, so
+the worst case is about 120 seconds plus up to 15 seconds if the hang
+starts just after a successful probe, under 2.5 minutes. A 401 from the
+chat probe is logged and does not by itself restart the head. The key is
+read from `~/.config/spark-vllm/api.env` and is not logged.
 
 Stopping the head runs `docker stop` and then `ExecStopPost` (`docker rm
 -f`). A killed `docker run --rm` client can leave `dsv41-serve` behind;
