@@ -54,7 +54,8 @@ in
           skopeo
 
           # Cloud CLI tools
-          google-cloud-sdk
+          # gke-gcloud-auth-plugin: kubectl auth for GKE (`gcloud components install` is read-only on Nix)
+          (google-cloud-sdk.withExtraComponents [ google-cloud-sdk.components.gke-gcloud-auth-plugin ])
           awscli2
           azure-cli
           doctl
