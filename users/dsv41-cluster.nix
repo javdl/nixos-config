@@ -68,9 +68,21 @@ let
     shmSize = "64g";
     memlock = "-1";
     stack = "67108864";
-    healthEvery = "2min";
-    healthFailures = 2;
-    healthTimeoutSec = 90;
+    # The timer is shorter than the chat timeout. A hung probe therefore
+    # runs back to back: an OnUnitActiveSec elapse that lands while this
+    # oneshot is still running is acted on as soon as the oneshot exits.
+    # Five 20s chat timeouts are about 100s, plus up to one 15s tick.
+    # A ~70s prefill can time out at most four of those probes; the probe
+    # still in flight when the prefill finishes returns 200 and clears the
+    # streak. Two ticks that see the spark2 TCPStore source port change
+    # restart sooner (about 15-30s). That is the worker-restart hang,
+    # where /health stays 200. Probes wait until ready.sh has been
+    # successful for healthGraceSec, so the cold load is not a strike.
+    healthEvery = "15s";
+    healthFailures = 5;
+    healthTimeoutSec = 20;
+    healthGraceSec = 60;
+    healthPeerConfirms = 2;
     followEvery = "30s";
     # 80 * 15s = 20 min. A cold load is ~6.5 min plus pairing.
     readyRetries = 80;
@@ -191,6 +203,9 @@ let
     DSV41_MARKOV = markov;
     DSV41_HEALTH_FAILURES = cluster.healthFailures;
     DSV41_HEALTH_TIMEOUT_SEC = cluster.healthTimeoutSec;
+    DSV41_HEALTH_GRACE_SEC = cluster.healthGraceSec;
+    DSV41_HEALTH_PEER_CONFIRMS = cluster.healthPeerConfirms;
+    DSV41_WORKER_IP = cluster.nodes.spark2.ip;
     DSV41_READY_RETRIES = cluster.readyRetries;
     DSV41_READY_RETRY_DELAY = cluster.readyRetryDelaySec;
     DSV41_FABRIC_WAIT_SEC = cluster.fabricWaitSec;
@@ -320,12 +335,15 @@ in
         };
       };
       dsv41-cluster-health = {
-        Unit.Description = "Probe the dsv41 cluster and restart the head after repeated chat failures";
+        Unit.Description = "Probe the dsv41 cluster and restart the head after repeated chat failures or a worker TCPStore change";
         Service = {
           Type = "oneshot";
           Environment = [ "DSV41_CLUSTER_ENV=${nodeEnv}" ];
           ExecStart = "${scriptDir}/health.sh";
-          TimeoutStartSec = "3min";
+          # One tick is a 10s /health curl plus a 20s chat curl. A stuck
+          # curl must not hold the oneshot for the old 3 minute cap, or
+          # the next tick cannot run.
+          TimeoutStartSec = "1min";
         };
       };
     }
@@ -365,7 +383,9 @@ in
           Timer = {
             OnBootSec = cluster.healthEvery;
             OnUnitActiveSec = cluster.healthEvery;
-            AccuracySec = "15s";
+            # The default AccuracySec is 1 minute, which would swallow a
+            # 15s cadence. 1s keeps the coalescing window inside one tick.
+            AccuracySec = "1s";
           };
           Install.WantedBy = [ "timers.target" ];
         };

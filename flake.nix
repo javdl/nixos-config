@@ -382,6 +382,25 @@
                 bash ${./tests/nix-performance-policy.sh} ${self}
                 touch $out
               '';
+
+          # The dsv41 watchdog decides when to restart a live model. Run the
+          # script against fake curl/systemctl so the failure streak, the
+          # startup grace, and the worker TCPStore trigger stay pinned.
+          dsv41-health =
+            pkgs.runCommandLocal "check-dsv41-health"
+              {
+                nativeBuildInputs = [
+                  pkgs.bash
+                  pkgs.coreutils
+                  pkgs.gawk
+                  pkgs.gnugrep
+                  pkgs.gnused
+                ];
+              }
+              ''
+                bash ${./tests/dsv41-health.sh} ${./users/dsv41}
+                touch $out
+              '';
         }
         // nixpkgs.lib.optionalAttrs (system == "x86_64-linux") (
           # Keep explicit full-module evaluation coverage, but expose each host

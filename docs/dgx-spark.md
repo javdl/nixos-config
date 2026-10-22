@@ -262,13 +262,33 @@ key mismatch: fix `api.env`, then
 `systemctl --user restart dsv41-cluster-head`. If `/health` never answers,
 the oneshot restarts the head.
 
-`dsv41-cluster-health.timer` (every 2 minutes) is the watchdog. It skips
-the chat probe until the readiness oneshot has recorded success, so the
-cold load is not two strikes. After that, a 1-token
-`POST /v1/chat/completions` to `127.0.0.1:8000` uses a 90 second timeout.
-In the Aperture profile the chat probe sends the key. `/health` does not.
-Two consecutive chat failures restart `dsv41-cluster-head`. A 401 from
-the chat probe is logged and does not by itself restart the head.
+`dsv41-cluster-health.timer` (every 15 seconds, `AccuracySec=1s`) is the
+watchdog. It does not probe until `dsv41-cluster-ready` has succeeded and
+that success is at least 60 seconds old, so the cold load (~6.5 minutes)
+and the first minute of serving are not strikes.
+
+After that, each tick looks at the worker's TCPStore connection first.
+`/proc/net/tcp` is read for an established socket on `192.168.100.10:25000`
+whose remote address is spark2's CX7 address. The identity is that
+socket's source port. An extra socket on the same port does not count:
+the previous port has to be gone. Two consecutive ticks with a new port,
+or with the connection gone, restart `dsv41-cluster-head` without waiting
+on a chat call. That is the fast path for a spark2 worker restart, about
+15-30 seconds. A worker restart is the hang that left `/health` at 200
+while chat timed out.
+
+Otherwise the tick checks `GET /health` (no key, 10 seconds) and then one
+authenticated 1-token `POST /v1/chat/completions` to `127.0.0.1:8000`
+(`max_tokens` 1, 20 second curl timeout). In the Aperture profile the chat
+probe sends the key. The timer interval is shorter than that timeout, so
+a hung probe is followed immediately by the next one. Five consecutive
+chat failures are about 100 seconds, plus up to 15 seconds if the hang
+starts just after a successful probe. A single ~70 second prefill can
+time out at most four of those probes; the probe still in flight when the
+prefill finishes returns 200 and clears the streak, so normal load
+(`max_num_seqs` 2) does not restart the head. A 401 from the chat probe
+is logged and does not by itself restart the head. The key is read from
+`~/.config/spark-vllm/api.env` and is not logged.
 
 Stopping the head runs `docker stop` and then `ExecStopPost` (`docker rm
 -f`). A killed `docker run --rm` client can leave `dsv41-serve` behind;
