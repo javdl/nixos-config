@@ -121,6 +121,25 @@ let
     ln -s /usr/bin/pinentry "$out/bin/pinentry"
   '';
 
+  # Yubico Authenticator (the YubiKey Manager GUI's successor). On Omarchy the
+  # Nix build cannot load Arch's NVIDIA EGL vendor and aborts with "No provider
+  # of eglGetPlatformDisplayEXT"; point it at Nix's mesa vendor instead. NixOS
+  # hosts get a working EGL from /run/opengl-driver. OATH and PIV talk to the
+  # key over PC/SC, so the host needs pcscd running (Arch: pcscd.socket).
+  yubicoAuthenticator =
+    if isOmarchy then
+      pkgs.symlinkJoin {
+        name = "yubioath-flutter-omarchy";
+        paths = [ pkgs.yubioath-flutter ];
+        nativeBuildInputs = [ pkgs.makeWrapper ];
+        postBuild = ''
+          wrapProgram $out/bin/yubioath-flutter \
+            --set-default __EGL_VENDOR_LIBRARY_DIRS ${pkgs.mesa}/share/glvnd/egl_vendor.d
+        '';
+      }
+    else
+      pkgs.yubioath-flutter;
+
   # tailmixd unit for the Omarchy boxes, sharing its fields with the NixOS
   # module bali uses. See lib/tailmix-service.nix for why both exist.
   tailmixUnit = import ../../lib/tailmix-service.nix { inherit lib; };
@@ -447,6 +466,7 @@ in
       tailscale-systray
       # windsurf  # Replaced with VS Code
       baobab # Disk usage, gnome only
+      yubicoAuthenticator # YubiKey GUI (Yubico Authenticator)
 
       # DGX Spark client software; Macs get the same set as casks in
       # users/joost/darwin.nix. Nsight from the newest CUDA 13 set so the GUIs

@@ -110,6 +110,14 @@ systemFunc {
       else
         { }
     )
+    # Yubico Authenticator (users/joost/home-manager.nix) reaches the YubiKey's
+    # OATH and PIV applets over PC/SC.
+    (
+      if !darwin && !isWSL && user == "joost" && !server && name != "github-runner" then
+        { services.pcscd.enable = true; }
+      else
+        { }
+    )
     home-manager.home-manager
     {
       home-manager.backupFileExtension = "backup";

@@ -53,23 +53,23 @@ in
           # grok - xAI Grok Build CLI (coding agent harness + TUI)
           # Bare static-PIE binary; runs on NixOS with no patchelf needed (verified).
           # Version endpoint: https://x.ai/cli/stable
-          grokVersion = "1.0.62";
+          grokVersion = "1.0.67";
           grokSources = {
             "x86_64-linux" = {
               url = "https://x.ai/cli/grok-${grokVersion}-linux-x86_64";
-              sha256 = "1ak9i49gpc804j19g96j3prdbnhr9dqicmzryz7skmzbszjdjiia";
+              sha256 = "0l9annmzk28dx4cgj63i6zyycj8igbd6r4arzrb1z41pksib2cyf";
             };
             "aarch64-linux" = {
               url = "https://x.ai/cli/grok-${grokVersion}-linux-aarch64";
-              sha256 = "1q9gq7gfgfcqfvf7xz5950av8q6l8qcfld3wwg98i1vj14i8m00b";
+              sha256 = "11k3vfn39fghiavhmh42mglgcx50i87wviciszy0wmqv5k60m6h8";
             };
             "x86_64-darwin" = {
               url = "https://x.ai/cli/grok-${grokVersion}-macos-x86_64";
-              sha256 = "0x8bna9nl3jk25crs5yh6v8yg85bzvk9286yc20qs8sjrv90bkbk";
+              sha256 = "0gm06g3f8zglx3lqv9gb5qmlwric8k91q7pw6rh3yyzv3f3m3a94";
             };
             "aarch64-darwin" = {
               url = "https://x.ai/cli/grok-${grokVersion}-macos-aarch64";
-              sha256 = "0kjsc09mvmvaf68s95nym2jgh79bfgyiaa0gg23wxkzx3a1lwhzc";
+              sha256 = "1nrlnyncg3pid2qhsr4v2szn1i0cpw1phzw2vq2axbc75774fsh3";
             };
           };
           grokSource = grokSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for grok: ${prev.stdenv.hostPlatform.system}");
@@ -102,23 +102,23 @@ in
           # Linux uses the musl tarballs (verified `file`: static-pie linked), so
           # no patchelf. The tarball ships lib/posthog-api-cli.mjs next to the
           # binary for `posthog-cli api`; keep the layout and put node on PATH.
-          posthogCliVersion = "0.18.10";
+          posthogCliVersion = "0.18.12";
           posthogCliSources = {
             "x86_64-linux" = {
               target = "x86_64-unknown-linux-musl";
-              sha256 = "d4507f08a29e8e89e79c3430841f9da5e2216983e231c219f30c69f4c7ac8c97";
+              sha256 = "4799c1e81318511885295dd22599c38aec99430559da570ff8f6c70473c257aa";
             };
             "aarch64-linux" = {
               target = "aarch64-unknown-linux-musl";
-              sha256 = "5b0b26378a3edc4b2de0250c924606f559cfba4f5f2898d8e89b76c8624f1863";
+              sha256 = "1c9b8181c0bed920dfa5ce8388ac22e5418951f1a86ca95c10c4819f3feadfd8";
             };
             "x86_64-darwin" = {
               target = "x86_64-apple-darwin";
-              sha256 = "31340b1936e36e93fbb6759a506f9cf2b55057bcdf5d18113d67f90d9ebe7e58";
+              sha256 = "d0638d2a1acae1f9c6945291805606e4e207e879418bb7493199efa376da1f39";
             };
             "aarch64-darwin" = {
               target = "aarch64-apple-darwin";
-              sha256 = "ac3610273be3c7bfd31b0e7f81d8b35119543bf66b99f669d1ec50abbb36d0da";
+              sha256 = "39f4bd1ea864d2335686a7097f85b5003983a906f934c925afe4443bc5384989";
             };
           };
           posthogCliSource = posthogCliSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for posthog-cli: ${prev.stdenv.hostPlatform.system}");
@@ -129,23 +129,23 @@ in
           # Version endpoint: https://cdn.getmoshi.app/hook/latest/version.txt
           # Checksums: https://cdn.getmoshi.app/hook/v<version>/checksums.txt
           # The CDN keeps only recent releases; old versions 404, so bump promptly.
-          moshiHookVersion = "0.4.33";
+          moshiHookVersion = "0.4.35";
           moshiHookSources = {
             "x86_64-linux" = {
               url = "https://cdn.getmoshi.app/hook/v${moshiHookVersion}/moshi-hook_Linux_x86_64.tar.gz";
-              sha256 = "1xcaydygwv1rfzs9i5hxalq4ypgqw609x17mbi07gyjsgx6zdjgj";
+              sha256 = "0rz9zz720nlqdhyg9ymspv603aag9x5132g3p0xmk9sphs2jbwqk";
             };
             "aarch64-linux" = {
               url = "https://cdn.getmoshi.app/hook/v${moshiHookVersion}/moshi-hook_Linux_arm64.tar.gz";
-              sha256 = "0yyg0m6dqxnf1ria7lqalr3ikxw9p2ipykz82f1k2b05d7jpnxdj";
+              sha256 = "0a813xn1vzc4nk5757s85r0xixgcq2rhlkn3mc18vjiijbaasl4z";
             };
             "x86_64-darwin" = {
               url = "https://cdn.getmoshi.app/hook/v${moshiHookVersion}/moshi-hook_Darwin_x86_64.tar.gz";
-              sha256 = "14dscw1gbhl232fqrid9l7z4y6xdq1mk77wq4cqbx3kbcz9cj4k9";
+              sha256 = "1hs227b08m0alqkjqs148jn3i3bpf8xkbdd03n29nbxh9ybrrfx9";
             };
             "aarch64-darwin" = {
               url = "https://cdn.getmoshi.app/hook/v${moshiHookVersion}/moshi-hook_Darwin_arm64.tar.gz";
-              sha256 = "01rirvrdi0bhf3h7zf466g1pr2m2nh7sgza9bijjr3hxdpz0imd4";
+              sha256 = "1wy2mzx07lkr1xnznhg6i9p47jip4pympk4a291aa2xzlrbks5ln";
             };
           };
           moshiHookSource = moshiHookSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for moshi-hook: ${prev.stdenv.hostPlatform.system}");
@@ -155,23 +155,23 @@ in
           # range and answering MagicDNS with those addresses. Used on bali to
           # reach personal-tailnet machines; node sharing cannot do this because
           # bali is a tagged device and tagged machines cannot accept shares.
-          tailmixVersion = "0.1.17";
+          tailmixVersion = "0.1.19";
           tailmixSources = {
             "x86_64-linux" = {
               url = "https://github.com/maisem/tailmix/releases/download/v${tailmixVersion}/tailmix_linux_amd64.tar.gz";
-              sha256 = "1x19rb5ny6bvhlk5lcbbrg58k4pqy0zsp0b2vm9cnh4zi0hw89vw";
+              sha256 = "18qml84lrw36fssajcr9mj7b64jgmm085m5cm6xpqi4vai4m8ml8";
             };
             "aarch64-linux" = {
               url = "https://github.com/maisem/tailmix/releases/download/v${tailmixVersion}/tailmix_linux_arm64.tar.gz";
-              sha256 = "1h0xc94dli87b8x79wccn9rg3bjrvf8vjffby4i0yk3zs06wbmw9";
+              sha256 = "0mdvajdgpdlx5n8rdx4w8a85rxsd4n6alcgvr733g3ddlkjxqjpl";
             };
             "x86_64-darwin" = {
               url = "https://github.com/maisem/tailmix/releases/download/v${tailmixVersion}/tailmix_darwin_amd64.tar.gz";
-              sha256 = "0gndl1cgkks4zs13gbpmqc4ji2qk7z1jy22hv34q61ks8436z8f1";
+              sha256 = "0bpi3p3166w4gxvw3ck00dmvgylw2ijvixsvrk5vidmz29zzgcs6";
             };
             "aarch64-darwin" = {
               url = "https://github.com/maisem/tailmix/releases/download/v${tailmixVersion}/tailmix_darwin_arm64.tar.gz";
-              sha256 = "1mm7r333ngavi117d8lg0v3y2myi55cf1j6xdpzsxf56l3g0hp4n";
+              sha256 = "0a9fhh6j10pzq696k5l5801bxvblsx3bwys9q2pwy5zlhinndl4j";
             };
           };
           tailmixSource = tailmixSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for tailmix: ${prev.stdenv.hostPlatform.system}");
@@ -535,23 +535,23 @@ in
           # linked against glibc (verified `file` on omp-linux-x64), so the Linux
           # builds need autoPatchelfHook. Upstream also ships musl variants; the
           # glibc ones are used because autoPatchelfHook handles them natively.
-          ompVersion = "18.12.3";
+          ompVersion = "18.12.6";
           ompSources = {
             "x86_64-linux" = {
               url = "https://github.com/can1357/oh-my-pi/releases/download/v${ompVersion}/omp-linux-x64";
-              sha256 = "1v3x5nkqs7kazfsvfb3ar9lzbw7812l5p4qwjryvgxjzsrwm0nq6";
+              sha256 = "196ggkh2c9klj13cypy83k9ghsjpxc21kbi5sj66xiszl3rxmnc5";
             };
             "aarch64-linux" = {
               url = "https://github.com/can1357/oh-my-pi/releases/download/v${ompVersion}/omp-linux-arm64";
-              sha256 = "14qhkxkz2br3zsjlam9jayrch80qlc3xm6h4j8hhi6vjkdgc5xsq";
+              sha256 = "1kyh9b57wd6bk04zcn6x8rfrdaccnhl2p2r1bir2xvsc4y3fbs7f";
             };
             "x86_64-darwin" = {
               url = "https://github.com/can1357/oh-my-pi/releases/download/v${ompVersion}/omp-darwin-x64";
-              sha256 = "1jdjyycpjscwk5dihmafz47585h7p57cw788hq3bqqzs4pi8m4bk";
+              sha256 = "08v1c1nmzwl6nc5iv6sm4yi1mgsjy432k142rbi5vymni3yydmk2";
             };
             "aarch64-darwin" = {
               url = "https://github.com/can1357/oh-my-pi/releases/download/v${ompVersion}/omp-darwin-arm64";
-              sha256 = "1ibf1mkks09qi0ajlhg1ahr8ssmj8l598lsh0lizmjhg6armg9pj";
+              sha256 = "0n7yrimhiib1lsqcjn6wmkm7sa3xb2z001vibvjkp2lgrlw5xfyg";
             };
           };
           ompSource = ompSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for omp: ${prev.stdenv.hostPlatform.system}");
@@ -580,24 +580,24 @@ in
           # cua-spacesd, the host service that provides Spaces to Cua Bots
           # (modules/cua-spaces-host.nix). Both are glibc-linked Rust binaries.
           # Match the daemon pin in the CLI release's libs/cua-spacesd/VERSION:
-          # CLI 0.5.0 pins spacesd 0.5.3.
-          cuaVersion = "0.5.0";
+          # CLI 0.7.0 pins spacesd 0.6.0.
+          cuaVersion = "0.7.0";
           cuaSources = {
             "x86_64-linux" = {
               url = "https://github.com/trycua/cua/releases/download/cua-sdk-v${cuaVersion}/cua-cli-${cuaVersion}-linux-x64.tar.gz";
-              sha256 = "01hk00h3f5g4i3wh1aq6hdfz0ir0mkklc4r4ghwzl1i1cqazfyva";
+              sha256 = "1h5aq23r0rjdi14r55w9lcajp07krfpxxsbgpxccllxm63x62h01";
             };
             "aarch64-darwin" = {
               url = "https://github.com/trycua/cua/releases/download/cua-sdk-v${cuaVersion}/cua-cli-${cuaVersion}-darwin-arm64.tar.gz";
-              sha256 = "1c7hk108nl0hhadxyad623qs9f4vwxlqc1qm9x84d529n1bc8gwn";
+              sha256 = "1zmyw7dnalcwr7z9c243536pgvpi1bf8zjsaacv56naapjcp779d";
             };
           };
           cuaSource = cuaSources.${prev.stdenv.hostPlatform.system} or null;
-          cuaSpacesdVersion = "0.5.3";
+          cuaSpacesdVersion = "0.6.0";
           cuaSpacesdSources = {
             "x86_64-linux" = {
               url = "https://github.com/trycua/cua/releases/download/cua-spacesd-v${cuaSpacesdVersion}/cua-spacesd-linux-x86_64.tar.gz";
-              sha256 = "068blq7vxxk9qma4bljkgc7p4ml1d35938p4z9a8xf61ck9q924w";
+              sha256 = "1mxw8b00xl5j4m3x5br49arfhsyh8a6m8gzcwmk1s5ljnhiqfsjw";
             };
           };
           cuaSpacesdSource = cuaSpacesdSources.${prev.stdenv.hostPlatform.system} or null;
@@ -889,7 +889,7 @@ in
 
           # ubs - ultimate bug scanner for AI-assisted code quality
           ubs = let
-            ubsVersion = "5.4.17";
+            ubsVersion = "5.5.3";
           in prev.stdenv.mkDerivation {
             pname = "ubs";
             version = ubsVersion;
@@ -900,7 +900,7 @@ in
               owner = "Dicklesworthstone";
               repo = "ultimate_bug_scanner";
               rev = "v${ubsVersion}";
-              hash = "sha256-ryDAZImE7KuiP88eDjGPou/70oEta5uEnjeRNf3Zuqw=";
+              hash = "sha256-Pej1N1IqfVFenA25BW8zimXsPIyJsuMgybn8XgnQIR8=";
             };
 
             nativeBuildInputs = [ prev.makeWrapper ];
@@ -1326,13 +1326,13 @@ in
             src = prev.fetchFromGitHub {
               owner = "Dicklesworthstone";
               repo = "cass_memory_system";
-              rev = "v0.2.14";
-              hash = "sha256-25NPzERkqZKBwCKf8apcANkV22bNeg0It7E6brtV1aU=";
+              rev = "v0.5.0";
+              hash = "sha256-4ZkiKIMrYFJyCJtcQam3pX7Rb72zjnEbSTt/5FvN1ss=";
             };
             # Fixed-output derivation for bun install (needs network)
             bunDeps = prev.stdenv.mkDerivation {
               pname = "cass-memory-bun-deps";
-              version = "0.2.14";
+              version = "0.5.0";
               inherit src;
               nativeBuildInputs = [ prev.bun prev.cacert ];
               buildPhase = ''
@@ -1345,11 +1345,11 @@ in
               '';
               outputHashAlgo = "sha256";
               outputHashMode = "recursive";
-              outputHash = "sha256-ToAnXLcbBDzVmLW/ZM0IbHaSPQ80BcVUgu771qPXgcc=";
+              outputHash = "sha256-9yF6UExeN7PROf1eq1jiIdMo5SbxApZ3lX6yJPKoJSs=";
             };
           in prev.stdenv.mkDerivation {
             pname = "cass-memory";
-            version = "0.2.14";
+            version = "0.5.0";
             inherit src;
             nativeBuildInputs = [ prev.bun ];
             # Bun standalone binaries embed JS after the ELF section;
@@ -1991,12 +1991,12 @@ in
           # Keep nixpkgs' native packaging, wrappers and sandbox dependencies.
           claude-code = prev.claude-code.override {
             manifest = {
-              version = "2.1.295";
+              version = "2.1.308";
               platforms = {
-                "linux-x64".checksum = "4503bfe11a6c7fcc1e0b39b5e0d347c04248f750b03b0977b3ad6b531fe6f358";
-                "linux-arm64".checksum = "cfb9dc1332fb6f92a683f835823e91b3179a803398ca7852cd2381a3cb1dea3b";
-                "darwin-x64".checksum = "a6066492288585a1ef5e482cb28ad22714ab12cd48e367c0cee988b00cff724c";
-                "darwin-arm64".checksum = "0116ee2e0a513900b633d9951367f18747686478e2b462805b8c31609f047f70";
+                "linux-x64".checksum = "356733f185fa988e6bf3aa9a555269fdd167982a2e2a80d3c8a78037bb92ad58";
+                "linux-arm64".checksum = "fdd22e6cbb734d580f5664c48df4294eeec850218ff07f186f9af30426396ee1";
+                "darwin-x64".checksum = "9a0bc140f5fb06e6366624d770371ef290e6731d1e84c4def5daf4df946d1b59";
+                "darwin-arm64".checksum = "ca923c86ac84b30574a82331a05b6e066c27477a926ceaffe46a845a33e4dd37";
               };
             };
           };
@@ -2122,11 +2122,11 @@ in
           # gemini-cli - Google Gemini coding agent CLI (pre-built JS bundle)
           gemini-cli = prev.stdenv.mkDerivation {
             pname = "gemini-cli";
-            version = "0.64.0";
+            version = "0.65.0";
 
             src = prev.fetchzip {
-              url = "https://github.com/google-gemini/gemini-cli/releases/download/v0.64.0/gemini-cli-bundle.zip";
-              hash = "sha256-4xBGPuIIryOJLBLVlZWLsVmHnJWCsLQVXeSL17ATFQE=";
+              url = "https://github.com/google-gemini/gemini-cli/releases/download/v0.65.0/gemini-cli-bundle.zip";
+              hash = "sha256-dlAv349AGi8Yve0KvxozTAN8m1YoY2oWeYjsAUpN2EY=";
               stripRoot = false;
             };
 
@@ -2201,13 +2201,13 @@ in
           # cco - Claude Code sandbox (bubblewrap on Linux, sandbox-exec on macOS)
           cco = prev.stdenv.mkDerivation {
             pname = "cco";
-            version = "0-unstable-2026-09-01";
+            version = "0-unstable-2026-09-29";
 
             src = prev.fetchFromGitHub {
               owner = "nikvdp";
               repo = "cco";
-              rev = "68f92e899738f91a2646674c82c7a44946fcf74d";
-              sha256 = "0wqzhk97q0gl2zyj9bc4gvwfdj61l4s8sgndawgp4x4r0y9l0bjl";
+              rev = "658e99ce3ef90963b0a7d4443af16f4de983ea2c";
+              sha256 = "1bvlfvwnxpwg111kq1vx93qp673r1xrsbsfr76n0aq55hi7gkg4v";
             };
 
             nativeBuildInputs = [ prev.makeWrapper ];

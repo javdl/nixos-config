@@ -331,6 +331,8 @@ uses via `lib/tailmix-service.nix`, so the two cannot drift. See
 
 Only add CLI tools that complement Omarchy without conflicting. `playerctl` is the one remaining supplemental package from the pre-Quattro list.
 
+Yubico Authenticator (`yubioath-flutter`) is installed on Linux desktops from `users/joost/home-manager.nix`. On Omarchy it is wrapped to use Nix's mesa EGL vendor, because the Nix build cannot load Arch's NVIDIA one. OATH and PIV need pcscd: NixOS desktops enable `services.pcscd` in `lib/mksystem.nix`, while Omarchy needs a one-time `sudo systemctl enable --now pcscd.socket` (`pcsclite` and `ccid` already come from pacman).
+
 ### NVIDIA DGX Spark (DGX OS, Ubuntu)
 
 `spark` and `spark2` are Grace-Blackwell DGX Sparks (DGX OS, Ubuntu 24.04,

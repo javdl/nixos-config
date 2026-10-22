@@ -146,6 +146,7 @@ let
     "vlc"
     "warp"
     "webstorm"
+    "yubico-authenticator" # YubiKey GUI; Linux desktops get yubioath-flutter
     "zed"
   ];
 
