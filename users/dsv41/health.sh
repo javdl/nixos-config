@@ -5,12 +5,17 @@
 # grace after it has, so the cold load is not a strike.
 #
 # Two signals restart the head:
-# - The spark2 TCPStore source port on the CX7 changes, or the connection
-#   drops, on N consecutive ticks. A worker-container restart looks like
-#   this while /health is still 200. Those ticks do not wait on a chat call.
-# - An authenticated 1-token chat (max_tokens 1) fails N times. The curl
-#   timeout is short. The timer interval is shorter than that timeout, so
-#   a hung probe is followed immediately by the next one.
+# - The spark2 TCPStore source port changes, or the connection drops, on
+#   N consecutive ticks. The head listens dual-stack, so that socket is an
+#   IPv4 row in /proc/net/tcp or an IPv4-mapped row in /proc/net/tcp6. A
+#   worker-container restart looks like this while /health is still 200.
+#   Those ticks do not wait on a chat call.
+# - An authenticated 1-token chat (max_tokens 1) fails N times while the
+#   engine is idle or its token counters are frozen. A timeout where
+#   /metrics shows num_requests_running > 0 and prompt or generation
+#   tokens advanced since the previous scrape is a live prefill, not a
+#   strike. The curl timeout is short. The timer interval is shorter than
+#   that timeout, so a hung probe is followed immediately by the next one.
 #
 # The API key is read the same way as the other units. It is never printed.
 set -euo pipefail
@@ -45,7 +50,7 @@ esac
 
 restart_head() {
   printf '%s\n' 0 >"$state"
-  rm -f "$peer_file"
+  rm -f "$peer_file" "$(dsv41_health_metrics_file)"
   "$(dsv41_systemctl)" --user restart --no-block "$unit"
 }
 
@@ -84,31 +89,49 @@ EOF
   printf '%02X%02X%02X%02X' "$d" "$c" "$b" "$a"
 }
 
+# Source ports of established sockets on local_port whose remote address
+# is remote_hex. Unreadable tables contribute nothing.
+dsv41_tcp_established_ports() {
+  local table=$1 remote_hex=$2 port_hex=$3
+  [ -r "$table" ] || return 0
+  awk -v remote_hex="$remote_hex" -v port="$port_hex" '
+    NR == 1 { next }
+    {
+      split(toupper($2), local, ":")
+      split(toupper($3), remote, ":")
+      if (local[2] != port) next
+      if (remote[1] != remote_hex) next
+      if (toupper($4) != "01") next
+      print remote[2]
+    }
+  ' "$table"
+}
+
 # Established TCPStore client ports on the worker, comma-separated.
-# Prints "down" when the table is readable and no matching socket exists.
-# Returns 1 when the table or the worker address cannot be read, so the
+# The head listens dual-stack, so spark2's IPv4 connection is in
+# /proc/net/tcp6 as 0000000000000000FFFF0000 plus the little-endian IPv4,
+# not in /proc/net/tcp. Both tables are read. Prints "down" when at least
+# one table is readable and no matching socket exists. Returns 1 when
+# neither table is readable, or the worker address is unusable, so the
 # caller leaves the saved baseline alone.
 dsv41_worker_tcpstore_identity() {
-  local table=${DSV41_PROC_NET_TCP:-/proc/net/tcp}
-  local worker_hex port_hex ports
-  [ -r "$table" ] || return 1
+  local tcp4=${DSV41_PROC_NET_TCP:-/proc/net/tcp}
+  local tcp6=${DSV41_PROC_NET_TCP6:-/proc/net/tcp6}
+  local worker_hex port_hex mapped ports
   worker_hex=$(dsv41_ipv4_le_hex "${DSV41_WORKER_IP:-}") || return 1
   case "${DSV41_MASTER_PORT:-}" in
     ''|*[!0-9]*) return 1 ;;
   esac
+  if [ ! -r "$tcp4" ] && [ ! -r "$tcp6" ]; then
+    return 1
+  fi
   port_hex=$(printf '%04X' "$DSV41_MASTER_PORT")
+  mapped="0000000000000000FFFF0000${worker_hex}"
   ports=$(
-    awk -v worker="$worker_hex" -v port="$port_hex" '
-      NR == 1 { next }
-      {
-        split(toupper($2), local, ":")
-        split(toupper($3), remote, ":")
-        if (local[2] != port) next
-        if (remote[1] != worker) next
-        if (toupper($4) != "01") next
-        print remote[2]
-      }
-    ' "$table" | sort -u | paste -sd, -
+    {
+      dsv41_tcp_established_ports "$tcp4" "$worker_hex" "$port_hex"
+      dsv41_tcp_established_ports "$tcp6" "$mapped" "$port_hex"
+    } | sort -u | paste -sd, -
   )
   if [ -z "$ports" ]; then
     printf '%s\n' down
@@ -195,6 +218,118 @@ arm_peer_baseline() {
   fi
 }
 
+dsv41_metrics_read() {
+  metrics_prompt=
+  metrics_generation=
+  metrics_known=0
+  local f line_p line_g
+  f=$(dsv41_health_metrics_file)
+  [ -f "$f" ] || return 0
+  line_p=$(sed -n 's/^prompt=//p' "$f")
+  line_g=$(sed -n 's/^generation=//p' "$f")
+  case "$line_p" in
+    ''|*[!0-9]*) return 0 ;;
+  esac
+  case "$line_g" in
+    ''|*[!0-9]*) return 0 ;;
+  esac
+  metrics_prompt=$line_p
+  metrics_generation=$line_g
+  metrics_known=1
+}
+
+dsv41_metrics_write() {
+  printf 'prompt=%s\ngeneration=%s\n' "$1" "$2" >"$(dsv41_health_metrics_file)"
+}
+
+# Sum Prometheus series. Names match with or without a vllm: prefix, and
+# with or without labels. Histogram buckets and *_created are not the
+# counters. Prints "running prompt generation". Returns 1 when the
+# running gauge is absent.
+dsv41_parse_metrics() {
+  awk '
+    function metric_name(s) {
+      sub(/\{.*/, "", s)
+      sub(/^vllm:/, "", s)
+      return s
+    }
+    /^#/ || NF < 2 { next }
+    {
+      name = metric_name($1)
+      value = $2 + 0
+      if (name == "num_requests_running") {
+        running += value
+        seen_running = 1
+      } else if (name == "prompt_tokens_total") {
+        prompt += value
+      } else if (name == "generation_tokens_total") {
+        generation += value
+      }
+    }
+    END {
+      if (!seen_running) exit 1
+      printf "%d %d %d\n", running, prompt, generation
+    }
+  ' "$1"
+}
+
+# A chat failure is not a strike when a request is in flight and the
+# engine's token counters moved. The first busy scrape only records the
+# baseline, so a frozen engine still reaches N strikes one probe later.
+# Returns 0 when the caller should not count this probe.
+dsv41_chat_failure_is_live() {
+  local metrics_url code parsed running prompt generation advanced
+  metrics_url="http://127.0.0.1:${DSV41_PORT}/metrics"
+  code=$(
+    "$(dsv41_curl)" --config "$cfg" \
+      --connect-timeout 5 --max-time 5 -s -o "$metrics_body" -w '%{http_code}' \
+      "$metrics_url" || true
+  )
+  if [ "$code" != 200 ]; then
+    return 1
+  fi
+  if ! parsed=$(dsv41_parse_metrics "$metrics_body"); then
+    return 1
+  fi
+  read -r running prompt generation <<EOF
+$parsed
+EOF
+  case "$running" in
+    ''|*[!0-9]*) return 1 ;;
+  esac
+  case "$prompt" in
+    ''|*[!0-9]*) return 1 ;;
+  esac
+  case "$generation" in
+    ''|*[!0-9]*) return 1 ;;
+  esac
+  dsv41_metrics_read
+  if [ "$metrics_known" -eq 1 ]; then
+    if [ "$prompt" -lt "$metrics_prompt" ] || [ "$generation" -lt "$metrics_generation" ]; then
+      dsv41_metrics_write "$prompt" "$generation"
+      echo "dsv41 cluster: token counters went backwards; recording a new baseline" >&2
+      return 0
+    fi
+    advanced=0
+    if [ "$prompt" -gt "$metrics_prompt" ] || [ "$generation" -gt "$metrics_generation" ]; then
+      advanced=1
+    fi
+    if [ "$running" -gt 0 ] && [ "$advanced" -eq 1 ]; then
+      dsv41_metrics_write "$prompt" "$generation"
+      printf '%s\n' 0 >"$state"
+      echo "dsv41 cluster: chat probe failed but a request is running and token counters advanced; not a strike" >&2
+      return 0
+    fi
+  elif [ "$running" -gt 0 ]; then
+    dsv41_metrics_write "$prompt" "$generation"
+    printf '%s\n' 0 >"$state"
+    echo "dsv41 cluster: chat probe failed with a request running; recording the token baseline" >&2
+    return 0
+  fi
+  dsv41_metrics_write "$prompt" "$generation"
+  return 1
+}
+
 if ! "$(dsv41_systemctl)" --user is-active --quiet "$unit"; then
   exit 0
 fi
@@ -229,8 +364,9 @@ url="http://127.0.0.1:${DSV41_PORT}/v1/chat/completions"
 body=$(printf '{"model":"%s","messages":[{"role":"user","content":"ping"}],"max_tokens":1}' "$DSV41_SERVED")
 cfg=$(mktemp "${XDG_RUNTIME_DIR}/dsv41-curl.XXXXXX")
 body_file=$(mktemp "${XDG_RUNTIME_DIR}/dsv41-body.XXXXXX")
-chmod 600 "$cfg" "$body_file"
-trap 'rm -f "$cfg" "$body_file"' EXIT
+metrics_body=$(mktemp "${XDG_RUNTIME_DIR}/dsv41-metrics.XXXXXX")
+chmod 600 "$cfg" "$body_file" "$metrics_body"
+trap 'rm -f "$cfg" "$body_file" "$metrics_body"' EXIT
 printf '%s' "$body" >"$body_file"
 printf 'header = "Content-Type: application/json"\n' >>"$cfg"
 
@@ -254,6 +390,10 @@ fi
 if [ "$code" = 401 ]; then
   echo "dsv41 cluster: chat probe returned 401. The API key was rejected. ~/.config/spark-vllm/api.env must be the Aperture provider key. Fix the file, then: systemctl --user restart dsv41-cluster-head" >&2
   exit 1
+fi
+
+if dsv41_chat_failure_is_live; then
+  exit 0
 fi
 
 note_failure
