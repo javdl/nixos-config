@@ -502,10 +502,6 @@
 
       nixosConfigurations.peterbot = mkServer "peterbot" "peter";
 
-      nixosConfigurations.rajbot = mkServer "rajbot" "rajesh";
-
-      nixosConfigurations.jeevanator = mkServer "jeevanator" "jeevan";
-
       # All aarch64-darwin workstations share one definition (see mkDarwin).
       darwinConfigurations = nixpkgs.lib.genAttrs [
         "fu129"

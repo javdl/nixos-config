@@ -97,10 +97,10 @@ Each colleague has a dedicated NixOS server config with auto-update enabled:
 |-----------|-----------------|------------------|---------------------------------------|
 | Desmond   | `desmondroid`   | `#desmondroid`   | `users/desmond/home-manager-server.nix` |
 | Jackson   | `jacksonator`   | `#jacksonator`   | `users/jackson/home-manager-server.nix` |
-| Jeevan    | `jeevanator`    | `#jeevanator`    | `users/jeevan/home-manager-server.nix`  |
+| ~~Jeevan~~ | ~~`jeevanator`~~ | N/A           | **DECOMMISSIONED 2026-10-23**: server gone; `hosts/jeevanator.nix`, `hosts/hardware/jeevanator.nix` and `users/jeevan/` deleted |
 | ~~Lennard~~ | ~~`lennardroid`~~ | N/A            | **DECOMMISSIONED 2026-07-28**: server gone; `hosts/lennardroid.nix`, `hosts/hardware/lennardroid.nix` and `users/lennard/` deleted |
 | Peter     | `peterbot`      | `#peterbot`      | `users/peter/home-manager-server.nix`   |
-| Rajesh    | `rajbot`        | `#rajbot`        | `users/rajesh/home-manager-server.nix`  |
+| ~~Rajesh~~ | ~~`rajbot`~~    | N/A              | **DECOMMISSIONED 2026-10-23**: server gone; `hosts/rajbot.nix`, `hosts/hardware/rajbot.nix` and `users/rajesh/` deleted |
 
 ### GitHub Actions Runner
 Dedicated self-hosted runner for the `fuww` GitHub organization:

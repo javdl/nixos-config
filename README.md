@@ -421,9 +421,7 @@ Colleague development servers (Hetzner CPX32, Nuremberg):
 |-----------|----------------|------------------|-----------------------------------------|
 | Desmond   | desmondroid    | `#desmondroid`   | `users/desmond/home-manager-server.nix` |
 | Jackson   | jacksonator    | `#jacksonator`   | `users/jackson/home-manager-server.nix` |
-| Jeevan    | jeevanator     | `#jeevanator`    | `users/jeevan/home-manager-server.nix`  |
 | Peter     | peterbot       | `#peterbot`      | `users/peter/home-manager-server.nix`   |
-| Rajesh    | rajbot         | `#rajbot`        | `users/rajesh/home-manager-server.nix`  |
 
 All servers auto-update from `main` at 4 AM UTC daily via the `nixosAutoUpdate` module.
 
