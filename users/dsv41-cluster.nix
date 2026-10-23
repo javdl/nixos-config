@@ -54,7 +54,7 @@ let
     nnodes = 2;
     gpuMemoryUtilization = "0.88";
     maxModelLen = 262144;
-    maxNumSeqs = 2;
+    maxNumSeqs = 4;
     maxNumBatchedTokens = 2048;
     loadFormat = "auto";
     kvCacheMemoryBytes = 2684354560;
