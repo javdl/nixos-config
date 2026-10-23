@@ -270,6 +270,12 @@ in
       else
         import ./agent-cli-updates.nix { inherit isOmarchy; }
     )
+    (
+      if currentSystemName == "github-runner" then
+        { }
+      else
+        import ../beacon.nix { inherit currentSystemName; }
+    )
     (import ./omarchy-startup.nix { inherit isOmarchy currentSystemName; })
     (import ./omarchy-auto-theme.nix { inherit isOmarchy; })
     (import ./bitwarden-omarchy.nix { inherit isOmarchy; })
