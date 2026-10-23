@@ -220,10 +220,5 @@ in
 
     # Enable containerd
     virtualisation.containerd.enable = true;
-
-    # Add common CA certificates
-    security.pki.certificateFiles = [
-      "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
-    ];
   };
 }

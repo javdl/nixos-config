@@ -98,6 +98,10 @@ systemFunc {
         ../modules/mosh.nix
     )
 
+    # Fleet-wide root distrust for the system bundle (/etc/ssl/certs on NixOS,
+    # NIX_SSL_CERT_FILE on nix-darwin). Same option name on both platforms.
+    { security.pki.caCertificateBlacklist = import ./distrusted-cas.nix; }
+
     machineConfig
     userOSConfig
     # Joost's workstation mise updater installs upstream agent binaries.

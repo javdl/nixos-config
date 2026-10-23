@@ -114,10 +114,13 @@ in
     # package that downloads over TLS during its build fails with
     # CERTIFICATE_VERIFY_FAILED. Nix-built Python is unaffected because the
     # bundle path is compiled in. Point uv (and anything else honouring this
-    # variable) at the nix cacert bundle; a store path, so it resolves on both
+    # variable) at a nix cacert bundle; a store path, so it resolves on both
     # Linux and Darwin. Hit via shfmt-py in a prek hook, whose setup.py fetches
-    # the shfmt binary with plain urllib.
-    SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
+    # the shfmt binary with plain urllib. Built with the fleet distrust list so
+    # this variable cannot re-trust roots that the system bundle removed.
+    SSL_CERT_FILE = "${
+      pkgs.cacert.override { blacklist = import ../lib/distrusted-cas.nix; }
+    }/etc/ssl/certs/ca-bundle.crt";
   };
 
   # Common fish plugins - removed with niv

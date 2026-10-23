@@ -17,7 +17,37 @@ historical plans and audits.
 5. **Verify after every change.** Execute the runtime path of what changed, not just "the edit applied". For configs, trigger the consumer. For binaries, run `--version` *and* a representative subcommand.
 6. **Don't blindly stage Plans/.** Auto-generated plan-mode files (`Plans/now-*.md`) are gitignored; descriptive plan docs commit normally. Check names before `git add Plans/`.
 
+## Temporary reminder: eMudhra roots distrust (from 2026-10-23)
 
+Workaround for the eMudhra intermediate CA key compromise
+(<https://emudhra.we-have-a-problem.com/>). `lib/distrusted-cas.nix` lists
+"Comodo AAA Services root" and "emSign ECC Root CA - G3". `lib/mksystem.nix`
+applies the list to `security.pki.caCertificateBlacklist` on every NixOS and
+nix-darwin host, and `users/shared-home-manager.nix` builds `SSL_CERT_FILE`
+from it. The upstream fix is cacert 3.131.1: nixpkgs PR #576347
+(master `baa8279`), backported to `staging-next-26.05` as `92013ac`.
+
+On or after 2026-10-25, any agent working in this repo checks whether the
+`nixos-26.05` channel contains `92013ac`:
+`gh api repos/NixOS/nixpkgs/compare/92013ac029427b3ce5cd1c1f64f3684a3b25d12a...nixos-26.05 --jq .status`
+(`ahead` or `identical` means it does; `behind` or `diverged` means not yet;
+a short sha returns 404). If it does not, check again two days
+later. Once it does, back out:
+
+1. Run `nix flake update nixpkgs` and confirm `pkgs.cacert.version` is at least `3.131.1`.
+2. Delete `lib/distrusted-cas.nix`, its import block in `lib/mksystem.nix`, and the
+   `override` in the `SSL_CERT_FILE` entry of `users/shared-home-manager.nix`
+   (return it to `${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt`).
+3. Verify that every host's `/etc/ssl/certs/ca-certificates.crt` and `SSL_CERT_FILE`
+   reject the chains in <https://emudhra.we-have-a-problem.com/chains.zip>. Use
+   `openssl verify -purpose sslserver -CAfile <bundle> -untrusted <f> <f>` on each
+   file; all 14 must fail.
+4. Delete this section, commit and push.
+
+Do not put back the `security.pki.certificateFiles = [ "${pkgs.cacert}/..." ]`
+that `modules/github-actions-runner.nix` used to have. It re-added the raw bundle
+on top of the system bundle, which silently undoes any blacklist. NixOS already
+installs cacert by default.
 
 ## Project Overview
 This is a NixOS/nix-darwin configuration repository using Nix flakes. It manages system configurations for multiple hosts including macOS (Darwin), NixOS VMs, WSL, and bare metal Linux installations.
