@@ -150,6 +150,31 @@ in
           };
           moshiHookSource = moshiHookSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for moshi-hook: ${prev.stdenv.hostPlatform.system}");
 
+          # beacon - Asymptote Labs agent session recorder (users/beacon.nix,
+          # docs/beacon-fleet.md). Tarballs hold statically linked Go binaries.
+          # GitHub's "latest" release is the browser extension, so pin the v* tag.
+          # Checksums: gh release download v<version> --repo Asymptote-Labs/agent-beacon -p checksums.txt
+          beaconVersion = "1.3.46";
+          beaconSources = {
+            "x86_64-linux" = {
+              url = "https://github.com/Asymptote-Labs/agent-beacon/releases/download/v${beaconVersion}/beacon_${beaconVersion}_linux_amd64.tar.gz";
+              sha256 = "25d2bebdd1ee80f0eb053669b2a370d471ade520b29302a0e87e137986909d04";
+            };
+            "aarch64-linux" = {
+              url = "https://github.com/Asymptote-Labs/agent-beacon/releases/download/v${beaconVersion}/beacon_${beaconVersion}_linux_arm64.tar.gz";
+              sha256 = "0b0dbbd91fc937b9f94062d3aa710910c0429e1687c8686fe6d983266dab13e3";
+            };
+            "x86_64-darwin" = {
+              url = "https://github.com/Asymptote-Labs/agent-beacon/releases/download/v${beaconVersion}/beacon_${beaconVersion}_darwin_amd64.tar.gz";
+              sha256 = "fe512f6ebf4db343b3cefdc0b57c1e09b9c9502ff84156eb2b6b2c4f12304e8a";
+            };
+            "aarch64-darwin" = {
+              url = "https://github.com/Asymptote-Labs/agent-beacon/releases/download/v${beaconVersion}/beacon_${beaconVersion}_darwin_arm64.tar.gz";
+              sha256 = "a482c3b3bd71224af2ed3b42fa14899757811d5da524352f7b7b4de30ef80dc8";
+            };
+          };
+          beaconSource = beaconSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for beacon: ${prev.stdenv.hostPlatform.system}");
+
           # tailmix - joins several tailnets at once by running one tsnet client
           # per tailnet behind a single TUN, remapping peers into a local IPv4
           # range and answering MagicDNS with those addresses. Used on bali to
@@ -818,6 +843,31 @@ in
               homepage = "https://getmoshi.app";
               license = licenses.unfree;
               mainProgram = "moshi-hook";
+              platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+            };
+          };
+
+          beacon = prev.stdenv.mkDerivation {
+            pname = "beacon";
+            version = beaconVersion;
+
+            src = prev.fetchurl {
+              url = beaconSource.url;
+              sha256 = beaconSource.sha256;
+            };
+
+            sourceRoot = ".";
+
+            installPhase = ''
+              mkdir -p $out/bin
+              install -m755 beacon beacon-hooks beacon-otelcol beacon-vector $out/bin/
+            '';
+
+            meta = with prev.lib; {
+              description = "Agent session recorder with a local dashboard and bundled Vector";
+              homepage = "https://github.com/Asymptote-Labs/agent-beacon";
+              license = licenses.mit;
+              mainProgram = "beacon";
               platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
             };
           };
