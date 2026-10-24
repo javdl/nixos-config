@@ -21,7 +21,9 @@ that name. So switching is not a way to have both.
 tailmix is. It runs one tsnet client per extra tailnet behind a single TUN,
 remaps each tailnet's peers into a local IPv4 range and answers MagicDNS with
 those addresses, so the two overlapping `100.64.0.0/10` spaces stop colliding.
-`bali` runs it for the mirror-image reason — see `modules/tailmix.nix`.
+bali no longer runs it: declarative node sharing between the two tailnets
+connects bali to the personal devices (fuww/fashionunited
+`infra/tailscale/README.md`).
 
 **Keep `tailscaled` on the personal tailnet (`buri-hoki`) and give the work
 tailnet to tailmix.** That preserves `j9.buri-hoki.ts.net` for the machines that
@@ -33,7 +35,7 @@ address j9 by name.
 |---|---|
 | `tailmix` / `tailmixd` binaries | `omarchyExtraPackages` in `flake.nix` |
 | Rendered unit | `~/.config/tailmix/tailmixd.service` |
-| Shared unit fields | `lib/tailmix-service.nix`, also used by `modules/tailmix.nix` |
+| Unit text | `users/joost/home-manager.nix` |
 
 `tailmixd` needs a TUN device, so it cannot be a Home Manager user service. Nix
 renders the unit; installing it is a one-time root step.
@@ -110,10 +112,7 @@ ping -c1 bali                  # a work-tailnet host
 
 - **`-auto-update=false` is set for you.** `tailmixd` defaults it to true, but
   Nix owns the binary and `/nix/store` is read-only, so a self-update can never
-  apply. It is passed from `lib/tailmix-service.nix`, so bali gets it too.
-  Upgrade by bumping `tailmixVersion` in `lib/overlays.nix`. A host that wants
-  the daemon updating itself can pass `-auto-update=true` through `extraFlags`,
-  which lands after this flag and wins.
+  apply. Upgrade by bumping `tailmixVersion` in `lib/overlays.nix`.
 - The unit reads its binary from `~/.nix-profile/bin/tailmixd`, a stable symlink
   that follows the current Home Manager generation, so `make switch` upgrades the
   daemon without touching the unit. This is the same convention

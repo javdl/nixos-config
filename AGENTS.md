@@ -337,9 +337,7 @@ leaves out gollama. The agent CLIs themselves stay.
 time, and j9 must stay on `buri-hoki` so the `j9` SSH alias keeps resolving.
 The second tailnet comes from tailmix, whose unit is rendered into
 `~/.config/tailmix/tailmixd.service` by `users/joost/home-manager.nix` and
-installed by root once. The unit fields are shared with the NixOS module bali
-uses via `lib/tailmix-service.nix`, so the two cannot drift. See
-[`docs/tailmix-omarchy.md`](docs/tailmix-omarchy.md).
+installed by root once. See [`docs/tailmix-omarchy.md`](docs/tailmix-omarchy.md).
 
 **DO NOT add these packages to the Omarchy Nix config.** They are managed by Omarchy via pacman:
 - Desktop stack: `hyprland`, `quickshell`, `uwsm`, `xdg-desktop-portal-hyprland`
