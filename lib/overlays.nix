@@ -152,9 +152,8 @@ in
 
           # tailmix - joins several tailnets at once by running one tsnet client
           # per tailnet behind a single TUN, remapping peers into a local IPv4
-          # range and answering MagicDNS with those addresses. Used on bali to
-          # reach personal-tailnet machines; node sharing cannot do this because
-          # bali is a tagged device and tagged machines cannot accept shares.
+          # range and answering MagicDNS with those addresses. Used on the
+          # Omarchy boxes to reach the work tailnet (docs/tailmix-omarchy.md).
           tailmixVersion = "0.1.19";
           tailmixSources = {
             "x86_64-linux" = {
@@ -838,7 +837,7 @@ in
             installPhase = ''
               mkdir -p $out/bin $out/share/tailmix
               # The release ships the CLI *and* the tailmixd daemon; the daemon
-              # is what modules/tailmix.nix runs. Installing only the CLI leaves
+              # is what the Omarchy unit runs. Installing only the CLI leaves
               # `tailmix status` failing on a missing tailmixd.sock.
               cp tailmix $out/bin/tailmix
               cp tailmixd $out/bin/tailmixd
