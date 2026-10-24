@@ -31,6 +31,9 @@ keys:
   # agent-jay-01: reused github-runner-01 box. Derived from its SSH host key via
   # `ssh-keyscan 100.78.158.57 | grep ed25519 | ssh-to-age`.
   - &agent-jay-01 age1k77q70qv8h6kp7n8pw92mcyww62xkmwps50mknmzdjwn6s29wu2s3gav4w
+  # radon: Mac mini, family Hermes gateway. Derived from its SSH host key via
+  # `ssh-to-age -i /etc/ssh/ssh_host_ed25519_key.pub` (read over SSH, 2026-10-24).
+  - &radon age1up4gk2najj56dtdxsfzje30ma8vm43ma6kzkehhrd56xjl6m6f9q2zjma4
   # hermes-fu: placeholder. Replace with the real age recipient (derived from
   # /etc/ssh/ssh_host_ed25519_key.pub via `ssh-to-age`) after provisioning the VM.
   # Until then, secrets/hermes-fu.yaml cannot be encrypted (creation rule below
@@ -77,6 +80,14 @@ creation_rules:
     key_groups:
       - age:
           - *agent-jay-01
+          - *bali
+
+  # radon secrets (family Hermes hermes-env). Encrypted to the host key (so
+  # radon decrypts at activation) and bali (so it can be edited from there).
+  - path_regex: secrets/radon\.yaml$
+    key_groups:
+      - age:
+          - *radon
           - *bali
 
   # hermes-fu secrets (FashionUnited company-wide hermes-agent env)

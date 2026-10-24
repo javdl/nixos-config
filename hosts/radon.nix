@@ -1,5 +1,6 @@
 {
   config,
+  inputs,
   lib,
   pkgs,
   ...
@@ -32,6 +33,9 @@ in
     ./mac-shared.nix
     ../modules/darwin-auto-update.nix
     ../modules/darwin-tailscaled.nix
+    # Secrets for the family Hermes gateway (secrets/radon.yaml). Only radon
+    # imports it, so the other Macs keep their activation unchanged.
+    inputs.sops-nix.darwinModules.sops
   ];
 
   # Stay current: rebuild from the GitHub flake daily (launchd equivalent of
@@ -127,6 +131,30 @@ in
       RunAtLoad = true;
       StandardOutPath = "/var/log/agent-volume-unlock.log";
       StandardErrorPath = "/var/log/agent-volume-unlock.log";
+    };
+  };
+
+  # The hermes user may reach only Aperture (and MagicDNS) on the tailnet.
+  # The tailnet policy cannot say this: it applies per node, and PAIR on radon
+  # needs the tailnet too. Apple's /etc/pf.conf already evaluates every
+  # anchor under com.apple/*, so loading this one is enough. The script names
+  # the anchor's store path, so a changed anchor changes the plist and
+  # nix-darwin reloads the daemon.
+  environment.etc."pf.anchors/hermes".text = ''
+    pass out quick proto tcp from any to 100.75.128.40 port 443 user hermes
+    pass out quick proto { tcp udp } from any to 100.100.100.100 port 53 user hermes
+    block drop out quick inet from any to 100.64.0.0/10 user hermes
+    block drop out quick inet6 from any to fd7a:115c:a1e0::/48 user hermes
+  '';
+  launchd.daemons.hermes-pf = {
+    script = ''
+      /sbin/pfctl -E
+      /sbin/pfctl -a com.apple/hermes -f ${config.environment.etc."pf.anchors/hermes".source}
+    '';
+    serviceConfig = {
+      RunAtLoad = true;
+      StandardOutPath = "/var/log/hermes-pf.log";
+      StandardErrorPath = "/var/log/hermes-pf.log";
     };
   };
 
