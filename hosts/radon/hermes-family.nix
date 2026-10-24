@@ -142,6 +142,10 @@ lib.mkIf enableHermesFamily {
           provider = "aperture-local";
           default = "spark/dsv41";
         };
+        # Hermes sends reasoning_effort "medium" by default, and dsv41
+        # answers 400 to anything but low, high, xhigh, max or 1-100, so
+        # every request fell back to the cloud model.
+        agent.reasoning_overrides."spark/dsv41" = "high";
         cron = cronRoute;
         # dsv41 takes no images. An explicit vision backend makes Hermes
         # describe each photo with Claude and pass only the text on.
