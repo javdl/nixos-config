@@ -189,6 +189,12 @@ in
       else
         import ./agent-cli-updates.nix { inherit isOmarchy; }
     )
+    (
+      if currentSystemName == "github-runner" then
+        { }
+      else
+        import ../beacon.nix { inherit currentSystemName; }
+    )
     (import ./omarchy-startup.nix { inherit isOmarchy currentSystemName; })
     ./cachix-daemon.nix # auto-push locally-built paths to javdl-nixos-config cachix
     (import ../herdr-fleet.nix { inherit currentSystemName; })
