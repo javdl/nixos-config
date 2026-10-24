@@ -157,7 +157,7 @@ def call_passes(calls: list) -> bool:
     return EXPECTED_DATE in start and EXPECTED_TIME in start and args.get("mail_key") == MAIL_KEY
 
 
-def stream_turn(model: str, max_tokens: int, tools: list, messages: list) -> Turn:
+def stream_turn(model: str, max_tokens: int, reasoning_effort: str | None, tools: list, messages: list) -> Turn:
     body = {
         "model": model,
         "stream": True,
@@ -167,6 +167,8 @@ def stream_turn(model: str, max_tokens: int, tools: list, messages: list) -> Tur
         "tools": tools,
         "messages": messages,
     }
+    if reasoning_effort:
+        body["reasoning_effort"] = reasoning_effort
     request = urllib.request.Request(
         ENDPOINT,
         data=json.dumps(body).encode(),
@@ -223,12 +225,12 @@ def stream_turn(model: str, max_tokens: int, tools: list, messages: list) -> Tur
     )
 
 
-def run_case(fixture: Fixture, model: str, max_tokens: int, run: int, cache: str) -> RunResult:
+def run_case(fixture: Fixture, model: str, max_tokens: int, reasoning_effort: str | None, run: int, cache: str) -> RunResult:
     system = fixture.system if cache == "warm" else f"[gate {uuid.uuid4().hex}]\n{fixture.system}"
     messages: list = [{"role": "system", "content": system}, {"role": "user", "content": TASK}]
     turns: list[Turn] = []
     for _ in range(MAX_INVALID_RETRIES + 1):
-        turn = stream_turn(model, max_tokens, fixture.tools, messages)
+        turn = stream_turn(model, max_tokens, reasoning_effort, fixture.tools, messages)
         turns.append(turn)
         invalid = [c for c in turn.tool_calls if c["name"] not in fixture.tool_names]
         if turn.error or turn.http_status != 200 or not invalid:
@@ -279,6 +281,8 @@ def main() -> int:
     parser.add_argument("--tools", choices=["family", "hermes-cron"], default="family")
     parser.add_argument("--prompt-toolsets", nargs="*", default=None,
                         help="toolsets for building the system prompt; default is the inspecting Hermes's own")
+    parser.add_argument("--reasoning-effort", default=None,
+                        help="sent as reasoning_effort; match agent.reasoning_overrides in the family config")
     args = parser.parse_args()
 
     fixture = load_fixture(args.tools, args.prompt_toolsets)
@@ -287,16 +291,17 @@ def main() -> int:
         "cache": args.cache,
         "tools": args.tools,
         "prompt_toolsets": args.prompt_toolsets,
+        "reasoning_effort": args.reasoning_effort,
         "system_prompt_bytes": len(fixture.system.encode()),
         "tool_schema_bytes": len(json.dumps(fixture.tools, ensure_ascii=False).encode()),
         "hermes_tools": fixture.hermes_tool_count,
     }), flush=True)
 
-    warmup = run_case(fixture, args.model, args.max_tokens, 0, args.cache)
+    warmup = run_case(fixture, args.model, args.max_tokens, args.reasoning_effort, 0, args.cache)
     print(json.dumps({"warmup": dataclasses.asdict(warmup)}), flush=True)
     results = []
     for run in range(1, args.runs + 1):
-        result = run_case(fixture, args.model, args.max_tokens, run, args.cache)
+        result = run_case(fixture, args.model, args.max_tokens, args.reasoning_effort, run, args.cache)
         results.append(result)
         print(json.dumps(dataclasses.asdict(result)), flush=True)
     summary = summarize(results)
