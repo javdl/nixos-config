@@ -13,10 +13,13 @@ tree, and that tree only builds after the unit tests pass on the build platform.
 | `planAheadWeather` | `plan-ahead-weather [--today YYYY-MM-DD]` | `--script` of `family-plan-ahead` |
 | `gcalMcp` | `gcal-mcp proposals --credential <hermes-google-proposals> --family <hermes-family>` and `gcal-mcp read --credential <hermes-google-read> --family <hermes-family>` | MCP servers `gcal-proposals` and `gcal-read` (stdio) |
 | `googleOauth` | `google-oauth {mail,proposals,read} --client <client.json>` | you, once per credential, on a laptop |
-| `jobsSync` | `jobs-sync --jobs-dir <hermesHome>/jobs --personal-deliver telegram:<your user id>` | user `hermes`, `HERMES_HOME` set |
+| `jobsSync` | `jobs-sync --jobs-dir <hermesHome>/jobs --personal-deliver telegram:<your user id>` | user `hermes`, `HERMES_HOME` set, through `hermes-family-jobs-sync` |
 
 `<state>` is `${hermesHome}/state`. The credential and family files are the sops
 secrets in `/run/secrets/`. Each tool gets only the files it names.
+`hosts/radon/hermes-family.nix` wires these command lines into the jobs links,
+the `gcal-proposals` and `gcal-read` MCP servers, and the system command
+`hermes-family-jobs-sync`.
 
 ## How a job reaches its script
 
@@ -43,8 +46,11 @@ writes a real two-line `$HERMES_HOME/scripts/<name>.sh` that `exec`s it.
 4. Put the school and daycare sender addresses in `${hermesHome}/state/senders.txt`,
    one per line. A missing file allows nobody. The check uses the `From`
    address, so forward with a Gmail filter (which keeps `From`), not by hand.
-5. As `hermes`, run `jobs-sync --dry-run ...` and read the plan, then run it
-   without `--dry-run`. Run it again after every change to the job table.
+5. After the first switch, run `hermes-family-jobs-sync --personal-deliver
+   telegram:<your user id> --dry-run` and read the plan, then run it without
+   `--dry-run`. It runs `jobs-sync` as `hermes` (through `sudo`) with the
+   gateway's `HERMES_HOME` and `PATH`. Run it again after every change to the
+   job table.
 
 ## Job table
 
