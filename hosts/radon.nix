@@ -36,6 +36,7 @@ in
     # Secrets for the family Hermes gateway (secrets/radon.yaml). Only radon
     # imports it, so the other Macs keep their activation unchanged.
     inputs.sops-nix.darwinModules.sops
+    (import ./radon/hermes-family.nix { inherit agentRoot hermesHome; })
   ];
 
   # Stay current: rebuild from the GitHub flake daily (launchd equivalent of
