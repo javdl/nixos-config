@@ -18,6 +18,7 @@
 let
   sessionName = "agents";
   fleetKeys = import ./herdr-fleet-keys.nix;
+  appendAuthorizedKeys = import ../lib/append-authorized-keys.nix { inherit lib pkgs; };
   isController = controller || cmdpane;
   isFu137 = currentSystemName == "fu137";
   # radon is the macOS fleet worker; its server runs as a launchd agent.
@@ -322,29 +323,10 @@ lib.mkIf isFleetMachine {
   # would replace every other key already trusted by this workstation.
   # Exact-line match, same as fu137. CX7 peer lines are not in the repo.
   home.activation.herdrFleetAuthorizedKey = lib.mkIf (isFu137 || isSpark) (
-    lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      auth_dir="$HOME/.ssh"
-      auth_file="$auth_dir/authorized_keys"
-
-      $DRY_RUN_CMD ${pkgs.coreutils}/bin/install -d -m 0700 "$auth_dir"
-      if [ -L "$auth_file" ]; then
-        echo "Refusing to modify symlinked $auth_file; migrate it to a regular file first." >&2
-        exit 1
-      fi
-      if [ ! -e "$auth_file" ]; then
-        $DRY_RUN_CMD ${pkgs.coreutils}/bin/install -m 0600 /dev/null "$auth_file"
-      fi
-      for fleet_key in ${lib.escapeShellArgs (builtins.attrValues fleetKeys)}; do
-        if ! ${pkgs.gnugrep}/bin/grep -qxF "$fleet_key" "$auth_file" 2>/dev/null; then
-          if [ -n "$DRY_RUN_CMD" ]; then
-            echo "Would append a Herdr controller key to $auth_file"
-          else
-            printf '%s\n' "$fleet_key" >> "$auth_file"
-          fi
-        fi
-      done
-      $DRY_RUN_CMD ${pkgs.coreutils}/bin/chmod 0600 "$auth_file"
-    ''
+    lib.hm.dag.entryAfter [ "writeBoundary" ] (appendAuthorizedKeys {
+      keys = builtins.attrValues fleetKeys;
+      label = "a Herdr controller key";
+    })
   );
 
   systemd.user.services.herdr-agents = lib.mkIf pkgs.stdenv.isLinux {

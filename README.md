@@ -789,7 +789,8 @@ nix run home-manager/release-26.05 -- switch -b backup --flake ".#spark"
 ```
 
 The switch installs that package set, the `herdr-agents` user service, and
-appends the Herdr controller keys to `~/.ssh/authorized_keys`. It does not
+appends the Herdr controller keys and radon's sparks key to
+`~/.ssh/authorized_keys`. It does not
 install the NAS mount or the ConnectX-7 link: those files are rendered under
 `~/.config/dgx-spark/` and installed once as root. The sudoers drop-in is
 manual. Driver, CUDA, Docker, tailscale, apt, and locale stay native.

@@ -37,9 +37,14 @@ The entire managed set:
   (`ExecStart` is the store path), `~/.config/herdr/fleet.toml`, and
   `HERDR_SESSION=agents`. Fleet `remoteBin` is
   `/home/joost/.nix-profile/bin/herdr`.
-- `authorized_keys` activation, the same append fu137 uses. Controller lines
-  from `users/herdr-fleet-keys.nix` are added when the full line is absent.
-  Existing lines are not removed.
+- `authorized_keys` activations, append-only, same exact-line pattern as
+  fu137. Controller lines from `users/herdr-fleet-keys.nix`
+  (`home.activation.herdrFleetAuthorizedKey`) and radon's sparks key from
+  `users/dgx-spark-keys.nix` (`home.activation.radonSparksAuthorizedKey`
+  in `users/dgx-spark.nix`) are added when the full line is absent.
+  Existing lines are not removed. The file is never a `home.file`
+  symlink: NVIDIA Sync, `ssh-spark-joost-personal`, and the CX7 peer
+  lines are not in this repo.
 - Rendered files under `~/.config/dgx-spark/` (below). A switch does not
   copy them into `/etc`.
 - The dsv41 cluster, one definition in `users/dsv41-cluster.nix`. spark
@@ -92,7 +97,7 @@ from="192.168.100.0/24,192.168.101.0/24",no-agent-forwarding,no-X11-forwarding s
 four packages, write `~/.config/herdr/fleet.toml` and
 `~/.config/dgx-spark/`, install and start `herdr-agents` (which restarts
 the `agents` session if the bootstrap unit was already running), and append
-bali and cmdpane keys if the exact line is missing.
+the bali, cmdpane, and radon-sparks keys if the exact line is missing.
 
 Linger has to be on or the user service stops at logout:
 
@@ -105,6 +110,44 @@ Switch **spark and spark2 before bali** (and the command pane). Bali's
 fleet config will point `remoteBin` at `~/.nix-profile/bin/herdr`. Bali
 auto-updates from `main` at 04:00. If that lands first, the mirror misses
 the binary until the Sparks have switched.
+
+## Access from radon
+
+radon (nix-darwin, `hosts/radon.nix`) reaches the Sparks over OpenSSH on
+port 2222. Tailscale SSH refuses radon, and radon's usual
+`~/.ssh/id_ed25519` is passphrase-protected, so unattended logins use a
+separate key. That private key is not in this repo and Nix does not
+create it.
+
+Generate it once on radon:
+
+```bash
+ssh-keygen -t ed25519 -N '' -C radon-sparks -f ~/.ssh/id_ed25519_sparks
+```
+
+The public half is `users/dgx-spark-keys.nix` (`radon-sparks`,
+`SHA256:ZDiov1MbGbm6Y7QU0KQqhhSg6M0nMG4F+8wZ+3eXUOE`). A switch on each
+Spark appends that exact line to `~/.ssh/authorized_keys` when it is
+missing. Joost added the same line by hand on 2026-10-21, so the first
+switch after this change finds it and leaves it.
+
+### Client config
+
+`~/.ssh/config` on radon is chezmoi-owned (`javdl/dotfiles`
+`private_dot_ssh/config`), applied by `home.activation.chezmoiSync`.
+`programs.ssh` is not enabled in `users/joost/home-manager.nix` and must
+stay off: turning it on would replace the chezmoi file on every switch.
+This repo writes no SSH client config for the Sparks.
+
+In that file, the `Match host spark… exec "test \"$(hostname -s)\" = radon"`
+blocks (and the `spark2` twin) set port 2222, user `joost`,
+`IdentitiesOnly yes`, and `IdentityFile ~/.ssh/id_ed25519_sparks`. They
+precede the `Host spark` / `Host spark2` blocks, so on radon that key is
+offered first; the keys listed on the `Host` blocks follow. Other machines
+do not match and keep their own routes.
+
+Bali's `Host spark` / `Host spark2` aliases and the Herdr fleet URIs
+(`fromBali`, `fromCmdpane` in `users/herdr-fleet.nix`) are unchanged.
 
 ## One-time root install
 

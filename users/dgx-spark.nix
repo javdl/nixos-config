@@ -1,21 +1,36 @@
-# Headless DGX Spark files that need root to install.
+# Headless DGX Spark files that need root to install, plus radon's
+# unattended SSH key.
 #
-# Home Manager only renders them under ~/.config/dgx-spark. The one-time
-# root install is docs/dgx-spark.md, same pattern as tailmix on Omarchy
-# (docs/tailmix-omarchy.md): Nix does not write /etc on these hosts.
+# Home Manager only renders the root files under ~/.config/dgx-spark. The
+# one-time root install is docs/dgx-spark.md, same pattern as tailmix on
+# Omarchy (docs/tailmix-omarchy.md): Nix does not write /etc on these hosts.
 #
 # sudoers, apt, the NVIDIA driver, CUDA, Docker, tailscaled, and locale
 # stay native. spark-vllm is not a service here.
+#
+# authorized_keys is append-only (lib/append-authorized-keys.nix). The
+# Sparks also hold keys that are not in this repo (NVIDIA Sync,
+# ssh-spark-joost-personal, the CX7 peer lines).
 { currentSystemName }:
 
-{ lib, ... }:
+{ lib, pkgs, ... }:
 
 let
   isSpark = currentSystemName == "spark";
   isSpark2 = currentSystemName == "spark2";
   enable = isSpark || isSpark2;
+  sparkKeys = import ./dgx-spark-keys.nix;
+  appendAuthorizedKeys = import ../lib/append-authorized-keys.nix { inherit lib pkgs; };
 in
 {
+  # Spark-only: enable is false for any other currentSystemName.
+  home.activation.radonSparksAuthorizedKey = lib.mkIf enable (
+    lib.hm.dag.entryAfter [ "writeBoundary" ] (appendAuthorizedKeys {
+      keys = builtins.attrValues sparkKeys;
+      label = "the radon-sparks key";
+    })
+  );
+
   home.file = lib.mkIf enable (
     {
       ".config/dgx-spark/systemd/mnt-models.mount".text = ''
