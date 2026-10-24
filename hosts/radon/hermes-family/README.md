@@ -77,9 +77,13 @@ one field into `cron/jobs.json` under the store's own lock
    `<mail>` blocks, `Mail-Key:` first; the key is the first 32 hex characters of
    SHA-256 of the raw Message-ID. The printed keys go to `fetch-record.jsonl`.
    With nothing to print, Hermes skips the model call.
-2. The parsing job calls `create_proposal` with the key as event id, so a rerun
-   gets 409 and creates nothing. One event per mail: a mail with two
-   appointments gets the first and is listed as uncertain.
+2. The parsing job calls `create_proposal` once per appointment it can date. A
+   mail can hold several appointments, so the event id is the first 32 hex
+   characters of SHA-256 of `<mail key>|<start>`, with the start as local
+   `YYYY-MM-DDTHH:MM`, or `YYYY-MM-DD` for an all-day event. A rerun with the
+   same start gets 409 and creates nothing. A mail that also holds an
+   appointment the model cannot date is listed as uncertain. The ledger and
+   the JSON block keep the mail key.
 3. `notifier` reads each new parsing run's answer (located by Hermes's length
    frames, so a JSON block quoted inside a mail is never read), takes the last
    fenced JSON block, ledgers and labels the `processed` keys that

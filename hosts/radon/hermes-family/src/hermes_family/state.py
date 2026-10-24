@@ -19,8 +19,8 @@ IGNORED_LABEL = "hermes-ignored"
 
 
 def mail_key(message_id: str) -> str:
-    """First 32 hex characters of SHA-256 of the raw Message-ID. It is also the
-    Proposals event id (base32hex allows 0-9a-f)."""
+    """First 32 hex characters of SHA-256 of the raw Message-ID. The ledger,
+    the parse result and each Proposals event id derive from it."""
     return hashlib.sha256(message_id.strip().encode()).hexdigest()[:32]
 
 

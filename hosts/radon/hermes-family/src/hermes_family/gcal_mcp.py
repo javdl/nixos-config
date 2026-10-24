@@ -1,7 +1,8 @@
 """gcal-mcp: the family calendar MCP server, over stdio.
 
 `gcal-mcp proposals` offers one tool, create_proposal, which writes only to the
-Proposals calendar and invites both parents. The event id is the mail key, so a
+Proposals calendar and invites both parents. The event id is derived from the
+mail key and the start, so each appointment in a mail gets its own event and a
 repeated run gets 409 and creates nothing. `gcal-mcp read` offers list_events
 over the family calendar and, when the family file names one, the personal
 calendar. Each mode gets its own credential file by argument.
@@ -10,6 +11,7 @@ calendar. Each mode gets its own credential file by argument.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 from datetime import date, datetime, timedelta
@@ -45,6 +47,17 @@ def _when(value: str, *, end: bool) -> tuple[dict[str, str], date | datetime]:
     return {"dateTime": moment.isoformat()}, moment
 
 
+def event_id(mail_key: str, start_at: date | datetime) -> str:
+    """The Proposals event id of one appointment: the first 32 hex characters of
+    SHA-256 of `<mail_key>|<start>`, where start is local `YYYY-MM-DDTHH:MM` or,
+    for an all-day event, `YYYY-MM-DD`. base32hex allows 0-9a-f."""
+    if isinstance(start_at, datetime):
+        start = start_at.astimezone(ZONE).strftime("%Y-%m-%dT%H:%M")
+    else:
+        start = start_at.isoformat()
+    return hashlib.sha256(f"{mail_key}|{start}".encode()).hexdigest()[:32]
+
+
 def proposal_event(title: str, start: str, end: str, location: str | None, mail_key: str, family: Family) -> dict:
     if not is_key(mail_key):
         raise ValueError("mail_key must be the 32 lowercase hex characters of the Mail-Key line")
@@ -58,7 +71,7 @@ def proposal_event(title: str, start: str, end: str, location: str | None, mail_
     if end_at <= start_at:
         raise ValueError("end must be after start")
     event = {
-        "id": mail_key,
+        "id": event_id(mail_key, start_at),
         "summary": title[:TITLE_LIMIT],
         "start": start_field,
         "end": end_field,
@@ -81,8 +94,9 @@ def create_proposal(api: Api, family: Family, title: str, start: str, end: str, 
         accept=(409,),
     )
     if response.status == 409:
-        return f"Proposal {mail_key} already exists; nothing to do."
-    return f"Created proposal {mail_key}: {event['summary']} ({start} to {end}); both parents are invited."
+        return f"Proposal {event['id']} for mail {mail_key} already exists; nothing to do."
+    return (f"Created proposal {event['id']} for mail {mail_key}: {event['summary']} ({start} to {end}); "
+            "both parents are invited.")
 
 
 def _instant(value: str) -> datetime:
@@ -147,7 +161,8 @@ def build_server(mode: str, api_factory: Callable[[], Api], family_factory: Call
             start and end are local Europe/Amsterdam ISO 8601 date-times such as
             2026-11-12T15:30:00, or dates such as 2026-11-12 for an all-day event
             (the end date is the last day). mail_key is the Mail-Key line of the
-            mail, copied exactly. Running it twice for one mail key creates one event.
+            mail, copied exactly. Call it once per appointment; running it twice
+            for one mail key and start creates one event.
             """
             return create_proposal(api_factory(), family_factory(), title, start, end, mail_key, location)
 
