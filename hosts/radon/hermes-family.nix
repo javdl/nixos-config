@@ -101,6 +101,9 @@ lib.mkIf enableHermesFamily {
   home-manager.users.hermes = {
     imports = [ inputs.hermes-agent.homeManagerModules.default ];
     home.stateVersion = "26.05";
+    # A service account: no agent CLIs, no Herdr or Moshi hooks, and no
+    # moshi-hook LaunchAgent (users/agent-clis.nix).
+    agentClis.enable = false;
 
     programs.hermes-agent.enable = true;
     services.hermes-agent = {

@@ -140,7 +140,8 @@ systemFunc {
         ({ pkgs, ... }: { home.packages = [ pkgs.mise ]; })
         # Agent CLIs (claude, codex, opencode, cursor, grok, omp, pi), Herdr
         # integrations for them, and the moshi-hook daemon, for every user on
-        # every machine. See users/agent-clis.nix.
+        # every machine unless the user sets agentClis.enable = false. See
+        # users/agent-clis.nix.
         ../users/agent-clis.nix
         # programs.git manages ~/.config/git/config as a read-only store symlink,
         # so `git config --global ...` fails to lock it. Git writes --global to
