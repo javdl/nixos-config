@@ -199,9 +199,9 @@ def includes_for(post: dict, includes: dict) -> dict:
 
 
 def ends_unknown(posts: list[dict], known: set[str]) -> bool:
-    """Whether new bookmarks may continue past this page: one of its last STOP_RUN posts is
-    new, or it is empty."""
-    return not posts or any(post["id"] not in known for post in posts[-STOP_RUN:])
+    """Whether new bookmarks may continue past this page: it shows fewer than STOP_RUN posts,
+    or one of its last STOP_RUN posts is new."""
+    return len(posts) < STOP_RUN or any(post["id"] not in known for post in posts[-STOP_RUN:])
 
 
 def walk(api: Bookmarks, known: set[str]) -> tuple[list[Page], bool]:
@@ -228,8 +228,8 @@ def capture(api: Bookmarks, known: set[str], now: str, via: str) -> tuple[list[d
     MAX_PAGES."""
     probe = api.page(PROBE_SIZE, detailed=False)
     unknown = [post for post in probe.posts if post["id"] not in known]
-    if not unknown and (probe.posts or not probe.next_token):
-        return [], False  # an empty probe that has more pages walks: X omitted its ten slots
+    if not unknown and not (probe.next_token and ends_unknown(probe.posts, known)):
+        return [], False  # a probe that shows too little to end on two known posts walks
     truncated = False
     if probe.next_token and ends_unknown(probe.posts, known):
         pages, truncated = walk(api, known)

@@ -253,6 +253,15 @@ class XBookmarksTest(unittest.TestCase):
         self.assertEqual([c.params["max_results"] for c in self.fake.calls], ["10", "90"])
         self.assertEqual([e["id"] for e in self.entries()], [post_id(n) for n in reversed(range(10, 30))])
 
+    def test_a_probe_showing_one_known_post_is_not_taken_for_the_boundary(self):
+        self.serve(FakeX(30, hidden_slots=set(range(9))))
+        self.archive.parent.mkdir(parents=True)
+        self.archive.write_text(json.dumps({"id": post_id(9), "via": "import", "post": {}}) + "\n")
+        code, out, _ = self.run_main()
+        self.assertEqual(code, 0)
+        self.assertIn("stored the 20 bookmarks", out)
+        self.assertEqual([c.params["max_results"] for c in self.fake.calls], ["10", "90"])
+
     def test_a_probe_only_post_keeps_its_place_among_the_new_ones(self):
         self.serve(FakeX(10, detail_hidden={post_id(0), post_id(2)}))
         self.store(range(5, 10))

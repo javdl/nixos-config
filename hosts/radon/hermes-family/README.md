@@ -316,7 +316,8 @@ post's author, media and referenced posts from the same response.
    returned is stored as the probe saw it, with its id and text.
 3. When one of the two oldest of the 10 is new too, it walks pages of 90 until
    a page ends with two known posts. One known post does not stop the walk,
-   because an archived post can be bookmarked again with new ones below it.
+   because an archived post can be bookmarked again with new ones below it,
+   and neither does a probe or page that shows fewer than two posts.
    Two archived posts bookmarked again in a row, landing exactly at the end of
    the probe or a page with new bookmarks below them, would still hide those.
    An exact boundary needs every id in the list each time something is new:
