@@ -12,6 +12,15 @@ let
   agentVolumeUUID = "B1E4C91E-5FF3-4FF7-B66E-18F5E6D877DD";
   agentRoot = "/Volumes/Agent";
   hermesHome = "${agentRoot}/hermes";
+  # Exits 0 only when the Agent volume itself is mounted at agentRoot. A path
+  # check is not enough: an empty /Volumes/Agent on the internal disk, or the
+  # volume mounted at "/Volumes/Agent 1" because such a directory exists,
+  # would both pass it.
+  agentVolumeMounted = pkgs.writeShellScript "agent-volume-mounted" ''
+    mountPoint=$(/usr/sbin/diskutil info ${agentVolumeUUID} 2>/dev/null |
+      /usr/bin/awk -F': +' '/^ *Mounted:/ {m=$2} /^ *Mount Point:/ {p=$2} END {if (m == "Yes") print p}')
+    [ "$mountPoint" = ${agentRoot} ]
+  '';
 in
 {
   # nix-darwin stateVersion. Host runs macOS Tahoe.
@@ -134,9 +143,13 @@ in
   # directories the hermes user writes to.
   agentLauncher.daemons.agent-volume-unlock = {
     job = pkgs.writeShellScript "agent-volume-unlock" ''
-      if ! /sbin/mount | /usr/bin/grep -q ' on ${agentRoot} '; then
+      if ! ${agentVolumeMounted}; then
         /usr/sbin/diskutil apfs unlockVolume ${agentVolumeUUID} -stdinpassphrase \
-          < /etc/hermes/agent-volume.key
+          < /etc/hermes/agent-volume.key || /usr/sbin/diskutil mount ${agentVolumeUUID}
+      fi
+      if ! ${agentVolumeMounted}; then
+        echo "agent-volume-unlock: the Agent volume is not mounted at ${agentRoot}" >&2
+        exit 1
       fi
       /usr/sbin/diskutil enableOwnership ${agentRoot}
       /usr/bin/install -d -o hermes -g staff -m 0700 \
@@ -155,6 +168,10 @@ in
   agentLauncher.daemons.agent-volume-probe = {
     job = pkgs.writeShellScript "agent-volume-probe" ''
       now=$(/bin/date -u +%Y-%m-%dT%H:%M:%SZ)
+      if ! ${agentVolumeMounted}; then
+        echo "$now FAILED: the Agent volume is not mounted at ${agentRoot}"
+        exit 1
+      fi
       if echo "$now" > ${agentRoot}/logs/agent-volume-probe 2>/dev/null; then
         echo "$now ok: $(/usr/bin/id -un) wrote ${agentRoot}/logs/agent-volume-probe"
       else
