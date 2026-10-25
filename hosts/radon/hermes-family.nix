@@ -10,8 +10,8 @@
 # Manager configuration. The gateway job does at each start what the upstream
 # Home Manager activation would do: state directories, config.yaml, .env.
 #
-# Off until Joost has created secrets/radon.yaml. With the gate off radon's
-# system is unchanged.
+# Off until Joost has added the family keys to secrets/radon.yaml. With the
+# gate off radon's system is unchanged.
 {
   agentRoot,
   agentVolumeMounted,
