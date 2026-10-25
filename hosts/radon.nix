@@ -36,6 +36,7 @@ in
     # Secrets for the family Hermes gateway (secrets/radon.yaml). Only radon
     # imports it, so the other Macs keep their activation unchanged.
     inputs.sops-nix.darwinModules.sops
+    ./radon/agent-launcher.nix
   ];
 
   # Stay current: rebuild from the GitHub flake daily (launchd equivalent of
@@ -112,13 +113,18 @@ in
       AutomountDisksWithoutUserLogin -bool true
   '';
 
+  # Every launchd job that touches the Agent volume runs through the Full
+  # Disk Access launcher (radon/agent-launcher.nix); TCC refuses the others,
+  # root included.
+  agentLauncher.users = [ "hermes" ];
+
   # Unlock the encrypted Agent volume at boot with the root-only key
   # (/etc/hermes/agent-volume.key, mode 0400, on the FileVault-encrypted
   # internal disk), keep ownership enforced (external volumes default to
   # "ignore ownership", which shows every file as _unknown), and create the
   # directories the hermes user writes to.
-  launchd.daemons.agent-volume-unlock = {
-    script = ''
+  agentLauncher.daemons.agent-volume-unlock = {
+    job = pkgs.writeShellScript "agent-volume-unlock" ''
       if ! /sbin/mount | /usr/bin/grep -q ' on ${agentRoot} '; then
         /usr/sbin/diskutil apfs unlockVolume ${agentVolumeUUID} -stdinpassphrase \
           < /etc/hermes/agent-volume.key
@@ -131,6 +137,28 @@ in
       RunAtLoad = true;
       StandardOutPath = "/var/log/agent-volume-unlock.log";
       StandardErrorPath = "/var/log/agent-volume-unlock.log";
+    };
+  };
+
+  # Shows whether the hermes user can write to the Agent volume from launchd,
+  # which needs the launcher's Full Disk Access. Runs at load; run it again
+  # with `sudo launchctl kickstart system/org.nixos.agent-volume-probe`.
+  agentLauncher.daemons.agent-volume-probe = {
+    job = pkgs.writeShellScript "agent-volume-probe" ''
+      now=$(/bin/date -u +%Y-%m-%dT%H:%M:%SZ)
+      if echo "$now" > ${agentRoot}/logs/agent-volume-probe 2>/dev/null; then
+        echo "$now ok: $(/usr/bin/id -un) wrote ${agentRoot}/logs/agent-volume-probe"
+      else
+        echo "$now FAILED: $(/usr/bin/id -un) cannot write ${agentRoot}/logs/agent-volume-probe"
+        exit 1
+      fi
+    '';
+    serviceConfig = {
+      UserName = "hermes";
+      GroupName = "staff";
+      RunAtLoad = true;
+      StandardOutPath = "/var/log/agent-volume-probe.log";
+      StandardErrorPath = "/var/log/agent-volume-probe.log";
     };
   };
 
