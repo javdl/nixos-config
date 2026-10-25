@@ -79,6 +79,7 @@ gets only the files it names.
 | `hermes-google-proposals` | the same, scope `calendar.events` | MCP server `gcal-proposals` |
 | `hermes-google-read` | the same, scope `calendar.readonly` | MCP servers `gcal-read` and `gcal-family`, `pickup` |
 | `hermes-family` | JSON object, below | the gateway job, `jobs-sync`, `pickup`, the three MCP servers |
+| `hermes-x-bookmarks` | dotenv: `X_API_KEY`, `X_API_KEY_SECRET`, `X_ACCESS_TOKEN`, `X_ACCESS_TOKEN_SECRET` (OAuth 1.0a, app permission Read), `X_USER_ID`, `X_USERNAME` | `x-bookmarks` |
 
 `hermes-env`:
 
@@ -179,6 +180,8 @@ the build platform.
 | `gcalMcp` | `gcal-mcp proposals --credential <hermes-google-proposals> --family <hermes-family> --state-dir <state>`, `gcal-mcp read --credential <hermes-google-read> --family <hermes-family>` and `gcal-mcp family --credential <hermes-google-read> --family <hermes-family>` | MCP servers `gcal-proposals`, `gcal-read` and `gcal-family` (stdio) |
 | `googleOauth` | `google-oauth {mail,proposals,read} --client <client.json>` | you, once per credential, on a laptop |
 | `jobsSync` | `jobs-sync --jobs-dir <hermesHome>/jobs --family <hermes-family> [--dry-run]` | the gateway job, at each start |
+| `xBookmarks` | `x-bookmarks --credential <hermes-x-bookmarks> --archive <hermesHome>/x-bookmarks/bookmarks.jsonl --import-dir /Users/Shared/x-bookmarks-import` | no-agent job `x-bookmarks` |
+| `xBookmarksDigest` | `x-bookmarks-digest --archive <hermesHome>/x-bookmarks/bookmarks.jsonl --hermes-python <Hermes venv>/bin/python3` | `--script` of `x-bookmarks-digest` |
 
 `<state>` is `/Volumes/Agent/hermes/state`.
 
@@ -190,7 +193,7 @@ runs each tool with its arguments, and `jobs-sync` writes a real two-line
 
 ## Job table
 
-`jobs-sync` owns these six jobs by name. It creates a missing job, edits a
+`jobs-sync` owns these eight jobs by name. It creates a missing job, edits a
 drifted one back, and stops without changes if a name appears twice. A second
 run changes nothing. Each job runs on its entry in `schedules` in
 `hermes-family`; the family's routines stay out of this public repository.
@@ -206,16 +209,18 @@ message names the job, never the expression.
 | `family-plan-ahead` | `schedules` in hermes-family | agent, `plan-ahead-weather.sh` injected | `signal` (family group) | cron default | `web`, `gcal-family` |
 | `family-evening-brief` | `schedules` in hermes-family | agent | `personal_deliver` | cron default | `gcal-read` |
 | `agent-tooling-digest` | `schedules` in hermes-family | agent | `personal_deliver` | cron default | `web`, `skills`, `todo`, `no_mcp` |
+| `x-bookmarks` | `schedules` in hermes-family | no-agent, `x-bookmarks.sh` | `personal_deliver` | | |
+| `x-bookmarks-digest` | `schedules` in hermes-family | agent, `x-bookmarks-digest.sh` injected | `personal_deliver` | cron default | none (`[]`) |
 
 `gcal-read` lists the family calendar and the personal calendar;
 `gcal-family` lists the family calendar alone. The plan-ahead answers in the
 family group, so it gets only `gcal-family`.
 
-The evening brief reads the personal calendar, and the digest is Joost's, so
-both go to `personal_deliver`, never the family group. `jobs-sync` refuses a
-`personal_deliver` that names no single chat on a messaging platform: bare
-`signal`, a list with a comma, and `local:`, `origin:` or any platform
-outside the cron home-target list of Hermes 81a5543
+The evening brief reads the personal calendar, and the digests and the X
+bookmarks are Joost's, so they go to `personal_deliver`, never the family
+group. `jobs-sync` refuses a `personal_deliver` that names no single chat on a
+messaging platform: bare `signal`, a list with a comma, and `local:`,
+`origin:` or any platform outside the cron home-target list of Hermes 81a5543
 (`cron/scheduler_delivery.py:41-44`) are refused, whatever follows the colon.
 
 `hermes cron create/edit` cannot set `enabled_toolsets`. `jobs-sync` writes that
@@ -290,6 +295,50 @@ reason was paused by hand: `jobs-sync` reports it and leaves it paused.
    sender not in `senders.txt` gets no line but a `failed` row.
    `quarantine-cursor` holds how many lines it has handled.
 
+## X bookmarks
+
+`x-bookmarks` copies Joost's X bookmarks into
+`/Volumes/Agent/hermes/x-bookmarks/bookmarks.jsonl`, one JSON line per post, in
+the order it found them. A line is never rewritten. It holds the post `id`,
+`first_seen_at` (UTC), `via` and the raw `post`. `via` is `poll` for a bookmark
+an hourly run found, `backfill` for the first run and `import` for a browser
+export. An API line also has `includes`: the post's author, media and
+referenced posts from the same response.
+
+1. Each run asks X for the ids of the 10 newest bookmarks, without
+   expansions. X bills an owned read once per post per UTC day, so this costs
+   about $0.01 a day.
+2. When an id is not in the archive, it fetches the posts down to the last
+   unknown one with their text (`note_tweet` for long posts), author, media and
+   referenced posts. That is about $0.011 to $0.016 per new bookmark.
+3. When all 10 are new, it walks pages of 90 until a page holds a known post.
+   An empty archive walks everything the API returns: X documents the newest
+   800, and pagination has been seen to stop near 200. The first run therefore
+   costs a few dollars and reports how many it stored.
+4. Older bookmarks come from a browser export. Export the Bookmarks page as
+   JSON with [twitter-web-exporter](https://github.com/prinsss/twitter-web-exporter)
+   and copy it to radon:
+   `ssh radon mkdir -p /Users/Shared/x-bookmarks-import` and
+   `scp twitter-Bookmarks-*.json radon:/Users/Shared/x-bookmarks-import/`. The
+   folder is on the internal disk, because the Agent volume is closed to
+   everything but the launcher. The next run adds the posts the archive does
+   not have, reports the count, and records the file's SHA-256 in
+   `imported.txt`, so it reads each export once.
+
+An ordinary run prints nothing, so Hermes sends nothing. A failed request, such
+as HTTP 402 when the X API credits run out, exits 1 with X's reason, and Hermes
+sends it to `personal_deliver` as an alert. The credential is OAuth 1.0a: its
+tokens never refresh, so a second client cannot invalidate them, and a request
+carries only a signature, never the secrets. To rotate it, regenerate the
+Access Token and Secret in the X console and update `hermes-x-bookmarks`.
+
+`x-bookmarks-digest` runs on Sundays at 09:00. Its script prints the `poll`
+lines of the last seven days, at most 40, as `<bookmark>` blocks with the
+link, author, date, full text, quoted post and outside links. Each block goes
+through Hermes's prompt scan; a rejected block is replaced by its link. Without
+new bookmarks it prints `{"wakeAgent": false}`, and Hermes runs no model. The
+job has no toolsets, so the post text it reads can reach nothing.
+
 ## Tests
 
 ```bash
@@ -297,8 +346,9 @@ cd hosts/radon/hermes-family
 PYTHONPATH=src python3 -m unittest discover -s tests -t .
 ```
 
-The calendar MCP tests need the `mcp` package; the Nix build has it. Google
-calls go through `hermes_family.net.send`, which the tests replace. The
+The calendar MCP tests need the `mcp` package; the Nix build has it. Google and
+X calls go through `hermes_family.net.send`, which the tests replace. The
 Open-Meteo and Rijkswaterstaat fixtures are recorded responses. The Gmail and
 Calendar fixtures follow the API reference shapes; no live Google response was
-recorded.
+recorded. The X bookmark responses in `test_xbookmarks.py` follow the shape the
+API returned on 2026-10-25, with made-up values.

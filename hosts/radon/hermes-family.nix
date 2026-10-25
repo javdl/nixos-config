@@ -1,7 +1,8 @@
 # Family Hermes agent on radon: the Signal gateway, its signal-cli daemon, the
-# family cron jobs and calendar MCP servers, the cron run log and the
-# hermes-family command (javdl/joost docs/plans/active/hermes-family-mac-mini.md,
-# Milestones 4 to 6). README: radon/hermes-family/README.md.
+# family cron jobs and calendar MCP servers, Joost's X bookmark jobs, the cron
+# run log and the hermes-family command (javdl/joost
+# docs/plans/active/hermes-family-mac-mini.md, Milestones 4 to 6).
+# README: radon/hermes-family/README.md.
 #
 # The state lives on the Agent volume, and macOS lets a launchd job use that
 # volume only through the Full Disk Access launcher (radon/agent-launcher.nix).
@@ -45,6 +46,10 @@ let
   jobs = import ./hermes-family/packages.nix { inherit pkgs; };
   stateDir = "${hermesHome}/state";
   runLog = "${hermesHome}/runs.jsonl";
+  # The X bookmark archive, and the folder for browser exports of older bookmarks. That
+  # folder is on the internal disk, so Joost can copy an export there over SSH.
+  xArchive = "${hermesHome}/x-bookmarks/bookmarks.jsonl";
+  xImportDir = "/Users/Shared/x-bookmarks-import";
 
   # The cron job scripts, each with only the files it names. Hermes runs a cron
   # script only if it resolves inside $HERMES_HOME/scripts, so the gateway job
@@ -87,6 +92,22 @@ let
           runLog
         ];
         plan-ahead-weather = [ "${jobs.planAheadWeather}/bin/plan-ahead-weather" ];
+        x-bookmarks = [
+          "${jobs.xBookmarks}/bin/x-bookmarks"
+          "--credential"
+          (secret "hermes-x-bookmarks")
+          "--archive"
+          xArchive
+          "--import-dir"
+          xImportDir
+        ];
+        x-bookmarks-digest = [
+          "${jobs.xBookmarksDigest}/bin/x-bookmarks-digest"
+          "--archive"
+          xArchive
+          "--hermes-python"
+          "${hermesPackage.hermesVenv}/bin/python3"
+        ];
       }
   );
 
@@ -359,6 +380,7 @@ lib.mkIf enableHermesFamily {
         "hermes-google-proposals"
         "hermes-google-read"
         "hermes-family"
+        "hermes-x-bookmarks"
       ]
       (_: {
         sopsFile = ../../secrets/radon.yaml;

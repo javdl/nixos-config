@@ -95,7 +95,7 @@ class JobsSyncTest(unittest.TestCase):
     def by_name(self) -> dict[str, dict]:
         return {job["name"]: job for job in self.hermes.jobs()}
 
-    def test_creates_the_six_jobs_exactly_as_the_plan_says(self):
+    def test_creates_the_eight_jobs_exactly_as_the_plan_says(self):
         report = self.sync()
         self.assertEqual(report, [f"{spec.name}: create" for spec in jobs_sync.JOBS])
         jobs = self.by_name()
@@ -113,6 +113,8 @@ class JobsSyncTest(unittest.TestCase):
             "family-evening-brief": (None, False, PERSONAL, None, None, ["gcal-read"], True),
             "agent-tooling-digest": (None, False, PERSONAL, None, None,
                                      ["web", "skills", "todo", "no_mcp"], True),
+            "x-bookmarks": ("x-bookmarks.sh", True, PERSONAL, None, None, None, True),
+            "x-bookmarks-digest": ("x-bookmarks-digest.sh", False, PERSONAL, None, None, [], True),
         })
 
     def test_new_jobs_are_created_paused_and_resumed_after_their_toolsets_are_set(self):
@@ -153,7 +155,7 @@ class JobsSyncTest(unittest.TestCase):
         calls = len(self.hermes.argvs)
         self.assertEqual(self.sync(), [f"{spec.name}: unchanged" for spec in jobs_sync.JOBS])
         self.assertEqual(len(self.hermes.argvs), calls)
-        self.assertEqual(len(self.hermes.jobs()), 6)
+        self.assertEqual(len(self.hermes.jobs()), 8)
         self.assertEqual(jobs_sync.verify(self.home, self.specs), [])
 
     def test_drift_is_edited_back_in_place(self):
@@ -172,7 +174,7 @@ class JobsSyncTest(unittest.TestCase):
         self.assertIn(["cron", "edit", parse_id, "--deliver", "local", "--model", "spark/dsv41",
                        "--provider", "aperture-local"], self.hermes.argvs)
         self.assertEqual(jobs_sync.verify(self.home, self.specs), [])
-        self.assertEqual(len(self.hermes.jobs()), 6)
+        self.assertEqual(len(self.hermes.jobs()), 8)
 
     def test_an_unwanted_model_pin_is_cleared(self):
         self.sync()
@@ -202,7 +204,8 @@ class JobsSyncTest(unittest.TestCase):
         self.assertFalse(wrapper.is_symlink())
         self.assertEqual(wrapper.read_text(), "#!/bin/bash\nexec /Volumes/Agent/hermes/jobs/mail-fetch \"$@\"\n")
         self.assertEqual(sorted(p.name for p in (self.home / "scripts").iterdir()),
-                         ["mail-fetch.sh", "notifier.sh", "pickup.sh", "plan-ahead-weather.sh"])
+                         ["mail-fetch.sh", "notifier.sh", "pickup.sh", "plan-ahead-weather.sh",
+                          "x-bookmarks-digest.sh", "x-bookmarks.sh"])
 
     def test_toolsets_write_waits_for_the_store_lock_and_keeps_other_fields(self):
         self.hermes.save([{"id": "x1", "name": "other", "enabled_toolsets": None, "custom": 1}])
