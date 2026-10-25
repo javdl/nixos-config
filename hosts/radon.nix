@@ -74,6 +74,15 @@ in
   environment.systemPackages = [
     pkgs.cua
     pkgs.macmon
+    # signal-cli as the hermes user, with its account data on the Agent
+    # volume: registers the family bot's number before the gateway runs.
+    # The gateway's signal-cli daemon uses the same package and directory.
+    (pkgs.writeShellScriptBin "hermes-family-signal-cli" ''
+      exec /usr/bin/sudo -u hermes -H /usr/bin/env \
+        TMPDIR=${agentRoot}/tmp \
+        JAVA_OPTS=-Djava.io.tmpdir=${agentRoot}/tmp \
+        ${pkgs.signal-cli}/bin/signal-cli --config ${hermesHome}/signal-cli "$@"
+    '')
   ];
   # Usage telemetry off for the CLI and for the Cua Bots app started from a
   # shell (scripts/build-cua-bots.sh --run inherits it).
