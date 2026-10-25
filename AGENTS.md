@@ -16,6 +16,7 @@ historical plans and audits.
 4. **Investigate before asking.** Read the upstream README/source/`--help` before drafting a plan or presenting a question menu. The answer is often two grep calls away.
 5. **Verify after every change.** Execute the runtime path of what changed, not just "the edit applied". For configs, trigger the consumer. For binaries, run `--version` *and* a representative subcommand.
 6. **Don't blindly stage Plans/.** Auto-generated plan-mode files (`Plans/now-*.md`) are gitignored; descriptive plan docs commit normally. Check names before `git add Plans/`.
+7. **Keep personal data out of this public repository.** No names of family members, schools, childcare, addresses, schedules, phone numbers, email addresses or calendar ids, in code, tests, fixtures, comments or commit messages. Put such values in a sops secret or in runtime state, and use made-up values in tests.
 
 ## Temporary reminder: eMudhra roots distrust (from 2026-10-23)
 

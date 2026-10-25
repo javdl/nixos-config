@@ -8,10 +8,30 @@
 let
   # Family Hermes agent (javdl/joost docs/plans/active/hermes-family-mac-mini.md).
   # Everything the `hermes` user writes lives on the encrypted `Agent` APFS
-  # volume on the external disk, never on the internal SSD.
-  agentVolumeUUID = "B1E4C91E-5FF3-4FF7-B66E-18F5E6D877DD";
+  # volume on the agent disk, never on the internal SSD.
+  #
+  # The agent disk is a Samsung T7 Shield (2 TB), named by its USB serial
+  # number. To set up a new disk: put its serial here and switch, run
+  # `agent-volume-format --erase`, pin the UUID it prints below and switch
+  # again. agent-volume-unlock then encrypts the volume with the root-only key.
+  agentDiskSerial = "S6YLNS0W800550A";
+  agentVolumeUUID = "CEFC4785-1252-443A-B861-F871994AB0FC";
   agentRoot = "/Volumes/Agent";
   hermesHome = "${agentRoot}/hermes";
+  # Exits 0 only when the Agent volume itself is mounted at agentRoot. A path
+  # check is not enough: an empty /Volumes/Agent on the internal disk, or the
+  # volume mounted at "/Volumes/Agent 1" because such a directory exists,
+  # would both pass it.
+  agentVolumeMounted = pkgs.writeShellScript "agent-volume-mounted" ''
+    mountPoint=$(/usr/sbin/diskutil info ${agentVolumeUUID} 2>/dev/null |
+      /usr/bin/awk -F': +' '/^ *Mounted:/ {m=$2} /^ *Mount Point:/ {p=$2} END {if (m == "Yes") print p}')
+    [ "$mountPoint" = ${agentRoot} ]
+  '';
+  agentVolumeFormat = pkgs.writeShellApplication {
+    name = "agent-volume-format";
+    runtimeInputs = [ pkgs.python3 ];
+    text = ''exec python3 ${./radon/agent-volume-format.py} ${agentDiskSerial} "$@"'';
+  };
 in
 {
   # nix-darwin stateVersion. Host runs macOS Tahoe.
@@ -36,6 +56,7 @@ in
     # Secrets for the family Hermes gateway (secrets/radon.yaml). Only radon
     # imports it, so the other Macs keep their activation unchanged.
     inputs.sops-nix.darwinModules.sops
+    ./radon/agent-launcher.nix
   ];
 
   # Stay current: rebuild from the GitHub flake daily (launchd equivalent of
@@ -73,6 +94,16 @@ in
   environment.systemPackages = [
     pkgs.cua
     pkgs.macmon
+    agentVolumeFormat
+    # signal-cli as the hermes user, with its account data on the Agent
+    # volume: registers the family bot's number before the gateway runs.
+    # The gateway's signal-cli daemon uses the same package and directory.
+    (pkgs.writeShellScriptBin "hermes-family-signal-cli" ''
+      exec /usr/bin/sudo -u hermes -H /usr/bin/env \
+        TMPDIR=${agentRoot}/tmp \
+        JAVA_OPTS=-Djava.io.tmpdir=${agentRoot}/tmp \
+        ${pkgs.signal-cli}/bin/signal-cli --config ${hermesHome}/signal-cli "$@"
+    '')
   ];
   # Usage telemetry off for the CLI and for the Cua Bots app started from a
   # shell (scripts/build-cua-bots.sh --run inherits it).
@@ -112,25 +143,74 @@ in
       AutomountDisksWithoutUserLogin -bool true
   '';
 
+  # Every launchd job that touches the Agent volume runs through the Full
+  # Disk Access launcher (radon/agent-launcher.nix); TCC refuses the others,
+  # root included.
+  agentLauncher.users = [ "hermes" ];
+
   # Unlock the encrypted Agent volume at boot with the root-only key
   # (/etc/hermes/agent-volume.key, mode 0400, on the FileVault-encrypted
-  # internal disk), keep ownership enforced (external volumes default to
-  # "ignore ownership", which shows every file as _unknown), and create the
-  # directories the hermes user writes to.
-  launchd.daemons.agent-volume-unlock = {
-    script = ''
-      if ! /sbin/mount | /usr/bin/grep -q ' on ${agentRoot} '; then
+  # internal disk; made here if missing), encrypt a volume that
+  # agent-volume-format has just made, keep ownership enforced (external
+  # volumes default to "ignore ownership", which shows every file as
+  # _unknown), and create the directories the hermes user writes to.
+  agentLauncher.daemons.agent-volume-unlock = {
+    job = pkgs.writeShellScript "agent-volume-unlock" ''
+      key=/etc/hermes/agent-volume.key
+      if [ ! -e "$key" ]; then
+        /usr/bin/install -d -m 0700 /etc/hermes
+        (umask 0277 && /usr/bin/openssl rand -base64 32 > "$key")
+      fi
+      if ! ${agentVolumeMounted}; then
         /usr/sbin/diskutil apfs unlockVolume ${agentVolumeUUID} -stdinpassphrase \
-          < /etc/hermes/agent-volume.key
+          < "$key" || /usr/sbin/diskutil mount ${agentVolumeUUID}
+      fi
+      if ! ${agentVolumeMounted}; then
+        echo "agent-volume-unlock: the Agent volume is not mounted at ${agentRoot}" >&2
+        exit 1
+      fi
+      if /usr/sbin/diskutil info ${agentVolumeUUID} | /usr/bin/grep -q '^ *FileVault: *No$'; then
+        /usr/sbin/diskutil apfs encryptVolume ${agentVolumeUUID} -user disk \
+          -stdinpassphrase < "$key" || exit 1
       fi
       /usr/sbin/diskutil enableOwnership ${agentRoot}
       /usr/bin/install -d -o hermes -g staff -m 0700 \
         ${hermesHome} ${agentRoot}/logs ${agentRoot}/tmp
     '';
+    # A non-zero exit (the disk is not there yet, or unlocking failed) makes
+    # launchd run the job again after 30 s.
     serviceConfig = {
       RunAtLoad = true;
+      KeepAlive.SuccessfulExit = false;
+      ThrottleInterval = 30;
       StandardOutPath = "/var/log/agent-volume-unlock.log";
       StandardErrorPath = "/var/log/agent-volume-unlock.log";
+    };
+  };
+
+  # Shows whether the hermes user can write to the Agent volume from launchd,
+  # which needs the launcher's Full Disk Access. Runs at load; run it again
+  # with `sudo launchctl kickstart system/org.nixos.agent-volume-probe`.
+  agentLauncher.daemons.agent-volume-probe = {
+    job = pkgs.writeShellScript "agent-volume-probe" ''
+      now=$(/bin/date -u +%Y-%m-%dT%H:%M:%SZ)
+      if ! ${agentVolumeMounted}; then
+        echo "$now FAILED: the Agent volume is not mounted at ${agentRoot}"
+        exit 1
+      fi
+      if echo "$now" > ${agentRoot}/logs/agent-volume-probe 2>/dev/null; then
+        echo "$now ok: $(/usr/bin/id -un) wrote ${agentRoot}/logs/agent-volume-probe"
+      else
+        echo "$now FAILED: $(/usr/bin/id -un) cannot write ${agentRoot}/logs/agent-volume-probe"
+        exit 1
+      fi
+    '';
+    serviceConfig = {
+      UserName = "hermes";
+      GroupName = "staff";
+      RunAtLoad = true;
+      StandardOutPath = "/var/log/agent-volume-probe.log";
+      StandardErrorPath = "/var/log/agent-volume-probe.log";
     };
   };
 
