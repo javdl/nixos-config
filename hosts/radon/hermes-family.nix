@@ -1,7 +1,7 @@
 # Family Hermes agent on radon: the Signal gateway, its signal-cli daemon, the
-# cron run log and the hermes-family command (javdl/joost
-# docs/plans/active/hermes-family-mac-mini.md, Milestones 4 to 6). README:
-# radon/hermes-family/README.md.
+# family cron jobs and calendar MCP servers, the cron run log and the
+# hermes-family command (javdl/joost docs/plans/active/hermes-family-mac-mini.md,
+# Milestones 4 to 6). README: radon/hermes-family/README.md.
 #
 # The state lives on the Agent volume, and macOS lets a launchd job use that
 # volume only through the Full Disk Access launcher (radon/agent-launcher.nix).
@@ -41,6 +41,64 @@ let
   tmpDir = "${agentRoot}/tmp";
 
   secret = name: config.sops.secrets.${name}.path;
+
+  jobs = import ./hermes-family/packages.nix { inherit pkgs; };
+  stateDir = "${hermesHome}/state";
+  runLog = "${hermesHome}/runs.jsonl";
+
+  # The cron job scripts, each with only the files it names. Hermes runs a cron
+  # script only if it resolves inside $HERMES_HOME/scripts, so the gateway job
+  # links this directory to ${hermesHome}/jobs, and jobs-sync writes a real
+  # scripts/<name>.sh that execs jobs/<name>.
+  jobLinks = pkgs.linkFarm "hermes-family-jobs" (
+    lib.mapAttrsToList
+      (name: argv: {
+        inherit name;
+        path = pkgs.writeShellScript name ''exec ${lib.escapeShellArgs argv} "$@"'';
+      })
+      {
+        mail-fetch = [
+          "${jobs.mailFetch}/bin/mail-fetch"
+          "--credential"
+          (secret "hermes-google-mail")
+          "--state-dir"
+          stateDir
+        ];
+        notifier = [
+          "${jobs.notifier}/bin/notifier"
+          "--credential"
+          (secret "hermes-google-mail")
+          "--state-dir"
+          stateDir
+          "--hermes-home"
+          hermesDir
+          "--run-log"
+          runLog
+        ];
+        pickup = [
+          "${jobs.pickup}/bin/pickup"
+          "--credential"
+          (secret "hermes-google-read")
+          "--family"
+          (secret "hermes-family")
+          "--run-log"
+          runLog
+        ];
+        plan-ahead-weather = [ "${jobs.planAheadWeather}/bin/plan-ahead-weather" ];
+      }
+  );
+
+  gcalServer = mode: credential: {
+    command = "${jobs.gcalMcp}/bin/gcal-mcp";
+    args = [
+      mode
+      "--credential"
+      (secret credential)
+      "--family"
+      (secret "hermes-family")
+    ];
+    enabled = true;
+  };
 
   hermesCommon = import "${inputs.hermes-agent}/nix/moduleCommon.nix" { inherit lib; };
 
@@ -131,6 +189,11 @@ let
             # In the family group, answer only when mentioned
             # (gateway/config_loader.py:479-484).
             signal.require_mention = true;
+            # Only cron jobs that name a server get it (no_mcp above).
+            mcp_servers = {
+              gcal-proposals = gcalServer "proposals" "hermes-google-proposals";
+              gcal-read = gcalServer "read" "hermes-google-read";
+            };
             security.approval.transport_fallback = "deny";
           };
         }
@@ -202,6 +265,20 @@ let
         document = "0600";
       };
     }}
+    # The family jobs: links, the mail sender allowlist from the family file
+    # (none if the file has no valid list, so mail-fetch reads nothing), and
+    # the job table. A jobs-sync failure leaves the jobs as they were and does
+    # not stop the gateway.
+    mkdir -p ${stateDir}
+    ln -sfn ${jobLinks} ${hermesHome}/jobs
+    if ${pkgs.jq}/bin/jq -r '.senders | if type == "array" and all(type == "string") then .[] else error("senders is not a list of addresses") end' \
+      ${secret "hermes-family"} >${stateDir}/.senders.txt.new; then
+      mv ${stateDir}/.senders.txt.new ${stateDir}/senders.txt
+    else
+      rm -f ${stateDir}/.senders.txt.new ${stateDir}/senders.txt
+    fi
+    ${jobs.jobsSync}/bin/jobs-sync --jobs-dir ${hermesHome}/jobs --family ${secret "hermes-family"} ||
+      echo "hermes-gateway: jobs-sync failed; the jobs stay as they were"
     cd ${hermes.workingDirectory}
     exec ${lib.escapeShellArgs (hermesCommon.gatewayArgv hermes)}
   '';
@@ -267,12 +344,21 @@ let
   launchLog = name: "/var/log/${name}.launch.log";
 in
 lib.mkIf enableHermesFamily {
-  sops.secrets.hermes-env = {
-    sopsFile = ../../secrets/radon.yaml;
-    format = "yaml";
-    owner = "hermes";
-    mode = "0400";
-  };
+  sops.secrets =
+    lib.genAttrs
+      [
+        "hermes-env"
+        "hermes-google-mail"
+        "hermes-google-proposals"
+        "hermes-google-read"
+        "hermes-family"
+      ]
+      (_: {
+        sopsFile = ../../secrets/radon.yaml;
+        format = "yaml";
+        owner = "hermes";
+        mode = "0400";
+      });
 
   # Before the launchd step. sops-nix installs secrets only at the end of
   # postActivation, so a switch that changes a secret and the gateway job
