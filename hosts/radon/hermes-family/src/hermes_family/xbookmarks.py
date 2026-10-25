@@ -58,6 +58,7 @@ MEDIA_FIELDS = "type,url,preview_image_url,alt_text,variants"
 CREDENTIAL_KEYS = ("X_API_KEY", "X_API_KEY_SECRET", "X_ACCESS_TOKEN", "X_ACCESS_TOKEN_SECRET", "X_USER_ID")
 ID_RE = re.compile(r"\d{1,19}")
 IMPORTED_FILE = "imported.txt"
+BACKFILL_MARKER = "backfilled"
 LOCK_FILE = ".lock"
 
 
@@ -222,14 +223,13 @@ def _entry(post: dict, includes: dict, now: str, via: str) -> dict:
     return {"id": post["id"], "first_seen_at": now, "via": via, "post": post, "includes": includes}
 
 
-def capture(api: Bookmarks, known: set[str], now: str) -> tuple[list[dict], str, bool]:
-    """New archive entries, newest first; how they were found ("" for none, "poll" or
-    "backfill" for an empty archive); whether a walk was cut off by MAX_PAGES."""
+def capture(api: Bookmarks, known: set[str], now: str, via: str) -> tuple[list[dict], bool]:
+    """New archive entries, newest first, marked `via`; and whether a walk was cut off by
+    MAX_PAGES."""
     probe = api.page(PROBE_SIZE, detailed=False)
     unknown = [post for post in probe.posts if post["id"] not in known]
     if not unknown:
-        return [], "", False
-    via = "poll" if known else "backfill"
+        return [], False
     truncated = False
     if probe.next_token and ends_unknown(probe.posts, known):
         pages, truncated = walk(api, known)
@@ -252,7 +252,7 @@ def capture(api: Bookmarks, known: set[str], now: str) -> tuple[list[dict], str,
     # A probe post that no detailed page returned is stored as the probe saw it (id and
     # text), so it is neither lost nor fetched again every hour.
     entries += [_entry(post, {}, now, via) for post in unknown if post["id"] not in seen]
-    return entries, via, truncated
+    return entries, truncated
 
 
 def read_entries(path: Path) -> list[dict]:
@@ -344,6 +344,28 @@ def stamp(moment: datetime) -> str:
     return moment.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
 
+CAUGHT = (XError, OSError, http.client.HTTPException)
+
+
+def capture_into(archive: Path, credential: Path, known: set[str], now: str, import_dir: Path | None) -> list[str]:
+    """Capture and append. The first successful capture is the backfill, even if it finds
+    nothing or an import came first; BACKFILL_MARKER records that it happened."""
+    marker = archive.parent / BACKFILL_MARKER
+    first = not marker.exists()
+    entries, truncated = capture(Bookmarks(load_credential(credential)), known, now, "backfill" if first else "poll")
+    append_entries(archive, entries[::-1])
+    known.update(entry["id"] for entry in entries)
+    if not first:
+        return []
+    marker.write_text(f"{now}\n")
+    lines = [f"X bookmarks: the first run stored the {len(entries)} bookmarks that X's API returned."]
+    if truncated:
+        lines.append(f"It stopped after {MAX_PAGES} pages of {WALK_SIZE}; X may hold more.")
+    if import_dir:
+        lines.append(f"For older ones, put a twitter-web-exporter JSON export in {import_dir}.")
+    return lines
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="x-bookmarks", description=__doc__.splitlines()[0])
     parser.add_argument("--credential", type=Path, required=True, help="hermes-x-bookmarks dotenv")
@@ -351,28 +373,25 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--import-dir", type=Path, help="folder for twitter-web-exporter JSON exports")
     args = parser.parse_args(argv)
 
-    lines = []
+    lines: list[str] = []
+    errors: list[str] = []
     try:
         with archive_lock(args.archive):
             now = stamp(datetime.now(timezone.utc))
             known = {entry["id"] for entry in read_entries(args.archive)}
-            entries, via, truncated = capture(Bookmarks(load_credential(args.credential)), known, now)
-            append_entries(args.archive, entries[::-1])
-            known.update(entry["id"] for entry in entries)
-            if via == "backfill":
-                lines.append(f"X bookmarks: the first run stored the {len(entries)} bookmarks that X's API returned.")
-                if truncated:
-                    lines.append(f"It stopped after {MAX_PAGES} pages of {WALK_SIZE}; X may hold more.")
-                if args.import_dir:
-                    lines.append(f"For older ones, put a twitter-web-exporter JSON export in {args.import_dir}.")
+            try:
+                lines += capture_into(args.archive, args.credential, known, now, args.import_dir)
+            except CAUGHT as error:
+                errors.append(str(error))  # an X outage does not hold back a queued export
             if args.import_dir:
                 lines += import_exports(args.import_dir, args.archive, known, now)
-    except (XError, OSError, http.client.HTTPException) as error:
-        print(f"x-bookmarks: {error}", file=sys.stderr)
-        return 1
+    except CAUGHT as error:
+        errors.append(str(error))
     if lines:
         print("\n".join(lines))
-    return 0
+    for error in errors:
+        print(f"x-bookmarks: {error}", file=sys.stderr)
+    return 1 if errors else 0
 
 
 if __name__ == "__main__":

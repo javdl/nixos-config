@@ -300,10 +300,10 @@ reason was paused by hand: `jobs-sync` reports it and leaves it paused.
 `x-bookmarks` copies Joost's X bookmarks into
 `/Volumes/Agent/hermes/x-bookmarks/bookmarks.jsonl`, one JSON line per post, in
 the order it found them. A line is never rewritten. It holds the post `id`,
-`first_seen_at` (UTC), `via` and the raw `post`. `via` is `poll` for a bookmark
-an hourly run found, `backfill` for the first run and `import` for a browser
-export. An API line also has `includes`: the post's author, media and
-referenced posts from the same response.
+`first_seen_at` (UTC, to the microsecond), `via` and the raw `post`. `via` is
+`poll` for a bookmark an hourly run found, `backfill` for the first successful
+run and `import` for a browser export. An API line also has `includes`: the
+post's author, media and referenced posts from the same response.
 
 1. Each run asks X for the ids of the 10 newest bookmarks, without
    expansions. X bills an owned read once per post per UTC day, so this costs
@@ -316,10 +316,15 @@ referenced posts from the same response.
    returned is stored as the probe saw it, with its id and text.
 3. When one of the two oldest of the 10 is new too, it walks pages of 90 until
    a page ends with two known posts. One known post does not stop the walk,
-   because an archived post can be bookmarked again with new ones below it. An
-   empty archive walks everything the API returns: X documents the newest 800,
-   and pagination has been seen to stop near 200. The first run therefore
-   costs a few dollars and reports how many it stored.
+   because an archived post can be bookmarked again with new ones below it.
+   Two archived posts bookmarked again in a row, landing exactly at the end of
+   the probe or a page with new bookmarks below them, would still hide those.
+   An exact boundary needs every id in the list each time something is new:
+   up to $0.80 a day.
+   The first successful run walks everything the API returns: X documents the
+   newest 800, and pagination has been seen to stop near 200. It costs a few
+   dollars, reports how many it stored (zero included), and writes
+   `x-bookmarks/backfilled`, so later runs mark their lines `poll`.
 4. Older bookmarks come from a browser export. Export the Bookmarks page as
    JSON with [twitter-web-exporter](https://github.com/prinsss/twitter-web-exporter)
    and copy it to radon:
@@ -328,7 +333,8 @@ referenced posts from the same response.
    folder is on the internal disk, because the Agent volume is closed to
    everything but the launcher. The next run adds the posts the archive does
    not have, reports the count, and records the file's SHA-256 in
-   `imported.txt`, so it reads each export once.
+   `imported.txt`, so it reads each export once. This also happens while X's
+   API fails.
 
 An ordinary run prints nothing, so Hermes sends nothing. A failed request, such
 as HTTP 402 when the X API credits run out, exits 1 with X's reason, and Hermes

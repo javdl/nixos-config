@@ -107,10 +107,12 @@ class XBookmarksTest(unittest.TestCase):
         return [json.loads(line) for line in self.archive.read_text().splitlines()]
 
     def store(self, numbers) -> None:
+        """An archive from earlier runs, the first of which was the backfill."""
         self.archive.parent.mkdir(parents=True, exist_ok=True)
         self.archive.write_text("".join(
             json.dumps({"id": post_id(n), "via": "poll", "first_seen_at": "2026-10-01T00:00:00Z"}) + "\n"
             for n in numbers))
+        (self.archive.parent / xbookmarks.BACKFILL_MARKER).write_text("2026-09-01T00:00:00.000000Z\n")
 
     def test_signature_matches_the_example_in_xs_documentation(self):
         credential = xbookmarks.Credential(
@@ -242,6 +244,30 @@ class XBookmarksTest(unittest.TestCase):
         self.assertEqual(self.run_main(), (0, "", ""))
         self.assertEqual([c.params for c in self.fake.calls], [{"max_results": "10"}])
         self.assertEqual(xbookmarks.read_entries(self.archive)[-1]["post"]["text"], "one\u2028two\u2029three\x85")
+
+    def test_a_first_run_with_no_bookmarks_still_ends_the_backfill(self):
+        fake = FakeX(0)
+        self.serve(fake)
+        code, out, _ = self.run_main()
+        self.assertEqual((code, out), (0, "X bookmarks: the first run stored the 0 bookmarks that X's API returned.\n"))
+        fake.posts.append(make_post(0))
+        self.assertEqual(self.run_main(), (0, "", ""))
+        self.assertEqual([(e["id"], e["via"]) for e in self.entries()], [(post_id(0), "poll")])
+
+    def test_an_export_is_imported_while_x_is_unavailable_and_the_backfill_still_follows(self):
+        self.serve((402, {"title": "Payment Required", "detail": "credits depleted", "status": 402}))
+        self.import_dir.mkdir()
+        write_json(self.import_dir / "twitter-Bookmarks-1.json", [{"id": post_id(500), "full_text": "older one"}])
+        code, out, err = self.run_main(import_dir=True)
+        self.assertEqual(code, 1)
+        self.assertIn("imported 1 bookmarks from twitter-Bookmarks-1.json", out)
+        self.assertIn("HTTP 402", err)
+        self.fake.routes.clear()
+        self.fake.on("GET", BOOKMARKS, FakeX(3))
+        code, out, _ = self.run_main(import_dir=True)
+        self.assertEqual(code, 0)
+        self.assertIn("the first run stored the 3 bookmarks", out)
+        self.assertEqual([e["via"] for e in self.entries()], ["import", "backfill", "backfill", "backfill"])
 
     def test_a_failed_request_exits_1_with_xs_reason_and_no_credential(self):
         self.serve((402, {"title": "Payment Required", "detail": "credits depleted", "status": 402}))
