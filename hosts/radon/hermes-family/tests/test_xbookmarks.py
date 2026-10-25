@@ -185,20 +185,20 @@ class XBookmarksTest(unittest.TestCase):
             if request == 2:
                 fake.posts.insert(0, make_post(100))
         self.serve(FakeX(30, before=bookmark_during_the_run))
-        self.store(set(range(30)) - {8})
+        self.store(set(range(30)) - {7})
         self.assertEqual(self.run_main(), (0, "", ""))
-        self.assertEqual([c.params["max_results"] for c in self.fake.calls], ["10", "9", "90"])
+        self.assertEqual([c.params["max_results"] for c in self.fake.calls], ["10", "8", "90"])
         new = self.entries()[29:]
-        self.assertEqual([e["id"] for e in new], [post_id(8), post_id(100)])
-        self.assertEqual([e["includes"]["users"][0]["id"] for e in new], ["3000", "3000"])
+        self.assertEqual([e["id"] for e in new], [post_id(7), post_id(100)])
+        self.assertEqual([e["includes"]["users"][0]["id"] for e in new], ["3003", "3000"])
 
     def test_a_bookmark_x_counts_but_does_not_return_does_not_push_a_new_one_out(self):
         self.serve(FakeX(30, hidden_slots={3}))
-        self.store(set(range(30)) - {8})
+        self.store(set(range(30)) - {7})
         self.assertEqual(self.run_main(), (0, "", ""))
-        self.assertEqual([c.params["max_results"] for c in self.fake.calls], ["10", "8", "90"])
+        self.assertEqual([c.params["max_results"] for c in self.fake.calls], ["10", "7", "90"])
         (new,) = self.entries()[29:]
-        self.assertEqual((new["id"], new["includes"]["users"][0]["id"]), (post_id(8), "3000"))
+        self.assertEqual((new["id"], new["includes"]["users"][0]["id"]), (post_id(7), "3003"))
 
     def test_a_post_only_the_probe_returns_is_stored_as_the_probe_saw_it_once(self):
         self.serve(FakeX(30, detail_hidden={post_id(0)}))
@@ -224,6 +224,14 @@ class XBookmarksTest(unittest.TestCase):
         self.assertEqual(self.run_main(), (0, "", ""))
         self.assertEqual([c.params["max_results"] for c in self.fake.calls], ["10", "90"])
         self.assertEqual([e["id"] for e in self.entries()[28:]], [post_id(n) for n in reversed(range(1, 13))])
+
+    def test_a_re_bookmarked_archived_post_at_the_probes_end_does_not_hide_new_ones(self):
+        self.serve(FakeX(40))
+        self.store([9] + list(range(15, 40)))
+        self.assertEqual(self.run_main(), (0, "", ""))
+        self.assertEqual([c.params["max_results"] for c in self.fake.calls], ["10", "90"])
+        self.assertEqual([e["id"] for e in self.entries()[26:]],
+                         [post_id(n) for n in reversed([*range(9), *range(10, 15)])])
 
     def test_a_raw_line_separator_in_an_archived_line_keeps_the_post_known(self):
         self.serve(FakeX(10))

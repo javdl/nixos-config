@@ -3,10 +3,10 @@
 Each run first asks X for the ids of the newest bookmarks only: an owned read with no
 expansions, which X bills once per post per UTC day. When one of those ids is not in the
 archive, it fetches the posts down to the last unknown one with their text, author, media and
-referenced posts, and appends one JSON line per new bookmark, oldest first. When the oldest of
-them is new too, it walks pages of 90 until a page ends with a known post. An empty archive so
-gets every bookmark the API still returns: X documents 800, and its pagination has been seen to
-stop near 200.
+referenced posts, and appends one JSON line per new bookmark, oldest first. When one of the
+two oldest of them is new too, it walks pages of 90 until a page ends with two known posts. An
+empty archive so gets every bookmark the API still returns: X documents 800, and its
+pagination has been seen to stop near 200.
 
 A twitter-web-exporter JSON export in --import-dir adds the bookmarks the API no longer
 returns. Each export is read once (its SHA-256 goes to imported.txt next to the archive) and
@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+import fcntl
 import hashlib
 import hmac
 import http.client
@@ -32,9 +33,11 @@ import secrets
 import sys
 import time
 import urllib.parse
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Iterator
 
 from hermes_family import net
 
@@ -42,6 +45,9 @@ API = "https://api.x.com/2"
 PROBE_SIZE = 10
 WALK_SIZE = 90
 MAX_PAGES = 12
+# A page or the probe must end with this many known posts before capture stops: a single
+# known post can be an archived post that was bookmarked again, with new ones below it.
+STOP_RUN = 2
 POST_FIELDS = (
     "created_at,author_id,conversation_id,lang,entities,attachments,referenced_tweets,"
     "note_tweet,article,public_metrics,possibly_sensitive"
@@ -52,6 +58,20 @@ MEDIA_FIELDS = "type,url,preview_image_url,alt_text,variants"
 CREDENTIAL_KEYS = ("X_API_KEY", "X_API_KEY_SECRET", "X_ACCESS_TOKEN", "X_ACCESS_TOKEN_SECRET", "X_USER_ID")
 ID_RE = re.compile(r"\d{1,19}")
 IMPORTED_FILE = "imported.txt"
+LOCK_FILE = ".lock"
+
+
+@contextmanager
+def archive_lock(archive: Path) -> Iterator[None]:
+    """Held while x-bookmarks stamps and appends, and while the digest reads and moves its
+    cursor, so a digest never runs between a capture's timestamp and its append."""
+    archive.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    with (archive.parent / LOCK_FILE).open("a") as handle:
+        fcntl.flock(handle, fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(handle, fcntl.LOCK_UN)
 
 
 class XError(RuntimeError):
@@ -178,14 +198,14 @@ def includes_for(post: dict, includes: dict) -> dict:
 
 
 def ends_unknown(posts: list[dict], known: set[str]) -> bool:
-    """Whether a page's oldest post is new, so new bookmarks may continue past it. A known
-    post higher up does not stop a walk: it can be an archived post bookmarked again."""
-    return not posts or posts[-1]["id"] not in known
+    """Whether new bookmarks may continue past this page: one of its last STOP_RUN posts is
+    new, or it is empty."""
+    return not posts or any(post["id"] not in known for post in posts[-STOP_RUN:])
 
 
 def walk(api: Bookmarks, known: set[str]) -> tuple[list[Page], bool]:
-    """Detailed pages from the newest bookmark down to the first page that ends with a known
-    post. The bool says whether MAX_PAGES stopped it while X had more."""
+    """Detailed pages from the newest bookmark down to the first page that ends with STOP_RUN
+    known posts. The bool says whether MAX_PAGES stopped it while X had more."""
     pages: list[Page] = []
     token = None
     while True:
@@ -325,21 +345,22 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--import-dir", type=Path, help="folder for twitter-web-exporter JSON exports")
     args = parser.parse_args(argv)
 
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     lines = []
     try:
-        known = {entry["id"] for entry in read_entries(args.archive)}
-        entries, via, truncated = capture(Bookmarks(load_credential(args.credential)), known, now)
-        append_entries(args.archive, entries[::-1])
-        known.update(entry["id"] for entry in entries)
-        if via == "backfill":
-            lines.append(f"X bookmarks: the first run stored the {len(entries)} bookmarks that X's API returned.")
-            if truncated:
-                lines.append(f"It stopped after {MAX_PAGES} pages of {WALK_SIZE}; X may hold more.")
+        with archive_lock(args.archive):
+            now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+            known = {entry["id"] for entry in read_entries(args.archive)}
+            entries, via, truncated = capture(Bookmarks(load_credential(args.credential)), known, now)
+            append_entries(args.archive, entries[::-1])
+            known.update(entry["id"] for entry in entries)
+            if via == "backfill":
+                lines.append(f"X bookmarks: the first run stored the {len(entries)} bookmarks that X's API returned.")
+                if truncated:
+                    lines.append(f"It stopped after {MAX_PAGES} pages of {WALK_SIZE}; X may hold more.")
+                if args.import_dir:
+                    lines.append(f"For older ones, put a twitter-web-exporter JSON export in {args.import_dir}.")
             if args.import_dir:
-                lines.append(f"For older ones, put a twitter-web-exporter JSON export in {args.import_dir}.")
-        if args.import_dir:
-            lines += import_exports(args.import_dir, args.archive, known, now)
+                lines += import_exports(args.import_dir, args.archive, known, now)
     except (XError, OSError, http.client.HTTPException) as error:
         print(f"x-bookmarks: {error}", file=sys.stderr)
         return 1

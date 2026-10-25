@@ -20,7 +20,7 @@ from pathlib import Path
 
 from hermes_family.mailfetch import Scan, ScanError, hermes_scan
 from hermes_family.state import write_atomic
-from hermes_family.xbookmarks import read_entries
+from hermes_family.xbookmarks import archive_lock, read_entries
 
 FIRST_WINDOW = timedelta(days=7)
 CURSOR_FILE = "digest-cursor"
@@ -32,6 +32,11 @@ MAX_LINKS = 5
 # (cron/scheduler_prompt.py:40). Replacing, not deleting, means nested tags cannot reassemble.
 TAG_RE = re.compile(r"<(/?)bookmark>", re.IGNORECASE)
 FENCE_RE = re.compile(r"`{3,}")
+# Hermes deletes these code points from the assembled prompt before the model reads it
+# (tools/threat_patterns.py:110-112, cron/scheduler_prompt.py:384-385). They go first, or
+# "<book\u200bmark>" would pass TAG_RE here and reach the model as a tag.
+INVISIBLE = dict.fromkeys(map(ord, "\u200b\u200c\u200d\u2060\u2062\u2063\u2064\ufeff"
+                                   "\u202a\u202b\u202c\u202d\u202e\u2066\u2067\u2068\u2069"))
 SLEEP = json.dumps({"wakeAgent": False})
 
 
@@ -40,7 +45,7 @@ def clean(value: object) -> str:
     if not isinstance(value, str):
         return ""
     text = value.encode("utf-8", "replace").decode("utf-8")  # a lone surrogate cannot be printed
-    text = TAG_RE.sub(r"[\1bookmark]", text)
+    text = TAG_RE.sub(r"[\1bookmark]", text.translate(INVISIBLE))
     return FENCE_RE.sub(lambda match: "'" * len(match.group()), text)
 
 
@@ -159,12 +164,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--hermes-python", required=True, help="the Python of the installed Hermes, for its prompt scan")
     args = parser.parse_args(argv)
     cursor = args.archive.parent / CURSOR_FILE
-    now = datetime.now(timezone.utc)
     try:
-        output = render(read_entries(args.archive), read_cursor(cursor, now), now, hermes_scan(args.hermes_python))
-        print(output)
-        if output != SLEEP:
-            write_atomic(cursor, now.isoformat() + "\n")
+        with archive_lock(args.archive):
+            now = datetime.now(timezone.utc)
+            output = render(read_entries(args.archive), read_cursor(cursor, now), now, hermes_scan(args.hermes_python))
+            print(output)
+            if output != SLEEP:
+                write_atomic(cursor, now.isoformat() + "\n")
     except (ScanError, OSError) as error:
         print(f"x-bookmarks-digest: {error}", file=sys.stderr)
         return 1
