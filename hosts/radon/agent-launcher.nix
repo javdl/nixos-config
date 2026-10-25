@@ -24,6 +24,31 @@ let
     mkdir -p $out/bin
     $CC -O2 -Wall -Wextra -o $out/bin/agent-launcher ${./agent-launcher/agent-launcher.c}
   '';
+
+  # launchd opens a daemon's StandardOutPath and StandardErrorPath as its
+  # UserName, and does not start it when that fails ("Unable to open stdout
+  # path ... Permission denied", exit 78). A user such as hermes cannot create
+  # files in /var/log, so the logs of daemons with a UserName are made for it.
+  userDaemonLogs = lib.concatMapStrings (
+    daemon:
+    let
+      service = daemon.serviceConfig;
+      owner = service.UserName + lib.optionalString (service ? GroupName) ":${service.GroupName}";
+      logs = lib.unique (
+        lib.filter (path: path != null) [
+          (service.StandardOutPath or null)
+          (service.StandardErrorPath or null)
+        ]
+      );
+    in
+    lib.optionalString (service ? UserName) (
+      lib.concatMapStrings (log: ''
+        [ -e ${lib.escapeShellArg log} ] || /usr/bin/touch ${lib.escapeShellArg log}
+        /usr/sbin/chown ${lib.escapeShellArg owner} ${lib.escapeShellArg log}
+        /bin/chmod 0640 ${lib.escapeShellArg log}
+      '') logs
+    )
+  ) (lib.attrValues cfg.daemons);
 in
 {
   options.agentLauncher = {
@@ -40,7 +65,8 @@ in
         launchd daemons (label org.nixos.<name>) whose job runs through the
         launcher. The job becomes /etc/agent-launcher.d/<name>. The launcher
         passes only PATH, so a job sets HOME, TMPDIR and anything else it needs
-        itself. A job may exec: the launcher stays the parent.
+        itself. A job may exec: the launcher stays the parent. Activation makes
+        the log files of a daemon with a UserName, owned by that user.
       '';
       type = lib.types.attrsOf (
         lib.types.submodule {
@@ -85,9 +111,9 @@ in
       };
     }) cfg.daemons;
 
-    # Before the launchd step, so daemons find the launcher on the first
-    # switch. Mode 0754 keeps it readable for the System Settings file picker
-    # but executable only by root and cfg.users.
+    # Before the launchd step, so daemons find the launcher and their logs on
+    # the first switch. Mode 0754 keeps the launcher readable for the System
+    # Settings file picker but executable only by root and cfg.users.
     system.activationScripts.preActivation.text = ''
       if [ ! -e ${cfg.path} ]; then
         echo "installing ${cfg.path}: grant it Full Disk Access in System Settings" >&2
@@ -98,6 +124,7 @@ in
       ${lib.concatMapStrings (user: ''
         /bin/chmod +a ${lib.escapeShellArg "user:${user} allow execute"} ${cfg.path}
       '') cfg.users}
+      ${userDaemonLogs}
     '';
   };
 }
