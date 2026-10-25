@@ -253,6 +253,14 @@ class XBookmarksTest(unittest.TestCase):
         self.assertEqual([c.params["max_results"] for c in self.fake.calls], ["10", "90"])
         self.assertEqual([e["id"] for e in self.entries()], [post_id(n) for n in reversed(range(10, 30))])
 
+    def test_a_probe_only_post_keeps_its_place_among_the_new_ones(self):
+        self.serve(FakeX(10, detail_hidden={post_id(0), post_id(2)}))
+        self.store(range(5, 10))
+        self.assertEqual(self.run_main(), (0, "", ""))
+        new = self.entries()[5:]
+        self.assertEqual([e["id"] for e in new], [post_id(n) for n in (4, 3, 2, 1, 0)])
+        self.assertEqual([bool(e["includes"]) for e in new], [True, True, False, True, False])
+
     def test_a_first_run_with_no_bookmarks_still_ends_the_backfill(self):
         fake = FakeX(0)
         self.serve(fake)

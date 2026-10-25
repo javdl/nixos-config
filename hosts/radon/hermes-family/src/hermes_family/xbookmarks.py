@@ -251,8 +251,24 @@ def capture(api: Bookmarks, known: set[str], now: str, via: str) -> tuple[list[d
             entries.append(_entry(post, includes_for(post, page.includes), now, via))
     # A probe post that no detailed page returned is stored as the probe saw it (id and
     # text), so it is neither lost nor fetched again every hour.
-    entries += [_entry(post, {}, now, via) for post in unknown if post["id"] not in seen]
+    rank = {post["id"]: index for index, post in enumerate(probe.posts)}
+    for post in unknown:
+        if post["id"] not in seen:
+            _place(entries, _entry(post, {}, now, via), rank)
     return entries, truncated
+
+
+def _place(entries: list[dict], entry: dict, rank: dict[str, int]) -> None:
+    """Insert a probe post into the newest-first entries where the probe's order puts it:
+    before the first entry the probe saw below it, else after the last it saw above it, else
+    first, since the probe holds the newest bookmarks."""
+    mine = rank[entry["id"]]
+    for index, other in enumerate(entries):
+        if rank.get(other["id"], -1) > mine:
+            entries.insert(index, entry)
+            return
+    above = [index for index, other in enumerate(entries) if other["id"] in rank]
+    entries.insert(above[-1] + 1 if above else 0, entry)
 
 
 def read_entries(path: Path) -> list[dict]:
