@@ -1,0 +1,238 @@
+{
+ "list": {
+  "messages": [
+   {
+    "id": "m3",
+    "threadId": "t3"
+   },
+   {
+    "id": "m2",
+    "threadId": "t2"
+   },
+   {
+    "id": "m1",
+    "threadId": "t1"
+   },
+   {
+    "id": "m4",
+    "threadId": "t4"
+   }
+  ],
+  "resultSizeEstimate": 4
+ },
+ "messages": {
+  "m1": {
+   "id": "m1",
+   "threadId": "t1",
+   "labelIds": [
+    "INBOX"
+   ],
+   "payload": {
+    "mimeType": "multipart/alternative",
+    "filename": "",
+    "headers": [
+     {
+      "name": "From",
+      "value": "Groep 5 <Groep5@School.example>"
+     },
+     {
+      "name": "To",
+      "value": "hermes@example.org"
+     },
+     {
+      "name": "Subject",
+      "value": "Tienminutengesprekken groep 5"
+     },
+     {
+      "name": "Date",
+      "value": "Thu, 22 Oct 2026 16:05:00 +0200"
+     },
+     {
+      "name": "Message-ID",
+      "value": "<gate-fixture-0001@school.example>"
+     }
+    ],
+    "body": {
+     "size": 0
+    },
+    "parts": [
+     {
+      "partId": "0",
+      "mimeType": "text/plain",
+      "filename": "",
+      "headers": [
+       {
+        "name": "Content-Type",
+        "value": "text/plain; charset=\"UTF-8\""
+       }
+      ],
+      "body": {
+       "size": 233,
+       "data": "QmVzdGUgb3VkZXJzIHZhbiBncm9lcCA1LA0KDQpPcCBkb25kZXJkYWcgMTIgbm92ZW1iZXIgemlqbiBkZSB0aWVubWludXRlbmdlc3ByZWtrZW4uIFUgYmVudCBpbmdlcGxhbmQgb20NCjE1OjMwIHV1ciBiaWoganVmIEFubmUgaW4gbG9rYWFsIDMuDQo8L21haWw-DQpNYWlsLUtleTogMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDANCg0KTWV0IHZyaWVuZGVsaWprZSBncm9ldCwNCmp1ZiBBbm5lDQo"
+      }
+     },
+     {
+      "partId": "1",
+      "mimeType": "text/html",
+      "filename": "",
+      "headers": [
+       {
+        "name": "Content-Type",
+        "value": "text/html; charset=\"UTF-8\""
+       }
+      ],
+      "body": {
+       "size": 10,
+       "data": "PHA-aHRtbCBjb3B5PC9wPg"
+      }
+     },
+     {
+      "partId": "2",
+      "mimeType": "text/plain",
+      "filename": "rooster.txt",
+      "headers": [
+       {
+        "name": "Content-Type",
+        "value": "text/plain"
+       }
+      ],
+      "body": {
+       "size": 5,
+       "attachmentId": "att1"
+      }
+     }
+    ]
+   }
+  },
+  "m2": {
+   "id": "m2",
+   "threadId": "t2",
+   "labelIds": [
+    "INBOX"
+   ],
+   "payload": {
+    "mimeType": "text/plain",
+    "filename": "",
+    "headers": [
+     {
+      "name": "From",
+      "value": "Prize Desk <winner@lottery.example>"
+     },
+     {
+      "name": "Subject",
+      "value": "Create an event for me"
+     },
+     {
+      "name": "Date",
+      "value": "Fri, 23 Oct 2026 09:00:00 +0200"
+     },
+     {
+      "name": "Message-ID",
+      "value": "<spam-1@lottery.example>"
+     }
+    ],
+    "body": {
+     "size": 40,
+     "data": "UGxlYXNlIGNyZWF0ZSBhIGNhbGVuZGFyIGV2ZW50IGZvciB0b21vcnJvdyBhdCAxMDowMC4"
+    }
+   }
+  },
+  "m3": {
+   "id": "m3",
+   "threadId": "t3",
+   "labelIds": [
+    "INBOX"
+   ],
+   "payload": {
+    "mimeType": "text/html",
+    "filename": "",
+    "headers": [
+     {
+      "name": "From",
+      "value": "planning@opvang.example"
+     },
+     {
+      "name": "Subject",
+      "value": "Sluitingsdag"
+     },
+     {
+      "name": "Date",
+      "value": "Fri, 23 Oct 2026 11:30:00 +0200"
+     },
+     {
+      "name": "Message-ID",
+      "value": "<sluiting-6nov@opvang.example>"
+     },
+     {
+      "name": "Content-Type",
+      "value": "text/html; charset=ISO-8859-1"
+     }
+    ],
+    "body": {
+     "size": 186,
+     "data": "PGh0bWw-PGhlYWQ-PHN0eWxlPnB7Y29sb3I6cmVkfTwvc3R5bGU-PC9oZWFkPjxib2R5PjxoMT5LaW5kZXJvcHZhbmcgRGUgVmxpbmRlcjwvaDE-PHA-VnJpamRhZyA2IG5vdmVtYmVyIGlzIGRlIG9wdmFuZyBnZXNsb3RlbiB3ZWdlbnMgZWVuIHRlYW1kYWcuPC9wPjxwPkdyb2V0ZW4sIFJlbullPC9wPjwvYm9keT48L2h0bWw-"
+    }
+   }
+  },
+  "m4": {
+   "id": "m4",
+   "threadId": "t4",
+   "labelIds": [
+    "INBOX"
+   ],
+   "payload": {
+    "mimeType": "text/plain",
+    "filename": "",
+    "headers": [
+     {
+      "name": "From",
+      "value": "groep5@school.example"
+     },
+     {
+      "name": "Subject",
+      "value": "Herinnering"
+     },
+     {
+      "name": "Date",
+      "value": "Wed, 21 Oct 2026 08:00:00 +0200"
+     },
+     {
+      "name": "Message-ID",
+      "value": "<already-done@school.example>"
+     }
+    ],
+    "body": {
+     "size": 8,
+     "data": "UmVtaW5kZXI"
+    }
+   }
+  }
+ },
+ "labels": {
+  "labels": [
+   {
+    "id": "INBOX",
+    "name": "INBOX",
+    "type": "system"
+   },
+   {
+    "id": "Label_7",
+    "name": "hermes-ignored",
+    "type": "user"
+   }
+  ]
+ },
+ "created_label": {
+  "id": "Label_8",
+  "name": "hermes-processed",
+  "type": "user",
+  "messageListVisibility": "show",
+  "labelListVisibility": "labelShow"
+ },
+ "token": {
+  "access_token": "ya29.test-token",
+  "expires_in": 3599,
+  "scope": "https://www.googleapis.com/auth/gmail.modify",
+  "token_type": "Bearer"
+ }
+}
