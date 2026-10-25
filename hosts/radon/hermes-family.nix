@@ -230,9 +230,8 @@ let
     } ${hermesPackage}/bin/hermes "$@"
   '';
 
-  # Each runs as hermes through the launcher. launchd may open a launch log
-  # as the job's user, and hermes cannot create files in /var/log, so
-  # activation makes them.
+  # Each runs as hermes through the launcher, which also makes their launch
+  # logs in /var/log for hermes (radon/agent-launcher.nix).
   daemons = {
     hermes-gateway = {
       job = gatewayJob;
@@ -262,9 +261,6 @@ lib.mkIf enableHermesFamily {
   # would otherwise restart the gateway with the old secret.
   system.activationScripts.extraActivation.text = ''
     ${config.launchd.daemons.sops-install-secrets.command}
-    for log in ${toString (map launchLog (lib.attrNames daemons))}; do
-      [ -e "$log" ] || /usr/bin/install -m 0640 -o hermes -g staff /dev/null "$log"
-    done
   '';
 
   environment.systemPackages = [ hermesFamilyCommand ];
