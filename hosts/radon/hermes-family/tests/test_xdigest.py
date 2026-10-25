@@ -174,6 +174,15 @@ class MainTest(unittest.TestCase):
         self.assertEqual(out, "")
         self.assertFalse(self.cursor.exists())
 
+    def test_a_capture_in_the_same_second_after_a_digest_is_in_the_next_digest(self):
+        self.add(entry(1, seen=self.at(NOW - timedelta(hours=1))))
+        self.assertIn("post 1", self.run_main(NOW + timedelta(milliseconds=400))[1])
+        # x-bookmarks takes the archive 0.5 s after that digest released it.
+        self.add(entry(2, seen=xbookmarks.stamp(NOW + timedelta(milliseconds=900))))
+        out = self.run_main(NOW + timedelta(days=7))[1]
+        self.assertIn("post 2", out)
+        self.assertNotIn("post 1", out)
+
     def test_a_digest_waits_for_a_capture_that_is_appending(self):
         result = {}
         with xbookmarks.archive_lock(self.archive):

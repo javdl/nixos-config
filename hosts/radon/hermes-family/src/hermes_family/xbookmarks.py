@@ -338,6 +338,12 @@ def import_exports(import_dir: Path, archive: Path, known: set[str], now: str) -
     return lines
 
 
+def stamp(moment: datetime) -> str:
+    """first_seen_at, to the microsecond like the digest cursor: a capture that takes the lock
+    right after a digest, in the same second, must not be stamped before that cursor."""
+    return moment.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="x-bookmarks", description=__doc__.splitlines()[0])
     parser.add_argument("--credential", type=Path, required=True, help="hermes-x-bookmarks dotenv")
@@ -348,7 +354,7 @@ def main(argv: list[str] | None = None) -> int:
     lines = []
     try:
         with archive_lock(args.archive):
-            now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+            now = stamp(datetime.now(timezone.utc))
             known = {entry["id"] for entry in read_entries(args.archive)}
             entries, via, truncated = capture(Bookmarks(load_credential(args.credential)), known, now)
             append_entries(args.archive, entries[::-1])
