@@ -3,9 +3,10 @@
 Each run first asks X for the ids of the newest bookmarks only: an owned read with no
 expansions, which X bills once per post per UTC day. When one of those ids is not in the
 archive, it fetches the posts down to the last unknown one with their text, author, media and
-referenced posts, and appends one JSON line per new bookmark, oldest first. An empty archive
+referenced posts, and appends one JSON line per new bookmark, oldest first. When the oldest of
+them is new too, it walks pages of 90 until a page ends with a known post. An empty archive so
 gets every bookmark the API still returns: X documents 800, and its pagination has been seen to
-stop near 200, so those pages are 90 posts.
+stop near 200.
 
 A twitter-web-exporter JSON export in --import-dir adds the bookmarks the API no longer
 returns. Each export is read once (its SHA-256 goes to imported.txt next to the archive) and
@@ -176,35 +177,50 @@ def includes_for(post: dict, includes: dict) -> dict:
     return selected
 
 
+def ends_unknown(posts: list[dict], known: set[str]) -> bool:
+    """Whether a page's oldest post is new, so new bookmarks may continue past it. A known
+    post higher up does not stop a walk: it can be an archived post bookmarked again."""
+    return not posts or posts[-1]["id"] not in known
+
+
 def walk(api: Bookmarks, known: set[str]) -> tuple[list[Page], bool]:
-    """Detailed pages from the newest bookmark down to the first page that holds a known
+    """Detailed pages from the newest bookmark down to the first page that ends with a known
     post. The bool says whether MAX_PAGES stopped it while X had more."""
     pages: list[Page] = []
     token = None
     while True:
         page = api.page(WALK_SIZE, token, detailed=True)
         pages.append(page)
-        if not page.next_token or any(post["id"] in known for post in page.posts):
+        if not page.next_token or not ends_unknown(page.posts, known):
             return pages, False
         if len(pages) == MAX_PAGES:
             return pages, True
         token = page.next_token
 
 
+def _entry(post: dict, includes: dict, now: str, via: str) -> dict:
+    return {"id": post["id"], "first_seen_at": now, "via": via, "post": post, "includes": includes}
+
+
 def capture(api: Bookmarks, known: set[str], now: str) -> tuple[list[dict], str, bool]:
     """New archive entries, newest first; how they were found ("" for none, "poll" or
     "backfill" for an empty archive); whether a walk was cut off by MAX_PAGES."""
     probe = api.page(PROBE_SIZE, detailed=False)
-    unknown = [index for index, post in enumerate(probe.posts) if post["id"] not in known]
+    unknown = [post for post in probe.posts if post["id"] not in known]
     if not unknown:
         return [], "", False
     via = "poll" if known else "backfill"
-    if len(unknown) == len(probe.posts) and probe.next_token:
+    truncated = False
+    if probe.next_token and ends_unknown(probe.posts, known):
         pages, truncated = walk(api, known)
     else:
-        # A bookmark added since the probe shifts this page down by one. The post that falls
-        # off its end is still unknown, so the next run's probe finds it.
-        pages, truncated = [api.page(unknown[-1] + 1, detailed=True)], False
+        last = max(index for index, post in enumerate(probe.posts) if post["id"] not in known)
+        pages = [api.page(last + 1, detailed=True)]
+        returned = {post["id"] for post in pages[0].posts}
+        if any(post["id"] not in returned for post in unknown):
+            # The page held fewer of the probe's posts than it counted: a bookmark added since
+            # the probe, or one X counts but no longer shows. Walk from the top instead.
+            pages, truncated = walk(api, known)
     entries: list[dict] = []
     seen: set[str] = set()
     for page in pages:
@@ -212,13 +228,10 @@ def capture(api: Bookmarks, known: set[str], now: str) -> tuple[list[dict], str,
             if post["id"] in known or post["id"] in seen:
                 continue
             seen.add(post["id"])
-            entries.append({
-                "id": post["id"],
-                "first_seen_at": now,
-                "via": via,
-                "post": post,
-                "includes": includes_for(post, page.includes),
-            })
+            entries.append(_entry(post, includes_for(post, page.includes), now, via))
+    # A probe post that no detailed page returned is stored as the probe saw it (id and
+    # text), so it is neither lost nor fetched again every hour.
+    entries += [_entry(post, {}, now, via) for post in unknown if post["id"] not in seen]
     return entries, via, truncated
 
 
@@ -226,7 +239,8 @@ def read_entries(path: Path) -> list[dict]:
     """Archive entries in file order. A line a crash cut short is skipped, so its post
     counts as unknown and is fetched again."""
     try:
-        lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+        # Not splitlines(): it also splits at U+2028, U+2029 and U+0085, which JSON allows raw.
+        lines = path.read_text(encoding="utf-8", errors="replace").split("\n")
     except FileNotFoundError:
         return []
     entries = []
@@ -244,7 +258,7 @@ def append_entries(path: Path, entries: list[dict]) -> None:
     if not entries:
         return
     path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-    text = "".join(json.dumps(entry, ensure_ascii=False, sort_keys=True) + "\n" for entry in entries)
+    text = "".join(json.dumps(entry, sort_keys=True) + "\n" for entry in entries)
     with path.open("a+b") as handle:
         handle.seek(0, os.SEEK_END)
         if handle.tell():

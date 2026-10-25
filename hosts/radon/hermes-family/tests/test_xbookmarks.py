@@ -37,16 +37,28 @@ def make_post(n: int) -> dict:
 
 
 class FakeX:
-    """GET /2/users/2001/bookmarks over a list of posts, newest first."""
+    """GET /2/users/2001/bookmarks over a list of posts, newest first. A hidden slot counts
+    toward max_results but is not returned; a detail-hidden post is missing only from
+    responses with expansions; `before` runs before the nth request is answered."""
 
-    def __init__(self, count: int):
+    def __init__(self, count: int, *, hidden_slots=(), detail_hidden=(), before=None):
         self.posts = [make_post(n) for n in range(count)]
+        self.hidden_slots = set(hidden_slots)
+        self.detail_hidden = set(detail_hidden)
+        self.before = before
+        self.requests = 0
 
     def __call__(self, call):
+        self.requests += 1
+        if self.before:
+            self.before(self, self.requests)
         size = int(call.params["max_results"])
         start = int(call.params.get("pagination_token", "page-0").removeprefix("page-"))
-        chunk = self.posts[start:start + size]
         detailed = "expansions" in call.params
+        chunk = [
+            post for slot, post in enumerate(self.posts[start:start + size], start)
+            if slot not in self.hidden_slots and not (detailed and post["id"] in self.detail_hidden)
+        ]
         body = {
             "data": [post if detailed else {key: post[key] for key in ("id", "text", "edit_history_tweet_ids")}
                      for post in chunk],
@@ -167,6 +179,61 @@ class XBookmarksTest(unittest.TestCase):
         new = self.entries()[275:]
         self.assertEqual([e["id"] for e in new], [post_id(n) for n in reversed(range(25))])
         self.assertEqual({e["via"] for e in new}, {"poll"})
+
+    def test_a_bookmark_added_between_probe_and_detail_does_not_push_a_new_one_out(self):
+        def bookmark_during_the_run(fake, request):
+            if request == 2:
+                fake.posts.insert(0, make_post(100))
+        self.serve(FakeX(30, before=bookmark_during_the_run))
+        self.store(set(range(30)) - {8})
+        self.assertEqual(self.run_main(), (0, "", ""))
+        self.assertEqual([c.params["max_results"] for c in self.fake.calls], ["10", "9", "90"])
+        new = self.entries()[29:]
+        self.assertEqual([e["id"] for e in new], [post_id(8), post_id(100)])
+        self.assertEqual([e["includes"]["users"][0]["id"] for e in new], ["3000", "3000"])
+
+    def test_a_bookmark_x_counts_but_does_not_return_does_not_push_a_new_one_out(self):
+        self.serve(FakeX(30, hidden_slots={3}))
+        self.store(set(range(30)) - {8})
+        self.assertEqual(self.run_main(), (0, "", ""))
+        self.assertEqual([c.params["max_results"] for c in self.fake.calls], ["10", "8", "90"])
+        (new,) = self.entries()[29:]
+        self.assertEqual((new["id"], new["includes"]["users"][0]["id"]), (post_id(8), "3000"))
+
+    def test_a_post_only_the_probe_returns_is_stored_as_the_probe_saw_it_once(self):
+        self.serve(FakeX(30, detail_hidden={post_id(0)}))
+        self.store(range(1, 30))
+        self.assertEqual(self.run_main(), (0, "", ""))
+        (new,) = self.entries()[29:]
+        self.assertEqual((new["id"], new["post"]["text"], new["includes"]), (post_id(0), "post 0", {}))
+        calls = len(self.fake.calls)
+        self.assertEqual(self.run_main(), (0, "", ""))
+        self.assertEqual([c.params for c in self.fake.calls[calls:]], [{"max_results": "10"}])
+
+    def test_a_lone_surrogate_in_post_text_does_not_stop_the_capture(self):
+        fake = FakeX(10)
+        fake.posts[0]["text"] = "cut short \ud83d"
+        self.serve(fake)
+        self.store(range(1, 10))
+        self.assertEqual(self.run_main(), (0, "", ""))
+        self.assertEqual(xbookmarks.read_entries(self.archive)[-1]["post"]["text"], "cut short \ud83d")
+
+    def test_new_bookmarks_below_a_re_bookmarked_archived_post_are_all_stored(self):
+        self.serve(FakeX(40))
+        self.store([0] + list(range(13, 40)))
+        self.assertEqual(self.run_main(), (0, "", ""))
+        self.assertEqual([c.params["max_results"] for c in self.fake.calls], ["10", "90"])
+        self.assertEqual([e["id"] for e in self.entries()[28:]], [post_id(n) for n in reversed(range(1, 13))])
+
+    def test_a_raw_line_separator_in_an_archived_line_keeps_the_post_known(self):
+        self.serve(FakeX(10))
+        self.store(range(1, 10))
+        with self.archive.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps({"id": post_id(0), "post": {"text": "one\u2028two\u2029three\x85"}},
+                                    ensure_ascii=False) + "\n")
+        self.assertEqual(self.run_main(), (0, "", ""))
+        self.assertEqual([c.params for c in self.fake.calls], [{"max_results": "10"}])
+        self.assertEqual(xbookmarks.read_entries(self.archive)[-1]["post"]["text"], "one\u2028two\u2029three\x85")
 
     def test_a_failed_request_exits_1_with_xs_reason_and_no_credential(self):
         self.serve((402, {"title": "Payment Required", "detail": "credits depleted", "status": 402}))

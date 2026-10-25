@@ -310,11 +310,16 @@ referenced posts from the same response.
    about $0.01 a day.
 2. When an id is not in the archive, it fetches the posts down to the last
    unknown one with their text (`note_tweet` for long posts), author, media and
-   referenced posts. That is about $0.011 to $0.016 per new bookmark.
-3. When all 10 are new, it walks pages of 90 until a page holds a known post.
-   An empty archive walks everything the API returns: X documents the newest
-   800, and pagination has been seen to stop near 200. The first run therefore
-   costs a few dollars and reports how many it stored.
+   referenced posts. That is about $0.011 to $0.016 per new bookmark. If that
+   page lacks a post the probe saw (a bookmark added in between, or one X
+   counts but no longer shows), it walks instead. A post that only the probe
+   returned is stored as the probe saw it, with its id and text.
+3. When the oldest of the 10 is new too, it walks pages of 90 until a page ends
+   with a known post. A known post higher up does not stop the walk, because an
+   archived post can be bookmarked again. An empty archive walks everything the
+   API returns: X documents the newest 800, and pagination has been seen to
+   stop near 200. The first run therefore costs a few dollars and reports how
+   many it stored.
 4. Older bookmarks come from a browser export. Export the Bookmarks page as
    JSON with [twitter-web-exporter](https://github.com/prinsss/twitter-web-exporter)
    and copy it to radon:
@@ -333,11 +338,17 @@ carries only a signature, never the secrets. To rotate it, regenerate the
 Access Token and Secret in the X console and update `hermes-x-bookmarks`.
 
 `x-bookmarks-digest` runs on Sundays at 09:00. Its script prints the `poll`
-lines of the last seven days, at most 40, as `<bookmark>` blocks with the
-link, author, date, full text, quoted post and outside links. Each block goes
+lines since the last digest, at most 40, as `<bookmark>` blocks with the link,
+author, date, full text, quoted post and outside links. The first digest covers
+the last seven days. Post text cannot close its block or Hermes's code fence:
+tags become `[bookmark]` and runs of backticks become quotes. Each block goes
 through Hermes's prompt scan; a rejected block is replaced by its link. Without
-new bookmarks it prints `{"wakeAgent": false}`, and Hermes runs no model. The
-job has no toolsets, so the post text it reads can reach nothing.
+new bookmarks it prints `{"wakeAgent": false}`, and Hermes runs no model.
+Otherwise it moves `x-bookmarks/digest-cursor` to the run's time, so a late or
+repeated run sends no bookmark twice. If that model run then fails, Hermes
+alerts `personal_deliver`, and those bookmarks stay in the archive but are not
+sent again. The job has no toolsets, so the post text it reads can reach
+nothing.
 
 ## Tests
 

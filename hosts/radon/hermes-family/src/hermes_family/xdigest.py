@@ -1,10 +1,12 @@
 """x-bookmarks-digest: the weekly X bookmark digest's --script.
 
-Prints the bookmarks the hourly x-bookmarks job found in the last seven days, one <bookmark>
-block each, for the model to summarize. Bookmarks from the first run or from an import are not
-new and stay out. Each block goes through Hermes's own prompt scan; a block the scan rejects is
-replaced by its link, because Hermes refuses a whole run whose prompt fails the scan. Without
-new bookmarks it prints {"wakeAgent": false}, so Hermes skips the model and sends nothing.
+Prints the bookmarks the hourly x-bookmarks job found since the last digest (the first time:
+in the last seven days), one <bookmark> block each, for the model to summarize. Bookmarks from
+the first run or from an import are not new and stay out. Each block goes through Hermes's own
+prompt scan; a block the scan rejects is replaced by its link, because Hermes refuses a whole
+run whose prompt fails the scan. Without new bookmarks it prints {"wakeAgent": false}, so Hermes
+skips the model and sends nothing. After printing blocks it moves digest-cursor, next to the
+archive, to now, so a late or repeated run does not send a bookmark twice.
 """
 
 from __future__ import annotations
@@ -17,20 +19,29 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from hermes_family.mailfetch import Scan, ScanError, hermes_scan
+from hermes_family.state import write_atomic
 from hermes_family.xbookmarks import read_entries
 
-WINDOW = timedelta(days=7)
+FIRST_WINDOW = timedelta(days=7)
+CURSOR_FILE = "digest-cursor"
 MAX_BOOKMARKS = 40
 TEXT_LIMIT = 1500
 QUOTE_LIMIT = 500
 MAX_LINKS = 5
-TAG_RE = re.compile(r"</?bookmark>", re.IGNORECASE)
+# Post text cannot close its block, nor the code fence Hermes puts around script output
+# (cron/scheduler_prompt.py:40). Replacing, not deleting, means nested tags cannot reassemble.
+TAG_RE = re.compile(r"<(/?)bookmark>", re.IGNORECASE)
+FENCE_RE = re.compile(r"`{3,}")
 SLEEP = json.dumps({"wakeAgent": False})
 
 
 def clean(value: object) -> str:
-    """Untrusted text without the tags that delimit a block."""
-    return TAG_RE.sub("", value) if isinstance(value, str) else ""
+    """Untrusted text, safe to print inside a block."""
+    if not isinstance(value, str):
+        return ""
+    text = value.encode("utf-8", "replace").decode("utf-8")  # a lone surrogate cannot be printed
+    text = TAG_RE.sub(r"[\1bookmark]", text)
+    return FENCE_RE.sub(lambda match: "'" * len(match.group()), text)
 
 
 def post_text(post: dict) -> str:
@@ -111,8 +122,7 @@ def seen_at(entry: dict) -> datetime | None:
     return moment if moment.tzinfo else None
 
 
-def render(entries: list[dict], now: datetime, scan: Scan) -> str:
-    since = now - WINDOW
+def render(entries: list[dict], since: datetime, now: datetime, scan: Scan) -> str:
     recent = [
         entry for entry in entries
         if entry.get("via") == "poll" and (moment := seen_at(entry)) is not None and since < moment <= now
@@ -128,10 +138,19 @@ def render(entries: list[dict], now: datetime, scan: Scan) -> str:
         else:
             parts.append(text)
     if len(recent) > len(shown):
-        parts.append(f"Only the newest {len(shown)} of this week's {len(recent)} bookmarks are shown.")
+        parts.append(f"Only the newest {len(shown)} of the {len(recent)} new bookmarks are shown.")
     if hidden:
         parts.append(f"Not shown, because Hermes's prompt scan rejected their text: {' '.join(hidden)}")
     return "\n\n".join(parts)
+
+
+def read_cursor(path: Path, now: datetime) -> datetime:
+    """Where the last digest's window ended; without one, FIRST_WINDOW before now."""
+    try:
+        moment = datetime.fromisoformat(path.read_text().strip())
+    except (FileNotFoundError, ValueError):
+        return now - FIRST_WINDOW
+    return moment if moment.tzinfo else now - FIRST_WINDOW
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -139,8 +158,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--archive", type=Path, required=True, help="the x-bookmarks bookmarks.jsonl")
     parser.add_argument("--hermes-python", required=True, help="the Python of the installed Hermes, for its prompt scan")
     args = parser.parse_args(argv)
+    cursor = args.archive.parent / CURSOR_FILE
+    now = datetime.now(timezone.utc)
     try:
-        print(render(read_entries(args.archive), datetime.now(timezone.utc), hermes_scan(args.hermes_python)))
+        output = render(read_entries(args.archive), read_cursor(cursor, now), now, hermes_scan(args.hermes_python))
+        print(output)
+        if output != SLEEP:
+            write_atomic(cursor, now.isoformat() + "\n")
     except (ScanError, OSError) as error:
         print(f"x-bookmarks-digest: {error}", file=sys.stderr)
         return 1
