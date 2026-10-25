@@ -5,7 +5,7 @@ from contextlib import redirect_stdout
 from datetime import datetime, timezone
 
 from hermes_family import notifier
-from hermes_family.state import State, mail_key
+from hermes_family.state import Quarantined, State, mail_key
 from tests.support import CREDENTIAL, FakeNet, fixture, run_document, temp_dir, token_route, write_json
 
 SCHOOL = mail_key("<gate-fixture-0001@school.example>")
@@ -167,6 +167,33 @@ class NotifierTest(unittest.TestCase):
         self.run_main()
         self.assertEqual(self.state.ledger(), {SCHOOL})
         self.assertIn("labeling hermes-processed failed", self.log_rows()[0]["error"])
+
+    def test_a_mail_whose_proposal_failed_after_its_fetch_stays_retryable(self):
+        self.state.record_proposal_failure(SCHOOL, datetime(2026, 10, 24, 12, 3, tzinfo=timezone.utc))
+        self.write_run("2026-10-24_14-07-12.md", answer_with({"processed": [SCHOOL, DAYCARE]}))
+        self.run_main()
+        self.assertEqual(self.state.ledger(), {DAYCARE})
+
+    def test_an_older_failure_does_not_block_a_later_successful_run(self):
+        self.state.record_proposal_failure(SCHOOL, datetime(2026, 10, 24, 12, 3, tzinfo=timezone.utc))
+        self.state.record_fetch({SCHOOL: "m1"}, datetime(2026, 10, 24, 12, 15, tzinfo=timezone.utc))
+        self.write_run("2026-10-24_14-22-09.md", answer_with({"processed": [SCHOOL]}))
+        self.run_main()
+        self.assertEqual(self.state.ledger(), {SCHOOL})
+
+    def test_each_quarantined_mail_gets_the_dutch_notice_once(self):
+        self.state.quarantine(Quarantined(
+            mail_key("<nieuwsbrief-43@opvang.example>"), "Opvang <planning@opvang.example>",
+            "Nieuwsbrief https://opvang.example/x week\u202e 43", "Fri, 23 Oct 2026 09:00:00 +0200"))
+        self.assertEqual(
+            self.run_main(),
+            "Kon de mail niet lezen: planning@opvang.example, Nieuwsbrief week 43 (2026-10-23 09:00). "
+            "Kijk de mail even na.\n",
+        )
+        self.assertEqual(self.run_main(), "")
+        self.state.quarantine(Quarantined(mail_key("<x@evil.example>"), "attacker@evil.example", "x", "2026-10-23"))
+        self.assertEqual(self.run_main(), "")
+        self.assertIn("quarantine.txt line 2", self.log_rows()[0]["error"])
 
 
 class SanitizeTest(unittest.TestCase):

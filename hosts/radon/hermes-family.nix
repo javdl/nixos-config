@@ -63,6 +63,8 @@ let
           (secret "hermes-google-mail")
           "--state-dir"
           stateDir
+          "--hermes-python"
+          "${hermesPackage.hermesVenv}/bin/python3"
         ];
         notifier = [
           "${jobs.notifier}/bin/notifier"
@@ -96,6 +98,8 @@ let
       (secret credential)
       "--family"
       (secret "hermes-family")
+      "--state-dir"
+      stateDir
     ];
     enabled = true;
   };

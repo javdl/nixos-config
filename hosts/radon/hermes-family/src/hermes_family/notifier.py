@@ -4,8 +4,12 @@ A no-agent cron job, so Hermes delivers its stdout to the job's --deliver
 target and an empty stdout sends nothing. It reads the parsing job's run
 documents newer than its cursor, takes the last fenced JSON block of each
 model answer, ledgers and labels the processed keys that mail-fetch printed,
-and prints the fixed template for each valid uncertain mail. Model text never
-reaches the output: every printed field is re-derived or sanitized.
+and prints the fixed template for each valid uncertain mail. A key whose
+proposal failed at Google after mail-fetch last printed it stays out of the
+ledger, so the next parsing run tries that mail again. It also prints the
+fixed template for each mail that mail-fetch quarantined since the last run.
+Model text never reaches the output: every printed field is re-derived or
+sanitized.
 """
 
 from __future__ import annotations
@@ -26,6 +30,7 @@ from hermes_family.state import PROCESSED_LABEL, State, address, log_failure
 JOB_NAME = "family-mail-notifier"
 PARSE_JOB_NAME = "family-mail-parsing"
 TEMPLATE = "Kon geen datum vinden: {sender}, {subject} ({received}). Kijk de mail even na."
+QUARANTINE_TEMPLATE = "Kon de mail niet lezen: {sender}, {subject} ({received}). Kijk de mail even na."
 SUBJECT_LIMIT = 80
 
 # Hermes 81a5543 writes an agent run as header, "**Prompt Characters:** N",
@@ -120,13 +125,14 @@ def parse_received(value: str) -> str | None:
     return None
 
 
-def notice(entry: Uncertain, senders: frozenset[str]) -> str | None:
-    sender = address(entry.sender)
-    received = parse_received(entry.received)
-    subject = clean_subject(entry.subject)
+def notice(template: str, sender: str, subject: str, received: str, senders: frozenset[str]) -> str | None:
+    """The template with the three cleaned fields, or None when the sender is
+    not allowlisted or the date does not parse."""
+    sender = address(sender)
+    received = parse_received(received)
     if sender not in senders or received is None:
         return None
-    return TEMPLATE.format(sender=sender, subject=subject, received=received)
+    return template.format(sender=sender, subject=clean_subject(subject), received=received)
 
 
 def parse_job_output_dir(hermes_home: Path, job_name: str) -> Path:
@@ -147,10 +153,11 @@ class Pass:
 
 
 def run(state: State, output_dir: Path) -> Pass:
-    """Everything except Gmail: ledger appends, notices, failures, new cursor."""
+    """Everything except Gmail: ledger appends, notices, failures, new cursors."""
     cursor = state.notifier_cursor()
     documents = sorted(p for p in output_dir.glob("*.md") if p.name > cursor) if output_dir.is_dir() else []
     fetched = state.fetched()
+    retry = {key for key, at in state.proposal_failures().items() if key in fetched and at >= fetched[key].at}
     ledger = state.ledger()
     senders = state.senders()
     result = Pass([], [], [], cursor)
@@ -161,19 +168,34 @@ def run(state: State, output_dir: Path) -> Pass:
         except NoAnswer:
             continue
         except InvalidBlock as error:
-            result.failures.append(f"{document.name}: {error}")
+            result.failures.append(f"invalid parse result {document.name}: {error}")
             continue
-        new = [key for key in dict.fromkeys(parsed.processed) if key in fetched and key not in ledger]
+        new = [
+            key
+            for key in dict.fromkeys(parsed.processed)
+            if key in fetched and key not in ledger and key not in retry
+        ]
         state.append_ledger(new)
         ledger.update(new)
-        result.newly_ledgered += [(key, fetched[key]) for key in new]
+        result.newly_ledgered += [(key, fetched[key].gmail_id) for key in new]
         notified = set()
         for entry in parsed.uncertain:
-            if entry.key in new and entry.key not in notified and (line := notice(entry, senders)):
+            if entry.key in new and entry.key not in notified and (
+                line := notice(TEMPLATE, entry.sender, entry.subject, entry.received, senders)
+            ):
                 notified.add(entry.key)
                 result.lines.append(line)
     if result.cursor:
         state.set_notifier_cursor(result.cursor)
+
+    quarantined = state.quarantined()
+    start = state.quarantine_cursor()
+    for number, entry in enumerate(quarantined[start:], start + 1):
+        if line := notice(QUARANTINE_TEMPLATE, entry.sender, entry.subject, entry.date, senders):
+            result.lines.append(line)
+        else:
+            result.failures.append(f"quarantine.txt line {number}: no allowlisted sender or no date")
+    state.set_quarantine_cursor(len(quarantined))
     return result
 
 
@@ -194,7 +216,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     result = run(state, output_dir)
     for failure in result.failures:
-        log_failure(args.run_log, JOB_NAME, f"invalid parse result {failure}")
+        log_failure(args.run_log, JOB_NAME, failure)
     if result.newly_ledgered:
         try:
             gmail = Gmail(Api.from_credential_file(args.credential))

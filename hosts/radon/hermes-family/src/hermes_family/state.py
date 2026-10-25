@@ -7,15 +7,17 @@ import json
 import os
 import re
 import tempfile
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from email.utils import parseaddr
 from pathlib import Path
 
 KEY_RE = re.compile(r"[0-9a-f]{32}")
-FETCH_RECORD_KEEP = 500
+RECORD_KEEP = 500
 
 PROCESSED_LABEL = "hermes-processed"
 IGNORED_LABEL = "hermes-ignored"
+QUARANTINED_LABEL = "hermes-quarantined"
 
 
 def mail_key(message_id: str) -> str:
@@ -45,6 +47,53 @@ def write_atomic(path: Path, text: str) -> None:
         raise
 
 
+def _rows(path: Path) -> list[dict]:
+    try:
+        lines = path.read_text().splitlines()
+    except FileNotFoundError:
+        return []
+    rows = []
+    for line in lines:
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(row, dict):
+            rows.append(row)
+    return rows
+
+
+def _append_kept(path: Path, row: dict) -> None:
+    """Append one JSON row, keeping the last RECORD_KEEP rows."""
+    try:
+        kept = path.read_text().splitlines()[-(RECORD_KEEP - 1):]
+    except FileNotFoundError:
+        kept = []
+    write_atomic(path, "".join(f"{line}\n" for line in [*kept, json.dumps(row, sort_keys=True)]))
+
+
+def _time(value: object) -> datetime | None:
+    try:
+        moment = datetime.fromisoformat(value) if isinstance(value, str) else None
+    except ValueError:
+        return None
+    return moment if moment and moment.tzinfo else None
+
+
+@dataclass(frozen=True)
+class Fetched:
+    gmail_id: str
+    at: datetime
+
+
+@dataclass(frozen=True)
+class Quarantined:
+    key: str
+    sender: str
+    subject: str
+    date: str
+
+
 class State:
     def __init__(self, directory: Path):
         self.dir = Path(directory)
@@ -52,6 +101,9 @@ class State:
         self.ledger_file = self.dir / "mail-ledger.txt"
         self.fetch_record_file = self.dir / "fetch-record.jsonl"
         self.notifier_cursor_file = self.dir / "notifier-cursor"
+        self.quarantine_file = self.dir / "quarantine.txt"
+        self.quarantine_cursor_file = self.dir / "quarantine-cursor"
+        self.proposal_failures_file = self.dir / "proposal-failures.jsonl"
 
     def senders(self) -> frozenset[str]:
         """Allowlisted sender addresses. A missing file allows nobody."""
@@ -76,29 +128,67 @@ class State:
 
     def record_fetch(self, mails: dict[str, str], now: datetime) -> None:
         """Append the keys this mail-fetch run printed, with their Gmail ids."""
-        line = json.dumps({"ts": now.isoformat(), "mails": mails}, sort_keys=True)
-        try:
-            kept = self.fetch_record_file.read_text().splitlines()[-(FETCH_RECORD_KEEP - 1):]
-        except FileNotFoundError:
-            kept = []
-        write_atomic(self.fetch_record_file, "".join(f"{row}\n" for row in [*kept, line]))
+        _append_kept(self.fetch_record_file, {"ts": now.isoformat(), "mails": mails})
 
-    def fetched(self) -> dict[str, str]:
-        """Key -> Gmail id for every key mail-fetch printed in the kept runs."""
-        mails: dict[str, str] = {}
+    def fetched(self) -> dict[str, Fetched]:
+        """Every key mail-fetch printed in the kept runs, with its Gmail id and
+        the time of the last run that printed it."""
+        mails: dict[str, Fetched] = {}
+        for row in _rows(self.fetch_record_file):
+            at = _time(row.get("ts"))
+            mails_row = row.get("mails")
+            if at is None or not isinstance(mails_row, dict):
+                continue
+            for key, gmail_id in mails_row.items():
+                if is_key(key) and isinstance(gmail_id, str):
+                    mails[key] = Fetched(gmail_id, at)
+        return mails
+
+    def record_proposal_failure(self, key: str, now: datetime) -> None:
+        """gcal-mcp: Google refused or did not answer a proposal for this mail."""
+        _append_kept(self.proposal_failures_file, {"ts": now.isoformat(), "key": key})
+
+    def proposal_failures(self) -> dict[str, datetime]:
+        """Key -> time of its last failed proposal."""
+        failures: dict[str, datetime] = {}
+        for row in _rows(self.proposal_failures_file):
+            at, key = _time(row.get("ts")), row.get("key")
+            if at is not None and is_key(key):
+                failures[key] = max(at, failures.get(key, at))
+        return failures
+
+    def quarantine(self, entry: Quarantined) -> None:
+        line = json.dumps({"key": entry.key, "from": entry.sender, "subject": entry.subject, "date": entry.date})
+        with self.quarantine_file.open("a") as handle:
+            handle.write(f"{line}\n")
+
+    def quarantined(self) -> list[Quarantined]:
+        """Every line mail-fetch wrote, in order. A line that does not parse
+        keeps its place, as an entry the notifier rejects."""
         try:
-            lines = self.fetch_record_file.read_text().splitlines()
+            lines = self.quarantine_file.read_text().splitlines()
         except FileNotFoundError:
-            return mails
+            return []
+        entries = []
         for line in lines:
             try:
                 row = json.loads(line)
             except json.JSONDecodeError:
-                continue
-            for key, gmail_id in (row.get("mails") or {}).items():
-                if is_key(key) and isinstance(gmail_id, str):
-                    mails[key] = gmail_id
-        return mails
+                row = None
+            if not isinstance(row, dict):
+                row = {}
+            entries.append(Quarantined(*(str(row.get(field, "")) for field in ("key", "from", "subject", "date"))))
+        return entries
+
+    def quarantine_cursor(self) -> int:
+        """How many quarantine lines the notifier has handled."""
+        try:
+            return int(self.quarantine_cursor_file.read_text().strip() or 0)
+        except (FileNotFoundError, ValueError):
+            return 0
+
+    def set_quarantine_cursor(self, count: int) -> None:
+        write_atomic(self.quarantine_cursor_file, f"{count}\n")
 
     def notifier_cursor(self) -> str:
         try:

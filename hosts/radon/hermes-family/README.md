@@ -162,11 +162,11 @@ the build platform.
 
 | Attribute | Command | Runs as |
 | --- | --- | --- |
-| `mailFetch` | `mail-fetch --credential <hermes-google-mail> --state-dir <state> [--dry-run]` | `--script` of `family-mail-parsing` |
+| `mailFetch` | `mail-fetch --credential <hermes-google-mail> --state-dir <state> --hermes-python <Hermes venv>/bin/python3 [--dry-run]` | `--script` of `family-mail-parsing` |
 | `notifier` | `notifier --credential <hermes-google-mail> --state-dir <state> --hermes-home <HERMES_HOME> --run-log <runs.jsonl>` | no-agent job `family-mail-notifier` |
 | `pickup` | `pickup --credential <hermes-google-read> --family <hermes-family> --run-log <runs.jsonl> [--dry-run] [--date YYYY-MM-DD]` | no-agent job `family-pickup` |
 | `planAheadWeather` | `plan-ahead-weather [--today YYYY-MM-DD]` | `--script` of `family-plan-ahead` |
-| `gcalMcp` | `gcal-mcp proposals --credential <hermes-google-proposals> --family <hermes-family>` and `gcal-mcp read --credential <hermes-google-read> --family <hermes-family>` | MCP servers `gcal-proposals` and `gcal-read` (stdio) |
+| `gcalMcp` | `gcal-mcp proposals --credential <hermes-google-proposals> --family <hermes-family> --state-dir <state>` and `gcal-mcp read --credential <hermes-google-read> --family <hermes-family>` | MCP servers `gcal-proposals` and `gcal-read` (stdio) |
 | `googleOauth` | `google-oauth {mail,proposals,read} --client <client.json>` | you, once per credential, on a laptop |
 | `jobsSync` | `jobs-sync --jobs-dir <hermesHome>/jobs --family <hermes-family> [--dry-run]` | the gateway job, at each start |
 
@@ -200,30 +200,57 @@ both go to `personal_deliver`, never the family group. `jobs-sync` refuses a
 
 `hermes cron create/edit` cannot set `enabled_toolsets`. `jobs-sync` writes that
 one field into `cron/jobs.json` under the store's own lock
-(`cron/.jobs.lock`), creates new jobs paused and resumes them only after.
+(`cron/.jobs.lock`), creates new jobs paused with its own `paused_reason` and
+resumes them only after. A job still paused with that reason, because a run
+stopped in between, is resumed on the next run. A job paused with any other
+reason was paused by hand: `jobs-sync` reports it and leaves it paused.
 
 ## Mail flow
 
 1. `mail-fetch` lists inbox mail without a `hermes-*` label. Senders not in
    `senders.txt` get `hermes-ignored`. Mail whose key is in
-   `mail-ledger.txt` gets `hermes-processed`. Up to 10 other mails print as
+   `mail-ledger.txt` gets `hermes-processed`. Up to 10 other mails become
    `<mail>` blocks, `Mail-Key:` first; the key is the first 32 hex characters of
-   SHA-256 of the raw Message-ID. The printed keys go to `fetch-record.jsonl`.
+   SHA-256 of the raw Message-ID.
+2. Each block goes through Hermes's own prompt scan,
+   `_scan_cron_skill_assembled` in `tools/cronjob_prompt_scan.py`, run with the
+   installed Hermes's Python. Hermes runs the same scan on the parsing job's
+   prompt and refuses the whole run when it fails
+   (`cron/scheduler_prompt.py:378-389`), so one such mail would block all
+   school mail. A block the scan rejects is never printed. Its key, sender,
+   subject and date go to `quarantine.txt` as one JSON line, its key to
+   `mail-ledger.txt`, and the mail gets `hermes-quarantined`. If the scan
+   cannot run, `mail-fetch` prints nothing and fails.
+3. The other blocks are printed, and their keys go to `fetch-record.jsonl`.
    With nothing to print, Hermes skips the model call.
-2. The parsing job calls `create_proposal` once per appointment it can date. A
-   mail can hold several appointments, so the event id is the first 32 hex
-   characters of SHA-256 of `<mail key>|<start>`, with the start as local
-   `YYYY-MM-DDTHH:MM`, or `YYYY-MM-DD` for an all-day event. A rerun with the
-   same start gets 409 and creates nothing. A mail that also holds an
-   appointment the model cannot date is listed as uncertain. The ledger and
-   the JSON block keep the mail key.
-3. `notifier` reads each new parsing run's answer (located by Hermes's length
+4. The parsing job numbers the appointments in each mail in mail order and
+   calls `create_proposal` once per appointment it can date, with the mail
+   key, that number `n`, and a start and end that are RFC 3339 with an offset
+   (`2026-11-12T15:30:00+01:00`) or dates (all-day). The tool refuses a call
+   without `n` or with a date-time without an offset. The event id is the
+   first 32 hex characters of SHA-256 of `<mail key>|<start>|<n>`, with the
+   start in UTC as `YYYY-MM-DDTHH:MM:SSZ`, or `YYYY-MM-DD` for an all-day
+   event. Two appointments at the same time in one mail get two events, and a
+   rerun that writes the same instant with another offset gets 409 and
+   creates nothing. A mail that also holds an appointment the model cannot
+   date is listed as uncertain.
+5. When Google refuses a proposal (other than 409) or does not answer,
+   `gcal-mcp` appends the mail key to `proposal-failures.jsonl`.
+6. `notifier` reads each new parsing run's answer (located by Hermes's length
    frames, so a JSON block quoted inside a mail is never read), takes the last
    fenced JSON block, ledgers and labels the `processed` keys that
    `fetch-record.jsonl` lists, and prints
    `Kon geen datum vinden: <from>, <subject> (<received>). Kijk de mail even na.`
-   for each valid uncertain mail it ledgered in that pass. A run with an answer
+   for each valid uncertain mail it ledgered in that pass. A key with a
+   proposal failure after `mail-fetch` last printed it stays out of the
+   ledger, so the next parsing run shows that mail again. A run with an answer
    but no valid block becomes one `failed` row in `runs.jsonl`.
+7. For each line `mail-fetch` added to `quarantine.txt` since its last run,
+   `notifier` prints
+   `Kon de mail niet lezen: <from>, <subject> (<received>). Kijk de mail even na.`
+   with the same cleaning: the sender must be in `senders.txt`, the subject
+   loses URLs and control characters and is cut to 80 characters, and the
+   date must parse. `quarantine-cursor` holds how many lines it has handled.
 
 ## Tests
 

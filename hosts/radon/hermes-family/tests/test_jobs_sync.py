@@ -62,11 +62,12 @@ class FakeHermes:
                 "script": args.script, "no_agent": bool(args.no_agent), "deliver": args.deliver,
                 "model": args.model, "provider": args.provider, "enabled_toolsets": None,
                 "enabled": not args.paused, "state": "paused" if args.paused else "scheduled",
+                "paused_reason": args.paused_reason if args.paused else None,
             })
         else:
             (job,) = [j for j in jobs if j["id"] == args.job_id]
             if args.command == "resume":
-                job.update(enabled=True, state="scheduled")
+                job.update(enabled=True, state="scheduled", paused_at=None, paused_reason=None)
             else:
                 if args.schedule:
                     job["schedule"] = {"kind": "cron", "expr": args.schedule, "display": args.schedule}
@@ -119,6 +120,32 @@ class JobsSyncTest(unittest.TestCase):
         self.assertIn("--paused", create)
         job_id = self.by_name()["family-mail-parsing"]["id"]
         self.assertIn(["cron", "resume", job_id], self.hermes.argvs)
+
+    def pause(self, name: str, reason: str) -> str:
+        jobs = self.hermes.jobs()
+        (job,) = [job for job in jobs if job["name"] == name]
+        job.update(enabled=False, state="paused", paused_at="2026-10-25T10:00:00+00:00", paused_reason=reason)
+        self.hermes.save(jobs)
+        return job["id"]
+
+    def test_a_job_left_paused_by_an_interrupted_creation_is_resumed(self):
+        self.sync()
+        job_id = self.pause("family-plan-ahead", jobs_sync.SYNC_PAUSE_REASON)
+        report = self.sync()
+        self.assertIn("family-plan-ahead: update resume", report)
+        self.assertEqual(self.hermes.argvs[-1], ["cron", "resume", job_id])
+        self.assertTrue(self.by_name()["family-plan-ahead"]["enabled"])
+        self.assertEqual(jobs_sync.verify(self.home, self.specs), [])
+
+    def test_a_job_paused_by_hand_is_reported_and_left_paused(self):
+        self.sync()
+        self.pause("family-pickup", "school holiday")
+        calls = len(self.hermes.argvs)
+        report = self.sync()
+        self.assertIn("family-pickup: unchanged (paused by hand; left paused)", report)
+        self.assertEqual(len(self.hermes.argvs), calls)
+        self.assertFalse(self.by_name()["family-pickup"]["enabled"])
+        self.assertEqual(jobs_sync.verify(self.home, self.specs), [])
 
     def test_second_run_changes_nothing(self):
         self.sync()
