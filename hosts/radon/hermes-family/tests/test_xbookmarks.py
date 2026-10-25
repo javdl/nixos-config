@@ -245,6 +245,14 @@ class XBookmarksTest(unittest.TestCase):
         self.assertEqual([c.params for c in self.fake.calls], [{"max_results": "10"}])
         self.assertEqual(xbookmarks.read_entries(self.archive)[-1]["post"]["text"], "one\u2028two\u2029three\x85")
 
+    def test_an_empty_probe_with_more_pages_is_walked(self):
+        self.serve(FakeX(30, hidden_slots=set(range(10))))
+        code, out, _ = self.run_main()
+        self.assertEqual(code, 0)
+        self.assertIn("stored the 20 bookmarks", out)
+        self.assertEqual([c.params["max_results"] for c in self.fake.calls], ["10", "90"])
+        self.assertEqual([e["id"] for e in self.entries()], [post_id(n) for n in reversed(range(10, 30))])
+
     def test_a_first_run_with_no_bookmarks_still_ends_the_backfill(self):
         fake = FakeX(0)
         self.serve(fake)

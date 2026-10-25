@@ -228,8 +228,8 @@ def capture(api: Bookmarks, known: set[str], now: str, via: str) -> tuple[list[d
     MAX_PAGES."""
     probe = api.page(PROBE_SIZE, detailed=False)
     unknown = [post for post in probe.posts if post["id"] not in known]
-    if not unknown:
-        return [], False
+    if not unknown and (probe.posts or not probe.next_token):
+        return [], False  # an empty probe that has more pages walks: X omitted its ten slots
     truncated = False
     if probe.next_token and ends_unknown(probe.posts, known):
         pages, truncated = walk(api, known)
