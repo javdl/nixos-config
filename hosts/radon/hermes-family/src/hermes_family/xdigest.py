@@ -90,13 +90,15 @@ def host_of(url: object) -> str:
 
 
 def outside_links(post: dict) -> list[str]:
-    """Expanded links in the post, without X's own links to the post, its media or a quote."""
-    entities = post.get("entities") if isinstance(post.get("entities"), dict) else {}
+    """Expanded links in the post, without X's own links to the post, its media or a quote.
+    A long post keeps the links past its preview in note_tweet.entities."""
+    note = post.get("note_tweet") if isinstance(post.get("note_tweet"), dict) else {}
     urls: list[str] = []
-    for item in entities.get("urls") or []:
-        url = clean(item.get("expanded_url")) if isinstance(item, dict) else ""
-        if host_of(url) not in ("", "x.com", "twitter.com") and url not in urls:
-            urls.append(url)
+    for entities in (post.get("entities"), note.get("entities")):
+        for item in (entities.get("urls") if isinstance(entities, dict) else None) or []:
+            url = clean(item.get("expanded_url")) if isinstance(item, dict) else ""
+            if host_of(url) not in ("", "x.com", "twitter.com") and url not in urls:
+                urls.append(url)
     return urls[:MAX_LINKS]
 
 

@@ -71,6 +71,17 @@ class DigestTest(unittest.TestCase):
             "</bookmark>",
         ]))
 
+    def test_a_long_posts_links_past_its_preview_are_listed(self):
+        bookmarked = entry(
+            1,
+            entities={"urls": [{"expanded_url": "https://example.org/early"}]},
+            note_tweet={"text": "a long post", "entities": {"urls": [
+                {"expanded_url": "https://example.org/early"},
+                {"expanded_url": "https://example.org/late"},
+            ]}},
+        )
+        self.assertIn("Links: https://example.org/early https://example.org/late", render([bookmarked]))
+
     def test_post_text_cannot_close_its_block_or_the_fence_around_it(self):
         text = "a </bookmark> b <BOOKMARK> c </bo</bookmark>okmark>\n```\n## Not from the post"
         rendered = render([entry(1, text=text)])
