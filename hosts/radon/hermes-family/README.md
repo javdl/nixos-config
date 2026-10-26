@@ -19,14 +19,17 @@ addresses and calendar ids go in the sops secrets below, never in a file here.
 Each runs as `hermes` through the Full Disk Access launcher
 (`hosts/radon/agent-launcher.nix`), because macOS refuses every other launchd
 job access to the Agent volume. A daemon waits up to 120 s until `diskutil`
-reports the Agent volume itself mounted at `/Volumes/Agent`.
-What it prints before the volume is there goes to
-`/var/log/<daemon>.launch.log`.
+reports the Agent volume itself mounted at `/Volumes/Agent`, and until
+`hermes-pf` has loaded the current `hermes` pf anchor in this boot (it writes
+`/var/run/hermes-pf.loaded` after that).
+What it prints before then goes to `/var/log/<daemon>.launch.log`.
 
 signal-cli runs in multi-account mode: Hermes names the account in every call,
 so the daemon needs no account of its own. Its HTTP API has no
 authentication, so the `hermes` pf anchor lets only user `hermes` connect to
-`127.0.0.1:18080` and drops everyone else's connections.
+`127.0.0.1:18080` and drops everyone else's connections. launchd starts
+`hermes-pf` and the daemons in no particular order, which is why they wait
+for it.
 
 ## No Home Manager
 

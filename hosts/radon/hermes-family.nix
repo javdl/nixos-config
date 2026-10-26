@@ -154,14 +154,26 @@ let
     }:/usr/bin:/bin:/usr/sbin:/sbin";
   };
 
+  # The anchor hosts/radon.nix's hermes-pf loads, with the signal-cli rules
+  # below merged in. After loading it, hermes-pf writes this boot's time and
+  # the anchor's store path to hermesPfMarker, so a marker from an earlier
+  # boot or an older anchor does not count.
+  hermesPfAnchor = config.environment.etc."pf.anchors/hermes".source;
+  hermesPfMarker = "/var/run/hermes-pf.loaded";
+  hermesPfLoaded = pkgs.writeShellScript "hermes-pf-loaded" ''
+    [ "$(/bin/cat ${hermesPfMarker} 2>/dev/null)" = "$(/usr/sbin/sysctl -n kern.boottime) ${hermesPfAnchor}" ]
+  '';
+
   # launchd starts the daemons at boot, before agent-volume-unlock has mounted
-  # the volume and before sops-nix has installed the secrets. Until then a
-  # daemon's output goes to its launch log in /var/log; after, to the volume.
+  # the volume, before sops-nix has installed the secrets, and in no order
+  # with hermes-pf: signal-cli must not listen, nor hermes reach the tailnet,
+  # before the anchor is in force. Until then a daemon's output goes to its
+  # launch log in /var/log; after, to the volume.
   waitFor = name: condition: ''
     waited=0
-    until ${agentVolumeMounted} && [ -d ${hermesHome} ] ${condition}; do
+    until ${agentVolumeMounted} && [ -d ${hermesHome} ] && ${hermesPfLoaded} ${condition}; do
       if [ "$waited" -ge 120 ]; then
-        echo "$(/bin/date -u +%FT%TZ) ${name}: ${hermesHome} not ready after 120 s" >&2
+        echo "$(/bin/date -u +%FT%TZ) ${name}: ${hermesHome} or the hermes pf anchor not ready after 120 s" >&2
         exit 1
       fi
       /bin/sleep 1
@@ -276,6 +288,19 @@ lib.mkIf enableHermesFamily {
   environment.etc."pf.anchors/hermes".text = ''
     pass out quick on lo0 proto tcp from any to 127.0.0.1 port ${toString signalCliPort} user hermes
     block drop out quick on lo0 proto tcp from any to 127.0.0.1 port ${toString signalCliPort}
+  '';
+
+  # Appended to hosts/radon.nix's hermes-pf script, which loads the anchor
+  # above. Loading it again here is harmless and gives this step its own exit
+  # status: the marker is written only when the anchor loaded and pf is on.
+  launchd.daemons.hermes-pf.script = lib.mkAfter ''
+    if /sbin/pfctl -a com.apple/hermes -f ${hermesPfAnchor} &&
+      /sbin/pfctl -s info | /usr/bin/grep -q '^Status: Enabled'; then
+      echo "$(/usr/sbin/sysctl -n kern.boottime) ${hermesPfAnchor}" >${hermesPfMarker}
+      /bin/chmod 0644 ${hermesPfMarker} # the daemons read it as hermes
+    else
+      /bin/rm -f ${hermesPfMarker}
+    fi
   '';
 
   agentLauncher.daemons = lib.mapAttrs (name: daemon: {
