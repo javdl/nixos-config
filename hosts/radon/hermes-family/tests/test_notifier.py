@@ -108,20 +108,33 @@ class NotifierTest(unittest.TestCase):
         self.assertEqual(self.run_main(), "")
         self.assertEqual(self.state.ledger(), {SCHOOL})
 
-    def test_uncertain_entry_from_a_sender_off_the_allowlist_prints_nothing(self):
+    def test_uncertain_entry_from_a_sender_off_the_allowlist_stays_retryable_and_logs(self):
         self.write_run("2026-10-24_14-07-12.md", answer_with({
-            "processed": [SCHOOL],
+            "processed": [SCHOOL, DAYCARE],
             "uncertain": [{"key": SCHOOL, "from": "attacker@evil.example", "subject": "x", "received": "2026-10-22"}],
         }))
         self.assertEqual(self.run_main(), "")
-        self.assertEqual(self.state.ledger(), {SCHOOL})
+        self.assertEqual(self.state.ledger(), {DAYCARE})
+        self.assertEqual({call.path.split("/")[-2] for call in self.fake.matching("POST", "/modify")}, {"m3"})
+        self.assertIn(f"uncertain {SCHOOL} has no allowlisted sender or no date", self.log_rows()[0]["error"])
 
-    def test_uncertain_entry_with_an_unparseable_date_prints_nothing(self):
+    def test_uncertain_entry_with_an_unparseable_date_stays_retryable_and_logs(self):
         self.write_run("2026-10-24_14-07-12.md", answer_with({
             "processed": [SCHOOL],
             "uncertain": [{"key": SCHOOL, "from": "groep5@school.example", "subject": "x", "received": "next Thursday"}],
         }))
         self.assertEqual(self.run_main(), "")
+        self.assertEqual(self.state.ledger(), set())
+        self.assertEqual(self.fake.matching("POST", "/modify"), [])
+        self.assertEqual(len(self.log_rows()), 1)
+        self.assertIn(f"uncertain {SCHOOL} has no allowlisted sender or no date", self.log_rows()[0]["error"])
+        self.state.record_fetch({SCHOOL: "m1"}, datetime(2026, 10, 24, 12, 15, tzinfo=timezone.utc))
+        self.write_run("2026-10-24_14-22-09.md", answer_with({
+            "processed": [SCHOOL],
+            "uncertain": [{"key": SCHOOL, "from": "groep5@school.example", "subject": "x", "received": "2026-10-22"}],
+        }))
+        self.assertEqual(self.run_main(), "Kon geen datum vinden: groep5@school.example, x (2026-10-22). Kijk de mail even na.\n")
+        self.assertEqual(self.state.ledger(), {SCHOOL})
 
     def test_subject_is_cut_to_80_characters(self):
         self.write_run("2026-10-24_14-07-12.md", answer_with({

@@ -267,10 +267,12 @@ reason was paused by hand: `jobs-sync` reports it and leaves it paused.
    fenced JSON block, ledgers and labels the `processed` keys that
    `fetch-record.jsonl` lists, and prints
    `Kon geen datum vinden: <from>, <subject> (<received>). Kijk de mail even na.`
-   for each valid uncertain mail it ledgered in that pass. A key with a
+   for each uncertain mail it ledgered in that pass. A key with a
    proposal failure after `mail-fetch` last printed it stays out of the
-   ledger, so the next parsing run shows that mail again. A run with an answer
-   but no valid block becomes one `failed` row in `runs.jsonl`.
+   ledger, so the next parsing run shows that mail again. So does a key whose
+   uncertain entry has a sender not in `senders.txt` or a received date that
+   does not parse, and that entry becomes a `failed` row in `runs.jsonl`. A
+   run with an answer but no valid block becomes one `failed` row too.
 7. For each line `mail-fetch` added to `quarantine.txt` since its last run,
    `notifier` prints
    `Kon de mail niet lezen: <from>, <subject> (<received>). Kijk de mail even na.`

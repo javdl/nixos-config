@@ -4,10 +4,12 @@ A no-agent cron job, so Hermes delivers its stdout to the job's --deliver
 target and an empty stdout sends nothing. It reads the parsing job's run
 documents newer than its cursor, takes the last fenced JSON block of each
 model answer, ledgers and labels the processed keys that mail-fetch printed,
-and prints the fixed template for each valid uncertain mail. A key whose
-proposal failed at Google after mail-fetch last printed it stays out of the
-ledger, so the next parsing run tries that mail again. It also prints the
-fixed template for each mail that mail-fetch quarantined since the last run.
+and prints the fixed template for each uncertain mail. A key whose proposal
+failed at Google after mail-fetch last printed it stays out of the ledger, so
+the next parsing run tries that mail again; so does a key whose uncertain
+entry has no allowlisted sender or no date, with a failure row. It also
+prints the fixed template for each mail that mail-fetch quarantined since the
+last run.
 Model text never reaches the output: every printed field is re-derived or
 sanitized.
 """
@@ -175,16 +177,20 @@ def run(state: State, output_dir: Path) -> Pass:
             for key in dict.fromkeys(parsed.processed)
             if key in fetched and key not in ledger and key not in retry
         ]
+        notices: dict[str, str | None] = {}
+        for entry in parsed.uncertain:
+            if entry.key in new and notices.get(entry.key) is None:
+                notices[entry.key] = notice(TEMPLATE, entry.sender, entry.subject, entry.received, senders)
+        held = [key for key, line in notices.items() if line is None]
+        result.failures += [
+            f"{document.name}: uncertain {key} has no allowlisted sender or no date; left for the next run"
+            for key in held
+        ]
+        new = [key for key in new if key not in held]
         state.append_ledger(new)
         ledger.update(new)
         result.newly_ledgered += [(key, fetched[key].gmail_id) for key in new]
-        notified = set()
-        for entry in parsed.uncertain:
-            if entry.key in new and entry.key not in notified and (
-                line := notice(TEMPLATE, entry.sender, entry.subject, entry.received, senders)
-            ):
-                notified.add(entry.key)
-                result.lines.append(line)
+        result.lines += [line for line in notices.values() if line]
     if result.cursor:
         state.set_notifier_cursor(result.cursor)
 
