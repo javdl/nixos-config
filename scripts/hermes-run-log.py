@@ -17,10 +17,11 @@ writes, read-only:
   session and its child sessions (compression, subagents) hold the model,
   token counts and cost (hermes_state_common.py:461-529, 591-607).
 
-A row names its job and route from `cron/jobs.json`. A job's record can be gone
-before its run is logged, so the collector keeps every job it has seen in
-`runs-jobs.json` next to the log; a run of a job it never saw is logged under
-the job's id, without a route.
+A row names its job and route from `cron/jobs.json`. A job's record can be
+edited or gone before its run is logged, so the collector keeps every version
+of every job it has seen in `runs-jobs.json` next to the log and gives a run
+the version in force when it was claimed; a run of a job it never saw is logged
+under the job's id, without a route.
 
 Run it as the Hermes user. It is idempotent: each row carries its
 `execution_id`, and a run appends only executions whose id runs.jsonl does not
@@ -227,32 +228,60 @@ def load_jobs(path: Path) -> dict[str, Job]:
     }
 
 
+# Each job's metadata versions, oldest first, with the time a pass first saw each.
+JobHistory = dict[str, list[tuple[datetime, Job]]]
+
+
 def job_cache_path(run_log: Path) -> Path:
-    """The collector's record of every job it has seen, next to runs.jsonl."""
+    """The collector's record of every job version it has seen, next to runs.jsonl."""
     return run_log.with_name(f"{run_log.stem}-jobs.json")
 
 
-def load_job_cache(path: Path) -> dict[str, Job]:
+def load_job_cache(path: Path) -> JobHistory:
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except FileNotFoundError:
         return {}
     except json.JSONDecodeError:
-        return {}  # rebuilt from jobs.json below; only removed jobs are lost
-    jobs = {}
-    for job_id, fields in data.items() if isinstance(data, dict) else ():
+        return {}  # rebuilt from jobs.json below; only removed jobs and old versions are lost
+    history = {}
+    for job_id, versions in data.items() if isinstance(data, dict) else ():
         try:
-            jobs[job_id] = Job(**fields)
-        except TypeError:
+            history[job_id] = [
+                (datetime.fromisoformat(fields.pop("seen_at")), Job(**fields)) for fields in versions
+            ]
+        except (AttributeError, KeyError, TypeError, ValueError):
             continue
-    return jobs
+    return history
 
 
-def save_job_cache(path: Path, jobs: dict[str, Job]) -> None:
+def save_job_cache(path: Path, history: JobHistory) -> None:
+    data = {
+        job_id: [{"seen_at": seen.isoformat(), **dataclasses.asdict(job)} for seen, job in history[job_id]]
+        for job_id in sorted(history)
+    }
     staged = path.with_name(f"{path.name}.tmp")
-    staged.write_text(json.dumps({job_id: dataclasses.asdict(jobs[job_id]) for job_id in sorted(jobs)}, indent=1),
-                      encoding="utf-8")
+    staged.write_text(json.dumps(data, indent=1), encoding="utf-8")
     os.replace(staged, path)
+
+
+def record_jobs(history: JobHistory, jobs: dict[str, Job], now: datetime) -> bool:
+    """Add each job whose metadata differs from its latest version; return whether any did."""
+    changed = False
+    for job_id, job in jobs.items():
+        versions = history.setdefault(job_id, [])
+        if not versions or versions[-1][1] != job:
+            versions.append((now, job))
+            changed = True
+    return changed
+
+
+def job_at(versions: list[tuple[datetime, Job]], moment: datetime) -> Optional[Job]:
+    """The version in force at moment: the last one a pass had seen by then, else the first."""
+    if not versions:
+        return None
+    seen = [job for seen_at, job in versions if seen_at <= moment]
+    return seen[-1] if seen else versions[0][1]
 
 
 def logged_execution_ids(lines: list[str]) -> set[str]:
@@ -291,14 +320,23 @@ def collect(hermes_home: Path, run_log: Path, route: Route) -> int:
         # drops it at once, the retention sweep drops a finished one-shot or
         # repeat-limited job after cron.completed_retention_days, 7 by default,
         # and the dispatch-limit guard drops a one-shot whose tick died
-        # (cron/jobs.py:2260-2263, 2399-2402, 2800-2849, 3152-3191). So every
-        # pass records each job it finds, and a run of a job that is gone
-        # still gets its name and route.
+        # (cron/jobs.py:2260-2263, 2399-2402, 2800-2849, 3152-3191). And an
+        # edit replaces the record before a pass logs the runs it already
+        # made. So every pass records each job's metadata when it changes, and
+        # a run gets the version in force when the scheduler claimed it.
+        #
+        # Neither Hermes store says when a job was edited: jobs.json has no
+        # per-job edit time (its top-level updated_at moves on every write,
+        # run bookkeeping included), and the execution ledger keeps no copy of
+        # the job. So a version counts from the pass that first saw it. A run
+        # claimed after an edit but before the next pass, within five minutes,
+        # gets the version from before the edit; its model still comes from
+        # its session when it has one. A run claimed before the first pass
+        # that saw its job gets that first version.
         cache_path = job_cache_path(run_log)
-        cached = load_job_cache(cache_path)
-        jobs = {**cached, **load_jobs(jobs_file)}
-        if jobs != cached:
-            save_job_cache(cache_path, jobs)
+        history = load_job_cache(cache_path)
+        if record_jobs(history, load_jobs(jobs_file), datetime.now(UTC)):
+            save_job_cache(cache_path, history)
 
         if not ledger.exists():
             return 0
@@ -309,7 +347,8 @@ def collect(hermes_home: Path, run_log: Path, route: Route) -> int:
         state_db = hermes_home / "state.db"
         with closing(_connect_read_only(state_db)) if state_db.exists() else nullcontext() as state:
             rows = [
-                build_row(e, jobs.get(e.job_id), session_usage(state, e.job_id, e.id) if state else None, route)
+                build_row(e, job_at(history.get(e.job_id, []), _parse_time(e.claimed_at)),
+                          session_usage(state, e.job_id, e.id) if state else None, route)
                 for e in new
             ]
         log.write("".join(json.dumps(row) + "\n" for row in rows).encode())

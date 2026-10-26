@@ -16,7 +16,10 @@ import sys
 import tempfile
 import unittest
 import uuid
+from contextlib import nullcontext
+from datetime import datetime
 from pathlib import Path
+from unittest import mock
 
 REPO = Path(__file__).resolve().parents[1]
 SCHEMA = (REPO / "tests" / "fixtures" / "hermes-81a5543-cron-stores.sql").read_text()
@@ -32,6 +35,18 @@ def load_collector():
 
 run_log = load_collector()
 ROUTE = run_log.Route("spark/dsv41", "aperture-local")
+
+
+def clock(moment):
+    """Set the collector's clock to moment, an ISO time with an offset."""
+    fixed = datetime.fromisoformat(moment)
+
+    class Clock(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return fixed.astimezone(tz)
+
+    return mock.patch.object(run_log, "datetime", Clock)
 
 
 def job_record(job_id, name, *, no_agent=False, model=None, provider=None):
@@ -65,6 +80,12 @@ class Stores:
 
     def remove_job(self, job_id):
         self.jobs = [job for job in self.jobs if job["id"] != job_id]
+        self._write_jobs()
+
+    def edit_job(self, job_id, **fields):
+        for job in self.jobs:
+            if job["id"] == job_id:
+                job.update(fields)
         self._write_jobs()
 
     def _write_jobs(self):
@@ -105,8 +126,10 @@ class Stores:
             (uuid.uuid4().hex, f"cron:{job_id}:{execution_id}", session_id, uuid.uuid4().hex))
         self.state.commit()
 
-    def collect(self):
-        return run_log.collect(self.home, self.run_log, ROUTE)
+    def collect(self, at=None):
+        """One collector pass, at the ISO time at when given."""
+        with clock(at) if at else nullcontext():
+            return run_log.collect(self.home, self.run_log, ROUTE)
 
     def rows(self):
         if not self.run_log.exists():
@@ -220,6 +243,39 @@ class CollectorTests(unittest.TestCase):
                          ("reminder", "deepseek/deepseek-v4.1-flash", "aperture-local"))
         self.assertIs(agent["model_host_failure"], True)
         self.assertTrue((s.run_log.parent / "runs-jobs.json").exists())
+
+    def test_an_edit_after_a_run_does_not_change_its_row(self):
+        s = self.stores
+        s.add_job(job_record("mail00000001", "mail parsing"))
+        s.collect(at="2026-10-24T13:55:00+02:00")
+        s.add_execution("mail00000001", status="failed", error="APIConnectionError: Connection error.",
+                        started="2026-10-24T14:00:00+02:00", finished="2026-10-24T14:01:00+02:00")
+        s.edit_job("mail00000001", name="mail parsing on flash", model="deepseek/deepseek-v4.1-flash",
+                   provider="aperture-claude")
+        s.collect(at="2026-10-24T14:05:00+02:00")
+        s.add_execution("mail00000001", status="failed", error="APIConnectionError: Connection error.",
+                        started="2026-10-24T14:10:00+02:00", finished="2026-10-24T14:11:00+02:00")
+        s.collect(at="2026-10-24T14:15:00+02:00")
+
+        before, after = s.rows()
+        self.assertEqual((before["job"], before["model"], before["provider"]),
+                         ("mail parsing", "spark/dsv41", "aperture-local"))
+        self.assertEqual((after["job"], after["model"], after["provider"]),
+                         ("mail parsing on flash", "deepseek/deepseek-v4.1-flash", "aperture-claude"))
+
+    def test_a_run_claimed_between_an_edit_and_the_next_pass_gets_the_version_before(self):
+        # The ambiguity the collector documents: Hermes keeps no edit time, so
+        # the new version counts only from the pass that first saw it.
+        s = self.stores
+        s.add_job(job_record("mail00000001", "mail parsing"))
+        s.collect(at="2026-10-24T13:55:00+02:00")
+        s.edit_job("mail00000001", name="mail parsing on flash")
+        s.add_execution("mail00000001", status="completed",
+                        started="2026-10-24T14:00:00+02:00", finished="2026-10-24T14:01:00+02:00")
+        s.collect(at="2026-10-24T14:05:00+02:00")
+
+        [row] = s.rows()
+        self.assertEqual(row["job"], "mail parsing")
 
     def test_a_job_never_seen_is_logged_by_id_without_a_route(self):
         s = self.stores
