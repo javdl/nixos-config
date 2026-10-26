@@ -51,8 +51,20 @@ class CallPassesTests(unittest.TestCase):
         self.assertTrue(gate.call_passes([call(GOOD_ARGS)]))
 
     def test_the_same_times_in_utc_pass(self):
-        args = dict(GOOD_ARGS, start="2026-11-12T14:30:00Z", end="2026-11-12T14:40:00Z")
-        self.assertTrue(gate.call_passes([call(args)]))
+        for start, end in (("2026-11-12T14:30:00Z", "2026-11-12T14:40:00Z"),
+                           ("2026-11-12t14:30:00.000z", "2026-11-12t14:40:00.000z")):
+            with self.subTest(start=start):
+                self.assertTrue(gate.call_passes([call(dict(GOOD_ARGS, start=start, end=end))]))
+
+    def test_times_must_be_rfc_3339_date_times(self):
+        # Python's fromisoformat takes each of these, with the expected instants.
+        for start, end in (("20261112T153000+0100", "20261112T154000+0100"),
+                           ("2026-11-12 15:30:00+01:00", "2026-11-12 15:40:00+01:00"),
+                           ("2026-W46-4T15:30:00+01:00", "2026-W46-4T15:40:00+01:00"),
+                           ("2026-11-12T15:30:00+01:00:00", "2026-11-12T15:40:00+01:00:00"),
+                           ("2026-11-12T15:30+01:00", "2026-11-12T15:40+01:00")):
+            with self.subTest(start=start):
+                self.assertFalse(gate.call_passes([call(dict(GOOD_ARGS, start=start, end=end))]))
 
     def test_every_required_argument_must_be_there(self):
         for missing in ("title", "start", "end", "mail_key", "n"):

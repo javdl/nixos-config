@@ -38,6 +38,7 @@ import argparse
 import dataclasses
 import hashlib
 import json
+import re
 import statistics
 import sys
 import time
@@ -175,15 +176,22 @@ def configured_reasoning_effort(model: str) -> str | None:
     return requested_effort(resolve_reasoning_config(load_config(), model))
 
 
+# RFC 3339's date-time (section 5.6). datetime.fromisoformat alone also takes
+# ISO 8601 forms the tool schema does not, such as 20261112T153000+0100, week
+# dates, any date/time separator and offsets with seconds.
+RFC3339_DATE_TIME = re.compile(
+    r"[0-9]{4}-[0-9]{2}-[0-9]{2}[Tt][0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]+)?(?:[Zz]|[+-][0-9]{2}:[0-9]{2})"
+)
+
+
 def _rfc3339(value) -> datetime | None:
-    """The time a tool argument names, or None unless it is a string with an offset."""
-    if not isinstance(value, str):
+    """The time a tool argument names, or None unless it is an RFC 3339 date-time."""
+    if not isinstance(value, str) or not RFC3339_DATE_TIME.fullmatch(value):
         return None
     try:
-        moment = datetime.fromisoformat(value)
+        return datetime.fromisoformat(value.upper())
     except ValueError:
         return None
-    return moment if moment.tzinfo is not None else None
 
 
 def call_passes(calls: list) -> bool:
