@@ -5,8 +5,9 @@ in the last seven days), one <bookmark> block each, for the model to summarize. 
 the first run or from an import are not new and stay out. Each block goes through Hermes's own
 prompt scan; a block the scan rejects is replaced by its link, because Hermes refuses a whole
 run whose prompt fails the scan. Without new bookmarks it prints {"wakeAgent": false}, so Hermes
-skips the model and sends nothing. After printing blocks it moves digest-cursor, next to the
-archive, to now, so a late or repeated run does not send a bookmark twice.
+skips the model and sends nothing. Either way it then moves digest-cursor, next to the archive,
+to now: the next digest starts where this one ended, and a late or repeated run does not send a
+bookmark twice.
 """
 
 from __future__ import annotations
@@ -55,6 +56,17 @@ def post_text(post: dict) -> str:
     if isinstance(note, dict) and isinstance(note.get("text"), str):
         return note["text"]
     return post.get("text") if isinstance(post.get("text"), str) else ""
+
+
+def article_text(article: dict) -> str:
+    """An X Article's body: `plain_text`, which X leaves empty for some Articles, else the
+    shorter `preview_text`. X documents no schema for `article`; both keys and `title` are in
+    what the API returned on 2026-10-26."""
+    for key in ("plain_text", "preview_text"):
+        value = article.get(key)
+        if isinstance(value, str) and value.strip():
+            return value
+    return ""
 
 
 def _includes(entry: dict, kind: str) -> list[dict]:
@@ -112,6 +124,12 @@ def block(entry: dict) -> str:
     if isinstance(post.get("created_at"), str):
         lines.append(f"Posted: {clean(post['created_at'])}")
     lines += ["Text:", clean(post_text(post))[:TEXT_LIMIT]]
+    # An Article's post text is often only its t.co link; its title and body are in `article`.
+    article = post.get("article") if isinstance(post.get("article"), dict) else {}
+    if isinstance(article.get("title"), str) and article["title"].strip():
+        lines.append(f"Article: {clean(article['title'])[:QUOTE_LIMIT]}")
+    if article_text(article):
+        lines += ["Article text:", clean(article_text(article))[:TEXT_LIMIT]]
     for quoted in quoted_posts(entry):
         lines += ["Quoted post:", clean(post_text(quoted))[:QUOTE_LIMIT]]
     links = outside_links(post)
@@ -171,8 +189,7 @@ def main(argv: list[str] | None = None) -> int:
             now = datetime.now(timezone.utc)
             output = render(read_entries(args.archive), read_cursor(cursor, now), now, hermes_scan(args.hermes_python))
             print(output)
-            if output != SLEEP:
-                write_atomic(cursor, now.isoformat() + "\n")
+            write_atomic(cursor, now.isoformat() + "\n")
     except (ScanError, OSError) as error:
         print(f"x-bookmarks-digest: {error}", file=sys.stderr)
         return 1

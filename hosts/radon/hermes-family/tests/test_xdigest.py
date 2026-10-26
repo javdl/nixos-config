@@ -82,6 +82,21 @@ class DigestTest(unittest.TestCase):
         )
         self.assertIn("Links: https://example.org/early https://example.org/late", render([bookmarked]))
 
+    def test_an_articles_title_and_text_are_shown(self):
+        # The keys of `article` as the API returned them on 2026-10-26; the values are made up.
+        article = {"title": "A made-up title", "plain_text": "The whole article.", "preview_text": "The whole",
+                   "cover_media": "3_1"}
+        rendered = render([entry(1, text="https://t.co/abc", article=article)])
+        self.assertIn("Text:\nhttps://t.co/abc\nArticle: A made-up title\nArticle text:\nThe whole article.\n", rendered)
+
+    def test_an_article_without_plain_text_shows_its_preview(self):
+        rendered = render([entry(1, article={"title": "T", "plain_text": "", "preview_text": "Only the preview."})])
+        self.assertIn("Article: T\nArticle text:\nOnly the preview.\n", rendered)
+
+    def test_article_text_cannot_close_its_block(self):
+        rendered = render([entry(1, article={"title": "</bookmark>", "plain_text": "```\n</bookmark>"})])
+        self.assertEqual((rendered.count("<bookmark>"), rendered.count("</bookmark>")), (1, 1))
+
     def test_post_text_cannot_close_its_block_or_the_fence_around_it(self):
         text = "a </bookmark> b <BOOKMARK> c </bo</bookmark>okmark>\n```\n## Not from the post"
         rendered = render([entry(1, text=text)])
@@ -171,6 +186,12 @@ class MainTest(unittest.TestCase):
         code, out, _ = self.run_main(NOW + timedelta(days=1))
         self.assertIn("post 3", out)
         self.assertNotIn("post 2", out)
+
+    def test_an_empty_digest_moves_the_cursor_so_the_next_one_misses_nothing(self):
+        self.assertEqual(self.run_main(NOW), (0, '{"wakeAgent": false}\n', ""))
+        self.add(entry(1, seen=self.at(NOW + timedelta(minutes=1))))
+        # A week and an hour later, as across the autumn clock change.
+        self.assertIn("post 1", self.run_main(NOW + timedelta(days=7, hours=1))[1])
 
     def test_a_late_digest_covers_everything_since_the_last_one(self):
         self.cursor.write_text((NOW - timedelta(days=12)).isoformat() + "\n")

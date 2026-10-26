@@ -353,19 +353,19 @@ archive, so a digest never runs between a capture's timestamp and its append.
 
 `x-bookmarks-digest` runs weekly, such as `0 9 * * 0` (Sundays at 09:00) in
 `schedules`. Its script prints the `poll` lines since the last digest, at most
-40, as `<bookmark>` blocks with the link, author, date, full text, quoted post
-and outside links. The first digest covers the last seven days. Post text
-cannot close its block or Hermes's code fence:
-the invisible characters Hermes deletes before the model reads the prompt are
-deleted first, then tags become `[bookmark]` and runs of backticks become
-quotes. Each block goes through Hermes's prompt scan; a rejected block is
-replaced by its link. Without new bookmarks it prints `{"wakeAgent": false}`,
-and Hermes runs no model.
-Otherwise it moves `x-bookmarks/digest-cursor` to the run's time, so a late or
-repeated run sends no bookmark twice. If that model run then fails, Hermes
-alerts `personal_deliver`, and those bookmarks stay in the archive but are not
-sent again. The job has no toolsets, so the post text it reads can reach
-nothing.
+40, as `<bookmark>` blocks with the link, author, date, full text, an X
+Article's title and text, the quoted post and outside links. The first digest
+covers the last seven days. Post text cannot close its block or Hermes's code
+fence: the invisible characters Hermes deletes before the model reads the
+prompt are deleted first, then tags become `[bookmark]` and runs of backticks
+become quotes. Each block goes through Hermes's prompt scan; a rejected block
+is replaced by its link. Without new bookmarks it prints
+`{"wakeAgent": false}`, and Hermes runs no model. Either way it then moves
+`x-bookmarks/digest-cursor` to the run's time: the next digest starts where
+this one ended, and a late or repeated run sends no bookmark twice. If a model
+run fails, Hermes alerts `personal_deliver`, and those bookmarks stay in the
+archive but are not sent again. The job has no toolsets, so the post text it
+reads can reach nothing.
 
 ## Tests
 
