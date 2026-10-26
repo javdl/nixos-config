@@ -305,6 +305,21 @@
         }
       );
 
+      # The family Hermes agent's Google OAuth helper (hosts/radon/hermes-family),
+      # so a credential can be made on a laptop before radon runs the agent:
+      #   nix run github:javdl/nixos-config#hermes-family-google-oauth -- mail --client client.json
+      packages =
+        nixpkgs.lib.genAttrs
+          [
+            "aarch64-darwin"
+            "x86_64-linux"
+            "aarch64-linux"
+          ]
+          (system: {
+            hermes-family-google-oauth =
+              (import ./hosts/radon/hermes-family/packages.nix { pkgs = pkgsFor system; }).googleOauth;
+          });
+
       # `nix develop` — pinned contributor toolchain for working on this flake.
       devShells = forAllSystems (
         system:
