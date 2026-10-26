@@ -189,10 +189,18 @@ in
   };
 
   # Shows whether the hermes user can write to the Agent volume from launchd,
-  # which needs the launcher's Full Disk Access. Runs at load; run it again
-  # with `sudo launchctl kickstart system/org.nixos.agent-volume-probe`.
+  # which needs the launcher's Full Disk Access. Runs at load, so also at boot
+  # next to agent-volume-unlock: it first waits up to 120 s for that job to
+  # mount the volume and make its logs directory. Run it again with
+  # `sudo launchctl kickstart system/org.nixos.agent-volume-probe`.
   agentLauncher.daemons.agent-volume-probe = {
     job = pkgs.writeShellScript "agent-volume-probe" ''
+      waited=0
+      until ${agentVolumeMounted} && [ -d ${agentRoot}/logs ]; do
+        [ "$waited" -ge 120 ] && break
+        /bin/sleep 1
+        waited=$((waited + 1))
+      done
       now=$(/bin/date -u +%Y-%m-%dT%H:%M:%SZ)
       if ! ${agentVolumeMounted}; then
         echo "$now FAILED: the Agent volume is not mounted at ${agentRoot}"
