@@ -108,7 +108,7 @@ class JobsSyncTest(unittest.TestCase):
                                     "aperture-local", ["gcal-proposals"], True),
             "family-mail-notifier": ("5-59/15 7-21 * * *", "notifier.sh", True, "signal", None, None, None, True),
             "family-plan-ahead": ("0 16 * * 5", "plan-ahead-weather.sh", False, "signal", None, None,
-                                  ["web", "gcal-read"], True),
+                                  ["web", "gcal-family"], True),
             "family-evening-brief": ("0 20 * * *", None, False, PERSONAL, None, None, ["gcal-read"], True),
             "agent-tooling-digest": ("0 9 * * 6", None, False, PERSONAL, None, None,
                                      ["web", "skills", "todo", "no_mcp"], True),

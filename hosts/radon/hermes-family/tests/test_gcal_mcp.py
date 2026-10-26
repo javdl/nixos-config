@@ -3,6 +3,7 @@ import hashlib
 import json
 import unittest
 import urllib.error
+from unittest import mock
 
 from hermes_family import gcal_mcp
 from hermes_family.google import Api, load_family
@@ -243,6 +244,33 @@ class ReadTest(unittest.TestCase):
         with self.assertRaises(Exception) as caught:
             Server(self, "read", FakeNet()).call("list_events", time_min="2026-01-01", time_max="2026-06-01")
         self.assertIn("62 days", str(caught.exception))
+
+
+class FamilyTest(unittest.TestCase):
+    """The server for jobs that answer in the family group: the family calendar only."""
+
+    def test_offers_only_list_events(self):
+        self.assertEqual(set(Server(self, "family", FakeNet()).tools()), {"list_events"})
+
+    def test_never_reads_or_returns_the_personal_calendar(self):
+        fake = (FakeNet()
+                .on("GET", "/calendars/family%40group.calendar.google.com/events", CALENDAR["school_day"])
+                .on("GET", "/calendars/ouder1%40example.org/events", CALENDAR["personal"]))
+        result = json.loads(Server(self, "family", fake).call("list_events", time_min="2026-10-28",
+                                                              time_max="2026-10-29"))
+        self.assertEqual([(e["calendar"], e["title"]) for e in result["events"]], [("family", "Zwemles Kind A")])
+        self.assertNotIn("unavailable", result)
+        self.assertEqual(fake.matching("GET", "ouder1"), [])
+        self.assertEqual(len(fake.calls), 1)
+
+    def test_main_accepts_family_mode(self):
+        directory = temp_dir(self)
+        family = write_json(directory / "family.json", FAMILY)
+        credential = write_json(directory / "credential.json", {})
+        with mock.patch.object(gcal_mcp, "build_server") as build:
+            self.assertEqual(gcal_mcp.main(["family", "--credential", str(credential), "--family", str(family),
+                                            "--state-dir", str(directory)]), 0)
+        self.assertEqual(build.call_args.args[0], "family")
 
 
 if __name__ == "__main__":

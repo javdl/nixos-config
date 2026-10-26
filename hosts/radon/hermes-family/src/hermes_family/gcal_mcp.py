@@ -8,7 +8,9 @@ creates nothing. When Google refuses a proposal or does not answer, the mail
 key goes to the state directory's failure record, and the notifier keeps that
 mail out of the ledger so the next parsing run tries it again. `gcal-mcp read`
 offers list_events over the family calendar and, when the family file names
-one, the personal calendar. Each mode gets its own credential file by argument.
+one, the personal calendar. `gcal-mcp family` offers list_events over the
+family calendar alone, for jobs that answer in the family group. Each mode
+gets its own credential file by argument.
 """
 
 from __future__ import annotations
@@ -151,14 +153,16 @@ def _start_instant(row: dict) -> datetime:
         return datetime.max.replace(tzinfo=timezone.utc)
 
 
-def events_between(api: Api, family: Family, time_min: str, time_max: str) -> str:
+def events_between(api: Api, family: Family, time_min: str, time_max: str, *, personal: bool) -> str:
+    """Events from the family calendar and, if `personal` and the family file
+    names one, the personal calendar."""
     start, end = _instant(time_min), _instant(time_max)
     if end <= start:
         raise ValueError("time_max must be after time_min")
     if end - start > MAX_RANGE:
         raise ValueError(f"range is longer than {MAX_RANGE.days} days")
     calendars = [("family", family.family_calendar_id)]
-    if family.personal_calendar_id:
+    if personal and family.personal_calendar_id:
         calendars.append(("personal", family.personal_calendar_id))
     rows, unavailable = [], []
     for label, calendar_id in calendars:
@@ -204,24 +208,36 @@ def build_server(mode: str, api_factory: Callable[[], Api], family_factory: Call
             return create_proposal(api_factory, family_factory(), state, title, start, end, mail_key, n, location)
 
         server.add_tool(proposal_tool, name="create_proposal")
-    else:
+    elif mode == "read":
 
         def events_tool(time_min: str, time_max: str) -> str:
             """List events between time_min and time_max (ISO 8601; a time without
             an offset is Europe/Amsterdam) from the family calendar and Joost's
             personal calendar. Read-only. At most 62 days per call.
             """
-            return events_between(api_factory(), family_factory(), time_min, time_max)
+            return events_between(api_factory(), family_factory(), time_min, time_max, personal=True)
 
         server.add_tool(events_tool, name="list_events")
+    elif mode == "family":
+
+        def family_events_tool(time_min: str, time_max: str) -> str:
+            """List events between time_min and time_max (ISO 8601; a time without
+            an offset is Europe/Amsterdam) from the family calendar. Read-only.
+            At most 62 days per call.
+            """
+            return events_between(api_factory(), family_factory(), time_min, time_max, personal=False)
+
+        server.add_tool(family_events_tool, name="list_events")
+    else:
+        raise ValueError(f"unknown mode {mode!r}")
     return server
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="gcal-mcp", description=__doc__.splitlines()[0])
-    parser.add_argument("mode", choices=["proposals", "read"])
+    parser.add_argument("mode", choices=["proposals", "read", "family"])
     parser.add_argument("--credential", type=Path, required=True,
-                        help="hermes-google-proposals JSON for proposals, hermes-google-read JSON for read")
+                        help="hermes-google-proposals JSON for proposals, hermes-google-read JSON for read and family")
     parser.add_argument("--family", type=Path, required=True, help="hermes-family JSON")
     parser.add_argument("--state-dir", type=Path, help="proposals: where failed proposals are recorded")
     args = parser.parse_args(argv)

@@ -137,7 +137,7 @@ JOBS = (
         FAMILY_GROUP,
         prompt=PLAN_AHEAD_PROMPT,
         script="plan-ahead-weather",
-        enabled_toolsets=("web", "gcal-read"),
+        enabled_toolsets=("web", "gcal-family"),
     ),
     JobSpec("family-evening-brief", "0 20 * * *", PERSONAL, prompt=EVENING_PROMPT, enabled_toolsets=("gcal-read",)),
     JobSpec(

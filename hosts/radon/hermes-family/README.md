@@ -1,7 +1,7 @@
 # Family Hermes agent on radon
 
 `hosts/radon/hermes-family.nix` runs a Hermes gateway for the family on Signal,
-with the family's cron jobs and two calendar MCP servers (ExecPlan
+with the family's cron jobs and three calendar MCP servers (ExecPlan
 `hermes-family-mac-mini` in javdl/joost, Milestones 4 to 6). It is off until
 `enableHermesFamily` is set in that file. With the gate off, radon's system is
 unchanged.
@@ -25,7 +25,8 @@ reports the Agent volume itself mounted at `/Volumes/Agent`, and until
 `hermes-pf` has loaded the current `hermes` pf anchor in this boot (it writes
 `/var/run/hermes-pf.loaded` after that).
 What it prints before then goes to `/var/log/<daemon>.launch.log`. The gateway
-starts the MCP servers `gcal-proposals` and `gcal-read` itself, over stdio.
+starts the MCP servers `gcal-proposals`, `gcal-read` and `gcal-family` itself,
+over stdio.
 
 signal-cli runs in multi-account mode: Hermes names the account in every call,
 so the daemon needs no account of its own. Its HTTP API has no
@@ -76,8 +77,8 @@ gets only the files it names.
 | `hermes-env` | dotenv, below | the gateway, as `.env` |
 | `hermes-google-mail` | `{"client_id", "client_secret", "refresh_token"}`, scope `gmail.modify` | `mail-fetch`, `notifier` |
 | `hermes-google-proposals` | the same, scope `calendar.events` | MCP server `gcal-proposals` |
-| `hermes-google-read` | the same, scope `calendar.readonly` | MCP server `gcal-read`, `pickup` |
-| `hermes-family` | JSON object, below | the gateway job, `jobs-sync`, `pickup`, both MCP servers |
+| `hermes-google-read` | the same, scope `calendar.readonly` | MCP servers `gcal-read` and `gcal-family`, `pickup` |
+| `hermes-family` | JSON object, below | the gateway job, `jobs-sync`, `pickup`, the three MCP servers |
 
 `hermes-env`:
 
@@ -166,7 +167,7 @@ the build platform.
 | `notifier` | `notifier --credential <hermes-google-mail> --state-dir <state> --hermes-home <HERMES_HOME> --run-log <runs.jsonl>` | no-agent job `family-mail-notifier` |
 | `pickup` | `pickup --credential <hermes-google-read> --family <hermes-family> --run-log <runs.jsonl> [--dry-run] [--date YYYY-MM-DD]` | no-agent job `family-pickup` |
 | `planAheadWeather` | `plan-ahead-weather [--today YYYY-MM-DD]` | `--script` of `family-plan-ahead` |
-| `gcalMcp` | `gcal-mcp proposals --credential <hermes-google-proposals> --family <hermes-family> --state-dir <state>` and `gcal-mcp read --credential <hermes-google-read> --family <hermes-family>` | MCP servers `gcal-proposals` and `gcal-read` (stdio) |
+| `gcalMcp` | `gcal-mcp proposals --credential <hermes-google-proposals> --family <hermes-family> --state-dir <state>`, `gcal-mcp read --credential <hermes-google-read> --family <hermes-family>` and `gcal-mcp family --credential <hermes-google-read> --family <hermes-family>` | MCP servers `gcal-proposals`, `gcal-read` and `gcal-family` (stdio) |
 | `googleOauth` | `google-oauth {mail,proposals,read} --client <client.json>` | you, once per credential, on a laptop |
 | `jobsSync` | `jobs-sync --jobs-dir <hermesHome>/jobs --family <hermes-family> [--dry-run]` | the gateway job, at each start |
 
@@ -189,9 +190,13 @@ run changes nothing.
 | `family-pickup` | `0 14 * * 1-5` | no-agent, `pickup.sh` | `signal` (family group) | | |
 | `family-mail-parsing` | `*/15 7-21 * * *` | agent, `mail-fetch.sh` injected | `local` | `spark/dsv41` on `aperture-local`, pinned | `gcal-proposals` |
 | `family-mail-notifier` | `5-59/15 7-21 * * *` | no-agent, `notifier.sh` | `signal` (family group) | | |
-| `family-plan-ahead` | `0 16 * * 5` | agent, `plan-ahead-weather.sh` injected | `signal` (family group) | cron default | `web`, `gcal-read` |
+| `family-plan-ahead` | `0 16 * * 5` | agent, `plan-ahead-weather.sh` injected | `signal` (family group) | cron default | `web`, `gcal-family` |
 | `family-evening-brief` | `0 20 * * *` | agent | `personal_deliver` | cron default | `gcal-read` |
 | `agent-tooling-digest` | `0 9 * * 6` | agent | `personal_deliver` | cron default | `web`, `skills`, `todo`, `no_mcp` |
+
+`gcal-read` lists the family calendar and the personal calendar;
+`gcal-family` lists the family calendar alone. The plan-ahead answers in the
+family group, so it gets only `gcal-family`.
 
 The evening brief reads the personal calendar, and the digest is Joost's, so
 both go to `personal_deliver`, never the family group. `jobs-sync` refuses a

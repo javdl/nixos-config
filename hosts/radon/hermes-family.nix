@@ -194,9 +194,12 @@ let
             # (gateway/config_loader.py:479-484).
             signal.require_mention = true;
             # Only cron jobs that name a server get it (no_mcp above).
+            # gcal-family lists the family calendar alone, for jobs that
+            # answer in the family group; gcal-read adds the personal one.
             mcp_servers = {
               gcal-proposals = gcalServer "proposals" "hermes-google-proposals";
               gcal-read = gcalServer "read" "hermes-google-read";
+              gcal-family = gcalServer "family" "hermes-google-read";
             };
             security.approval.transport_fallback = "deny";
           };
