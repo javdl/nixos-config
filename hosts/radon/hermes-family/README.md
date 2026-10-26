@@ -103,7 +103,7 @@ In a group the bot answers only when it is mentioned (`signal.require_mention`).
 | `parents` | exactly two addresses, invited to every proposal | `["ouder1@example.org", "ouder2@example.org"]` |
 | `senders` | school and daycare addresses whose mail is read | `["groep5@school.example", "planning@opvang.example"]` |
 | `pickup_question` | optional: the pickup question; default `Wie haalt de kinderen vandaag op?` | `Wie haalt Kind A vandaag uit school?` |
-| `personal_deliver` | where the evening brief and the digest go: one chat on a messaging platform, `<platform>:<chat>` | `signal:+31600000001` |
+| `personal_deliver` | where the evening brief, the digests and the X bookmark alerts go: one chat on a messaging platform, `<platform>:<chat>` | `signal:+31600000001` |
 | `schedules` | a five-field cron expression per job in the job table, by job name; other keys are ignored | `{"family-pickup": "0 12 * * 1-5", ...}` |
 
 ```json
@@ -121,7 +121,9 @@ In a group the bot answers only when it is mentioned (`signal.require_mention`).
     "family-mail-notifier": "10-59/20 8-20 * * *",
     "family-plan-ahead": "30 17 * * 4",
     "family-evening-brief": "30 21 * * *",
-    "agent-tooling-digest": "0 10 * * 0"
+    "agent-tooling-digest": "0 10 * * 0",
+    "x-bookmarks": "17 * * * *",
+    "x-bookmarks-digest": "0 9 * * 0"
   }
 }
 ```
@@ -301,9 +303,12 @@ reason was paused by hand: `jobs-sync` reports it and leaves it paused.
 `/Volumes/Agent/hermes/x-bookmarks/bookmarks.jsonl`, one JSON line per post, in
 the order it found them. A line is never rewritten. It holds the post `id`,
 `first_seen_at` (UTC, to the microsecond), `via` and the raw `post`. `via` is
-`poll` for a bookmark an hourly run found, `backfill` for the first successful
-run and `import` for a browser export. An API line also has `includes`: the
-post's author, media and referenced posts from the same response.
+`poll` for a bookmark a scheduled run found, `backfill` for the first
+successful run and `import` for a browser export. An API line also has
+`includes`: the post's author, media and referenced posts from the same
+response. Give `x-bookmarks` an hourly entry in `schedules`, such as
+`17 * * * *`: X bills a post once per UTC day, so hourly runs cost no more
+than one a day.
 
 1. Each run asks X for the ids of the 10 newest bookmarks, without
    expansions. X bills an owned read once per post per UTC day, so this costs
@@ -346,10 +351,11 @@ Access Token and Secret in the X console and update `hermes-x-bookmarks`.
 Both jobs take `x-bookmarks/.lock` while they stamp, append or read the
 archive, so a digest never runs between a capture's timestamp and its append.
 
-`x-bookmarks-digest` runs on Sundays at 09:00. Its script prints the `poll`
-lines since the last digest, at most 40, as `<bookmark>` blocks with the link,
-author, date, full text, quoted post and outside links. The first digest covers
-the last seven days. Post text cannot close its block or Hermes's code fence:
+`x-bookmarks-digest` runs weekly, such as `0 9 * * 0` (Sundays at 09:00) in
+`schedules`. Its script prints the `poll` lines since the last digest, at most
+40, as `<bookmark>` blocks with the link, author, date, full text, quoted post
+and outside links. The first digest covers the last seven days. Post text
+cannot close its block or Hermes's code fence:
 the invisible characters Hermes deletes before the model reads the prompt are
 deleted first, then tags become `[bookmark]` and runs of backticks become
 quotes. Each block goes through Hermes's prompt scan; a rejected block is

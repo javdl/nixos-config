@@ -1,6 +1,6 @@
 """x-bookmarks-digest: the weekly X bookmark digest's --script.
 
-Prints the bookmarks the hourly x-bookmarks job found since the last digest (the first time:
+Prints the bookmarks the x-bookmarks job found since the last digest (the first time:
 in the last seven days), one <bookmark> block each, for the model to summarize. Bookmarks from
 the first run or from an import are not new and stay out. Each block goes through Hermes's own
 prompt scan; a block the scan rejects is replaced by its link, because Hermes refuses a whole

@@ -250,7 +250,7 @@ def capture(api: Bookmarks, known: set[str], now: str, via: str) -> tuple[list[d
             seen.add(post["id"])
             entries.append(_entry(post, includes_for(post, page.includes), now, via))
     # A probe post that no detailed page returned is stored as the probe saw it (id and
-    # text), so it is neither lost nor fetched again every hour.
+    # text), so it is neither lost nor fetched again on every run.
     rank = {post["id"]: index for index, post in enumerate(probe.posts)}
     for post in unknown:
         if post["id"] not in seen:
