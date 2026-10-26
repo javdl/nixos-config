@@ -66,8 +66,9 @@ _MODEL_CLIENT_TRANSPORT_ERRORS = frozenset({
     "PoolTimeout", "ReadError", "WriteError", "RemoteProtocolError",
 })
 # An SDK status error reads "Error code: 503 - {...}", Hermes's summary of one
-# "HTTP 503: ..." (agent/api_error_summary.py:71-73).
-_MODEL_HOST_STATUS = re.compile(r"(?:Error code:|HTTP) (?:429|50[0-4])\b")
+# "HTTP 503: ..." (agent/api_error_summary.py:71-73). 529 is Anthropic's
+# "overloaded", for the Claude route.
+_MODEL_HOST_STATUS = re.compile(r"(?:Error code:|HTTP) (?:429|50[0-4]|529)\b")
 # Hermes's summaries of an SDK connection error, an SDK timeout and a DNS
 # failure (agent/api_error_summary.py:161-171, 226).
 _UNREACHABLE_SUMMARIES = ("Connection error.", "Request timed out.", "Hermes can't reach the model provider.")
@@ -261,8 +262,18 @@ def save_job_cache(path: Path, history: JobHistory) -> None:
         for job_id in sorted(history)
     }
     staged = path.with_name(f"{path.name}.tmp")
-    staged.write_text(json.dumps(data, indent=1), encoding="utf-8")
+    with staged.open("w", encoding="utf-8") as handle:
+        handle.write(json.dumps(data, indent=1))
+        handle.flush()
+        os.fsync(handle.fileno())
     os.replace(staged, path)
+    # The rename itself must reach the disk too, or a power cut can bring back
+    # the old cache, or none.
+    directory = os.open(path.parent, os.O_RDONLY)
+    try:
+        os.fsync(directory)
+    finally:
+        os.close(directory)
 
 
 def record_jobs(history: JobHistory, jobs: dict[str, Job], now: datetime) -> bool:

@@ -372,6 +372,8 @@ class ModelHostFailureTests(unittest.TestCase):
             "RuntimeError: HTTP 429: Too many requests",
             "InternalServerError: Error code: 502 - {'error': {'message': 'Bad gateway'}}",
             "RateLimitError: Error code: 429",
+            "InternalServerError: Error code: 529 - {'type': 'error', 'error': {'type': 'overloaded_error'}}",
+            "RuntimeError: HTTP 529: Overloaded",
         ):
             with self.subTest(error=error):
                 self.assertIs(run_log.is_model_host_failure(error), True)
