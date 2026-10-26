@@ -228,7 +228,10 @@
 
   # Anthropic inference through Tailscale Aperture (see hosts/bali.nix).
   # --accept-dns=false, so the gateway's MagicDNS name is pinned here.
-  networking.hosts."100.126.110.21" = [ "ai.stargazer-duck.ts.net" "ai" ];
+  networking.hosts."100.126.110.21" = [
+    "ai.stargazer-duck.ts.net"
+    "ai"
+  ];
   environment.variables.ANTHROPIC_BASE_URL = "http://ai.stargazer-duck.ts.net";
 
   # Allow Tailscale traffic through firewall

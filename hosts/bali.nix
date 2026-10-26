@@ -400,7 +400,10 @@ in
   # Tailscale Aperture, the tailnet AI gateway (node `ai`, tag:aperture; the
   # tailnet policy lets tag:devboxes reach it on tcp:80). bali runs with
   # --accept-dns=false, so its MagicDNS name is pinned here.
-  networking.hosts."100.126.110.21" = [ "ai.stargazer-duck.ts.net" "ai" ];
+  networking.hosts."100.126.110.21" = [
+    "ai.stargazer-duck.ts.net"
+    "ai"
+  ];
 
   # Anthropic inference (Claude Code, omp, SDKs) goes through Aperture's
   # `anthropic-sub` provider, which passes each client's own subscription

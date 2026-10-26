@@ -24,10 +24,9 @@ let
     "radon"
   ];
 
-  anthropicBaseUrlEnv =
-    lib.optionalAttrs (aperture ? ${currentSystemName}) {
-      ANTHROPIC_BASE_URL = aperture.${currentSystemName};
-    };
+  anthropicBaseUrlEnv = lib.optionalAttrs (aperture ? ${currentSystemName}) {
+    ANTHROPIC_BASE_URL = aperture.${currentSystemName};
+  };
   aperture = {
     fu137 = "http://ai.stargazer-duck.ts.net";
     j9 = "http://ai.buri-hoki.ts.net";
