@@ -101,8 +101,9 @@ In a group the bot answers only when it is mentioned (`signal.require_mention`).
 | `personal_calendar_id` | optional: Joost's calendar, shared read-only, for the evening brief | `ouder1@example.org` |
 | `parents` | exactly two addresses, invited to every proposal | `["ouder1@example.org", "ouder2@example.org"]` |
 | `senders` | school and daycare addresses whose mail is read | `["groep5@school.example", "planning@opvang.example"]` |
-| `pickup_question` | optional: the 14:00 question; default `Wie haalt de kinderen vandaag op?` | `Wie haalt Kind A vandaag uit school?` |
+| `pickup_question` | optional: the pickup question; default `Wie haalt de kinderen vandaag op?` | `Wie haalt Kind A vandaag uit school?` |
 | `personal_deliver` | where the evening brief and the digest go: one chat on a messaging platform, `<platform>:<chat>` | `signal:+31600000001` |
+| `schedules` | a five-field cron expression per job in the job table, by job name; other keys are ignored | `{"family-pickup": "0 12 * * 1-5", ...}` |
 
 ```json
 {
@@ -112,7 +113,15 @@ In a group the bot answers only when it is mentioned (`signal.require_mention`).
   "parents": ["ouder1@example.org", "ouder2@example.org"],
   "senders": ["groep5@school.example", "planning@opvang.example"],
   "pickup_question": "Wie haalt Kind A vandaag uit school, en wie haalt Kind B van de opvang?",
-  "personal_deliver": "signal:+31600000001"
+  "personal_deliver": "signal:+31600000001",
+  "schedules": {
+    "family-pickup": "0 12 * * 1-5",
+    "family-mail-parsing": "*/20 8-20 * * *",
+    "family-mail-notifier": "10-59/20 8-20 * * *",
+    "family-plan-ahead": "30 17 * * 4",
+    "family-evening-brief": "30 21 * * *",
+    "agent-tooling-digest": "0 10 * * 0"
+  }
 }
 ```
 
@@ -183,16 +192,20 @@ runs each tool with its arguments, and `jobs-sync` writes a real two-line
 
 `jobs-sync` owns these six jobs by name. It creates a missing job, edits a
 drifted one back, and stops without changes if a name appears twice. A second
-run changes nothing.
+run changes nothing. Each job runs on its entry in `schedules` in
+`hermes-family`; the family's routines stay out of this public repository.
+Before any change, `jobs-sync` refuses a family file whose `schedules` is not
+an object or lacks a five-field cron expression for one of these jobs. The
+message names the job, never the expression.
 
 | Name | Schedule | Mode | Deliver | Model | `enabled_toolsets` |
 | --- | --- | --- | --- | --- | --- |
-| `family-pickup` | `0 14 * * 1-5` | no-agent, `pickup.sh` | `signal` (family group) | | |
-| `family-mail-parsing` | `*/15 7-21 * * *` | agent, `mail-fetch.sh` injected | `local` | `spark/dsv41` on `aperture-local`, pinned | `gcal-proposals` |
-| `family-mail-notifier` | `5-59/15 7-21 * * *` | no-agent, `notifier.sh` | `signal` (family group) | | |
-| `family-plan-ahead` | `0 16 * * 5` | agent, `plan-ahead-weather.sh` injected | `signal` (family group) | cron default | `web`, `gcal-family` |
-| `family-evening-brief` | `0 20 * * *` | agent | `personal_deliver` | cron default | `gcal-read` |
-| `agent-tooling-digest` | `0 9 * * 6` | agent | `personal_deliver` | cron default | `web`, `skills`, `todo`, `no_mcp` |
+| `family-pickup` | `schedules` in hermes-family | no-agent, `pickup.sh` | `signal` (family group) | | |
+| `family-mail-parsing` | `schedules` in hermes-family | agent, `mail-fetch.sh` injected | `local` | `spark/dsv41` on `aperture-local`, pinned | `gcal-proposals` |
+| `family-mail-notifier` | `schedules` in hermes-family | no-agent, `notifier.sh` | `signal` (family group) | | |
+| `family-plan-ahead` | `schedules` in hermes-family | agent, `plan-ahead-weather.sh` injected | `signal` (family group) | cron default | `web`, `gcal-family` |
+| `family-evening-brief` | `schedules` in hermes-family | agent | `personal_deliver` | cron default | `gcal-read` |
+| `agent-tooling-digest` | `schedules` in hermes-family | agent | `personal_deliver` | cron default | `web`, `skills`, `todo`, `no_mcp` |
 
 `gcal-read` lists the family calendar and the personal calendar;
 `gcal-family` lists the family calendar alone. The plan-ahead answers in the

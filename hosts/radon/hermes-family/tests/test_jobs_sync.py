@@ -86,7 +86,7 @@ class JobsSyncTest(unittest.TestCase):
         self.home.mkdir()
         self.jobs_dir = Path("/Volumes/Agent/hermes/jobs")
         self.hermes = FakeHermes(self.home)
-        self.specs = tuple(jobs_sync.resolve(spec, PERSONAL) for spec in jobs_sync.JOBS)
+        self.specs = tuple(jobs_sync.resolve(spec, PERSONAL, FAMILY["schedules"]) for spec in jobs_sync.JOBS)
 
     def sync(self, dry_run: bool = False) -> list[str]:
         jobs_sync.write_wrappers(self.home, self.jobs_dir, self.specs)
@@ -99,18 +99,19 @@ class JobsSyncTest(unittest.TestCase):
         report = self.sync()
         self.assertEqual(report, [f"{spec.name}: create" for spec in jobs_sync.JOBS])
         jobs = self.by_name()
-        table = {name: (job["schedule"]["expr"], job["script"], job["no_agent"], job["deliver"], job["model"],
+        self.assertEqual({name: job["schedule"]["expr"] for name, job in jobs.items()}, FAMILY["schedules"])
+        table = {name: (job["script"], job["no_agent"], job["deliver"], job["model"],
                         job["provider"], job["enabled_toolsets"], job["enabled"])
                  for name, job in jobs.items()}
         self.assertEqual(table, {
-            "family-pickup": ("0 14 * * 1-5", "pickup.sh", True, "signal", None, None, None, True),
-            "family-mail-parsing": ("*/15 7-21 * * *", "mail-fetch.sh", False, "local", "spark/dsv41",
+            "family-pickup": ("pickup.sh", True, "signal", None, None, None, True),
+            "family-mail-parsing": ("mail-fetch.sh", False, "local", "spark/dsv41",
                                     "aperture-local", ["gcal-proposals"], True),
-            "family-mail-notifier": ("5-59/15 7-21 * * *", "notifier.sh", True, "signal", None, None, None, True),
-            "family-plan-ahead": ("0 16 * * 5", "plan-ahead-weather.sh", False, "signal", None, None,
+            "family-mail-notifier": ("notifier.sh", True, "signal", None, None, None, True),
+            "family-plan-ahead": ("plan-ahead-weather.sh", False, "signal", None, None,
                                   ["web", "gcal-family"], True),
-            "family-evening-brief": ("0 20 * * *", None, False, PERSONAL, None, None, ["gcal-read"], True),
-            "agent-tooling-digest": ("0 9 * * 6", None, False, PERSONAL, None, None,
+            "family-evening-brief": (None, False, PERSONAL, None, None, ["gcal-read"], True),
+            "agent-tooling-digest": (None, False, PERSONAL, None, None,
                                      ["web", "skills", "todo", "no_mcp"], True),
         })
 
@@ -221,12 +222,15 @@ class MainTest(unittest.TestCase):
         self.dir = temp_dir(self)
 
     def main(self, personal_deliver, *flags: str) -> tuple[int, str]:
-        family = write_json(self.dir / "family.json", dict(FAMILY, personal_deliver=personal_deliver))
+        return self.run_with(dict(FAMILY, personal_deliver=personal_deliver), *flags)
+
+    def run_with(self, family: dict, *flags: str) -> tuple[int, str]:
+        path = write_json(self.dir / "family.json", family)
         out = io.StringIO()
         with mock.patch.dict(os.environ, {"HERMES_HOME": str(self.dir / "home")}), \
                 redirect_stdout(out), redirect_stderr(out):
             # A missing binary: a run that gets past validation fails instead of reaching a real hermes.
-            code = jobs_sync.main(["--jobs-dir", "/j", "--family", str(family),
+            code = jobs_sync.main(["--jobs-dir", "/j", "--family", str(path),
                                    "--hermes", str(self.dir / "no-hermes"), *flags])
         return code, out.getvalue()
 
@@ -250,6 +254,38 @@ class MainTest(unittest.TestCase):
         for target in ("signal:+31600000001", "telegram:123456789", "matrix:!kamer:example.org"):
             code, output = self.main(target, "--dry-run")
             self.assertEqual(code, 0, output)
+
+    def test_schedules_must_be_an_object(self):
+        without = {key: value for key, value in FAMILY.items() if key != "schedules"}
+        for family in (without, dict(FAMILY, schedules=None), dict(FAMILY, schedules=["30 12 * * 1-5"])):
+            code, output = self.run_with(family)
+            self.assertEqual(code, 1)
+            self.assertIn("the family file needs schedules", output)
+        self.assertFalse((self.dir / "home").exists())
+
+    def test_every_job_needs_a_five_field_cron_expression(self):
+        cases = [("family-pickup", None), ("family-plan-ahead", "30 17 * * *  4"), ("family-evening-brief", 2130),
+                 ("agent-tooling-digest", "@weekly"), ("family-mail-notifier", "10-59/20 8-20 * *"),
+                 ("family-mail-parsing", "")]
+        for name, value in cases:
+            schedules = dict(FAMILY["schedules"])
+            if value is None:
+                del schedules[name]
+            else:
+                schedules[name] = value
+            code, output = self.run_with(dict(FAMILY, schedules=schedules))
+            self.assertEqual(code, 1, name)
+            self.assertIn(f"schedules has no five-field cron expression for {name}\n", output)
+            if value:
+                self.assertNotIn(str(value), output)
+        self.assertFalse((self.dir / "home").exists())
+
+    def test_schedules_ignore_other_keys_and_extra_whitespace(self):
+        schedules = dict(FAMILY["schedules"], **{"old-job": "x", "family-pickup": " 30  12 * * 1-5 "})
+        code, output = self.run_with(dict(FAMILY, schedules=schedules), "--dry-run")
+        self.assertEqual(code, 0, output)
+        family = write_json(self.dir / "family.json", dict(FAMILY, schedules=schedules))
+        self.assertEqual(jobs_sync.schedules(family), FAMILY["schedules"])
 
     def test_dry_run_prints_the_plan(self):
         code, output = self.main(PERSONAL, "--dry-run")

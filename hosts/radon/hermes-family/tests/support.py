@@ -90,6 +90,14 @@ FAMILY = {
     "senders": ["groep5@school.example", "planning@opvang.example"],
     "pickup_question": "Wie haalt Kind A vandaag uit school, en wie haalt Kind B van de opvang?",
     "personal_deliver": "signal:+31600000001",
+    "schedules": {
+        "family-pickup": "30 12 * * 1-5",
+        "family-mail-parsing": "*/20 8-20 * * *",
+        "family-mail-notifier": "10-59/20 8-20 * * *",
+        "family-plan-ahead": "30 17 * * 4",
+        "family-evening-brief": "30 21 * * *",
+        "agent-tooling-digest": "0 10 * * 0",
+    },
 }
 
 
@@ -102,6 +110,7 @@ def run_document(prompt: str, response: str, job_name: str = "family-mail-parsin
     _run_doc_header at :2238-2246)."""
     return (
         f"# Cron Job: {job_name}\n\n**Job ID:** abc123def456\n**Run Time:** 2026-10-24 14:07:12\n"
-        f"**Schedule:** */15 7-21 * * *\n\n**Prompt Characters:** {len(prompt)}\n## Prompt\n\n{prompt}\n\n"
+        "**Schedule:** */20 8-20 * * *\n\n"
+        f"**Prompt Characters:** {len(prompt)}\n## Prompt\n\n{prompt}\n\n"
         f"**Response Characters:** {len(response)}\n## Response\n\n{response}\n"
     )

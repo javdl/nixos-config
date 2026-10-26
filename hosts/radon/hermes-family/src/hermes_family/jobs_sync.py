@@ -28,6 +28,8 @@ creates a second job with a name it manages. Facts below are from Hermes
   (cron/scheduler_delivery.py:603-627), an unknown platform resolves to no
   target (:629-640, :670-671, tools/send_message_targets.py:103-105), and a
   comma separates targets (cron/scheduler_delivery.py:883).
+- Each job's cron schedule is its entry in `schedules` in the family file,
+  so the family's routines stay out of this public repository.
 """
 
 from __future__ import annotations
@@ -116,7 +118,6 @@ Skip a topic with no news."""
 @dataclass(frozen=True)
 class JobSpec:
     name: str
-    schedule: str
     deliver: str
     prompt: str = ""
     script: str | None = None
@@ -124,6 +125,8 @@ class JobSpec:
     model: str | None = None
     provider: str | None = None
     enabled_toolsets: tuple[str, ...] | None = None
+    # Set by resolve() from the family file's schedules.
+    schedule: str = ""
 
     @property
     def script_file(self) -> str | None:
@@ -131,10 +134,9 @@ class JobSpec:
 
 
 JOBS = (
-    JobSpec("family-pickup", "0 14 * * 1-5", FAMILY_GROUP, script="pickup", no_agent=True),
+    JobSpec("family-pickup", FAMILY_GROUP, script="pickup", no_agent=True),
     JobSpec(
         "family-mail-parsing",
-        "*/15 7-21 * * *",
         "local",
         prompt=MAIL_PROMPT,
         script="mail-fetch",
@@ -142,19 +144,17 @@ JOBS = (
         provider="aperture-local",
         enabled_toolsets=("gcal-proposals",),
     ),
-    JobSpec("family-mail-notifier", "5-59/15 7-21 * * *", FAMILY_GROUP, script="notifier", no_agent=True),
+    JobSpec("family-mail-notifier", FAMILY_GROUP, script="notifier", no_agent=True),
     JobSpec(
         "family-plan-ahead",
-        "0 16 * * 5",
         FAMILY_GROUP,
         prompt=PLAN_AHEAD_PROMPT,
         script="plan-ahead-weather",
         enabled_toolsets=("web", "gcal-family"),
     ),
-    JobSpec("family-evening-brief", "0 20 * * *", PERSONAL, prompt=EVENING_PROMPT, enabled_toolsets=("gcal-read",)),
+    JobSpec("family-evening-brief", PERSONAL, prompt=EVENING_PROMPT, enabled_toolsets=("gcal-read",)),
     JobSpec(
         "agent-tooling-digest",
-        "0 9 * * 6",
         PERSONAL,
         prompt=DIGEST_PROMPT,
         enabled_toolsets=("web", "skills", "todo", "no_mcp"),
@@ -162,26 +162,48 @@ JOBS = (
 )
 
 
-def resolve(spec: JobSpec, personal_deliver: str) -> JobSpec:
-    if spec.deliver != PERSONAL:
-        return spec
-    return JobSpec(**{**spec.__dict__, "deliver": personal_deliver})
+def resolve(spec: JobSpec, personal_deliver: str, schedules: dict[str, str]) -> JobSpec:
+    deliver = personal_deliver if spec.deliver == PERSONAL else spec.deliver
+    return JobSpec(**{**spec.__dict__, "deliver": deliver, "schedule": schedules[spec.name]})
+
+
+def _family_data(family_file: Path) -> dict:
+    try:
+        data = json.loads(Path(family_file).read_text())
+    except (OSError, json.JSONDecodeError) as error:
+        raise ValueError(f"cannot read the family file {family_file}: {error}") from error
+    return data if isinstance(data, dict) else {}
 
 
 def personal_deliver(family_file: Path) -> str:
     """`personal_deliver` from the family file: one chat as `<platform>:<chat>`
     on one of MESSAGING_PLATFORMS. Bare `signal` (the family group), `local`,
     `origin` and any other platform are refused, whatever follows the colon."""
-    try:
-        data = json.loads(Path(family_file).read_text())
-    except (OSError, json.JSONDecodeError) as error:
-        raise ValueError(f"cannot read the family file {family_file}: {error}") from error
-    target = data.get("personal_deliver") if isinstance(data, dict) else None
+    target = _family_data(family_file).get("personal_deliver")
     platform, _, chat = target.strip().partition(":") if isinstance(target, str) else ("", "", "")
     if platform not in MESSAGING_PLATFORMS or not chat.strip() or "," in chat:
         raise ValueError("the family file's personal_deliver must name one chat on a messaging platform, "
                          "for example signal:+31600000001")
     return target.strip()
+
+
+def schedules(family_file: Path) -> dict[str, str]:
+    """`schedules` from the family file: a five-field cron expression for each
+    job in JOBS, by name. Other keys are ignored. An error names the job, never
+    the expression."""
+    found = _family_data(family_file).get("schedules")
+    if not isinstance(found, dict):
+        raise ValueError("the family file needs schedules: an object with a five-field cron expression per job")
+    result, missing = {}, []
+    for spec in JOBS:
+        value = found.get(spec.name)
+        if isinstance(value, str) and len(value.split()) == 5:
+            result[spec.name] = " ".join(value.split())
+        else:
+            missing.append(spec.name)
+    if missing:
+        raise ValueError(f"the family file's schedules has no five-field cron expression for {', '.join(missing)}")
+    return result
 
 
 def wrapper_text(jobs_dir: Path, script: str) -> str:
@@ -393,7 +415,8 @@ def verify(hermes_home: Path, specs: tuple[JobSpec, ...]) -> list[str]:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="jobs-sync", description=__doc__.splitlines()[0])
     parser.add_argument("--jobs-dir", type=Path, required=True, help="${hermesHome}/jobs, the store-linked scripts")
-    parser.add_argument("--family", type=Path, required=True, help="hermes-family JSON, for personal_deliver")
+    parser.add_argument("--family", type=Path, required=True,
+                        help="hermes-family JSON, for personal_deliver and schedules")
     parser.add_argument("--hermes", default="hermes")
     parser.add_argument("--dry-run", action="store_true", help="print the plan; change nothing")
     args = parser.parse_args(argv)
@@ -403,11 +426,12 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("HERMES_HOME must be set to the gateway's HERMES_HOME")
     try:
         personal = personal_deliver(args.family)
+        plan = schedules(args.family)
     except ValueError as error:
         print(f"jobs-sync: {error}", file=sys.stderr)
         return 1
     hermes_home = Path(home)
-    specs = tuple(resolve(spec, personal) for spec in JOBS)
+    specs = tuple(resolve(spec, personal, plan) for spec in JOBS)
 
     if not args.dry_run:
         for name in write_wrappers(hermes_home, args.jobs_dir, specs):
