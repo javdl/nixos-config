@@ -13,6 +13,7 @@ from email.utils import parseaddr
 from pathlib import Path
 
 KEY_RE = re.compile(r"[0-9a-f]{32}")
+ADDRESS_RE = re.compile(r"[^@\s]+@[^@\s]+\.[^@\s]+")
 RECORD_KEEP = 500
 
 PROCESSED_LABEL = "hermes-processed"
@@ -114,14 +115,13 @@ class State:
         self.proposal_failures_file = self.dir / "proposal-failures.jsonl"
 
     def senders(self) -> frozenset[str]:
-        """Allowlisted sender addresses. A missing file allows nobody."""
+        """Allowlisted sender addresses: the lines that are an address. A
+        missing file, or one without a valid address, allows nobody."""
         try:
             lines = self.senders_file.read_text().splitlines()
         except FileNotFoundError:
             return frozenset()
-        return frozenset(
-            line.strip().lower() for line in lines if line.strip() and not line.lstrip().startswith("#")
-        )
+        return frozenset(line.strip().lower() for line in lines if ADDRESS_RE.fullmatch(line.strip()))
 
     def ledger(self) -> set[str]:
         try:

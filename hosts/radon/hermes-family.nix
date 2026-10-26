@@ -273,12 +273,12 @@ let
       };
     }}
     # The family jobs: links, the mail sender allowlist from the family file
-    # (none if the file has no valid list, so mail-fetch reads nothing), and
+    # (none unless every entry is an address, so mail-fetch reads nothing), and
     # the job table. A jobs-sync failure leaves the jobs as they were and does
     # not stop the gateway.
     mkdir -p ${stateDir}
     ln -sfn ${jobLinks} ${hermesHome}/jobs
-    if ${pkgs.jq}/bin/jq -r '.senders | if type == "array" and all(type == "string") then .[] else error("senders is not a list of addresses") end' \
+    if ${pkgs.jq}/bin/jq -r '.senders | if type == "array" and all(type == "string" and test("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) then .[] else error("senders is not a list of addresses") end' \
       ${secret "hermes-family"} >${stateDir}/.senders.txt.new; then
       mv ${stateDir}/.senders.txt.new ${stateDir}/senders.txt
     else

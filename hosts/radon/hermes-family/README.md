@@ -52,8 +52,8 @@ Manager activation would do, with the upstream module's own code
    `hermes-env` secret.
 5. Link `/Volumes/Agent/hermes/jobs` to the job scripts in the store.
 6. Write `/Volumes/Agent/hermes/state/senders.txt` from `senders` in
-   `hermes-family`. Without a valid list there is no file, and mail-fetch
-   reads no mail.
+   `hermes-family`. Without a valid list, a list of addresses only, there is
+   no file, and mail-fetch reads no mail.
 7. Run `jobs-sync` (see the job table). If it fails, the log says so and the
    gateway starts anyway.
 8. `exec hermes gateway`.
@@ -234,10 +234,10 @@ reason was paused by hand: `jobs-sync` reports it and leaves it paused.
    SHA-256 of the raw Message-ID. A block's body is the mail's `text/plain`
    parts, or its `text/html` parts as text when those are missing or blank. A
    text part whose body Gmail stores as an attachment is fetched with
-   `users.messages.attachments.get`. The body is cut at 8 KB. When
-   `senders.txt` is missing or lists no address, `mail-fetch` lists and labels
-   nothing, so the mail is still there once the family secret has a valid
-   sender list.
+   `users.messages.attachments.get`. The body is cut at 8 KB. `mail-fetch`
+   only reads the lines of `senders.txt` that are an address. When the file
+   is missing or has no such line, it lists and labels nothing, so the mail
+   is still there once the family secret has a valid sender list.
 2. Each block goes through Hermes's own prompt scan,
    `_scan_cron_skill_assembled` in `tools/cronjob_prompt_scan.py`, run with the
    installed Hermes's Python. Hermes runs the same scan on the parsing job's

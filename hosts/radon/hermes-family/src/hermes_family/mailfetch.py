@@ -210,7 +210,7 @@ class Candidate:
 def fetch(gmail: Gmail, state: State, *, scan: Scan, dry_run: bool, max_mails: int, now: datetime) -> list[str]:
     senders = state.senders()
     if not senders:
-        print("mail-fetch: senders.txt lists nobody; listed and labeled nothing", file=sys.stderr)
+        print("mail-fetch: senders.txt lists no valid address; listed and labeled nothing", file=sys.stderr)
         return []
     ledger = state.ledger()
     quarantined = {entry.key for entry in state.quarantined()}

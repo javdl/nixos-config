@@ -191,13 +191,24 @@ class MailFetchTest(MailFetchCase):
         self.assertEqual(self.run_main(), "")
         self.assertEqual(self.fake.matching("GET", "/users/me/messages"), [])
         self.assertEqual(self.fake.matching("POST", "/modify"), [])
-        self.assertIn("senders.txt lists nobody", self.stderr.getvalue())
+        self.assertIn("senders.txt lists no valid address", self.stderr.getvalue())
 
     def test_senders_file_without_addresses_lists_and_labels_nothing(self):
         (self.state_dir / "senders.txt").write_text("# no valid sender list in the family secret\n\n")
         self.assertEqual(self.run_main(), "")
         self.assertEqual(self.fake.matching("GET", "/users/me/messages"), [])
         self.assertEqual(self.fake.matching("POST", "/modify"), [])
+
+    def test_senders_file_with_only_malformed_entries_lists_and_labels_nothing(self):
+        (self.state_dir / "senders.txt").write_text("school.example\n@opvang.example\ngroep5@\n")
+        self.assertEqual(self.run_main(), "")
+        self.assertEqual(self.fake.matching("GET", "/users/me/messages"), [])
+        self.assertEqual(self.fake.matching("POST", "/modify"), [])
+        self.assertIn("senders.txt lists no valid address", self.stderr.getvalue())
+
+    def test_malformed_sender_entries_are_dropped(self):
+        (self.state_dir / "senders.txt").write_text("school.example\n Groep5@School.example \nplanning@opvang\n")
+        self.assertEqual(State(self.state_dir).senders(), frozenset({"groep5@school.example"}))
 
 
 class QuarantineTest(MailFetchCase):
