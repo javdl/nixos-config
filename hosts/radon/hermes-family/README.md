@@ -90,6 +90,7 @@ group id from it:
 
 ```bash
 sudo -u hermes curl -s http://127.0.0.1:18080/api/v1/rpc \
+  -H 'Content-Type: application/json' \
   -d '{"jsonrpc":"2.0","id":1,"method":"listGroups","params":{"account":"+31600000009"}}'
 ```
 
