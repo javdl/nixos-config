@@ -231,7 +231,9 @@ reason was paused by hand: `jobs-sync` reports it and leaves it paused.
    `senders.txt` get `hermes-ignored`. Mail whose key is in
    `mail-ledger.txt` gets `hermes-processed`. Up to 10 other mails become
    `<mail>` blocks, `Mail-Key:` first; the key is the first 32 hex characters of
-   SHA-256 of the raw Message-ID.
+   SHA-256 of the raw Message-ID. When `senders.txt` is missing or lists no
+   address, `mail-fetch` lists and labels nothing, so the mail is still there
+   once the family secret has a valid sender list.
 2. Each block goes through Hermes's own prompt scan,
    `_scan_cron_skill_assembled` in `tools/cronjob_prompt_scan.py`, run with the
    installed Hermes's Python. Hermes runs the same scan on the parsing job's

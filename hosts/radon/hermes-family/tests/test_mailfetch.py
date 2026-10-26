@@ -150,9 +150,18 @@ class MailFetchTest(MailFetchCase):
         self.assertEqual(self.run_main(), "")
         self.assertFalse((self.state_dir / "fetch-record.jsonl").exists())
 
-    def test_missing_senders_file_allows_nobody(self):
+    def test_missing_senders_file_lists_and_labels_nothing(self):
         (self.state_dir / "senders.txt").unlink()
         self.assertEqual(self.run_main(), "")
+        self.assertEqual(self.fake.matching("GET", "/users/me/messages"), [])
+        self.assertEqual(self.fake.matching("POST", "/modify"), [])
+        self.assertIn("senders.txt lists nobody", self.stderr.getvalue())
+
+    def test_senders_file_without_addresses_lists_and_labels_nothing(self):
+        (self.state_dir / "senders.txt").write_text("# no valid sender list in the family secret\n\n")
+        self.assertEqual(self.run_main(), "")
+        self.assertEqual(self.fake.matching("GET", "/users/me/messages"), [])
+        self.assertEqual(self.fake.matching("POST", "/modify"), [])
 
 
 class QuarantineTest(MailFetchCase):
