@@ -1,8 +1,13 @@
-"""The Milestone 3 gate's scoring of a model's calendar tool call, without a model."""
+"""The Milestone 3 gate without a model: its scoring of the calendar tool call
+and the reasoning effort it sends."""
 
+import contextlib
 import importlib.util
+import io
 import json
+import os
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -77,6 +82,59 @@ class CallPassesTests(unittest.TestCase):
             result = gate.run_case(fixture, "spark/dsv41", 1024, None, 1, "warm")
         self.assertFalse(result.passed)
         self.assertFalse(result.first_response_passed)
+
+
+class ReasoningEffortTests(unittest.TestCase):
+    def run_gate(self, *flags):
+        fixture = gate.Fixture(system="system", tools=[gate.CALENDAR_TOOL], hermes_tool_count=0)
+        passed = gate.RunResult(run=0, turns=[turn([call(GOOD_ARGS)])], first_response_passed=True, passed=True)
+        argv = ["hermes-cron-gate.py", "--model", "spark/dsv41", "--runs", "2", *flags]
+        with (
+            mock.patch.object(sys, "argv", argv),
+            mock.patch.object(gate, "configured_reasoning_effort", return_value="high", create=True) as configured,
+            mock.patch.object(gate, "load_fixture", return_value=fixture),
+            mock.patch.object(gate, "run_case", return_value=passed) as run_case,
+            contextlib.redirect_stdout(io.StringIO()),
+        ):
+            self.assertEqual(gate.main(), 0)
+        return [c.args[3] for c in run_case.call_args_list], configured
+
+    def test_without_the_flag_the_gate_sends_the_configured_effort(self):
+        efforts, configured = self.run_gate()
+        configured.assert_called_once_with("spark/dsv41")
+        self.assertEqual(efforts, ["high"] * 3)
+
+    def test_the_flag_overrides_the_configured_effort(self):
+        efforts, configured = self.run_gate("--reasoning-effort", "low")
+        configured.assert_not_called()
+        self.assertEqual(efforts, ["low"] * 3)
+
+    def test_an_empty_flag_sends_no_effort(self):
+        efforts, configured = self.run_gate("--reasoning-effort", "")
+        configured.assert_not_called()
+        self.assertEqual(efforts, [""] * 3)
+
+
+def hermes_importable():
+    try:
+        import agent.reasoning_effort  # noqa: F401
+        import hermes_cli.config  # noqa: F401
+        import hermes_constants  # noqa: F401
+    except ImportError:
+        return False
+    return True
+
+
+@unittest.skipUnless(hermes_importable(), "needs a Hermes Python (hermesVenv) on sys.path")
+class ConfiguredReasoningEffortTests(unittest.TestCase):
+    def test_the_per_model_override_then_the_global_effort(self):
+        with tempfile.TemporaryDirectory() as home:
+            Path(home, "config.yaml").write_text(
+                "agent:\n  reasoning_effort: medium\n  reasoning_overrides:\n    spark/dsv41: high\n")
+            with mock.patch.dict(os.environ, {"HERMES_HOME": home}):
+                self.assertEqual(gate.configured_reasoning_effort("spark/dsv41"), "high")
+                self.assertEqual(gate.configured_reasoning_effort("deepseek/deepseek-v4.1-flash"), "medium")
+
 
 
 if __name__ == "__main__":

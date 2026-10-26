@@ -21,9 +21,15 @@ the inspecting Hermes's cron session, the largest prompt a cron run can send.
 the family job's prompt.
 
 Run it with the Python of an installed Hermes, so the prompt is one Hermes
-builds:
+builds. Unless --reasoning-effort says otherwise, it sends the reasoning effort
+that Hermes's config resolves for --model, the way a cron run of a job without
+its own effort does (cron/scheduler.py:490-510): agent.reasoning_overrides,
+then agent.reasoning_effort. To send what the deployed family config sends,
+run it as hermes against the family's HERMES_HOME, with the Python of the
+Hermes package the hermes-family command runs (its hermesVenv):
 
-    ~/.hermes/hermes-agent/venv/bin/python hermes-cron-gate.py --model spark/dsv41
+    sudo -u hermes -H /usr/bin/env HERMES_HOME=/Volumes/Agent/hermes/.hermes \\
+      "$FAMILY_HERMES_VENV/bin/python3" hermes-cron-gate.py --model spark/dsv41
 """
 
 from __future__ import annotations
@@ -158,6 +164,15 @@ def load_fixture(tools: str, prompt_toolsets: list[str] | None) -> Fixture:
     )
     hermes_tools = list(getattr(agent, "tools", None) or []) if tools == "hermes-cron" else []
     return Fixture(build_system_prompt(agent), hermes_tools + [CALENDAR_TOOL], len(hermes_tools))
+
+
+def configured_reasoning_effort(model: str) -> str | None:
+    """The reasoning_effort Hermes's config.yaml sends for model, or None when it sends none."""
+    from agent.reasoning_effort import requested_effort
+    from hermes_cli.config import load_config
+    from hermes_constants import resolve_reasoning_config
+
+    return requested_effort(resolve_reasoning_config(load_config(), model))
 
 
 def _rfc3339(value) -> datetime | None:
@@ -319,8 +334,11 @@ def main() -> int:
     parser.add_argument("--prompt-toolsets", nargs="*", default=None,
                         help="toolsets for building the system prompt; default is the inspecting Hermes's own")
     parser.add_argument("--reasoning-effort", default=None,
-                        help="sent as reasoning_effort; match agent.reasoning_overrides in the family config")
+                        help="sent as reasoning_effort; default is what the inspecting Hermes's config sends for"
+                             " --model, and an empty value sends none")
     args = parser.parse_args()
+    if args.reasoning_effort is None:
+        args.reasoning_effort = configured_reasoning_effort(args.model)
 
     fixture = load_fixture(args.tools, args.prompt_toolsets)
     print(json.dumps({
