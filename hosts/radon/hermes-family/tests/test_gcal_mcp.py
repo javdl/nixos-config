@@ -82,7 +82,7 @@ class ProposalsTest(unittest.TestCase):
         self.assertEqual(len(set(ids)), 3)
         self.assertTrue(all(len(i) == 32 and set(i) <= set("0123456789abcdef") for i in ids))
 
-    def test_the_same_instant_with_another_offset_is_one_event(self):
+    def test_the_same_instant_written_another_way_is_one_event(self):
         created = set()
 
         def calendar(call):
@@ -94,8 +94,8 @@ class ProposalsTest(unittest.TestCase):
         server = Server(self, "proposals", FakeNet().on("POST", PROPOSALS_EVENTS, calendar))
         first = server.call("create_proposal", title="Ouderavond", start="2026-11-12T19:00:00+01:00",
                             end="2026-11-12T20:00:00+01:00", mail_key=KEY, n=1)
-        again = server.call("create_proposal", title="Ouderavond school", start="2026-11-12T18:00:00Z",
-                            end="2026-11-12T19:30:00Z", mail_key=KEY, n=1)
+        again = server.call("create_proposal", title="Ouderavond school", start="2026-11-12T19:00+01:00",
+                            end="2026-11-12T20:30:00.000+01:00", mail_key=KEY, n=1)
         self.assertIn("Created proposal", first)
         self.assertIn("already exists", again)
         self.assertEqual(created, {expected_id("2026-11-12T18:00:00Z", 1)})
@@ -106,6 +106,32 @@ class ProposalsTest(unittest.TestCase):
             "create_proposal", title="Sluitingsdag opvang", start="2026-11-06", end="2026-11-06", mail_key=KEY, n=1)
         self.assertEqual(fake.calls[0].body["start"], {"date": "2026-11-06"})
         self.assertEqual(fake.calls[0].body["end"], {"date": "2026-11-07"})
+
+    def test_both_offsets_of_the_fall_back_hour_are_accepted(self):
+        fake = FakeNet().on("POST", PROPOSALS_EVENTS, CALENDAR["created"])
+        server = Server(self, "proposals", fake)
+        server.call("create_proposal", title="Nachtwandeling", start="2026-10-25T02:30:00+02:00",
+                    end="2026-10-25T02:45:00+02:00", mail_key=KEY, n=1)
+        server.call("create_proposal", title="Nachtwandeling", start="2026-10-25T02:30:00+01:00",
+                    end="2026-10-25T02:45:00+01:00", mail_key=KEY, n=2)
+        self.assertEqual([call.body["id"] for call in fake.calls],
+                         [expected_id("2026-10-25T00:30:00Z", 1), expected_id("2026-10-25T01:30:00Z", 2)])
+
+    def test_rejects_an_offset_that_is_not_amsterdams_without_calling_google(self):
+        fake = FakeNet()
+        server = Server(self, "proposals", fake)
+        for start, end in [
+            ("2026-11-12T15:30:00+02:00", "2026-11-12T16:00:00+02:00"),
+            ("2026-11-12T15:30:00+01:00", "2026-11-12T16:00:00+02:00"),
+            ("2026-11-12T14:30:00Z", "2026-11-12T15:00:00Z"),
+            ("2026-06-12T15:30:00+01:00", "2026-06-12T16:00:00+01:00"),
+            ("2026-03-29T02:30:00+01:00", "2026-03-29T03:30:00+02:00"),
+        ]:
+            with self.assertRaises(Exception) as caught:
+                server.call("create_proposal", title="X", start=start, end=end, mail_key=KEY, n=1)
+            self.assertIn("Europe/Amsterdam offset", str(caught.exception))
+        self.assertEqual(fake.calls, [])
+        self.assertEqual(server.state.proposal_failures(), {})
 
     def test_rejects_bad_input_without_calling_google(self):
         fake = FakeNet()

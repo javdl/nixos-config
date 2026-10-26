@@ -32,9 +32,12 @@ TITLE_LIMIT = 200
 
 
 def _when(value: str, *, end: bool) -> tuple[dict[str, str], date | datetime]:
-    """A date, or an RFC 3339 date-time with an offset. A date-time without one
-    is refused: it is ambiguous around a daylight saving change, and the event
-    id hashes the instant."""
+    """A date, or an RFC 3339 date-time with the Europe/Amsterdam offset of that
+    moment. A date-time without an offset is refused: it is ambiguous around a
+    daylight saving change, and the event id hashes the instant. So is one with
+    another offset: Google would store the instant, and the event would land
+    an hour or more away from the time the mail gives. In the hour that repeats
+    when summer time ends, both offsets name a real local time."""
     value = value.strip()
     try:
         day = date.fromisoformat(value)
@@ -50,6 +53,9 @@ def _when(value: str, *, end: bool) -> tuple[dict[str, str], date | datetime]:
         raise ValueError(f"not a date or an RFC 3339 date-time: {value!r}") from error
     if moment.tzinfo is None:
         raise ValueError(f"date-time without an offset: {value!r}; write it as for example 2026-11-12T15:30:00+01:00")
+    if moment.astimezone(ZONE).utcoffset() != moment.utcoffset():
+        raise ValueError(f"{value!r} does not have the Europe/Amsterdam offset for that date and time: "
+                         "+01:00 in winter time, +02:00 in summer time")
     return {"dateTime": moment.isoformat()}, moment
 
 
@@ -188,7 +194,8 @@ def build_server(mode: str, api_factory: Callable[[], Api], family_factory: Call
             Europe/Amsterdam, such as 2026-11-12T15:30:00+01:00 (winter) or
             2026-06-12T15:30:00+02:00 (summer), or dates such as 2026-11-12 for
             an all-day event (the end date is the last day). A date-time
-            without an offset is refused. mail_key is the Mail-Key line of the
+            without an offset, or with another offset than Europe/Amsterdam's
+            on that date, is refused. mail_key is the Mail-Key line of the
             mail, copied exactly. n is the appointment's position among the
             appointments the mail lists, in the mail's order: 1 for the first.
             Call it once per appointment; running it twice for one mail key,
