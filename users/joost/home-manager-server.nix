@@ -38,6 +38,7 @@ in
       inherit currentSystemName;
       controller = currentSystemName == "bali";
     })
+    (import ../beacon.nix { inherit currentSystemName; })
   ];
 
   # Home-manager state version

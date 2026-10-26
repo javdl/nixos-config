@@ -656,6 +656,14 @@ Keep the fleet inventory in `users/herdr-fleet.nix`; follow
 [`docs/herdr-command-center.md`](docs/herdr-command-center.md) for rollout,
 verification, authentication, and adding nodes.
 
+### Beacon fleet capture
+
+Every joost machine sweeps agent session stores with Beacon every 5 minutes and
+ships the events to bali, which keeps `~/.local/share/beacon-fleet/runtime.jsonl`
+and serves the dashboard on `127.0.0.1:8766` (`ssh -L 8766:127.0.0.1:8766 bali`).
+`sweptRuntimes` in `users/beacon.nix` is the one list of swept runtimes. Read
+[`docs/beacon-fleet.md`](docs/beacon-fleet.md) before changing it.
+
 ### Cua Bots fleet
 
 bali, github-runner-03/04/05 and fu137 provide Linux Spaces (Docker) to the
