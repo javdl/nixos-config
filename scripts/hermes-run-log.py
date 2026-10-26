@@ -42,17 +42,29 @@ TERMINAL_STATUSES = ("completed", "failed", "unknown")
 CRON_PRINCIPAL_ID = "cron-owner"
 MAX_ERROR_CHARS = 500
 
-# An unreachable, overloaded or rate-limiting model host. A 4xx such as an
-# unknown model is a configuration fault and does not match.
-_MODEL_HOST_FAILURE = re.compile(
-    r"\b(?:429|50[0-4])\b"
-    r"|connection (?:error|refused|reset|aborted)"
-    r"|connecterror|apiconnectionerror|apitimeouterror|internalservererror"
-    r"|timed out|timeout"
-    r"|rate.?limit|overloaded|service unavailable|bad gateway"
-    r"|name or service not known|nodename nor servname|no route to host|network is unreachable",
-    re.IGNORECASE,
-)
+# Hermes records an agent run's failure as "<exception type>: <message>"
+# (cron/scheduler.py:2652-2653 at hermes-agent 81a55437). A model call that
+# keeps failing ends the turn with a summary of its last error
+# (agent/turn_recovery.py:1145-1240, agent/api_error_summary.py:155-226), and
+# cron raises that summary as a RuntimeError (cron/scheduler.py:2086-2087); a
+# model-client exception can also escape with its own type. Only those shapes
+# count, so the inactivity watchdog's TimeoutError, a script timeout or an
+# agent's own [CRON_FAILURE] report of a failing calendar service is not blamed
+# on the model host. Of the statuses, an overloaded or rate-limiting host
+# counts; a 4xx such as an unknown model is a configuration fault.
+_EXCEPTION_PREFIX = re.compile(r"(?:[\w.]+\.)?([A-Z]\w*(?:Error|Timeout|Exception))\s*:\s*(.*)", re.DOTALL)
+# The openai and anthropic SDKs' connection and timeout errors and the httpx
+# transport errors beneath them.
+_MODEL_CLIENT_TRANSPORT_ERRORS = frozenset({
+    "APIConnectionError", "APITimeoutError", "ConnectError", "ConnectTimeout", "ReadTimeout", "WriteTimeout",
+    "PoolTimeout", "ReadError", "WriteError", "RemoteProtocolError",
+})
+# An SDK status error reads "Error code: 503 - {...}", Hermes's summary of one
+# "HTTP 503: ..." (agent/api_error_summary.py:71-73).
+_MODEL_HOST_STATUS = re.compile(r"(?:Error code:|HTTP) (?:429|50[0-4])\b")
+# Hermes's summaries of an SDK connection error, an SDK timeout and a DNS
+# failure (agent/api_error_summary.py:161-171, 226).
+_UNREACHABLE_SUMMARIES = ("Connection error.", "Request timed out.", "Hermes can't reach the model provider.")
 
 
 @dataclasses.dataclass(frozen=True)
@@ -108,7 +120,16 @@ def _clean_error(error: Optional[str]) -> Optional[str]:
 
 
 def is_model_host_failure(error: Optional[str]) -> bool:
-    return bool(error) and _MODEL_HOST_FAILURE.search(error) is not None
+    """Whether an agent run's recorded error is the model client's, for an unreachable or overloaded host."""
+    match = _EXCEPTION_PREFIX.match(error or "")
+    if match is None:
+        return False
+    error_type, message = match.groups()
+    return (
+        error_type in _MODEL_CLIENT_TRANSPORT_ERRORS
+        or _MODEL_HOST_STATUS.match(message) is not None
+        or message.startswith(_UNREACHABLE_SUMMARIES)
+    )
 
 
 def build_row(execution: Execution, job: Optional[Job], usage: Optional[Usage], route: Route) -> dict:

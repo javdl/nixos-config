@@ -165,6 +165,19 @@ class CollectorTests(unittest.TestCase):
         self.assertEqual((row["model"], row["provider"]), ("spark/dsv41", "aperture-local"))
         self.assertIsNone(row["input_tokens"])
 
+    def test_a_job_past_its_inactivity_limit_is_not_a_model_host_failure(self):
+        s = self.stores
+        s.add_job(job_record("idle00000001", "mail parsing"))
+        error = ("TimeoutError: Cron job 'mail parsing' idle for 600s (limit 600s)"
+                 " — last activity: tool mcp_calendar_create_event")
+        s.add_execution("idle00000001", status="failed", error=error,
+                        started="2026-10-24T14:15:00+02:00", finished="2026-10-24T14:25:00+02:00")
+
+        s.collect()
+        [row] = s.rows()
+        self.assertEqual(row["status"], "failed")
+        self.assertIs(row["model_host_failure"], False)
+
     def test_no_agent_run_has_status_and_duration_only(self):
         s = self.stores
         s.add_job(job_record("pick00000001", "pickup", no_agent=True))
@@ -219,6 +232,45 @@ class CollectorTests(unittest.TestCase):
         home = Path(self.tmp.name) / "fresh"
         self.assertEqual(run_log.collect(home, home / "runs.jsonl", ROUTE), 0)
         self.assertFalse((home / "runs.jsonl").exists())
+
+
+class ModelHostFailureTests(unittest.TestCase):
+    """Error texts in the shapes Hermes 81a55437 records for an agent run."""
+
+    def test_model_client_failures_match(self):
+        for error in (
+            "APIConnectionError: Connection error.",
+            "openai.APITimeoutError: Request timed out.",
+            "ReadTimeout: timed out",
+            "RuntimeError: Connection error.",
+            "RuntimeError: Request timed out.",
+            "RuntimeError: Hermes can't reach the model provider. You may be offline. "
+            "Check your internet connection and try again.",
+            "RuntimeError: HTTP 503: Service Unavailable",
+            "RuntimeError: HTTP 429: Too many requests",
+            "InternalServerError: Error code: 502 - {'error': {'message': 'Bad gateway'}}",
+            "RateLimitError: Error code: 429",
+        ):
+            with self.subTest(error=error):
+                self.assertIs(run_log.is_model_host_failure(error), True)
+
+    def test_other_subsystems_do_not_match(self):
+        for error in (
+            None,
+            "",
+            "TimeoutError: Cron job 'mail parsing' idle for 600s (limit 600s) — last activity: tool web_search",
+            "TimeoutError: Canonical cron session store acquisition timed out",
+            "Script timed out after 120s: pickup.sh",
+            "Calendar: HTTP 503 from the proposals service, no event was created.",
+            "The calendar service answered 503 Service Unavailable; no event was created.",
+            "RuntimeError: MCP server 'calendar' call timed out after 30s",
+            "RuntimeError: calendar API returned HTTP 500 for events.insert",
+            "RuntimeError: Error code: 404 - {'error': {'message': 'model no/such-model not found'}}",
+            "RuntimeError: HTTP 400: reasoning_effort must be one of low, high, xhigh, max",
+            "Restart-safe cron worker dispatch failed: connection refused",
+        ):
+            with self.subTest(error=error):
+                self.assertIs(run_log.is_model_host_failure(error), False)
 
 
 def hermes_importable():
