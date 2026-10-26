@@ -162,6 +162,12 @@ def call_passes(calls: list) -> bool:
         return False
     try:
         args = json.loads(calls[0]["arguments"] or "{}")
+    except ValueError:
+        return False
+    # Valid JSON need not be an object: a model can send null, a string or a list.
+    if not isinstance(args, dict):
+        return False
+    try:
         start = datetime.fromisoformat(str(args.get("start", "")))
     except ValueError:
         return False
