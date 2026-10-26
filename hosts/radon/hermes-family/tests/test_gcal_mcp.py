@@ -191,6 +191,28 @@ class ReadTest(unittest.TestCase):
         self.assertEqual(len(result["events"]), 1)
         self.assertIn("personal", result["unavailable"][0])
 
+    def test_personal_calendar_without_answer_is_reported_not_fatal(self):
+        def unreachable(call):
+            raise urllib.error.URLError("timed out")
+
+        text = Server(self, "read", self.fake(unreachable)).call(
+            "list_events", time_min="2026-10-28", time_max="2026-10-29")
+        result = json.loads(text)
+        self.assertEqual([e["title"] for e in result["events"]], ["Zwemles Kind A"])
+        self.assertEqual(len(result["unavailable"]), 1)
+        self.assertIn("personal", result["unavailable"][0])
+
+    def test_family_calendar_without_answer_fails_the_call(self):
+        def unreachable(call):
+            raise ConnectionRefusedError("refused")
+
+        fake = (FakeNet()
+                .on("GET", "/calendars/family%40group.calendar.google.com/events", unreachable)
+                .on("GET", "/calendars/ouder1%40example.org/events", CALENDAR["personal"]))
+        with self.assertRaises(Exception) as caught:
+            Server(self, "read", fake).call("list_events", time_min="2026-10-28", time_max="2026-10-29")
+        self.assertIn("refused", str(caught.exception))
+
     def test_range_is_capped(self):
         with self.assertRaises(Exception) as caught:
             Server(self, "read", FakeNet()).call("list_events", time_min="2026-01-01", time_max="2026-06-01")

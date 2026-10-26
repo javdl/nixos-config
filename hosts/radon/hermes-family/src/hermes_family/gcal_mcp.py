@@ -158,7 +158,7 @@ def events_between(api: Api, family: Family, time_min: str, time_max: str) -> st
     for label, calendar_id in calendars:
         try:
             events = list_events(api, calendar_id, start.isoformat(), end.isoformat())
-        except GoogleError as error:
+        except (GoogleError, OSError) as error:
             if label == "family":
                 raise
             unavailable.append(f"{label}: {error}")
