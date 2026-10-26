@@ -57,6 +57,7 @@ in
     # imports it, so the other Macs keep their activation unchanged.
     inputs.sops-nix.darwinModules.sops
     ./radon/agent-launcher.nix
+    (import ./radon/hermes-family.nix { inherit agentRoot agentVolumeMounted hermesHome; })
   ];
 
   # Stay current: rebuild from the GitHub flake daily (launchd equivalent of
