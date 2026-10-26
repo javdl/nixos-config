@@ -142,6 +142,11 @@ class Gmail:
     def message(self, message_id: str) -> dict[str, Any]:
         return self.api.call("GET", f"{GMAIL}/messages/{message_id}", params={"format": "full"}).json()
 
+    def attachment(self, message_id: str, attachment_id: str) -> str:
+        """The base64url data of a part body Gmail stores as an attachment."""
+        url = f"{GMAIL}/messages/{message_id}/attachments/{attachment_id}"
+        return self.api.call("GET", url).json().get("data") or ""
+
     def label_id(self, name: str) -> str:
         """The id of a user label, created when missing."""
         labels = self.api.call("GET", f"{GMAIL}/labels").json().get("labels") or []

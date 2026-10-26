@@ -31,6 +31,27 @@ INJECTION = {
         "body": {"data": base64.urlsafe_b64encode(INJECTION_TEXT.encode()).decode()},
     },
 }
+STORED_KEY = mail_key("<stored-body@opvang.example>")
+STORED = {
+    "id": "m6",
+    "threadId": "t6",
+    "labelIds": ["INBOX"],
+    "payload": {
+        "mimeType": "multipart/alternative",
+        "filename": "",
+        "headers": [
+            {"name": "From", "value": "Opvang <planning@opvang.example>"},
+            {"name": "Subject", "value": "Studiedag"},
+            {"name": "Date", "value": "Mon, 26 Oct 2026 08:00:00 +0100"},
+            {"name": "Message-ID", "value": "<stored-body@opvang.example>"},
+        ],
+        "body": {"size": 0},
+        "parts": [
+            {"mimeType": "text/plain", "filename": "", "headers": [], "body": {"attachmentId": "ANGjdJ8-plain", "size": 61}},
+            {"mimeType": "text/html", "filename": "", "headers": [], "body": {"attachmentId": "ANGjdJ8-html", "size": 30}},
+        ],
+    },
+}
 
 # Stands in for the installed Hermes's Python: answers the scan protocol
 # (a JSON list of texts in, one error per text out) with the shape of Hermes's
@@ -60,6 +81,10 @@ def alternative(plain: dict, html: dict) -> dict:
         {"mimeType": "text/plain", "filename": "", "headers": [], "body": plain},
         {"mimeType": "text/html", "filename": "", "headers": [], "body": html},
     ]}
+
+
+def no_attachment(attachment_id: str) -> str:
+    raise AssertionError(f"unexpected attachment {attachment_id}")
 
 
 def gmail_fake(*extra: dict) -> FakeNet:
@@ -220,6 +245,23 @@ class QuarantineTest(MailFetchCase):
         self.assertEqual((state.fetched(), state.quarantined()), ({}, []))
 
 
+class StoredBodyTest(MailFetchCase):
+    extra_messages = (STORED,)
+
+    def setUp(self):
+        super().setUp()
+        self.fake.routes.insert(0, ("GET", "/messages/m6/attachments/ANGjdJ8-plain",
+                                    {"size": 61, "data": b64("Studiedag maandag 9 november: de opvang is de hele dag open.")}))
+
+    def test_a_text_part_stored_as_an_attachment_is_fetched(self):
+        output = self.run_main()
+        self.assertIn(f"Mail-Key: {STORED_KEY}\n", output)
+        self.assertIn("Studiedag maandag 9 november: de opvang is de hele dag open.", output)
+        calls = self.fake.matching("GET", "/attachments/")
+        self.assertEqual([call.path for call in calls], ["/gmail/v1/users/me/messages/m6/attachments/ANGjdJ8-plain"])
+
+
+
 class ScanProtocolTest(unittest.TestCase):
     def test_one_error_per_text_in_order(self):
         scan = mailfetch.hermes_scan(str(fake_python(temp_dir(self))))
@@ -242,7 +284,7 @@ class BodyTest(unittest.TestCase):
 
     def test_a_blank_plain_alternative_falls_back_to_the_html_one(self):
         payload = alternative({"data": b64(" \r\n \r\n")}, {"data": b64("<p>Ouderavond 12 november, 19:30 uur</p>")})
-        self.assertEqual(mailfetch.plain_text(payload), "Ouderavond 12 november, 19:30 uur")
+        self.assertEqual(mailfetch.plain_text(payload, no_attachment), "Ouderavond 12 november, 19:30 uur")
 
     def test_mail_key_matches_the_gate_fixture_key(self):
         self.assertEqual(SCHOOL_KEY, "76daed97cd1135f83d9772ef841c73e3")

@@ -22,6 +22,7 @@ import subprocess
 import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from functools import partial
 from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any, Callable, Iterator
@@ -127,8 +128,8 @@ def _parts(part: dict[str, Any]) -> Iterator[dict[str, Any]]:
         yield from _parts(child)
 
 
-def _part_text(part: dict[str, Any]) -> str:
-    raw = base64.urlsafe_b64decode(part["body"]["data"] + "=" * (-len(part["body"]["data"]) % 4))
+def _part_text(part: dict[str, Any], data: str) -> str:
+    raw = base64.urlsafe_b64decode(data + "=" * (-len(data) % 4))
     content_type = next(
         (h.get("value", "") for h in part.get("headers") or [] if h.get("name", "").lower() == "content-type"), ""
     )
@@ -139,12 +140,22 @@ def _part_text(part: dict[str, Any]) -> str:
         return raw.decode("utf-8", errors="replace")
 
 
-def plain_text(payload: dict[str, Any]) -> str:
+def _body_data(part: dict[str, Any], attachment: Callable[[str], str]) -> str:
+    """A part's base64url body: inline, or fetched when Gmail stores it apart."""
+    body = part.get("body") or {}
+    if body.get("data"):
+        return body["data"]
+    return attachment(body["attachmentId"]) if body.get("attachmentId") else ""
+
+
+def plain_text(payload: dict[str, Any], attachment: Callable[[str], str]) -> str:
     """The text/plain parts, or the text/html parts as text when the plain
-    ones are missing or blank. Attachments are skipped."""
-    inline = [p for p in _parts(payload) if not p.get("filename") and (p.get("body") or {}).get("data")]
+    ones are missing or blank. Parts with a filename are skipped. `attachment`
+    returns the data of a text part whose body Gmail stores as an attachment."""
+    parts = [p for p in _parts(payload) if not p.get("filename")]
     for mime in ("text/plain", "text/html"):
-        texts = [_part_text(p) for p in inline if p.get("mimeType") == mime]
+        bodies = [(p, _body_data(p, attachment)) for p in parts if p.get("mimeType") == mime]
+        texts = [_part_text(p, data) for p, data in bodies if data]
         text = "\n\n".join(texts).replace("\r\n", "\n")
         text = html_to_text(text) if mime == "text/html" else text.strip()
         if text:
@@ -226,7 +237,8 @@ def fetch(gmail: Gmail, state: State, *, scan: Scan, dry_run: bool, max_mails: i
             continue
         if key in candidates or len(candidates) >= max_mails:
             continue
-        candidates[key] = Candidate(key, gmail_id, head, block(key, head, plain_text(message.get("payload") or {})))
+        body = plain_text(message.get("payload") or {}, partial(gmail.attachment, gmail_id))
+        candidates[key] = Candidate(key, gmail_id, head, block(key, head, body))
 
     blocks: list[str] = []
     printed: dict[str, str] = {}

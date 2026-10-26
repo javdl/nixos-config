@@ -232,7 +232,9 @@ reason was paused by hand: `jobs-sync` reports it and leaves it paused.
    `mail-ledger.txt` gets `hermes-processed`. Up to 10 other mails become
    `<mail>` blocks, `Mail-Key:` first; the key is the first 32 hex characters of
    SHA-256 of the raw Message-ID. A block's body is the mail's `text/plain`
-   parts, or its `text/html` parts as text when those are missing or blank.
+   parts, or its `text/html` parts as text when those are missing or blank. A
+   text part whose body Gmail stores as an attachment is fetched with
+   `users.messages.attachments.get`.
    When `senders.txt` is missing or lists no address, `mail-fetch` lists and
    labels nothing, so the mail is still there once the family secret has a
    valid sender list.
