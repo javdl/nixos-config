@@ -9,7 +9,9 @@ quarantine.txt for the notifier, its key in the ledger, the
 `hermes-quarantined` label), because Hermes refuses a whole run whose prompt
 fails the scan, and that one mail would block every later run. The printed
 keys go to the fetch record, so the notifier only accepts keys this script
-showed the model. Empty output makes Hermes skip the model call.
+showed the model. A body over 8 KB is cut, and the fetch record keeps that
+mail's headers, so the notifier tells the family to read the rest. Empty
+output makes Hermes skip the model call.
 """
 
 from __future__ import annotations
@@ -32,6 +34,7 @@ from hermes_family.state import (
     IGNORED_LABEL,
     PROCESSED_LABEL,
     QUARANTINED_LABEL,
+    Head,
     Quarantined,
     State,
     address,
@@ -201,6 +204,7 @@ class Candidate:
     gmail_id: str
     head: dict[str, str]
     text: str
+    truncated: bool
 
 
 def fetch(gmail: Gmail, state: State, *, scan: Scan, dry_run: bool, max_mails: int, now: datetime) -> list[str]:
@@ -238,23 +242,29 @@ def fetch(gmail: Gmail, state: State, *, scan: Scan, dry_run: bool, max_mails: i
         if key in candidates or len(candidates) >= max_mails:
             continue
         body = plain_text(message.get("payload") or {}, partial(gmail.attachment, gmail_id))
-        candidates[key] = Candidate(key, gmail_id, head, block(key, head, body))
+        truncated = len(body.encode()) > BODY_LIMIT_BYTES
+        candidates[key] = Candidate(key, gmail_id, head, block(key, head, body), truncated)
 
     blocks: list[str] = []
     printed: dict[str, str] = {}
+    cut_mails: dict[str, Head] = {}
     for mail, error in zip(candidates.values(), scan([mail.text for mail in candidates.values()]), strict=True):
+        fields = [mail.head.get(name, "") for name in ("from", "subject", "date")]
         if not error:
             printed[mail.key] = mail.gmail_id
             blocks.append(mail.text)
+            if mail.truncated:
+                print(f"mail-fetch: {mail.key} body cut at {BODY_LIMIT_BYTES} bytes", file=sys.stderr)
+                cut_mails[mail.key] = Head(*fields)
             continue
         print(f"mail-fetch: {mail.key} {'would be ' if dry_run else ''}quarantined: {error}", file=sys.stderr)
         if dry_run:
             continue
-        state.quarantine(Quarantined(mail.key, *(mail.head.get(name, "") for name in ("from", "subject", "date"))))
+        state.quarantine(Quarantined(mail.key, *fields))
         state.append_ledger([mail.key])
         label(mail.gmail_id, QUARANTINED_LABEL)
     if printed and not dry_run:
-        state.record_fetch(printed, now)
+        state.record_fetch(printed, now, cut_mails)
     return blocks
 
 

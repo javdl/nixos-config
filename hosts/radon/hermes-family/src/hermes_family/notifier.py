@@ -4,10 +4,11 @@ A no-agent cron job, so Hermes delivers its stdout to the job's --deliver
 target and an empty stdout sends nothing. It reads the parsing job's run
 documents newer than its cursor, takes the last fenced JSON block of each
 model answer, ledgers and labels the processed keys that mail-fetch printed,
-and prints the fixed template for each uncertain mail. A key whose proposal
-failed at Google after mail-fetch last printed it stays out of the ledger, so
-the next parsing run tries that mail again; so does a key whose uncertain
-entry has no allowlisted sender or no date, with a failure row. It also
+and prints the fixed template for each uncertain mail, and for each mail
+whose body mail-fetch cut, from the headers mail-fetch recorded. A key whose
+proposal failed at Google after mail-fetch last printed it stays out of the
+ledger, so the next parsing run tries that mail again; so does a key whose
+notice has no allowlisted sender or no date, with a failure row. It also
 prints the fixed template for each mail that mail-fetch quarantined since the
 last run.
 Model text never reaches the output: every printed field is re-derived or
@@ -181,9 +182,12 @@ def run(state: State, output_dir: Path) -> Pass:
         for entry in parsed.uncertain:
             if entry.key in new and notices.get(entry.key) is None:
                 notices[entry.key] = notice(TEMPLATE, entry.sender, entry.subject, entry.received, senders)
+        for key in new:
+            if (cut := fetched[key].truncated) and notices.get(key) is None:
+                notices[key] = notice(TEMPLATE, cut.sender, cut.subject, cut.date, senders)
         held = [key for key, line in notices.items() if line is None]
         result.failures += [
-            f"{document.name}: uncertain {key} has no allowlisted sender or no date; left for the next run"
+            f"{document.name}: the notice for {key} has no allowlisted sender or no date; left for the next run"
             for key in held
         ]
         new = [key for key in new if key not in held]

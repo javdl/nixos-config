@@ -81,9 +81,17 @@ def _time(value: object) -> datetime | None:
 
 
 @dataclass(frozen=True)
+class Head:
+    sender: str
+    subject: str
+    date: str
+
+
+@dataclass(frozen=True)
 class Fetched:
     gmail_id: str
     at: datetime
+    truncated: Head | None = None
 
 
 @dataclass(frozen=True)
@@ -126,22 +134,30 @@ class State:
             with self.ledger_file.open("a") as handle:
                 handle.write("".join(f"{key}\n" for key in keys))
 
-    def record_fetch(self, mails: dict[str, str], now: datetime) -> None:
-        """Append the keys this mail-fetch run printed, with their Gmail ids."""
-        _append_kept(self.fetch_record_file, {"ts": now.isoformat(), "mails": mails})
+    def record_fetch(self, mails: dict[str, str], now: datetime, truncated: dict[str, Head] | None = None) -> None:
+        """Append the keys this mail-fetch run printed, with their Gmail ids,
+        and the headers of the ones whose body it cut."""
+        cut = {key: {"from": h.sender, "subject": h.subject, "date": h.date} for key, h in (truncated or {}).items()}
+        _append_kept(self.fetch_record_file, {"ts": now.isoformat(), "mails": mails, "truncated": cut})
 
     def fetched(self) -> dict[str, Fetched]:
-        """Every key mail-fetch printed in the kept runs, with its Gmail id and
-        the time of the last run that printed it."""
+        """Every key mail-fetch printed in the kept runs, with its Gmail id,
+        the time of the last run that printed it, and the headers when that
+        run cut its body."""
         mails: dict[str, Fetched] = {}
         for row in _rows(self.fetch_record_file):
             at = _time(row.get("ts"))
             mails_row = row.get("mails")
             if at is None or not isinstance(mails_row, dict):
                 continue
+            cut = row.get("truncated")
+            cut = cut if isinstance(cut, dict) else {}
             for key, gmail_id in mails_row.items():
                 if is_key(key) and isinstance(gmail_id, str):
-                    mails[key] = Fetched(gmail_id, at)
+                    head = cut.get(key)
+                    fields = ("from", "subject", "date")
+                    truncated = Head(*(str(head.get(f, "")) for f in fields)) if isinstance(head, dict) else None
+                    mails[key] = Fetched(gmail_id, at, truncated)
         return mails
 
     def record_proposal_failure(self, key: str, now: datetime) -> None:

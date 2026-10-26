@@ -5,7 +5,7 @@ from contextlib import redirect_stdout
 from datetime import datetime, timezone
 
 from hermes_family import notifier
-from hermes_family.state import Quarantined, State, mail_key
+from hermes_family.state import Head, Quarantined, State, mail_key
 from tests.support import CREDENTIAL, FakeNet, fixture, run_document, temp_dir, token_route, write_json
 
 SCHOOL = mail_key("<gate-fixture-0001@school.example>")
@@ -116,7 +116,7 @@ class NotifierTest(unittest.TestCase):
         self.assertEqual(self.run_main(), "")
         self.assertEqual(self.state.ledger(), {DAYCARE})
         self.assertEqual({call.path.split("/")[-2] for call in self.fake.matching("POST", "/modify")}, {"m3"})
-        self.assertIn(f"uncertain {SCHOOL} has no allowlisted sender or no date", self.log_rows()[0]["error"])
+        self.assertIn(f"the notice for {SCHOOL} has no allowlisted sender or no date", self.log_rows()[0]["error"])
 
     def test_uncertain_entry_with_an_unparseable_date_stays_retryable_and_logs(self):
         self.write_run("2026-10-24_14-07-12.md", answer_with({
@@ -127,7 +127,7 @@ class NotifierTest(unittest.TestCase):
         self.assertEqual(self.state.ledger(), set())
         self.assertEqual(self.fake.matching("POST", "/modify"), [])
         self.assertEqual(len(self.log_rows()), 1)
-        self.assertIn(f"uncertain {SCHOOL} has no allowlisted sender or no date", self.log_rows()[0]["error"])
+        self.assertIn(f"the notice for {SCHOOL} has no allowlisted sender or no date", self.log_rows()[0]["error"])
         self.state.record_fetch({SCHOOL: "m1"}, datetime(2026, 10, 24, 12, 15, tzinfo=timezone.utc))
         self.write_run("2026-10-24_14-22-09.md", answer_with({
             "processed": [SCHOOL],
@@ -135,6 +135,33 @@ class NotifierTest(unittest.TestCase):
         }))
         self.assertEqual(self.run_main(), "Kon geen datum vinden: groep5@school.example, x (2026-10-22). Kijk de mail even na.\n")
         self.assertEqual(self.state.ledger(), {SCHOOL})
+
+    def cut_fetch(self, date: str) -> None:
+        self.state.record_fetch({SCHOOL: "m1"}, datetime(2026, 10, 24, 12, 15, tzinfo=timezone.utc),
+                                {SCHOOL: Head("Groep 5 <groep5@school.example>", "Nieuwsbrief november", date)})
+
+    def test_a_mail_whose_body_was_cut_gets_the_template_from_its_headers(self):
+        self.cut_fetch("Mon, 26 Oct 2026 08:00:00 +0100")
+        self.write_run("2026-10-24_14-22-09.md", answer_with({"processed": [SCHOOL, DAYCARE]}))
+        self.assertEqual(self.run_main(), "Kon geen datum vinden: groep5@school.example, Nieuwsbrief november "
+                                          "(2026-10-26 08:00). Kijk de mail even na.\n")
+        self.assertEqual(self.state.ledger(), {SCHOOL, DAYCARE})
+
+    def test_a_cut_mail_the_model_listed_as_uncertain_gets_one_notice(self):
+        self.cut_fetch("Mon, 26 Oct 2026 08:00:00 +0100")
+        self.write_run("2026-10-24_14-22-09.md", answer_with({
+            "processed": [SCHOOL],
+            "uncertain": [{"key": SCHOOL, "from": "groep5@school.example", "subject": "Ouderavond", "received": "2026-10-22"}],
+        }))
+        self.assertEqual(self.run_main(), "Kon geen datum vinden: groep5@school.example, Ouderavond (2026-10-22). "
+                                          "Kijk de mail even na.\n")
+
+    def test_a_cut_mail_without_a_date_stays_retryable_and_logs(self):
+        self.cut_fetch("")
+        self.write_run("2026-10-24_14-22-09.md", answer_with({"processed": [SCHOOL]}))
+        self.assertEqual(self.run_main(), "")
+        self.assertEqual(self.state.ledger(), set())
+        self.assertIn(f"the notice for {SCHOOL} has no allowlisted sender or no date", self.log_rows()[0]["error"])
 
     def test_subject_is_cut_to_80_characters(self):
         self.write_run("2026-10-24_14-07-12.md", answer_with({

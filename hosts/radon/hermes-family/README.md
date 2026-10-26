@@ -234,10 +234,10 @@ reason was paused by hand: `jobs-sync` reports it and leaves it paused.
    SHA-256 of the raw Message-ID. A block's body is the mail's `text/plain`
    parts, or its `text/html` parts as text when those are missing or blank. A
    text part whose body Gmail stores as an attachment is fetched with
-   `users.messages.attachments.get`.
-   When `senders.txt` is missing or lists no address, `mail-fetch` lists and
-   labels nothing, so the mail is still there once the family secret has a
-   valid sender list.
+   `users.messages.attachments.get`. The body is cut at 8 KB. When
+   `senders.txt` is missing or lists no address, `mail-fetch` lists and labels
+   nothing, so the mail is still there once the family secret has a valid
+   sender list.
 2. Each block goes through Hermes's own prompt scan,
    `_scan_cron_skill_assembled` in `tools/cronjob_prompt_scan.py`, run with the
    installed Hermes's Python. Hermes runs the same scan on the parsing job's
@@ -248,7 +248,10 @@ reason was paused by hand: `jobs-sync` reports it and leaves it paused.
    `mail-ledger.txt`, and the mail gets `hermes-quarantined`. If the scan
    cannot run, `mail-fetch` prints nothing and fails.
 3. The other blocks are printed, and their keys go to `fetch-record.jsonl`.
-   With nothing to print, Hermes skips the model call.
+   For a mail whose body was cut, the record also keeps its From, Subject
+   and Date, so `notifier` treats it as uncertain (step 6): the model still
+   proposes what it read in the first 8 KB, and the family is told to read
+   the rest. With nothing to print, Hermes skips the model call.
 4. The parsing job numbers the appointments in each mail in mail order and
    calls `create_proposal` once per appointment it can date, with the mail
    key, that number `n`, and a start and end that are RFC 3339 with an offset
@@ -267,12 +270,13 @@ reason was paused by hand: `jobs-sync` reports it and leaves it paused.
    fenced JSON block, ledgers and labels the `processed` keys that
    `fetch-record.jsonl` lists, and prints
    `Kon geen datum vinden: <from>, <subject> (<received>). Kijk de mail even na.`
-   for each uncertain mail it ledgered in that pass. A key with a
-   proposal failure after `mail-fetch` last printed it stays out of the
+   for each uncertain mail it ledgered in that pass. A cut mail the model did
+   not list as uncertain gets that line from its recorded headers. A key with
+   a proposal failure after `mail-fetch` last printed it stays out of the
    ledger, so the next parsing run shows that mail again. So does a key whose
-   uncertain entry has a sender not in `senders.txt` or a received date that
-   does not parse, and that entry becomes a `failed` row in `runs.jsonl`. A
-   run with an answer but no valid block becomes one `failed` row too.
+   line has a sender not in `senders.txt` or a received date that does not
+   parse, and that key becomes a `failed` row in `runs.jsonl`. A run with an
+   answer but no valid block becomes one `failed` row too.
 7. For each line `mail-fetch` added to `quarantine.txt` since its last run,
    `notifier` prints
    `Kon de mail niet lezen: <from>, <subject> (<received>). Kijk de mail even na.`

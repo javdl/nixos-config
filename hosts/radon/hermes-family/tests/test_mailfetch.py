@@ -6,7 +6,7 @@ from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 from hermes_family import mailfetch
-from hermes_family.state import Quarantined, State, mail_key
+from hermes_family.state import Head, Quarantined, State, mail_key
 from tests.support import CREDENTIAL, FakeNet, fixture, temp_dir, token_route, write_json
 
 GMAIL = fixture("gmail.json")
@@ -259,6 +259,30 @@ class StoredBodyTest(MailFetchCase):
         self.assertIn("Studiedag maandag 9 november: de opvang is de hele dag open.", output)
         calls = self.fake.matching("GET", "/attachments/")
         self.assertEqual([call.path for call in calls], ["/gmail/v1/users/me/messages/m6/attachments/ANGjdJ8-plain"])
+
+
+LONG_KEY = mail_key("<nieuwsbrief-11@school.example>")
+LONG_TEXT = "Beste ouders,\n\n" + "Nieuws uit de klas. " * 450 + "\n\nDonderdag 19 november is de schoolfotograaf er."
+LONG = dict(INJECTION, id="m7", threadId="t7", payload=dict(INJECTION["payload"], headers=[
+    {"name": "From", "value": "Groep 5 <groep5@school.example>"},
+    {"name": "Subject", "value": "Nieuwsbrief november"},
+    {"name": "Date", "value": "Mon, 26 Oct 2026 08:00:00 +0100"},
+    {"name": "Message-ID", "value": "<nieuwsbrief-11@school.example>"},
+], body={"data": b64(LONG_TEXT)}))
+
+
+class LongBodyTest(MailFetchCase):
+    extra_messages = (LONG,)
+
+    def test_a_cut_body_is_recorded_with_its_headers_for_the_notifier(self):
+        output = self.run_main()
+        self.assertIn(f"Mail-Key: {LONG_KEY}\n", output)
+        self.assertNotIn("schoolfotograaf", output)
+        fetched = State(self.state_dir).fetched()
+        self.assertEqual(fetched[LONG_KEY].truncated,
+                         Head("Groep 5 <groep5@school.example>", "Nieuwsbrief november", "Mon, 26 Oct 2026 08:00:00 +0100"))
+        self.assertIsNone(fetched[SCHOOL_KEY].truncated)
+        self.assertIn(f"{LONG_KEY} body cut at 8192 bytes", self.stderr.getvalue())
 
 
 
