@@ -17,6 +17,11 @@ writes, read-only:
   session and its child sessions (compression, subagents) hold the model,
   token counts and cost (hermes_state_common.py:461-529, 591-607).
 
+A row names its job and route from `cron/jobs.json`. A job's record can be gone
+before its run is logged, so the collector keeps every job it has seen in
+`runs-jobs.json` next to the log; a run of a job it never saw is logged under
+the job's id, without a route.
+
 Run it as the Hermes user. It is idempotent: each row carries its
 `execution_id`, and a run appends only executions whose id runs.jsonl does not
 hold yet. The log is its own checkpoint, so a crash at any point cannot log an
@@ -136,12 +141,16 @@ def build_row(execution: Execution, job: Optional[Job], usage: Optional[Usage], 
     """The runs.jsonl row for one finished execution, keys in the documented order."""
     finished = _parse_time(execution.finished_at) or _parse_time(execution.claimed_at)
     started = _parse_time(execution.started_at)
-    agent_run = job is None or not job.no_agent
-    if agent_run:
-        model = (usage.model if usage else None) or (job.model if job else None) or route.model
-        provider = (job.provider if job else None) or route.provider
+    if job is not None:
+        agent_run = not job.no_agent
+        model = ((usage.model if usage else None) or job.model or route.model) if agent_run else None
+        provider = (job.provider or route.provider) if agent_run else None
     else:
-        model = provider = None
+        # A job neither jobs.json nor the cache knows: only a session shows it
+        # ran an agent, and nothing shows the job's own route.
+        agent_run = usage is not None
+        model = usage.model if usage else None
+        provider = None
     failed = execution.status != "completed"
     return {
         "ts": _utc_iso(finished),
@@ -218,6 +227,34 @@ def load_jobs(path: Path) -> dict[str, Job]:
     }
 
 
+def job_cache_path(run_log: Path) -> Path:
+    """The collector's record of every job it has seen, next to runs.jsonl."""
+    return run_log.with_name(f"{run_log.stem}-jobs.json")
+
+
+def load_job_cache(path: Path) -> dict[str, Job]:
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return {}
+    except json.JSONDecodeError:
+        return {}  # rebuilt from jobs.json below; only removed jobs are lost
+    jobs = {}
+    for job_id, fields in data.items() if isinstance(data, dict) else ():
+        try:
+            jobs[job_id] = Job(**fields)
+        except TypeError:
+            continue
+    return jobs
+
+
+def save_job_cache(path: Path, jobs: dict[str, Job]) -> None:
+    staged = path.with_name(f"{path.name}.tmp")
+    staged.write_text(json.dumps({job_id: dataclasses.asdict(jobs[job_id]) for job_id in sorted(jobs)}, indent=1),
+                      encoding="utf-8")
+    os.replace(staged, path)
+
+
 def logged_execution_ids(lines: list[str]) -> set[str]:
     ids = set()
     for line in lines:
@@ -233,7 +270,8 @@ def logged_execution_ids(lines: list[str]) -> set[str]:
 def collect(hermes_home: Path, run_log: Path, route: Route) -> int:
     """Append the rows for every terminal execution not logged yet; return how many."""
     ledger = hermes_home / "cron" / "executions.db"
-    if not ledger.exists():
+    jobs_file = hermes_home / "cron" / "jobs.json"
+    if not ledger.exists() and not jobs_file.exists():
         return 0
     run_log.parent.mkdir(parents=True, exist_ok=True)
     with open(run_log, "a+", encoding="utf-8") as log:
@@ -247,11 +285,25 @@ def collect(hermes_home: Path, run_log: Path, route: Route) -> int:
             log.truncate(len(text.encode()))
         logged = logged_execution_ids(text.splitlines())
 
+        # A job's runs outlive its record in jobs.json: `hermes cron remove`
+        # drops it at once, the retention sweep drops a finished one-shot or
+        # repeat-limited job after cron.completed_retention_days, 7 by default,
+        # and the dispatch-limit guard drops a one-shot whose tick died
+        # (cron/jobs.py:2260-2263, 2399-2402, 2800-2849, 3152-3191). So every
+        # pass records each job it finds, and a run of a job that is gone
+        # still gets its name and route.
+        cache_path = job_cache_path(run_log)
+        cached = load_job_cache(cache_path)
+        jobs = {**cached, **load_jobs(jobs_file)}
+        if jobs != cached:
+            save_job_cache(cache_path, jobs)
+
+        if not ledger.exists():
+            return 0
         with closing(_connect_read_only(ledger)) as conn:
             new = [e for e in terminal_executions(conn) if e.id not in logged]
         if not new:
             return 0
-        jobs = load_jobs(hermes_home / "cron" / "jobs.json")
         state_db = hermes_home / "state.db"
         with closing(_connect_read_only(state_db)) if state_db.exists() else nullcontext() as state:
             rows = [

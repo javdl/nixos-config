@@ -61,6 +61,13 @@ class Stores:
 
     def add_job(self, record):
         self.jobs.append(record)
+        self._write_jobs()
+
+    def remove_job(self, job_id):
+        self.jobs = [job for job in self.jobs if job["id"] != job_id]
+        self._write_jobs()
+
+    def _write_jobs(self):
         (self.home / "cron" / "jobs.json").write_text(
             json.dumps({"jobs": self.jobs, "updated_at": "2026-10-24T14:00:00.000000+02:00"}, indent=2))
 
@@ -191,6 +198,50 @@ class CollectorTests(unittest.TestCase):
         for key in ("model", "provider", "input_tokens", "output_tokens", "cost", "error"):
             self.assertIsNone(row[key], key)
         self.assertIs(row["model_host_failure"], False)
+
+    def test_a_removed_job_keeps_its_name_and_route(self):
+        s = self.stores
+        s.add_job(job_record("pick00000002", "pickup once", no_agent=True))
+        s.add_job(job_record("once00000001", "reminder", model="deepseek/deepseek-v4.1-flash",
+                             provider="aperture-local"))
+        self.assertEqual(s.collect(), 0)
+        s.remove_job("pick00000002")
+        s.remove_job("once00000001")
+        s.add_execution("pick00000002", status="failed", error="ConnectError: [Errno 61] Connection refused",
+                        started="2026-10-24T14:00:00+02:00", finished="2026-10-24T14:00:02+02:00")
+        s.add_execution("once00000001", status="failed", error="APIConnectionError: Connection error.",
+                        started="2026-10-24T14:05:00+02:00", finished="2026-10-24T14:06:00+02:00")
+
+        self.assertEqual(s.collect(), 2)
+        script, agent = s.rows()
+        self.assertEqual((script["job"], script["model"], script["provider"]), ("pickup once", None, None))
+        self.assertIs(script["model_host_failure"], False)
+        self.assertEqual((agent["job"], agent["model"], agent["provider"]),
+                         ("reminder", "deepseek/deepseek-v4.1-flash", "aperture-local"))
+        self.assertIs(agent["model_host_failure"], True)
+        self.assertTrue((s.run_log.parent / "runs-jobs.json").exists())
+
+    def test_a_job_never_seen_is_logged_by_id_without_a_route(self):
+        s = self.stores
+        s.add_execution("gone00000001", status="failed", error="APIConnectionError: Connection error.",
+                        started="2026-10-24T14:00:00+02:00", finished="2026-10-24T14:01:00+02:00")
+
+        s.collect()
+        [row] = s.rows()
+        self.assertEqual((row["job"], row["model"], row["provider"]), ("gone00000001", None, None))
+        self.assertIs(row["model_host_failure"], False)
+
+    def test_a_job_never_seen_with_a_session_reports_the_session_model(self):
+        s = self.stores
+        execution = s.add_execution("gone00000002", status="completed",
+                                    started="2026-10-24T14:00:00+02:00", finished="2026-10-24T14:00:05+02:00")
+        s.add_session("local-gone", model="spark/dsv41", input_tokens=800, output_tokens=5, cost=0.0)
+        s.admit("gone00000002", execution, "local-gone")
+
+        s.collect()
+        [row] = s.rows()
+        self.assertEqual((row["job"], row["model"], row["provider"]), ("gone00000002", "spark/dsv41", None))
+        self.assertEqual((row["input_tokens"], row["output_tokens"]), (800, 5))
 
     def test_each_execution_is_logged_once(self):
         s = self.stores
