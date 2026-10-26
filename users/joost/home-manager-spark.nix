@@ -6,8 +6,10 @@
 # (service, fleet.toml, controller authorized_keys) comes from
 # users/herdr-fleet.nix. The NAS and CX7 files rendered for a one-time root
 # install come from users/dgx-spark.nix. The dsv41 TP2 cluster is one
-# definition in users/dsv41-cluster.nix: this host runs the unit for its
-# own rank. See docs/dgx-spark.md.
+# definition in users/dsv41-cluster.nix, kept off. The production server
+# is Mia in users/dsv41-mia.nix: dsv41-mia.service on spark only. spark2
+# has no model unit; the head starts rank 1 over ssh. Tailscale Serve
+# stays dsv41-cluster-serve on spark. See docs/dgx-spark.md.
 { hostName }:
 { lib, pkgs, ... }:
 {
@@ -15,7 +17,14 @@
     (import ../herdr-fleet.nix { currentSystemName = hostName; })
     (import ../dgx-spark.nix { currentSystemName = hostName; })
     (import ../dsv41-cluster.nix { inherit hostName; })
+    (import ../dsv41-mia.nix { inherit hostName; })
   ];
+
+  # Explicit, so a switch cannot fall through to a changed module default.
+  # Sybil head/worker/health/follow stay out of the generation. Mia is the
+  # server. Flip both to roll back; see docs/dgx-spark.md.
+  services.dsv41Cluster.enable = false;
+  services.dsv41Mia.enable = true;
 
   assertions = [
     {

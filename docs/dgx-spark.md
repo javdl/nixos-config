@@ -42,9 +42,10 @@ The entire managed set:
   Existing lines are not removed.
 - Rendered files under `~/.config/dgx-spark/` (below). A switch does not
   copy them into `/etc`.
-- The dsv41 cluster, one definition in `users/dsv41-cluster.nix`. spark
-  runs `dsv41-cluster-head`. spark2 runs `dsv41-cluster-worker`. See
-  [dsv41 cluster](#dsv41-cluster).
+- The production model, Mia TensorFold, as `dsv41-mia.service` on spark.
+  spark2 has no model unit. Tailscale Serve stays `dsv41-cluster-serve`.
+  The sybil EXL3 head and worker are installed only when
+  `services.dsv41Cluster.enable` is set back to true. See [dsv41](#dsv41).
 
 The Claude/Codex integration installer that other fleet nodes run is
 disabled on the Sparks. A switch does not download Claude.
@@ -211,13 +212,200 @@ the user PATH. That does not remove the apt copies. As of 2026-10-21,
 present on both; `iperf3` was listening on spark and missing on spark2
 (that box had iperf 2.1.9 only).
 
-## dsv41 cluster
+## dsv41
 
-One cluster, two ranks. The definition is `users/dsv41-cluster.nix`.
+The production model on the two Sparks is Mia-AiLab DeepSeek V4.1 Flash
+1017 EAQ 2.9bpw on TensorFold. Joost approved that swap on 26 Oct 2026.
+One measured run that day, four streams sustained, was 150.5 tok/s against
+126.2 tok/s for the sybil EXL3 server it replaced. A warm start reached
+`/health` in 209 seconds.
+
+There is still one API, on spark:
+
+| | |
+|---|---|
+| Served name | `dsv41` |
+| Process bind | `127.0.0.1:8000` on spark |
+| Tailscale | `dsv41-cluster-serve` on spark: `https://spark.buri-hoki.ts.net:8443` to that port |
+| Key | Required on `/v1/*`. `GET /health` does not use it |
+| Context | 262144 tokens, 4 streams, DSpark drafts on |
+| Engine | TensorFold, image `tensorfold-dsv41:exl3-tp2-625d420e24a4` |
+| Weights | NAS paths under `/mnt/models/mia29`, named in the recipe's `scripts/local.sh` |
+
+`dsv41-cluster-serve` is unchanged. It is still the oneshot in
+`users/dsv41-cluster.nix` (`tailscale serve --bg --https=8443
+http://127.0.0.1:8000`). This repo does not change Tailscale ACLs,
+Aperture grants, the key value, or firewall rules. ACLs stay in
+`javdl/joost`.
+
+### Units
+
+`users/dsv41-mia.nix` installs `dsv41-mia.service` on spark only, wanted
+by `default.target`. spark2 has no model unit. `start.sh` on the head
+sshes to `joost@192.168.100.11` and starts rank 1 there, then starts rank
+0 locally. That is the whole pair. There is no worker unit to lose the
+boot race with the head (`Start request repeated too quickly` on the
+sybil worker).
+
+The unit runs the checkout at `~/mia29/recipe`:
+
+```bash
+FOREGROUND=1 PREPARE=0 SERVED_NAME=dsv41 PORT=8000 HOST=127.0.0.1 \
+  TENSORFOLD_NO_UPDATE_CHECK=1 bash ./start.sh
+```
+
+`PATH` starts with `~/mia29/shimw`, then `~/glm-dl/venv/bin` and the
+system directories. `PREPARE=0` means a restart does not download weights
+or build the image. Both machines already have
+`tensorfold-dsv41:exl3-tp2-625d420e24a4`. The checkout must be exactly
+`370daf0cc38f348516a98ebab38f6053858eab1f` (Mia's recipe commit that added
+the systemd template). `start.sh`, `stop.sh`, and
+`scripts/{config,nodes,prepare}.sh` must be clean against that commit.
+`scripts/local.sh` is not in git. It has to mention `/mnt/models/mia29`.
+The unit passes the serving settings in its environment, and the recipe
+lets the environment win over `local.sh`: `CONTEXT=262144`,
+`PARALLEL=4`, `DRAFTS=1`, `API_KEY=1`, `THINKING=1`,
+`WORKER=joost@192.168.100.11`, and the image name above.
+
+Before `start.sh`, the unit waits (and then fails the start, which counts
+toward the limit below) until all of these are true:
+
+- `192.168.100.10/24` is on `enp1s0f0np0` (up to 120s)
+- `ssh -o BatchMode=yes joost@192.168.100.11 true` works (up to 180s)
+- `/mnt/models/mia29` is a directory on an nfs mount (up to 120s). A stat
+  trips the automount
+- the same image is present on spark2, and `/mnt/models/mia29` is a
+  directory there
+- nothing is listening on port 8000, and the transient unit `mia29-tf` is
+  not active
+- `spark-vllm.service` and `nvpair.service` are inactive, as a system unit
+  and as a user unit
+
+`start.sh` exits 0 when both ranks are already running, and
+`Restart=on-failure` does not restart a success. The port check is what
+stops a switch from "adopting" a hand-started server and then going
+inactive. Stop the hand-started server first. The stop script is
+`~/mia29/recipe/stop.sh`. It stops both ranks.
+
+`Type=simple`. The unit is active as soon as `start.sh` is forked, which
+is before the weights are loaded. `TimeoutStartSec` is 15 minutes and
+covers the waits above, not the load. `TimeoutStopSec` is 120 seconds.
+Stop sends SIGTERM, `start.sh` runs `stop.sh` from that trap, and
+`ExecStopPost` runs `stop.sh` again. The second run finds nothing and
+exits 0.
+
+`Restart=on-failure`, `RestartSec=60`, `StartLimitIntervalSec=30min`,
+`StartLimitBurst=3` (the first start counts). After three failed starts
+in half an hour the unit stays failed. That cap is the one already used
+on the live transient unit. spark's GPU faulted more than once on 26 Oct
+2026 during a UPS incident, so nothing else restarts it. The health timer
+does not.
+
+`dsv41-mia-health.timer` is once a minute, log only. It is wanted by
+`timers.target` and has no `After=` of its own. Putting `After=` on a
+timer that `timers.target` pulls in, while the service orders after
+`basic.target`, made systemd drop the `timers.target` job on the sybil
+health timer. The oneshot the timer starts is ordered `After=dsv41-mia.service`.
+For the first 15 minutes the unit is active, a failed `/health` is
+ignored, because that is the load. After that, a failure is one journal
+line (`Not restarting.`) and exit 0. `GET /health` does not send the key.
+
+`Conflicts=spark-vllm.service` and `Conflicts=nvpair.service` are the same
+idea as the old head. A user unit cannot stop a system unit. The preflight
+refuses to start while either is active in either manager. This module
+does not enable, disable, or restart `spark-vllm`, `nvpair`, Docker, the
+driver, or the DGX dashboard. Leave those two disabled.
+
+### Key
+
+Mia reads one raw line from `~/.local/state/dsv41-tensorfold/api-key`
+(mode `600`, not a symlink). The engine rereads that file when it
+changes. The unit's `ExecStartPre` writes it from `VLLM_API_KEY` in
+`~/.config/spark-vllm/api.env` (mode `600`, not a symlink). One
+surrounding pair of single or double quotes in `api.env` is file syntax
+and is not part of the key. The value is not printed and is not in the
+Nix store. Replacing `api.env` does not update the raw file until the
+next start of `dsv41-mia`.
+
+`/v1/*` needs `Authorization: Bearer` with that line. `/health` does not.
+
+### Known limits
+
+Thinking is on unless the request turns it off. The recipe's own smoke
+test sends `chat_template_kwargs.enable_thinking: false`. This TensorFold
+build returns HTTP 400 for `response_format` and other guided-decoding
+fields. Ask for a shape in the prompt. Clients keep using the model name
+`dsv41`.
+
+### Start and stop
+
+Linger has to be on, or a reboot does not start the user unit. See the
+first-switch section above.
+
+```bash
+systemctl --user start dsv41-mia.service
+systemctl --user status dsv41-mia.service
+journalctl --user -u dsv41-mia -f
+curl -sf http://127.0.0.1:8000/health
+systemctl --user stop dsv41-mia.service
+```
+
+Stop from systemd, not `./stop.sh`, while the unit is active. A container
+that disappears out from under `start.sh` is a failure, and the unit
+restarts within the limit above. `systemctl --user reset-failed dsv41-mia`
+clears the start limit.
+
+`https://spark.buri-hoki.ts.net:8443/health` is the same server through
+Tailscale Serve. LAN, CX7, and tailnet clients of port 8000 itself still
+do not connect. The bind is localhost.
+
+A `home-manager switch` on spark starts `dsv41-mia` when it is not
+already active. It does not start `dsv41-cluster-head` or
+`dsv41-cluster-health.timer`. A switch on spark2 does not start
+`dsv41-cluster-worker`, `dsv41-cluster-follow.service`, or
+`dsv41-cluster-follow.timer`. Those four exist in
+`users/dsv41-cluster.nix` and are installed only when
+`services.dsv41Cluster.enable` is true. The profile sets that to false.
+
+Changing the Mia unit file and switching restarts the service. That is one
+cold load, a few minutes when the rank caches are warm, not a second model.
+
+### Roll back to sybil EXL3
+
+Stop Mia, then flip both options in `users/joost/home-manager-spark.nix`
+and switch spark2 before spark. The assertion in `users/dsv41-mia.nix`
+refuses a config that enables both.
+
+```nix
+services.dsv41Mia.enable = false;
+services.dsv41Cluster.enable = true;
+```
+
+```bash
+systemctl --user stop dsv41-mia.service
+make switch NIXNAME=spark2
+make switch NIXNAME=spark
+```
+
+Stopping Mia runs `stop.sh` on both ranks. The spark2 switch installs
+`dsv41-cluster-worker` and `dsv41-cluster-follow.timer`. The spark switch
+installs `dsv41-cluster-head`, `dsv41-cluster-ready`, and
+`dsv41-cluster-health.timer`. `dsv41-cluster-serve` stays. What those
+units do, and the image and weights they require, is the next section.
+The sybil cold load was about 6.5 minutes.
+
+To turn the model off entirely, set `services.dsv41Mia.enable = false` and
+leave the sybil option false. Serve keeps publishing `:8443` at whatever
+is on `127.0.0.1:8000`.
+
+## Sybil EXL3 cluster
+
+Not installed unless `services.dsv41Cluster.enable` is true. The profile
+sets it false. The definition is `users/dsv41-cluster.nix`.
 Changing the image digest, weights path, DSpark table, served name, port,
 API key path, or the CX7 rendezvous is a one-line edit in that file and
-applies to both machines. Each home imports it and runs the unit for its
-own node:
+applies to both machines. Each home imports it and, when the option is
+on, runs the unit for its own node:
 
 | Node | Role | Unit | CX7 address | Declared RoCE GID |
 |---|---|---|---|---|
@@ -334,6 +522,11 @@ Tailnet ACLs are unchanged. They live in `javdl/joost`.
 
 ### Switch during a planned window
 
+This switch is the sybil cluster, and only after
+`services.dsv41Cluster.enable = true` and `services.dsv41Mia.enable = false`
+in `users/joost/home-manager-spark.nix`. A switch with the profile as it is
+does not install these units. See [Roll back to sybil EXL3](#roll-back-to-sybil-exl3).
+
 A switch replaces the hand-launched `dsv41-serve` containers. `docker rm
 -f` runs before the new foreground `docker run --rm`. Do this while the
 model can be down for the cold start (measured 6 minutes 23 seconds, plus
@@ -391,11 +584,12 @@ unknown:
 `systemctl --user reset-failed dsv41-cluster-head` clears the start
 limit after that burst. The same command works for the worker unit.
 
-### Roll back
+### Stop sybil and clear Tailscale Serve
 
-Stop the units, then clear Tailscale Serve. The off command removes the
-`:8443` publication; it does not restore the previous mapping to
-`:8888`.
+With the profile defaults, sybil is already out of the generation. These
+commands are for a host that still has `services.dsv41Cluster.enable = true`.
+The off command removes the `:8443` publication; it does not restore the
+previous mapping to `:8888`. Mia's rollback does not clear Serve.
 
 ```bash
 # spark: stop the readiness poll first so it cannot restart the head
@@ -408,23 +602,23 @@ systemctl --user disable --now dsv41-cluster-worker dsv41-cluster-follow.timer
 
 `disable --now` removes the Home Manager symlinks under
 `~/.config/systemd/user/` (`default.target.wants/` and `timers.target.wants/`)
-until the next switch. The unit files stay. The next `home-manager switch`
-enables `WantedBy` units again and will start the cluster. A rollback
-that should survive a switch sets `services.dsv41Cluster.enable = false`
-in the shared profile and switches both hosts. To serve on every
-interface again, set `expose = "open"` in `users/dsv41-cluster.nix` and
-switch both hosts. Re-run `dsv41_tp2.sh up` only after the cluster units
-are stopped, or the two will fight over the container name `dsv41-serve`.
-Stopping the head also runs `docker rm -f dsv41-serve`, so a container
-that outlived the unit is removed.
+until the next switch. The unit files stay in that generation. The next
+switch starts sybil again only if `services.dsv41Cluster.enable` is still
+true. Leaving it false, which is the profile default, keeps the head,
+worker, health timer, and follow timer out. To serve on every interface
+again, set `expose = "open"` in `users/dsv41-cluster.nix` and switch both
+hosts. That also drops `dsv41-cluster-serve`. Re-run `dsv41_tp2.sh up`
+only after the cluster units are stopped, or the two will fight over the
+container name `dsv41-serve`. Stopping the head also runs `docker rm -f
+dsv41-serve`, so a container that outlived the unit is removed.
 
 ## Do not manage or restart
 
 - `spark-vllm` on spark (Docker vLLM serving Hermes on `:8888`, container
-  `spark-qwen36-nvfp4`). It is not a service in this flake. The dsv41
-  head refuses to start while `spark-vllm.service` or `nvpair.service`
-  is active. Stop those system units before switching the cluster; this
-  module does not do it.
+  `spark-qwen36-nvfp4`). It is not a service in this flake. `dsv41-mia`
+  (and the sybil head, when that option is on) refuses to start while
+  `spark-vllm.service` or `nvpair.service` is active. Leave both
+  disabled. This module does not stop them.
 - Docker, the NVIDIA driver, and CUDA.
 - The DGX OS updater and `dgx-dashboard` (`dgx-dashboard.service`,
   `dgx-dashboard-admin.service`, `/opt/nvidia/dgx-dashboard/dashboard-admin`).
