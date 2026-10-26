@@ -274,16 +274,18 @@ def collect(hermes_home: Path, run_log: Path, route: Route) -> int:
     if not ledger.exists() and not jobs_file.exists():
         return 0
     run_log.parent.mkdir(parents=True, exist_ok=True)
-    with open(run_log, "a+", encoding="utf-8") as log:
+    with open(run_log, "a+b") as log:
         fcntl.flock(log, fcntl.LOCK_EX)
         log.seek(0)
-        text = log.read()
-        # A crash mid-append leaves a last line without its newline. Drop it:
-        # its execution is then not logged, so it is written again below.
-        if text and not text.endswith("\n"):
-            text = text[: text.rfind("\n") + 1]
-            log.truncate(len(text.encode()))
-        logged = logged_execution_ids(text.splitlines())
+        data = log.read()
+        # A crash mid-append leaves a last line without its newline, maybe
+        # ending inside a multibyte character. Drop it as bytes, before
+        # decoding: its execution is then not logged, so it is written again
+        # below. A line garbled some other way must not stop every later pass.
+        if data and not data.endswith(b"\n"):
+            data = data[: data.rfind(b"\n") + 1]
+            log.truncate(len(data))
+        logged = logged_execution_ids(data.decode("utf-8", errors="replace").splitlines())
 
         # A job's runs outlive its record in jobs.json: `hermes cron remove`
         # drops it at once, the retention sweep drops a finished one-shot or
@@ -310,7 +312,7 @@ def collect(hermes_home: Path, run_log: Path, route: Route) -> int:
                 build_row(e, jobs.get(e.job_id), session_usage(state, e.job_id, e.id) if state else None, route)
                 for e in new
             ]
-        log.write("".join(json.dumps(row) + "\n" for row in rows))
+        log.write("".join(json.dumps(row) + "\n" for row in rows).encode())
         log.flush()
         os.fsync(log.fileno())
     return len(rows)

@@ -268,6 +268,21 @@ class CollectorTests(unittest.TestCase):
         self.assertEqual(lines[0] + "\n", other)
         self.assertEqual([json.loads(line).get("execution_id") for line in lines], [None, execution])
 
+    def test_a_row_cut_inside_a_multibyte_character_is_written_again_once(self):
+        s = self.stores
+        s.add_job(job_record("pick00000001", "pickup", no_agent=True))
+        execution = s.add_execution("pick00000001", status="completed",
+                                    started="2026-10-24T14:00:00+02:00", finished="2026-10-24T14:00:02+02:00")
+        other = '{"ts": "2026-10-24T11:00:00Z", "job": "zwemles café", "status": "failed"}\n'.encode()
+        torn = '{"ts": "2026-10-24T11:30:00Z", "job": "zwemles café"'.encode()[:-2]
+        s.run_log.write_bytes(other + torn)
+        self.assertEqual(s.collect(), 1)
+        self.assertEqual(s.collect(), 0)
+        data = s.run_log.read_bytes()
+        self.assertTrue(data.startswith(other))
+        lines = data.decode().splitlines()
+        self.assertEqual([json.loads(line).get("execution_id") for line in lines], [None, execution])
+
     def test_running_attempts_wait_until_they_finish(self):
         s = self.stores
         s.add_job(job_record("pick00000001", "pickup", no_agent=True))
