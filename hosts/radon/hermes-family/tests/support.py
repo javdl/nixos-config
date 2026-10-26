@@ -26,6 +26,7 @@ class Call:
     url: str
     params: dict[str, Any]
     body: Any
+    headers: dict[str, str] = field(default_factory=dict)
 
     @property
     def path(self) -> str:
@@ -50,7 +51,7 @@ class FakeNet:
         if data is not None:
             content_type = (headers or {}).get("content-type", "")
             body = json.loads(data) if "json" in content_type else dict(urllib.parse.parse_qsl(data.decode()))
-        call = Call(method, url, dict(params or {}), body)
+        call = Call(method, url, dict(params or {}), body, dict(headers or {}))
         self.calls.append(call)
         for route_method, part, responder in self.routes:
             if route_method == method and part in url:
@@ -97,6 +98,8 @@ FAMILY = {
         "family-plan-ahead": "30 17 * * 4",
         "family-evening-brief": "30 21 * * *",
         "agent-tooling-digest": "0 10 * * 0",
+        "x-bookmarks": "17 * * * *",
+        "x-bookmarks-digest": "0 9 * * 0",
     },
 }
 

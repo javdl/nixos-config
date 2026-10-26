@@ -48,4 +48,6 @@ in
   gcalMcp = tool "gcal-mcp" "gcal_mcp" mcpPython.interpreter;
   googleOauth = tool "google-oauth" "oauth" python.interpreter;
   jobsSync = tool "jobs-sync" "jobs_sync" python.interpreter;
+  xBookmarks = tool "x-bookmarks" "xbookmarks" python.interpreter;
+  xBookmarksDigest = tool "x-bookmarks-digest" "xdigest" python.interpreter;
 }
