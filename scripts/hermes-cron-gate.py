@@ -13,7 +13,7 @@ passes when both hold:
 - answered the way gcal-proposals answers a created proposal, it ends with a
   final answer whose last fenced JSON block, found and parsed the way the
   notifier finds and parses it, has exactly the keys processed and uncertain,
-  lists the mail key once in processed and has an empty uncertain list.
+  lists only the mail key in processed and has an empty uncertain list.
 
 A run follows Hermes's own loop for a tool name that does not exist: Hermes
 answers "Tool '<name>' does not exist. Available tools: ..." and lets the model
@@ -253,8 +253,8 @@ def block_error(answer: str) -> str | None:
     if set(data) != {"processed", "uncertain"}:
         return "keys are not exactly processed and uncertain"
     processed, uncertain = data["processed"], data["uncertain"]
-    if not isinstance(processed, list) or processed.count(MAIL_KEY) != 1:
-        return "processed does not list the mail key once"
+    if processed != [MAIL_KEY]:
+        return "processed is not exactly the mail key"
     if uncertain != []:
         return "uncertain is not an empty list"
     return None

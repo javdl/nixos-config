@@ -135,6 +135,8 @@ class BlockErrorTests(unittest.TestCase):
                       {"processed": [key], "uncertain": [], "notes": ""},
                       {"processed": key, "uncertain": []}, {"processed": [], "uncertain": []},
                       {"processed": [key, key], "uncertain": []}, {"processed": [key.upper()], "uncertain": []},
+                      {"processed": [key, other], "uncertain": []}, {"processed": [other, key], "uncertain": []},
+                      {"processed": [key, None], "uncertain": []},
                       {"processed": [other], "uncertain": []}, {"processed": [key], "uncertain": None},
                       {"processed": [key], "uncertain": {}},
                       {"processed": [key], "uncertain": [{"key": key, "from": "groep5@school.example",
