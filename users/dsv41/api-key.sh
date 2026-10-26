@@ -67,10 +67,37 @@ dsv41_api_key_value() {
   printf '%s' "$val"
 }
 
+cmd=${1:-}
+
+# Mia reads a raw key file (one line, mode 600), not a docker env-file.
+# This path does not load the sybil cluster env: the source file is
+# DSV41_API_KEY_FILE and the destination is the argument. The value is
+# never printed.
+if [ "$cmd" = write-raw ]; then
+  dest=${2:?}
+  if [ -L "$dest" ]; then
+    dsv41_die "refusing to write the API key through a symlink (${dest})"
+  fi
+  if [ -e "$dest" ] && [ ! -f "$dest" ]; then
+    dsv41_die "API key destination ${dest} exists and is not a regular file"
+  fi
+  val=$(dsv41_api_key_value "${DSV41_API_KEY_FILE:?}")
+  install -d -m 700 "$(dirname -- "$dest")"
+  umask 077
+  tmp=$(mktemp "${dest}.XXXXXX")
+  trap 'rm -f "$tmp"' EXIT
+  printf '%s\n' "$val" >"$tmp"
+  chmod 600 "$tmp"
+  mv -f "$tmp" "$dest"
+  chmod 600 "$dest"
+  trap - EXIT
+  unset val tmp
+  exit 0
+fi
+
 dsv41_source_cluster
 dsv41_require_runtime
 
-cmd=${1:-}
 runtime_env="${XDG_RUNTIME_DIR}/dsv41-cluster-api.env"
 
 case "$cmd" in
@@ -98,6 +125,6 @@ case "$cmd" in
     unset val
     ;;
   *)
-    dsv41_die "usage: api-key.sh write-env|append-auth DEST"
+    dsv41_die "usage: api-key.sh write-env|append-auth DEST|write-raw DEST"
     ;;
 esac

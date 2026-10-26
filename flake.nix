@@ -416,6 +416,28 @@
                 bash ${./tests/dsv41-health.sh} ${./users/dsv41}
                 touch $out
               '';
+
+          # Mia's preflight and the log-only probe. The sybil watchdog above
+          # stays, because rollback still runs it.
+          dsv41-mia =
+            pkgs.runCommandLocal "check-dsv41-mia"
+              {
+                nativeBuildInputs = [
+                  pkgs.bash
+                  pkgs.coreutils
+                  pkgs.gawk
+                  pkgs.gnugrep
+                  pkgs.gnused
+                ];
+              }
+              ''
+                bash ${./tests/dsv41-mia.sh} \
+                  ${./users/dsv41} \
+                  ${./users/dsv41-mia.nix} \
+                  ${./users/dsv41-cluster.nix} \
+                  ${./users/joost/home-manager-spark.nix}
+                touch $out
+              '';
         }
         // nixpkgs.lib.optionalAttrs (system == "x86_64-linux") (
           # Keep explicit full-module evaluation coverage, but expose each host

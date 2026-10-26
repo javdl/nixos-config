@@ -1,9 +1,18 @@
-# One dsv41 TP2 cluster for the two DGX Sparks.
+# Sybil EXL3 dsv41 TP2 cluster for the two DGX Sparks, and the Tailscale
+# Serve publication both engines share.
+#
+# services.dsv41Cluster.enable defaults to false. The production server is
+# Mia (users/dsv41-mia.nix). Turning this option on installs the sybil
+# head on spark and the worker on spark2 again. Mia must be off first:
+# the two would bind the same port.
 #
 # spark is the head (rank 0). spark2 is the worker (rank 1). Both homes
 # import this file and select themselves from `cluster.nodes` by hostname.
 # Edit the cluster attrset to change image, weights, the DSpark table,
 # the HTTP listener, or the CX7 rendezvous for both machines at once.
+#
+# dsv41-cluster-serve is not gated on enable. In the aperture profile it
+# stays on spark for whichever engine is bound to 127.0.0.1:8000.
 #
 # Default exposure is the Aperture profile: 127.0.0.1:8000, API key from
 # ~/.config/spark-vllm/api.env, Tailscale Serve :8443 on spark. Set
@@ -272,10 +281,14 @@ in
   options.services.dsv41Cluster = {
     enable = lib.mkOption {
       type = lib.types.bool;
-      default = true;
+      default = false;
       description = ''
-        Install and start this machine's unit of the dsv41 cluster.
+        Install and start this machine's sybil EXL3 unit.
         spark runs dsv41-cluster-head. spark2 runs dsv41-cluster-worker.
+        Default false: a home-manager switch must not bring those units
+        back while Mia is the production server. Tailscale Serve
+        (dsv41-cluster-serve) stays installed on spark either way.
+        Set true only with services.dsv41Mia.enable = false.
       '';
     };
 
@@ -295,67 +308,116 @@ in
     };
   };
 
-  config = lib.mkIf cfg.enable {
-    assertions = [
-      {
-        assertion = builtins.hasAttr hostName cluster.nodes;
-        message = "dsv41 cluster has no node for ${hostName}";
-      }
-      {
-        assertion = cluster.nodes.spark.role == "head" && cluster.nodes.spark2.role == "worker";
-        message = "dsv41 cluster nodes must be spark = head and spark2 = worker";
-      }
-      {
-        assertion = cluster.masterAddr == cluster.nodes.spark.ip;
-        message = "dsv41 rendezvous address must be the head CX7 IP";
-      }
-      {
-        assertion = node.role == "head" || node.role == "worker";
-        message = "dsv41 role for ${hostName} must be head or worker";
-      }
-      {
-        assertion = markovHash == "3e5d1845b6083e108bde9dc2a1372113";
-        message = "dsv41 Markov cache hash is ${markovHash}, expected 3e5d1845b6083e108bde9dc2a1372113";
-      }
-    ];
+  config = lib.mkMerge [
+    (lib.mkIf cfg.enable {
+      assertions = [
+        {
+          assertion = builtins.hasAttr hostName cluster.nodes;
+          message = "dsv41 cluster has no node for ${hostName}";
+        }
+        {
+          assertion = cluster.nodes.spark.role == "head" && cluster.nodes.spark2.role == "worker";
+          message = "dsv41 cluster nodes must be spark = head and spark2 = worker";
+        }
+        {
+          assertion = cluster.masterAddr == cluster.nodes.spark.ip;
+          message = "dsv41 rendezvous address must be the head CX7 IP";
+        }
+        {
+          assertion = node.role == "head" || node.role == "worker";
+          message = "dsv41 role for ${hostName} must be head or worker";
+        }
+        {
+          assertion = markovHash == "3e5d1845b6083e108bde9dc2a1372113";
+          message = "dsv41 Markov cache hash is ${markovHash}, expected 3e5d1845b6083e108bde9dc2a1372113";
+        }
+      ];
 
-    home.file = {
-      ".config/dsv41/serve.sh".source = "${scriptDir}/serve.sh";
-      ".config/dsv41/node.env".source = nodeEnv;
-      ".config/dsv41/recipe.env".source = recipeEnv;
-      ".config/dsv41/markov_top_tokens.json".source = markov;
-    };
+      home.file = {
+        ".config/dsv41/serve.sh".source = "${scriptDir}/serve.sh";
+        ".config/dsv41/node.env".source = nodeEnv;
+        ".config/dsv41/recipe.env".source = recipeEnv;
+        ".config/dsv41/markov_top_tokens.json".source = markov;
+      };
 
-    systemd.user.services = {
-      ${unitName} = clusterService;
-    }
-    // lib.optionalAttrs isHead {
-      # Not installed into a target. The head starts it with --no-block,
-      # so a switch does not wait on this oneshot.
-      dsv41-cluster-ready = {
-        Unit.Description = "Wait until the dsv41 head serves /health and accepts the API key";
-        Service = {
-          Type = "oneshot";
-          Environment = [ "DSV41_CLUSTER_ENV=${nodeEnv}" ];
-          ExecStart = "${scriptDir}/ready.sh";
-          TimeoutStartSec = cluster.readyTimeoutStartSec;
+      systemd.user.services = {
+        ${unitName} = clusterService;
+      }
+      // lib.optionalAttrs isHead {
+        # Not installed into a target. The head starts it with --no-block,
+        # so a switch does not wait on this oneshot.
+        dsv41-cluster-ready = {
+          Unit.Description = "Wait until the dsv41 head serves /health and accepts the API key";
+          Service = {
+            Type = "oneshot";
+            Environment = [ "DSV41_CLUSTER_ENV=${nodeEnv}" ];
+            ExecStart = "${scriptDir}/ready.sh";
+            TimeoutStartSec = cluster.readyTimeoutStartSec;
+          };
+        };
+        dsv41-cluster-health = {
+          Unit.Description = "Probe the dsv41 cluster and restart the head after repeated chat failures or a worker TCPStore change";
+          Service = {
+            Type = "oneshot";
+            Environment = [ "DSV41_CLUSTER_ENV=${nodeEnv}" ];
+            ExecStart = "${scriptDir}/health.sh";
+            # One tick is a 10s /health curl, a 20s chat curl, and on chat
+            # failure a 5s /metrics scrape. A stuck curl must not hold the
+            # oneshot for the old 3 minute cap, or the next tick cannot run.
+            TimeoutStartSec = "1min";
+          };
+        };
+      }
+      // lib.optionalAttrs (!isHead) {
+        dsv41-cluster-follow = {
+          Unit.Description = "Restart the dsv41 worker when the head goes from up to down";
+          Service = {
+            Type = "oneshot";
+            Environment = [ "DSV41_CLUSTER_ENV=${nodeEnv}" ];
+            ExecStart = "${scriptDir}/follow.sh";
+            TimeoutStartSec = "30s";
+          };
         };
       };
-      dsv41-cluster-health = {
-        Unit.Description = "Probe the dsv41 cluster and restart the head after repeated chat failures or a worker TCPStore change";
-        Service = {
-          Type = "oneshot";
-          Environment = [ "DSV41_CLUSTER_ENV=${nodeEnv}" ];
-          ExecStart = "${scriptDir}/health.sh";
-          # One tick is a 10s /health curl, a 20s chat curl, and on chat
-          # failure a 5s /metrics scrape. A stuck curl must not hold the
-          # oneshot for the old 3 minute cap, or the next tick cannot run.
-          TimeoutStartSec = "1min";
+
+      systemd.user.timers =
+        lib.optionalAttrs isHead {
+          dsv41-cluster-health = {
+            Unit = {
+              Description = "dsv41 cluster health probe every ${cluster.healthEvery}";
+              # No After= on this timer. It is WantedBy=timers.target, and the
+              # head service orders after basic.target, which orders after
+              # timers.target. After= on the timer made systemd drop the
+              # timers.target job to break that cycle. health.sh returns
+              # while the head is inactive, so the probe does not need it.
+            };
+            Timer = {
+              OnBootSec = cluster.healthEvery;
+              OnUnitActiveSec = cluster.healthEvery;
+              # The default AccuracySec is 1 minute, which would swallow a
+              # 15s cadence. 1s keeps the coalescing window inside one tick.
+              AccuracySec = "1s";
+            };
+            Install.WantedBy = [ "timers.target" ];
+          };
+        }
+        // lib.optionalAttrs (!isHead) {
+          dsv41-cluster-follow = {
+            Unit.Description = "dsv41 cluster follower every ${cluster.followEvery}";
+            Timer = {
+              OnBootSec = cluster.followEvery;
+              OnUnitActiveSec = cluster.followEvery;
+              AccuracySec = "5s";
+            };
+            Install.WantedBy = [ "timers.target" ];
+          };
         };
-      };
-    }
-    // lib.optionalAttrs (isHead && aperture) {
-      dsv41-cluster-serve = {
+    })
+    (lib.mkIf (isHead && aperture) {
+      # Not gated on services.dsv41Cluster.enable. Mia and the sybil head
+      # both bind 127.0.0.1:8000; this publication is the same either way.
+      # Stopping it is still `tailscale serve --https=8443 off`.
+      systemd.user.services.dsv41-cluster-serve = {
         Unit.Description = "Publish the dsv41 cluster API on Tailscale Serve";
         Service = {
           Type = "oneshot";
@@ -367,46 +429,6 @@ in
         };
         Install.WantedBy = [ "default.target" ];
       };
-    }
-    // lib.optionalAttrs (!isHead) {
-      dsv41-cluster-follow = {
-        Unit.Description = "Restart the dsv41 worker when the head goes from up to down";
-        Service = {
-          Type = "oneshot";
-          Environment = [ "DSV41_CLUSTER_ENV=${nodeEnv}" ];
-          ExecStart = "${scriptDir}/follow.sh";
-          TimeoutStartSec = "30s";
-        };
-      };
-    };
-
-    systemd.user.timers =
-      lib.optionalAttrs isHead {
-        dsv41-cluster-health = {
-          Unit = {
-            Description = "dsv41 cluster health probe every ${cluster.healthEvery}";
-            After = [ "dsv41-cluster-head.service" ];
-          };
-          Timer = {
-            OnBootSec = cluster.healthEvery;
-            OnUnitActiveSec = cluster.healthEvery;
-            # The default AccuracySec is 1 minute, which would swallow a
-            # 15s cadence. 1s keeps the coalescing window inside one tick.
-            AccuracySec = "1s";
-          };
-          Install.WantedBy = [ "timers.target" ];
-        };
-      }
-      // lib.optionalAttrs (!isHead) {
-        dsv41-cluster-follow = {
-          Unit.Description = "dsv41 cluster follower every ${cluster.followEvery}";
-          Timer = {
-            OnBootSec = cluster.followEvery;
-            OnUnitActiveSec = cluster.followEvery;
-            AccuracySec = "5s";
-          };
-          Install.WantedBy = [ "timers.target" ];
-        };
-      };
-  };
+    })
+  ];
 }

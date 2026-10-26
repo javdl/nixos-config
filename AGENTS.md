@@ -367,10 +367,14 @@ Yubico Authenticator (`yubioath-flutter`) is installed on Linux desktops from `u
 `spark` and `spark2` are Grace-Blackwell DGX Sparks (DGX OS, Ubuntu 24.04,
 aarch64-linux). They are a minimal headless Home Manager profile
 (`mkSparkHome`, `users/joost/home-manager-spark.nix`), not `mkOmarchyHome`.
-The profile installs only `mosh`, `tmux`, `iperf3`, and `herdr`, plus the
-dsv41 cluster user units from `users/dsv41-cluster.nix` (one definition:
-head on spark, worker on spark2). It does not import the workstation
-profile, `users/agent-clis.nix`, or chezmoi.
+The profile installs only `mosh`, `tmux`, `iperf3`, and `herdr`, plus
+the Mia TensorFold user unit from `users/dsv41-mia.nix` (`dsv41-mia` on
+spark only; spark2 is rank 1 over ssh and has no model unit). The sybil
+EXL3 head/worker units in `users/dsv41-cluster.nix` stay in the tree and
+stay off (`services.dsv41Cluster.enable = false`) so a switch cannot
+bring them back. `dsv41-cluster-serve` (Tailscale `:8443`) stays on spark.
+It does not import the workstation profile, `users/agent-clis.nix`, or
+chezmoi.
 
 `herdr` is the overlay package, wired as a fleet node (`users/herdr-fleet.nix`):
 the `herdr-agents` user service and the controller `authorized_keys` append.
@@ -382,9 +386,9 @@ Root files follow the tailmix precedent: Home Manager renders them under
 (`docs/dgx-spark.md`). That covers the NAS automount and the per-host CX7
 link. The sudoers drop-in stays manual. Driver, CUDA, Docker,
 `nvidia-container-toolkit`, `tailscaled`, apt, and locale stay native.
-`spark-vllm` is not a managed service. The dsv41 head unit conflicts with
+`spark-vllm` is not a managed service. `dsv41-mia` conflicts with
 `spark-vllm.service` and `nvpair.service` and refuses to start while
-either system unit is active.
+either is active. Leave both disabled.
 
 CX7 SSH aliases are not written by this profile. They belong in javdl/dotfiles
 if they should be managed. Apply with `make test` / `make switch` and
