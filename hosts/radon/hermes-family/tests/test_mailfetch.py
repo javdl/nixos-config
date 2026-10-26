@@ -1,9 +1,11 @@
 import base64
 import io
+import json
 import sys
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
+from unittest import mock
 
 from hermes_family import mailfetch
 from hermes_family.state import Head, Quarantined, State, gmail_key, mail_key
@@ -131,7 +133,7 @@ class MailFetchTest(MailFetchCase):
         output = self.run_main()
         blocks = output.strip().split("\n\n<mail>\n")
         self.assertEqual(len(blocks), 2)
-        self.assertTrue(blocks[0].startswith(f"<mail>\nMail-Key: {SCHOOL_KEY}\nMessage-ID: <gate-fixture-0001@school.example>\n"
+        self.assertTrue(blocks[0].startswith(f"<mail>\nMail-Key: {SCHOOL_KEY}\n"
                                              "From: Groep 5 <Groep5@School.example>\nDate: Thu, 22 Oct 2026 16:05:00 +0200\n"
                                              "Subject: Tienminutengesprekken groep 5\n\n"))
         self.assertIn("15:30 uur bij juf Anne", blocks[0])
@@ -140,6 +142,14 @@ class MailFetchTest(MailFetchCase):
         self.assertIn("Vrijdag 6 november is de opvang gesloten", blocks[1])
         self.assertIn("Renée", blocks[1])
         self.assertNotIn("color:red", blocks[1])
+
+    def test_the_model_sees_the_mail_key_and_never_the_message_id(self):
+        output = self.run_main()
+        self.assertIn(f"<mail>\nMail-Key: {SCHOOL_KEY}\nFrom: ", output)
+        self.assertIn(f"<mail>\nMail-Key: {DAYCARE_KEY}\nFrom: ", output)
+        self.assertNotIn("Message-ID", output)
+        self.assertNotIn("gate-fixture-0001@school.example", output)
+        self.assertNotIn("sluiting-6nov@opvang.example", output)
 
     def test_mail_text_cannot_close_its_block(self):
         output = self.run_main()
@@ -158,10 +168,28 @@ class MailFetchTest(MailFetchCase):
         self.assertEqual(self.labels_added()["m4"], ["Label_8"])
         self.assertEqual(self.fake.matching("POST", "/users/me/labels")[0].body["name"], "hermes-processed")
 
-    def test_fetch_record_lists_exactly_the_printed_keys(self):
+    def test_mail_keys_maps_exactly_the_printed_keys_to_gmail_id_and_message_id(self):
         self.run_main()
-        record = State(self.state_dir).fetched()
-        self.assertEqual({key: fetched.gmail_id for key, fetched in record.items()}, {SCHOOL_KEY: "m1", DAYCARE_KEY: "m3"})
+        mails = State(self.state_dir).mail_keys()
+        self.assertEqual({key: (mail.gmail_id, mail.message_id) for key, mail in mails.items()},
+                         {SCHOOL_KEY: ("m1", "<gate-fixture-0001@school.example>"),
+                          DAYCARE_KEY: ("m3", "<sluiting-6nov@opvang.example>")})
+        rows = [json.loads(line) for line in (self.state_dir / "mail-keys.txt").read_text().splitlines()]
+        self.assertEqual([(row["key"], row["gmail_id"], row["message_id"]) for row in rows],
+                         [(SCHOOL_KEY, "m1", "<gate-fixture-0001@school.example>"),
+                          (DAYCARE_KEY, "m3", "<sluiting-6nov@opvang.example>")])
+
+    def test_a_later_run_replaces_mail_keys_whole(self):
+        self.run_main("--max-mails", "1")
+        before = (self.state_dir / "mail-keys.txt").read_text()
+        with mock.patch("hermes_family.state.os.replace", side_effect=OSError("disk full")), \
+                self.assertRaises(OSError):
+            self.run_main()
+        self.assertEqual((self.state_dir / "mail-keys.txt").read_text(), before)
+        self.assertEqual(sorted(p.name for p in self.state_dir.iterdir()), ["mail-keys.txt", "mail-ledger.txt", "senders.txt"])
+        self.run_main()
+        self.assertEqual(set(State(self.state_dir).mail_keys()), {SCHOOL_KEY, DAYCARE_KEY})
+        self.assertEqual(len((self.state_dir / "mail-keys.txt").read_text().splitlines()), 2)
 
     def test_query_excludes_every_hermes_label(self):
         self.run_main()
@@ -173,18 +201,18 @@ class MailFetchTest(MailFetchCase):
         self.assertIn(SCHOOL_KEY, output)
         self.assertEqual(self.fake.matching("POST", "/modify"), [])
         self.assertEqual(self.fake.matching("POST", "/users/me/labels"), [])
-        self.assertFalse((self.state_dir / "fetch-record.jsonl").exists())
+        self.assertFalse((self.state_dir / "mail-keys.txt").exists())
 
     def test_max_mails_leaves_the_rest_for_the_next_run(self):
         output = self.run_main("--max-mails", "1")
         self.assertIn(SCHOOL_KEY, output)
         self.assertNotIn(DAYCARE_KEY, output)
-        self.assertEqual(set(State(self.state_dir).fetched()), {SCHOOL_KEY})
+        self.assertEqual(set(State(self.state_dir).mail_keys()), {SCHOOL_KEY})
 
     def test_nothing_new_prints_nothing(self):
         (self.state_dir / "mail-ledger.txt").write_text(f"{DONE_KEY}\n{SCHOOL_KEY}\n{DAYCARE_KEY}\n")
         self.assertEqual(self.run_main(), "")
-        self.assertFalse((self.state_dir / "fetch-record.jsonl").exists())
+        self.assertFalse((self.state_dir / "mail-keys.txt").exists())
 
     def test_missing_senders_file_lists_and_labels_nothing(self):
         (self.state_dir / "senders.txt").unlink()
@@ -224,7 +252,7 @@ class QuarantineTest(MailFetchCase):
         self.assertEqual(state.quarantined(), [Quarantined(INJECTION_KEY, "Opvang <planning@opvang.example>",
                                                            "Nieuwsbrief week 43", "Fri, 23 Oct 2026 09:00:00 +0200")])
         self.assertIn(INJECTION_KEY, state.ledger())
-        self.assertNotIn(INJECTION_KEY, state.fetched())
+        self.assertNotIn(INJECTION_KEY, state.mail_keys())
         self.assertEqual(self.labels_added()["m5"], ["Label_8"])
         self.assertIn("hermes-quarantined", [c.body["name"] for c in self.fake.matching("POST", "/users/me/labels")])
         self.assertIn(f"{INJECTION_KEY} quarantined: Blocked", self.stderr.getvalue())
@@ -253,7 +281,7 @@ class QuarantineTest(MailFetchCase):
         self.assertEqual(output, "")
         self.assertIn("Hermes prompt scan failed (exit 3)", self.stderr.getvalue())
         state = State(self.state_dir)
-        self.assertEqual((state.fetched(), state.quarantined()), ({}, []))
+        self.assertEqual((state.mail_keys(), state.quarantined()), ({}, []))
 
 
 class StoredBodyTest(MailFetchCase):
@@ -289,7 +317,7 @@ class LongBodyTest(MailFetchCase):
         output = self.run_main()
         self.assertIn(f"Mail-Key: {LONG_KEY}\n", output)
         self.assertNotIn("schoolfotograaf", output)
-        fetched = State(self.state_dir).fetched()
+        fetched = State(self.state_dir).mail_keys()
         self.assertEqual(fetched[LONG_KEY].truncated,
                          Head("Groep 5 <groep5@school.example>", "Nieuwsbrief november", "Mon, 26 Oct 2026 08:00:00 +0100"))
         self.assertIsNone(fetched[SCHOOL_KEY].truncated)
@@ -310,10 +338,11 @@ class NoMessageIdTest(MailFetchCase):
         key = gmail_key("m8")
         self.assertNotIn(key, {mail_key("m8"), mail_key("gmail-id:m8"), mail_key("\ngmail-id:m8")})
         output = self.run_main()
-        self.assertIn(f"Mail-Key: {key}\nMessage-ID: \n", output)
+        self.assertIn(f"Mail-Key: {key}\nFrom: Opvang <planning@opvang.example>\n", output)
         self.assertIn("ouderavond", output)
         self.assertNotIn("m8", self.labels_added())
-        self.assertEqual(State(self.state_dir).fetched()[key].gmail_id, "m8")
+        self.assertEqual(State(self.state_dir).mail_keys()[key].gmail_id, "m8")
+        self.assertEqual(State(self.state_dir).mail_keys()[key].message_id, "")
         (self.state_dir / "mail-ledger.txt").write_text(f"{DONE_KEY}\n{key}\n")
         self.fake.calls.clear()
         self.assertNotIn(key, self.run_main())

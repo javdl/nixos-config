@@ -96,8 +96,13 @@ class Head:
 
 
 @dataclass(frozen=True)
-class Fetched:
+class MailKey:
+    """What mail-fetch last printed under a mail key: the Gmail message id and
+    the Message-ID ("" for a mail keyed by its Gmail id), when, and the
+    headers when it cut the body."""
+
     gmail_id: str
+    message_id: str
     at: datetime
     truncated: Head | None = None
 
@@ -115,7 +120,7 @@ class State:
         self.dir = Path(directory)
         self.senders_file = self.dir / "senders.txt"
         self.ledger_file = self.dir / "mail-ledger.txt"
-        self.fetch_record_file = self.dir / "fetch-record.jsonl"
+        self.mail_keys_file = self.dir / "mail-keys.txt"
         self.notifier_cursor_file = self.dir / "notifier-cursor"
         self.quarantine_file = self.dir / "quarantine.txt"
         self.quarantine_cursor_file = self.dir / "quarantine-cursor"
@@ -141,30 +146,31 @@ class State:
             with self.ledger_file.open("a") as handle:
                 handle.write("".join(f"{key}\n" for key in keys))
 
-    def record_fetch(self, mails: dict[str, str], now: datetime, truncated: dict[str, Head] | None = None) -> None:
-        """Append the keys this mail-fetch run printed, with their Gmail ids,
-        and the headers of the ones whose body it cut."""
-        cut = {key: {"from": h.sender, "subject": h.subject, "date": h.date} for key, h in (truncated or {}).items()}
-        _append_kept(self.fetch_record_file, {"ts": now.isoformat(), "mails": mails, "truncated": cut})
+    def record_mail_keys(self, mails: dict[str, MailKey]) -> None:
+        """mail-keys.txt, one JSON line per key: the keys this mail-fetch run
+        printed replace their old lines, and the last RECORD_KEEP keys stay.
+        The file is replaced whole, so a reader sees the old map or the new
+        one, never part of either."""
+        rows = [row for row in _rows(self.mail_keys_file) if row.get("key") not in mails]
+        for key, mail in mails.items():
+            row = {"key": key, "gmail_id": mail.gmail_id, "message_id": mail.message_id, "ts": mail.at.isoformat()}
+            if mail.truncated:
+                row["truncated"] = {"from": mail.truncated.sender, "subject": mail.truncated.subject,
+                                    "date": mail.truncated.date}
+            rows.append(row)
+        write_atomic(self.mail_keys_file, "".join(f"{json.dumps(row, sort_keys=True)}\n" for row in rows[-RECORD_KEEP:]))
 
-    def fetched(self) -> dict[str, Fetched]:
-        """Every key mail-fetch printed in the kept runs, with its Gmail id,
-        the time of the last run that printed it, and the headers when that
-        run cut its body."""
-        mails: dict[str, Fetched] = {}
-        for row in _rows(self.fetch_record_file):
-            at = _time(row.get("ts"))
-            mails_row = row.get("mails")
-            if at is None or not isinstance(mails_row, dict):
+    def mail_keys(self) -> dict[str, MailKey]:
+        """Every key in mail-keys.txt: the keys mail-fetch showed a model."""
+        mails: dict[str, MailKey] = {}
+        for row in _rows(self.mail_keys_file):
+            key, at = row.get("key"), _time(row.get("ts"))
+            gmail_id, message_id = row.get("gmail_id"), row.get("message_id")
+            if not (is_key(key) and isinstance(gmail_id, str) and isinstance(message_id, str) and at is not None):
                 continue
-            cut = row.get("truncated")
-            cut = cut if isinstance(cut, dict) else {}
-            for key, gmail_id in mails_row.items():
-                if is_key(key) and isinstance(gmail_id, str):
-                    head = cut.get(key)
-                    fields = ("from", "subject", "date")
-                    truncated = Head(*(str(head.get(f, "")) for f in fields)) if isinstance(head, dict) else None
-                    mails[key] = Fetched(gmail_id, at, truncated)
+            head = row.get("truncated")
+            truncated = Head(*(str(head.get(f, "")) for f in ("from", "subject", "date"))) if isinstance(head, dict) else None
+            mails[key] = MailKey(gmail_id, message_id, at, truncated)
         return mails
 
     def record_proposal_failure(self, key: str, now: datetime) -> None:

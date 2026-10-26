@@ -52,7 +52,9 @@ class ProposalsTest(unittest.TestCase):
         text = Server(self, "proposals", fake).call(
             "create_proposal", title="Tienminutengesprek Kind A", start="2026-11-12T15:30:00+01:00",
             end="2026-11-12T15:40:00+01:00", location="Lokaal 3", mail_key=KEY, n=1)
-        self.assertIn("Created proposal", text)
+        self.assertEqual(text, f"Proposal {expected_id('2026-11-12T14:30:00Z', 1)} for mail {KEY} is in the Proposals "
+                               "calendar: Tienminutengesprek Kind A (2026-11-12T15:30:00+01:00 to "
+                               "2026-11-12T15:40:00+01:00); both parents are invited.")
         (call,) = fake.calls
         self.assertEqual(call.params, {"sendUpdates": "all"})
         self.assertEqual(call.body["id"], expected_id("2026-11-12T14:30:00Z", 1))
@@ -60,14 +62,17 @@ class ProposalsTest(unittest.TestCase):
         self.assertEqual(call.body["start"], {"dateTime": "2026-11-12T15:30:00+01:00"})
         self.assertEqual(call.body["location"], "Lokaal 3")
 
-    def test_conflict_409_is_success(self):
-        fake = FakeNet().on("POST", PROPOSALS_EVENTS, (409, CALENDAR["conflict"]))
-        server = Server(self, "proposals", fake)
-        text = server.call("create_proposal", title="Ouderavond", start="2026-11-12T19:00:00+01:00",
-                           end="2026-11-12T20:00:00+01:00", mail_key=KEY, n=1)
-        self.assertEqual(text,
-                         f"Proposal {expected_id('2026-11-12T18:00:00Z', 1)} for mail {KEY} already exists; nothing to do.")
-        self.assertEqual(server.state.proposal_failures(), {})
+    def test_conflict_409_for_its_own_id_answers_exactly_as_a_fresh_insert(self):
+        arguments = {"title": "Ouderavond", "start": "2026-11-12T19:00:00+01:00", "end": "2026-11-12T20:00:00+01:00",
+                     "mail_key": KEY, "n": 1}
+        fresh = Server(self, "proposals", FakeNet().on("POST", PROPOSALS_EVENTS, CALENDAR["created"]))
+        inserted = fresh.call("create_proposal", **arguments)
+        refused = FakeNet().on("POST", PROPOSALS_EVENTS, (409, CALENDAR["conflict"]))
+        conflict = Server(self, "proposals", refused)
+        self.assertEqual(conflict.call("create_proposal", **arguments), inserted)
+        self.assertEqual(len(refused.calls), 1)
+        self.assertIn("is in the Proposals calendar", inserted)
+        self.assertEqual(conflict.state.proposal_failures(), {})
 
     def test_two_appointments_at_the_same_time_in_one_mail_get_two_events(self):
         fake = FakeNet().on("POST", PROPOSALS_EVENTS, CALENDAR["created"])
@@ -97,8 +102,9 @@ class ProposalsTest(unittest.TestCase):
                             end="2026-11-12T20:00:00+01:00", mail_key=KEY, n=1)
         again = server.call("create_proposal", title="Ouderavond school", start="2026-11-12T19:00+01:00",
                             end="2026-11-12T20:30:00.000+01:00", mail_key=KEY, n=1)
-        self.assertIn("Created proposal", first)
-        self.assertIn("already exists", again)
+        self.assertEqual(again, first.replace("Ouderavond (2026-11-12T19:00:00+01:00 to 2026-11-12T20:00:00+01:00)",
+                                              "Ouderavond school (2026-11-12T19:00+01:00 to "
+                                              "2026-11-12T20:30:00.000+01:00)"))
         self.assertEqual(created, {expected_id("2026-11-12T18:00:00Z", 1)})
 
     def test_all_day_end_date_is_inclusive(self):

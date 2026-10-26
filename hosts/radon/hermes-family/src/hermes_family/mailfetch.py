@@ -4,15 +4,17 @@ Lists inbox mail without a hermes label. A sender outside senders.txt gets
 `hermes-ignored` and is never printed; a key already in the ledger gets
 `hermes-processed` and is skipped. Every other mail becomes one block,
 `Mail-Key:` first (from its Message-ID, or from Gmail's id when it has
-none), and goes through Hermes's own prompt scan. A block the
+none), and goes through Hermes's own prompt scan. The block shows the model
+the mail key, never the Message-ID. A block the
 scan rejects is never printed: the mail is quarantined (a line in
 quarantine.txt for the notifier, its key in the ledger, the
 `hermes-quarantined` label), because Hermes refuses a whole run whose prompt
-fails the scan, and that one mail would block every later run. The printed
-keys go to the fetch record, so the notifier only accepts keys this script
-showed the model. A body over 8 KB is cut, and the fetch record keeps that
-mail's headers, so the notifier tells the family to read the rest. Empty
-output makes Hermes skip the model call.
+fails the scan, and that one mail would block every later run. Each printed
+key goes to mail-keys.txt with its Gmail id and Message-ID, so the notifier
+only accepts keys this script showed the model and labels their mail by that
+Gmail id. A body over 8 KB is cut, and mail-keys.txt keeps that mail's
+headers, so the notifier tells the family to read the rest. Empty output
+makes Hermes skip the model call.
 """
 
 from __future__ import annotations
@@ -36,6 +38,7 @@ from hermes_family.state import (
     PROCESSED_LABEL,
     QUARANTINED_LABEL,
     Head,
+    MailKey,
     Quarantined,
     State,
     address,
@@ -184,12 +187,12 @@ def _field(value: str) -> str:
 
 
 def block(key: str, head: dict[str, str], body: str) -> str:
-    """One mail as the model sees it. Mail text cannot close or open a block."""
+    """One mail as the model sees it: the key, never the Message-ID. Mail text
+    cannot close or open a block."""
     return "\n".join(
         [
             "<mail>",
             f"Mail-Key: {key}",
-            f"Message-ID: {_field(head.get('message-id', ''))}",
             f"From: {_field(head.get('from', ''))}",
             f"Date: {_field(head.get('date', ''))}",
             f"Subject: {_field(head.get('subject', ''))}",
@@ -204,6 +207,7 @@ def block(key: str, head: dict[str, str], body: str) -> str:
 class Candidate:
     key: str
     gmail_id: str
+    message_id: str
     head: dict[str, str]
     text: str
     truncated: bool
@@ -245,19 +249,17 @@ def fetch(gmail: Gmail, state: State, *, scan: Scan, dry_run: bool, max_mails: i
             continue
         body = plain_text(message.get("payload") or {}, partial(gmail.attachment, gmail_id))
         truncated = len(body.encode()) > BODY_LIMIT_BYTES
-        candidates[key] = Candidate(key, gmail_id, head, block(key, head, body), truncated)
+        candidates[key] = Candidate(key, gmail_id, message_id, head, block(key, head, body), truncated)
 
     blocks: list[str] = []
-    printed: dict[str, str] = {}
-    cut_mails: dict[str, Head] = {}
+    printed: dict[str, MailKey] = {}
     for mail, error in zip(candidates.values(), scan([mail.text for mail in candidates.values()]), strict=True):
         fields = [mail.head.get(name, "") for name in ("from", "subject", "date")]
         if not error:
-            printed[mail.key] = mail.gmail_id
             blocks.append(mail.text)
             if mail.truncated:
                 print(f"mail-fetch: {mail.key} body cut at {BODY_LIMIT_BYTES} bytes", file=sys.stderr)
-                cut_mails[mail.key] = Head(*fields)
+            printed[mail.key] = MailKey(mail.gmail_id, mail.message_id, now, Head(*fields) if mail.truncated else None)
             continue
         print(f"mail-fetch: {mail.key} {'would be ' if dry_run else ''}quarantined: {error}", file=sys.stderr)
         if dry_run:
@@ -266,7 +268,7 @@ def fetch(gmail: Gmail, state: State, *, scan: Scan, dry_run: bool, max_mails: i
         state.append_ledger([mail.key])
         label(mail.gmail_id, QUARANTINED_LABEL)
     if printed and not dry_run:
-        state.record_fetch(printed, now, cut_mails)
+        state.record_mail_keys(printed)
     return blocks
 
 

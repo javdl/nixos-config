@@ -5,12 +5,18 @@ from contextlib import redirect_stdout
 from datetime import datetime, timezone
 
 from hermes_family import notifier
-from hermes_family.state import Head, Quarantined, State, mail_key
+from hermes_family.state import Head, MailKey, Quarantined, State, mail_key
 from tests.support import CREDENTIAL, FakeNet, fixture, run_document, temp_dir, token_route, write_json
 
 SCHOOL = mail_key("<gate-fixture-0001@school.example>")
 DAYCARE = mail_key("<sluiting-6nov@opvang.example>")
 NEVER_PRINTED = mail_key("<not-fetched@school.example>")
+MESSAGE_IDS = {SCHOOL: "<gate-fixture-0001@school.example>", DAYCARE: "<sluiting-6nov@opvang.example>"}
+
+
+def printed(gmail_ids: dict[str, str], at: datetime, truncated: dict[str, Head] | None = None) -> dict[str, MailKey]:
+    """mail-fetch's mail-keys.txt entries for keys it printed at `at`."""
+    return {key: MailKey(gmail_id, MESSAGE_IDS[key], at, (truncated or {}).get(key)) for key, gmail_id in gmail_ids.items()}
 
 PROMPT_WITH_INJECTED_BLOCK = (
     "## Script Output\nThe following data was collected by a pre-run script.\n\n```\n<mail>\n"
@@ -39,7 +45,7 @@ class NotifierTest(unittest.TestCase):
         self.state_dir.mkdir()
         (self.state_dir / "senders.txt").write_text("groep5@school.example\nplanning@opvang.example\n")
         self.state = State(self.state_dir)
-        self.state.record_fetch({SCHOOL: "m1", DAYCARE: "m3"}, datetime(2026, 10, 24, 12, tzinfo=timezone.utc))
+        self.state.record_mail_keys(printed({SCHOOL: "m1", DAYCARE: "m3"}, datetime(2026, 10, 24, 12, tzinfo=timezone.utc)))
         self.credential = write_json(self.dir / "mail.json", CREDENTIAL)
         self.run_log = self.dir / "runs.jsonl"
         gmail = fixture("gmail.json")
@@ -81,6 +87,15 @@ class NotifierTest(unittest.TestCase):
         labeled = {call.path.split("/")[-2] for call in self.fake.matching("POST", "/modify")}
         self.assertEqual(labeled, {"m1", "m3"})
         self.assertEqual(self.log_rows(), [])
+
+    def test_mail_is_labeled_by_the_gmail_id_in_mail_keys(self):
+        (self.state_dir / "mail-keys.txt").write_text(json.dumps({
+            "key": SCHOOL, "gmail_id": "m9", "message_id": MESSAGE_IDS[SCHOOL], "ts": "2026-10-24T12:00:00+00:00",
+        }) + "\n")
+        self.write_run("2026-10-24_14-07-12.md", answer_with({"processed": [SCHOOL, DAYCARE]}))
+        self.run_main()
+        self.assertEqual(self.state.ledger(), {SCHOOL})
+        self.assertEqual([call.path.split("/")[-2] for call in self.fake.matching("POST", "/modify")], ["m9"])
 
     def test_only_the_model_answer_counts_not_a_block_inside_the_mail(self):
         self.write_run("2026-10-24_14-07-12.md", "I could not process the mail.")
@@ -128,7 +143,7 @@ class NotifierTest(unittest.TestCase):
         self.assertEqual(self.fake.matching("POST", "/modify"), [])
         self.assertEqual(len(self.log_rows()), 1)
         self.assertIn(f"the notice for {SCHOOL} has no allowlisted sender or no date", self.log_rows()[0]["error"])
-        self.state.record_fetch({SCHOOL: "m1"}, datetime(2026, 10, 24, 12, 15, tzinfo=timezone.utc))
+        self.state.record_mail_keys(printed({SCHOOL: "m1"}, datetime(2026, 10, 24, 12, 15, tzinfo=timezone.utc)))
         self.write_run("2026-10-24_14-22-09.md", answer_with({
             "processed": [SCHOOL],
             "uncertain": [{"key": SCHOOL, "from": "groep5@school.example", "subject": "x", "received": "2026-10-22"}],
@@ -137,8 +152,8 @@ class NotifierTest(unittest.TestCase):
         self.assertEqual(self.state.ledger(), {SCHOOL})
 
     def cut_fetch(self, date: str) -> None:
-        self.state.record_fetch({SCHOOL: "m1"}, datetime(2026, 10, 24, 12, 15, tzinfo=timezone.utc),
-                                {SCHOOL: Head("Groep 5 <groep5@school.example>", "Nieuwsbrief november", date)})
+        self.state.record_mail_keys(printed({SCHOOL: "m1"}, datetime(2026, 10, 24, 12, 15, tzinfo=timezone.utc),
+                                            {SCHOOL: Head("Groep 5 <groep5@school.example>", "Nieuwsbrief november", date)}))
 
     def test_a_mail_whose_body_was_cut_gets_the_template_from_its_headers(self):
         self.cut_fetch("Mon, 26 Oct 2026 08:00:00 +0100")
@@ -216,7 +231,7 @@ class NotifierTest(unittest.TestCase):
 
     def test_an_older_failure_does_not_block_a_later_successful_run(self):
         self.state.record_proposal_failure(SCHOOL, datetime(2026, 10, 24, 12, 3, tzinfo=timezone.utc))
-        self.state.record_fetch({SCHOOL: "m1"}, datetime(2026, 10, 24, 12, 15, tzinfo=timezone.utc))
+        self.state.record_mail_keys(printed({SCHOOL: "m1"}, datetime(2026, 10, 24, 12, 15, tzinfo=timezone.utc)))
         self.write_run("2026-10-24_14-22-09.md", answer_with({"processed": [SCHOOL]}))
         self.run_main()
         self.assertEqual(self.state.ledger(), {SCHOOL})

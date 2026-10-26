@@ -4,7 +4,9 @@
 Proposals calendar and invites both parents. The event id is derived from the
 mail key, the start instant and the appointment's position in the mail, so
 each appointment in a mail gets its own event and a repeated run gets 409 and
-creates nothing. When Google refuses a proposal or does not answer, the mail
+creates nothing. A 409 for that id means the event exists, so the tool answers
+exactly as after a new insert, and the run still ends with its processed
+block. When Google refuses a proposal or does not answer, the mail
 key goes to the state directory's failure record, and the notifier keeps that
 mail out of the ledger so the next parsing run tries it again. `gcal-mcp read`
 offers list_events over the family calendar and, when the family file names
@@ -105,7 +107,7 @@ def create_proposal(api_factory: Callable[[], Api], family: Family, state: State
                     end: str, mail_key: str, n: int, location: str | None = None) -> str:
     event = proposal_event(title, start, end, location, mail_key, n, family)
     try:
-        response = api_factory().call(
+        api_factory().call(
             "POST",
             calendar_events_url(family.proposals_calendar_id),
             params={"sendUpdates": "all"},
@@ -115,10 +117,10 @@ def create_proposal(api_factory: Callable[[], Api], family: Family, state: State
     except (GoogleError, OSError):
         state.record_proposal_failure(mail_key, datetime.now(timezone.utc))
         raise
-    if response.status == 409:
-        return f"Proposal {event['id']} for mail {mail_key} already exists; nothing to do."
-    return (f"Created proposal {event['id']} for mail {mail_key}: {event['summary']} ({start} to {end}); "
-            "both parents are invited.")
+    # A 409 (accepted above) is Google's answer for an id that exists: this
+    # appointment's event, from an earlier run. The model gets the same answer.
+    return (f"Proposal {event['id']} for mail {mail_key} is in the Proposals calendar: {event['summary']} "
+            f"({start} to {end}); both parents are invited.")
 
 
 def _instant(value: str) -> datetime:

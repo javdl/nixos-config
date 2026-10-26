@@ -230,8 +230,9 @@ reason was paused by hand: `jobs-sync` reports it and leaves it paused.
 1. `mail-fetch` lists inbox mail without a `hermes-*` label. Senders not in
    `senders.txt` get `hermes-ignored`. Mail whose key is in
    `mail-ledger.txt` gets `hermes-processed`. Up to 10 other mails become
-   `<mail>` blocks, `Mail-Key:` first; the key is the first 32 hex characters of
-   SHA-256 of the raw Message-ID. A mail without a Message-ID gets the same
+   `<mail>` blocks, `Mail-Key:` first, then From, Date and Subject; the key is
+   the first 32 hex characters of SHA-256 of the raw Message-ID, and the block
+   never shows the Message-ID itself. A mail without a Message-ID gets the same
    hash of a newline, `gmail-id:` and Gmail's message id, which stays the same
    across runs; a trimmed Message-ID never starts with a newline, so the two
    kinds of key cannot meet. A block's body is the mail's `text/plain`
@@ -250,9 +251,12 @@ reason was paused by hand: `jobs-sync` reports it and leaves it paused.
    subject and date go to `quarantine.txt` as one JSON line, its key to
    `mail-ledger.txt`, and the mail gets `hermes-quarantined`. If the scan
    cannot run, `mail-fetch` prints nothing and fails.
-3. The other blocks are printed, and their keys go to `fetch-record.jsonl`.
-   For a mail whose body was cut, the record also keeps its From, Subject
-   and Date, so `notifier` treats it as uncertain (step 6): the model still
+3. The other blocks are printed. `mail-keys.txt` maps each printed key to the
+   mail's Gmail message id and Message-ID (empty for a mail keyed by its
+   Gmail id), one JSON line per key; `mail-fetch` replaces the whole file
+   atomically, keeping the last 500 keys. For a mail whose body was cut, the
+   line also keeps its From, Subject and Date, so `notifier` treats it as
+   uncertain (step 6): the model still
    proposes what it read in the first 8 KB, and the family is told to read
    the rest. With nothing to print, Hermes skips the model call.
 4. The parsing job numbers the appointments in each mail in mail order and
@@ -265,14 +269,16 @@ reason was paused by hand: `jobs-sync` reports it and leaves it paused.
    `YYYY-MM-DDTHH:MM:SSZ`, or `YYYY-MM-DD` for an all-day event. Two
    appointments at the same time in one mail get two events, and a rerun
    that writes the same instant in another form gets 409 and creates nothing.
+   The tool answers a 409 for its own id exactly as it answers a new insert,
+   so a rerun still ends with its `processed` block.
    A mail that also holds an appointment the model cannot
    date is listed as uncertain.
 5. When Google refuses a proposal (other than 409) or does not answer,
    `gcal-mcp` appends the mail key to `proposal-failures.jsonl`.
 6. `notifier` reads each new parsing run's answer (located by Hermes's length
    frames, so a JSON block quoted inside a mail is never read), takes the last
-   fenced JSON block, ledgers and labels the `processed` keys that
-   `fetch-record.jsonl` lists, and prints
+   fenced JSON block, ledgers the `processed` keys that `mail-keys.txt` lists,
+   labels their mail by the Gmail id it maps them to, and prints
    `Kon geen datum vinden: <from>, <subject> (<received>). Kijk de mail even na.`
    for each uncertain mail it ledgered in that pass. A cut mail the model did
    not list as uncertain gets that line from its recorded headers. A key with

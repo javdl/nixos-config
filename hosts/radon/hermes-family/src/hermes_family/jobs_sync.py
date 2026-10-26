@@ -80,8 +80,7 @@ tool once:
 - location: only when the mail gives one.
 Do not create an event you cannot date with confidence. A mail can hold several appointments;
 create one event for each appointment you can date, and list the mail as uncertain if it also
-holds one you cannot date. If create_proposal says the proposal already exists, that
-appointment is done. If it fails for another reason, fix the call when the error names a wrong
+holds one you cannot date. If create_proposal fails, fix the call when the error names a wrong
 argument; if Google failed, leave the mail out of processed and uncertain, so the next run
 tries it again.
 

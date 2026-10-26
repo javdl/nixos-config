@@ -3,7 +3,8 @@
 A no-agent cron job, so Hermes delivers its stdout to the job's --deliver
 target and an empty stdout sends nothing. It reads the parsing job's run
 documents newer than its cursor, takes the last fenced JSON block of each
-model answer, ledgers and labels the processed keys that mail-fetch printed,
+model answer, ledgers the processed keys that mail-fetch printed (the keys in
+mail-keys.txt), labels their mail by the Gmail id mail-keys.txt maps them to,
 and prints the fixed template for each uncertain mail, and for each mail
 whose body mail-fetch cut, from the headers mail-fetch recorded. A key whose
 proposal failed at Google after mail-fetch last printed it stays out of the
@@ -160,7 +161,7 @@ def run(state: State, output_dir: Path) -> Pass:
     """Everything except Gmail: ledger appends, notices, failures, new cursors."""
     cursor = state.notifier_cursor()
     documents = sorted(p for p in output_dir.glob("*.md") if p.name > cursor) if output_dir.is_dir() else []
-    fetched = state.fetched()
+    fetched = state.mail_keys()
     retry = {key for key, at in state.proposal_failures().items() if key in fetched and at >= fetched[key].at}
     ledger = state.ledger()
     senders = state.senders()
