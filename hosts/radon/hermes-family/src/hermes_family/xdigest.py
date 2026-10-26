@@ -80,6 +80,16 @@ def author(entry: dict) -> dict:
     return users[0] if users else {}
 
 
+def media_lines(entry: dict) -> list[str]:
+    """The post's photos and videos, which the model cannot open: their type and alt text."""
+    lines = []
+    for item in _includes(entry, "media"):
+        alt = clean(item.get("alt_text"))[:QUOTE_LIMIT]
+        described = f", alt text: {alt}" if alt.strip() else ", no alt text"
+        lines.append(f"Media: {clean(item.get('type')) or 'media'}{described}")
+    return lines
+
+
 def link(entry: dict) -> str:
     username = author(entry).get("username")
     if isinstance(username, str) and re.fullmatch(r"\w{1,15}", username):
@@ -130,6 +140,7 @@ def block(entry: dict) -> str:
         lines.append(f"Article: {clean(article['title'])[:QUOTE_LIMIT]}")
     if article_text(article):
         lines += ["Article text:", clean(article_text(article))[:TEXT_LIMIT]]
+    lines += media_lines(entry)
     for quoted in quoted_posts(entry):
         lines += ["Quoted post:", clean(post_text(quoted))[:QUOTE_LIMIT]]
     links = outside_links(post)

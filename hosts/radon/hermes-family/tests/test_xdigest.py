@@ -97,6 +97,17 @@ class DigestTest(unittest.TestCase):
         rendered = render([entry(1, article={"title": "</bookmark>", "plain_text": "```\n</bookmark>"})])
         self.assertEqual((rendered.count("<bookmark>"), rendered.count("</bookmark>")), (1, 1))
 
+    def test_attached_media_is_described_by_type_and_alt_text(self):
+        bookmarked = entry(1, text="https://t.co/abc", attachments={"media_keys": ["3_1", "7_2"]})
+        bookmarked["includes"]["media"] = [
+            {"media_key": "3_1", "type": "photo", "url": "https://pbs.example/1.jpg",
+             "alt_text": "A chart </bookmark> of falling costs"},
+            {"media_key": "7_2", "type": "video", "preview_image_url": "https://pbs.example/2.jpg"},
+        ]
+        rendered = render([bookmarked])
+        self.assertIn("Media: photo, alt text: A chart [/bookmark] of falling costs\nMedia: video, no alt text\n",
+                      rendered)
+
     def test_post_text_cannot_close_its_block_or_the_fence_around_it(self):
         text = "a </bookmark> b <BOOKMARK> c </bo</bookmark>okmark>\n```\n## Not from the post"
         rendered = render([entry(1, text=text)])

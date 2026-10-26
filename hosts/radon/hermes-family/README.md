@@ -354,8 +354,9 @@ archive, so a digest never runs between a capture's timestamp and its append.
 `x-bookmarks-digest` runs weekly, such as `0 9 * * 0` (Sundays at 09:00) in
 `schedules`. Its script prints the `poll` lines since the last digest, at most
 40, as `<bookmark>` blocks with the link, author, date, full text, an X
-Article's title and text, the quoted post and outside links. The first digest
-covers the last seven days. Post text cannot close its block or Hermes's code
+Article's title and text, the type and alt text of attached photos and
+videos, the quoted post and outside links. The first digest covers the last
+seven days. Post text cannot close its block or Hermes's code
 fence: the invisible characters Hermes deletes before the model reads the
 prompt are deleted first, then tags become `[bookmark]` and runs of backticks
 become quotes. Each block goes through Hermes's prompt scan; a rejected block
