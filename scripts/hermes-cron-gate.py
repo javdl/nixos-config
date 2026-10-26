@@ -4,9 +4,10 @@
 Sends a Hermes cron system prompt, a forwarded school mail and a calendar tool
 to a chat-completions endpoint, the way the mail-parsing job will. Each run
 measures time to first token and decode speed of the first response, and checks
-that the run ends in exactly one create_calendar_event call with the start
-(an RFC 3339 time with an offset), the mail key and the appointment's position
-n from the mail, the arguments the deployed gcal-proposals tool requires.
+that the run ends in exactly one create_calendar_event call with every argument
+the tool's schema requires, right: a title, the start and the ten-minute end
+(RFC 3339 times with an offset), the mail key and the appointment's position n
+from the mail.
 
 A run follows Hermes's own loop for a tool name that does not exist: Hermes
 answers "Tool '<name>' does not exist. Available tools: ..." and lets the model
@@ -37,11 +38,13 @@ import time
 import urllib.error
 import urllib.request
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 ENDPOINT = "https://ai.buri-hoki.ts.net/v1/chat/completions"
-# The mail's one appointment: 12 November 2026, 15:30 in Amsterdam (UTC+1).
+# The mail's one appointment: 12 November 2026, 15:30 in Amsterdam (UTC+1),
+# for ten minutes.
 EXPECTED_START = datetime(2026, 11, 12, 14, 30, tzinfo=timezone.utc)
+EXPECTED_END = EXPECTED_START + timedelta(minutes=10)
 EXPECTED_N = 1
 TTFT_LIMIT_S = 120.0
 MAX_INVALID_RETRIES = 3
@@ -157,7 +160,19 @@ def load_fixture(tools: str, prompt_toolsets: list[str] | None) -> Fixture:
     return Fixture(build_system_prompt(agent), hermes_tools + [CALENDAR_TOOL], len(hermes_tools))
 
 
+def _rfc3339(value) -> datetime | None:
+    """The time a tool argument names, or None unless it is a string with an offset."""
+    if not isinstance(value, str):
+        return None
+    try:
+        moment = datetime.fromisoformat(value)
+    except ValueError:
+        return None
+    return moment if moment.tzinfo is not None else None
+
+
 def call_passes(calls: list) -> bool:
+    """One create_calendar_event call with every argument the tool requires, right."""
     if len(calls) != 1 or calls[0]["name"] != "create_calendar_event":
         return False
     try:
@@ -167,13 +182,12 @@ def call_passes(calls: list) -> bool:
     # Valid JSON need not be an object: a model can send null, a string or a list.
     if not isinstance(args, dict):
         return False
-    try:
-        start = datetime.fromisoformat(str(args.get("start", "")))
-    except ValueError:
-        return False
+    title = args.get("title")
     return (
-        start.tzinfo is not None
-        and start == EXPECTED_START
+        isinstance(title, str)
+        and title.strip() != ""
+        and _rfc3339(args.get("start")) == EXPECTED_START
+        and _rfc3339(args.get("end")) == EXPECTED_END
         and args.get("mail_key") == MAIL_KEY
         and type(args.get("n")) is int
         and args["n"] == EXPECTED_N

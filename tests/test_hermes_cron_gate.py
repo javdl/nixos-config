@@ -45,6 +45,27 @@ class CallPassesTests(unittest.TestCase):
     def test_the_expected_call_passes(self):
         self.assertTrue(gate.call_passes([call(GOOD_ARGS)]))
 
+    def test_the_same_times_in_utc_pass(self):
+        args = dict(GOOD_ARGS, start="2026-11-12T14:30:00Z", end="2026-11-12T14:40:00Z")
+        self.assertTrue(gate.call_passes([call(args)]))
+
+    def test_every_required_argument_must_be_there(self):
+        for missing in ("title", "start", "end", "mail_key", "n"):
+            with self.subTest(missing=missing):
+                args = {k: v for k, v in GOOD_ARGS.items() if k != missing}
+                self.assertFalse(gate.call_passes([call(args)]))
+
+    def test_required_strings_must_be_strings(self):
+        for key, value in (("title", ""), ("title", "   "), ("title", 5), ("end", None), ("end", 1794501600)):
+            with self.subTest(key=key, value=value):
+                self.assertFalse(gate.call_passes([call(dict(GOOD_ARGS, **{key: value}))]))
+
+    def test_the_end_must_be_ten_minutes_after_the_start(self):
+        for end in ("2026-11-12T15:30:00+01:00", "2026-11-12T16:30:00+01:00", "2026-11-12T15:40:00",
+                    "2026-11-12T15:40:00+02:00", "15:40"):
+            with self.subTest(end=end):
+                self.assertFalse(gate.call_passes([call(dict(GOOD_ARGS, end=end))]))
+
     def test_non_object_arguments_fail_without_raising(self):
         for arguments in ("null", '"2026-11-12T15:30:00+01:00"', "[]", '[{"n": 1}]', "1", "true"):
             with self.subTest(arguments=arguments):
