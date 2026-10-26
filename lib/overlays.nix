@@ -129,23 +129,23 @@ in
           # Version endpoint: https://cdn.getmoshi.app/hook/latest/version.txt
           # Checksums: https://cdn.getmoshi.app/hook/v<version>/checksums.txt
           # The CDN keeps only recent releases; old versions 404, so bump promptly.
-          moshiHookVersion = "0.4.35";
+          moshiHookVersion = "0.4.37";
           moshiHookSources = {
             "x86_64-linux" = {
               url = "https://cdn.getmoshi.app/hook/v${moshiHookVersion}/moshi-hook_Linux_x86_64.tar.gz";
-              sha256 = "0rz9zz720nlqdhyg9ymspv603aag9x5132g3p0xmk9sphs2jbwqk";
+              sha256 = "1bxlmak82gm5v929vmy89pk34kc29ic2m1pzb22x6imavq5bl0f4";
             };
             "aarch64-linux" = {
               url = "https://cdn.getmoshi.app/hook/v${moshiHookVersion}/moshi-hook_Linux_arm64.tar.gz";
-              sha256 = "0a813xn1vzc4nk5757s85r0xixgcq2rhlkn3mc18vjiijbaasl4z";
+              sha256 = "1fzn75ni1iw7ck4ndbh99fxpdwf77f4p3916jaw74frp4k2jr9jq";
             };
             "x86_64-darwin" = {
               url = "https://cdn.getmoshi.app/hook/v${moshiHookVersion}/moshi-hook_Darwin_x86_64.tar.gz";
-              sha256 = "1hs227b08m0alqkjqs148jn3i3bpf8xkbdd03n29nbxh9ybrrfx9";
+              sha256 = "15lvnldns7pkvvcxwd1y5z3gj00l8kk8v3pvy0s86icfgwq999iz";
             };
             "aarch64-darwin" = {
               url = "https://cdn.getmoshi.app/hook/v${moshiHookVersion}/moshi-hook_Darwin_arm64.tar.gz";
-              sha256 = "1wy2mzx07lkr1xnznhg6i9p47jip4pympk4a291aa2xzlrbks5ln";
+              sha256 = "0b8ac2j3xl20qa8pl9iiz4gh1x2wl0gp8bzckn7rciiqmzv2hcxl";
             };
           };
           moshiHookSource = moshiHookSources.${prev.stdenv.hostPlatform.system} or (throw "Unsupported system for moshi-hook: ${prev.stdenv.hostPlatform.system}");
