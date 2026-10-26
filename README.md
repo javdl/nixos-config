@@ -792,10 +792,11 @@ The switch installs that package set, the `herdr-agents` user service, and
 appends the Herdr controller keys to `~/.ssh/authorized_keys`. On spark it
 also starts `dsv41-mia` (Mia TensorFold, served as `dsv41` on
 `127.0.0.1:8000`) and keeps Tailscale Serve on `:8443`. spark2 has no model
-unit. The sybil EXL3 head and worker are not installed. It does not
-install the NAS mount or the ConnectX-7 link: those files are rendered under
-`~/.config/dgx-spark/` and installed once as root. The sudoers drop-in is
-manual. Driver, CUDA, Docker, tailscale, apt, and locale stay native.
+unit. The sybil EXL3 head and worker are not installed. The switch also
+syncs the root-owned files (NAS automount, ConnectX-7 link, sshd fallback)
+into `/etc` through passwordless sudo and installs a timer that switches
+to `main` nightly at 04:00. The sudoers drop-in is manual. Driver,
+firmware, CUDA, Docker, tailscale, apt, and locale stay native.
 `spark-vllm` and `nvpair` are not managed and stay disabled. Details:
 [docs/dgx-spark.md](docs/dgx-spark.md).
 
