@@ -256,12 +256,13 @@ reason was paused by hand: `jobs-sync` reports it and leaves it paused.
    calls `create_proposal` once per appointment it can date, with the mail
    key, that number `n`, and a start and end that are RFC 3339 with an offset
    (`2026-11-12T15:30:00+01:00`) or dates (all-day). The tool refuses a call
-   without `n` or with a date-time without an offset. The event id is the
-   first 32 hex characters of SHA-256 of `<mail key>|<start>|<n>`, with the
-   start in UTC as `YYYY-MM-DDTHH:MM:SSZ`, or `YYYY-MM-DD` for an all-day
-   event. Two appointments at the same time in one mail get two events, and a
-   rerun that writes the same instant with another offset gets 409 and
-   creates nothing. A mail that also holds an appointment the model cannot
+   without `n`, with a date-time without an offset, or with an offset that is
+   not Europe/Amsterdam's on that date. The event id is the first 32 hex
+   characters of SHA-256 of `<mail key>|<start>|<n>`, with the start in UTC as
+   `YYYY-MM-DDTHH:MM:SSZ`, or `YYYY-MM-DD` for an all-day event. Two
+   appointments at the same time in one mail get two events, and a rerun
+   that writes the same instant in another form gets 409 and creates nothing.
+   A mail that also holds an appointment the model cannot
    date is listed as uncertain.
 5. When Google refuses a proposal (other than 409) or does not answer,
    `gcal-mcp` appends the mail key to `proposal-failures.jsonl`.
