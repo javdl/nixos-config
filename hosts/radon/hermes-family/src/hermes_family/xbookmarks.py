@@ -365,10 +365,14 @@ CAUGHT = (XError, OSError, http.client.HTTPException)
 
 def capture_into(archive: Path, credential: Path, known: set[str], now: str, import_dir: Path | None) -> list[str]:
     """Capture and append. The first successful capture is the backfill, even if it finds
-    nothing or an import came first; BACKFILL_MARKER records that it happened."""
+    nothing or an import came first; BACKFILL_MARKER records that it happened. The backfill
+    walks everything the API returns: posts an import archived first must not end it as known
+    posts, so they are only left out of what it stores."""
     marker = archive.parent / BACKFILL_MARKER
     first = not marker.exists()
-    entries, truncated = capture(Bookmarks(load_credential(credential)), known, now, "backfill" if first else "poll")
+    api = Bookmarks(load_credential(credential))
+    entries, truncated = capture(api, set() if first else known, now, "backfill" if first else "poll")
+    entries = [entry for entry in entries if entry["id"] not in known]
     append_entries(archive, entries[::-1])
     known.update(entry["id"] for entry in entries)
     if not first:

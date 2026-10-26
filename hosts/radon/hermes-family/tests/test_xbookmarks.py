@@ -294,6 +294,21 @@ class XBookmarksTest(unittest.TestCase):
         self.assertIn("the first run stored the 3 bookmarks", out)
         self.assertEqual([e["via"] for e in self.entries()], ["import", "backfill", "backfill", "backfill"])
 
+    def test_imported_posts_at_the_probes_end_do_not_cut_the_backfill_short(self):
+        # A partial export holds the 9th and 10th newest bookmarks and nothing older.
+        self.import_dir.mkdir()
+        write_json(self.import_dir / "twitter-Bookmarks-1.json", [{"id": post_id(8)}, {"id": post_id(9)}])
+        self.serve((402, {"title": "Payment Required", "detail": "credits depleted", "status": 402}))
+        self.assertEqual(self.run_main(import_dir=True)[0], 1)
+        self.fake.routes.clear()
+        self.fake.on("GET", BOOKMARKS, FakeX(30))
+        code, out, _ = self.run_main(import_dir=True)
+        self.assertEqual(code, 0)
+        self.assertIn("the first run stored the 28 bookmarks", out)
+        stored = [e["id"] for e in self.entries()]
+        self.assertEqual(sorted(stored), sorted(post_id(n) for n in range(30)))
+        self.assertEqual(len(stored), 30)
+
     def test_a_failed_request_exits_1_with_xs_reason_and_no_credential(self):
         self.serve((402, {"title": "Payment Required", "detail": "credits depleted", "status": 402}))
         code, out, err = self.run_main()

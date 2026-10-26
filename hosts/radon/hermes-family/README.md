@@ -328,8 +328,9 @@ than one a day.
    An exact boundary needs every id in the list each time something is new:
    up to $0.80 a day.
    The first successful run walks everything the API returns: X documents the
-   newest 800, and pagination has been seen to stop near 200. It costs a few
-   dollars, reports how many it stored (zero included), and writes
+   newest 800, and pagination has been seen to stop near 200. Posts an import
+   stored before it do not stop that walk; they are only not stored twice. It
+   costs a few dollars, reports how many it stored (zero included), and writes
    `x-bookmarks/backfilled`, so later runs mark their lines `poll`.
 4. Older bookmarks come from a browser export. Export the Bookmarks page as
    JSON with [twitter-web-exporter](https://github.com/prinsss/twitter-web-exporter)
