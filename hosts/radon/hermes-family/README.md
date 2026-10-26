@@ -231,7 +231,10 @@ reason was paused by hand: `jobs-sync` reports it and leaves it paused.
    `senders.txt` get `hermes-ignored`. Mail whose key is in
    `mail-ledger.txt` gets `hermes-processed`. Up to 10 other mails become
    `<mail>` blocks, `Mail-Key:` first; the key is the first 32 hex characters of
-   SHA-256 of the raw Message-ID. A block's body is the mail's `text/plain`
+   SHA-256 of the raw Message-ID. A mail without a Message-ID gets the same
+   hash of a newline, `gmail-id:` and Gmail's message id, which stays the same
+   across runs; a trimmed Message-ID never starts with a newline, so the two
+   kinds of key cannot meet. A block's body is the mail's `text/plain`
    parts, or its `text/html` parts as text when those are missing or blank. A
    text part whose body Gmail stores as an attachment is fetched with
    `users.messages.attachments.get`. The body is cut at 8 KB. `mail-fetch`

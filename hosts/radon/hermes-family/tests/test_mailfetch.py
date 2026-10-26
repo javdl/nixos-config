@@ -6,7 +6,7 @@ from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 from hermes_family import mailfetch
-from hermes_family.state import Head, Quarantined, State, mail_key
+from hermes_family.state import Head, Quarantined, State, gmail_key, mail_key
 from tests.support import CREDENTIAL, FakeNet, fixture, temp_dir, token_route, write_json
 
 GMAIL = fixture("gmail.json")
@@ -295,6 +295,29 @@ class LongBodyTest(MailFetchCase):
         self.assertIsNone(fetched[SCHOOL_KEY].truncated)
         self.assertIn(f"{LONG_KEY} body cut at 8192 bytes", self.stderr.getvalue())
 
+
+NO_ID = dict(INJECTION, id="m8", threadId="t8", payload=dict(INJECTION["payload"], headers=[
+    {"name": "From", "value": "Opvang <planning@opvang.example>"},
+    {"name": "Subject", "value": "Ouderavond"},
+    {"name": "Date", "value": "Mon, 26 Oct 2026 09:00:00 +0100"},
+], body={"data": b64("Donderdag 12 november om 19:30 uur is de ouderavond.")}))
+
+
+class NoMessageIdTest(MailFetchCase):
+    extra_messages = (NO_ID,)
+
+    def test_a_mail_without_a_message_id_is_keyed_by_its_gmail_id(self):
+        key = gmail_key("m8")
+        self.assertNotIn(key, {mail_key("m8"), mail_key("gmail-id:m8"), mail_key("\ngmail-id:m8")})
+        output = self.run_main()
+        self.assertIn(f"Mail-Key: {key}\nMessage-ID: \n", output)
+        self.assertIn("ouderavond", output)
+        self.assertNotIn("m8", self.labels_added())
+        self.assertEqual(State(self.state_dir).fetched()[key].gmail_id, "m8")
+        (self.state_dir / "mail-ledger.txt").write_text(f"{DONE_KEY}\n{key}\n")
+        self.fake.calls.clear()
+        self.assertNotIn(key, self.run_main())
+        self.assertEqual(self.labels_added()["m8"], ["Label_8"])
 
 
 class ScanProtocolTest(unittest.TestCase):

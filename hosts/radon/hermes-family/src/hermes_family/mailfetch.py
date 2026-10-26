@@ -3,7 +3,8 @@
 Lists inbox mail without a hermes label. A sender outside senders.txt gets
 `hermes-ignored` and is never printed; a key already in the ledger gets
 `hermes-processed` and is skipped. Every other mail becomes one block,
-`Mail-Key:` first, and goes through Hermes's own prompt scan. A block the
+`Mail-Key:` first (from its Message-ID, or from Gmail's id when it has
+none), and goes through Hermes's own prompt scan. A block the
 scan rejects is never printed: the mail is quarantined (a line in
 quarantine.txt for the notifier, its key in the ledger, the
 `hermes-quarantined` label), because Hermes refuses a whole run whose prompt
@@ -38,6 +39,7 @@ from hermes_family.state import (
     Quarantined,
     State,
     address,
+    gmail_key,
     mail_key,
 )
 
@@ -231,11 +233,11 @@ def fetch(gmail: Gmail, state: State, *, scan: Scan, dry_run: bool, max_mails: i
         if address(head.get("from", "")) not in senders:
             label(gmail_id, IGNORED_LABEL)
             continue
-        if not message_id:
-            print(f"mail-fetch: {gmail_id} has no Message-ID; labeled {IGNORED_LABEL}", file=sys.stderr)
-            label(gmail_id, IGNORED_LABEL)
-            continue
-        key = mail_key(message_id)
+        if message_id:
+            key = mail_key(message_id)
+        else:
+            key = gmail_key(gmail_id)
+            print(f"mail-fetch: {gmail_id} has no Message-ID; keyed by its Gmail id", file=sys.stderr)
         if key in ledger:
             label(gmail_id, QUARANTINED_LABEL if key in quarantined else PROCESSED_LABEL)
             continue

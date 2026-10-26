@@ -27,6 +27,13 @@ def mail_key(message_id: str) -> str:
     return hashlib.sha256(message_id.strip().encode()).hexdigest()[:32]
 
 
+def gmail_key(gmail_id: str) -> str:
+    """The key of a mail without a Message-ID: the same hash of a newline,
+    "gmail-id:" and Gmail's message id. A trimmed Message-ID never starts
+    with a newline, so this never equals a mail_key input."""
+    return hashlib.sha256(f"\ngmail-id:{gmail_id}".encode()).hexdigest()[:32]
+
+
 def is_key(value: object) -> bool:
     return isinstance(value, str) and KEY_RE.fullmatch(value) is not None
 
