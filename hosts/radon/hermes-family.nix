@@ -223,7 +223,13 @@ let
 
   # The family Hermes for Joost's checks, for example `hermes-family config`
   # or `hermes-family cron list`: as hermes, with the gateway's environment.
+  # Its HOME, HERMES_HOME and TMPDIR are on the Agent volume, so it refuses to
+  # run unless the volume itself is mounted there, as the daemons wait for.
   hermesFamilyCommand = pkgs.writeShellScriptBin "hermes-family" ''
+    if ! ${agentVolumeMounted}; then
+      echo "hermes-family: the Agent volume is not mounted at ${agentRoot}" >&2
+      exit 1
+    fi
     cd /
     exec /usr/bin/sudo -u hermes -H /usr/bin/env ${
       lib.escapeShellArgs (lib.mapAttrsToList (name: value: "${name}=${value}") hermesEnvironment)
