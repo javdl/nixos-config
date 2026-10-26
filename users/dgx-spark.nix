@@ -46,18 +46,21 @@ in
       '';
     }
     // lib.optionalAttrs isSpark {
+      # renderer is per device: a top-level renderer here would override the
+      # installer's global NetworkManager renderer and leave enP7s7 unmanaged.
       ".config/dgx-spark/netplan/40-cx7.yaml".text = ''
         network:
           version: 2
-          renderer: networkd
           ethernets:
             enp1s0f0np0:
+              renderer: networkd
               dhcp4: false
               dhcp6: false
               link-local: []
               mtu: 9000
               addresses: [192.168.100.10/24]
             enP2p1s0f0np0:
+              renderer: networkd
               dhcp4: false
               dhcp6: false
               link-local: []

@@ -117,7 +117,9 @@ let
   followMode = if aperture then "tcp" else "http";
   apiKeyFile = "${config.home.homeDirectory}/${cluster.apiKeyFileRel}";
 
-  markov = ./dsv41/markov_top_tokens.json;
+  # Interpolate, not toString: the env file needs the store path as a
+  # dependency, or GC deletes it and Docker bind-mounts an empty directory.
+  markov = "${./dsv41/markov_top_tokens.json}";
   markovHash = builtins.hashFile "md5" markov;
 
   scriptDir = pkgs.runCommand "dsv41-cluster-scripts" { } ''

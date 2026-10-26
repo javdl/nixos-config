@@ -164,9 +164,13 @@ point-to-point, MTU 9000, no gateway, no DNS, never a default route.
 down.
 
 **spark** — copy the rendered netplan and apply it. The file has no
-gateway and does not mention `enP7s7`. `netplan apply` still reloads
-networkd; run it from mosh or a console so a brief LAN blip does not drop
-the session. Do not put this file on spark2.
+gateway and does not mention `enP7s7`. It sets `renderer: networkd` per
+device, never at the top level: a top-level renderer overrides
+`00-installer-config.yaml`'s global `NetworkManager`, NetworkManager then
+leaves every Ethernet device unmanaged, and `enP7s7` stays down after the
+next boot (no LAN, no tailnet; happened 2026-10-26). `netplan apply` still
+reloads networkd; run it from mosh or a console so a brief LAN blip does not
+drop the session. Do not put this file on spark2.
 
 ```bash
 sudo install -m 600 \
