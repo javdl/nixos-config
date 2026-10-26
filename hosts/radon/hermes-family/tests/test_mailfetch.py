@@ -51,6 +51,17 @@ def fake_python(directory: Path, scanner: str = FAKE_SCANNER) -> Path:
     return python
 
 
+def b64(text: str) -> str:
+    return base64.urlsafe_b64encode(text.encode()).decode()
+
+
+def alternative(plain: dict, html: dict) -> dict:
+    return {"mimeType": "multipart/alternative", "filename": "", "body": {"size": 0}, "parts": [
+        {"mimeType": "text/plain", "filename": "", "headers": [], "body": plain},
+        {"mimeType": "text/html", "filename": "", "headers": [], "body": html},
+    ]}
+
+
 def gmail_fake(*extra: dict) -> FakeNet:
     fake = token_route(FakeNet())
     fake.on("GET", "/users/me/labels", GMAIL["labels"])
@@ -228,6 +239,10 @@ class BodyTest(unittest.TestCase):
         cut = mailfetch.cut(text)
         self.assertLessEqual(len(cut.encode()), 8192)
         self.assertEqual(cut, "é" * 4096)
+
+    def test_a_blank_plain_alternative_falls_back_to_the_html_one(self):
+        payload = alternative({"data": b64(" \r\n \r\n")}, {"data": b64("<p>Ouderavond 12 november, 19:30 uur</p>")})
+        self.assertEqual(mailfetch.plain_text(payload), "Ouderavond 12 november, 19:30 uur")
 
     def test_mail_key_matches_the_gate_fixture_key(self):
         self.assertEqual(SCHOOL_KEY, "76daed97cd1135f83d9772ef841c73e3")

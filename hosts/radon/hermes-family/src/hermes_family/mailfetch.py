@@ -140,13 +140,15 @@ def _part_text(part: dict[str, Any]) -> str:
 
 
 def plain_text(payload: dict[str, Any]) -> str:
-    """The text/plain parts, or the text/html parts as text. Attachments are skipped."""
+    """The text/plain parts, or the text/html parts as text when the plain
+    ones are missing or blank. Attachments are skipped."""
     inline = [p for p in _parts(payload) if not p.get("filename") and (p.get("body") or {}).get("data")]
     for mime in ("text/plain", "text/html"):
         texts = [_part_text(p) for p in inline if p.get("mimeType") == mime]
-        if texts:
-            text = "\n\n".join(texts).replace("\r\n", "\n")
-            return html_to_text(text) if mime == "text/html" else text.strip()
+        text = "\n\n".join(texts).replace("\r\n", "\n")
+        text = html_to_text(text) if mime == "text/html" else text.strip()
+        if text:
+            return text
     return ""
 
 
