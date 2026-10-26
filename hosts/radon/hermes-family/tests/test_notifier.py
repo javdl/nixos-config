@@ -235,6 +235,15 @@ class NotifierTest(unittest.TestCase):
         self.assertEqual(self.run_main(), "")
         self.assertIn("quarantine.txt line 2", self.log_rows()[0]["error"])
 
+    def test_a_quarantined_mail_without_a_usable_date_gets_the_notice_without_it(self):
+        for date in ("", "binnenkort"):
+            self.state.quarantine(Quarantined(
+                mail_key(f"<undated-{date}@school.example>"), "Groep 5 <groep5@school.example>",
+                "Schoolreis https://school.example/x\u202e", date))
+        self.assertEqual(self.run_main(), "Kon de mail niet lezen: groep5@school.example, Schoolreis. Kijk de mail even na.\n" * 2)
+        self.assertEqual(self.log_rows(), [])
+        self.assertEqual(self.state.quarantine_cursor(), 2)
+
 
 class SanitizeTest(unittest.TestCase):
     def test_received_accepts_iso_and_rfc_2822_dates(self):

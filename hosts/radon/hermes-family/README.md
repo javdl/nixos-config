@@ -281,9 +281,11 @@ reason was paused by hand: `jobs-sync` reports it and leaves it paused.
 7. For each line `mail-fetch` added to `quarantine.txt` since its last run,
    `notifier` prints
    `Kon de mail niet lezen: <from>, <subject> (<received>). Kijk de mail even na.`
-   with the same cleaning: the sender must be in `senders.txt`, the subject
-   loses URLs and control characters and is cut to 80 characters, and the
-   date must parse. `quarantine-cursor` holds how many lines it has handled.
+   with the same cleaning: the sender must be in `senders.txt`, and the
+   subject loses URLs and control characters and is cut to 80 characters.
+   When the date does not parse, the line leaves out ` (<received>)`; a
+   sender not in `senders.txt` gets no line but a `failed` row.
+   `quarantine-cursor` holds how many lines it has handled.
 
 ## Tests
 

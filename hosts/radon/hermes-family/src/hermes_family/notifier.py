@@ -10,7 +10,7 @@ proposal failed at Google after mail-fetch last printed it stays out of the
 ledger, so the next parsing run tries that mail again; so does a key whose
 notice has no allowlisted sender or no date, with a failure row. It also
 prints the fixed template for each mail that mail-fetch quarantined since the
-last run.
+last run, without the date when its Date header does not parse.
 Model text never reaches the output: every printed field is re-derived or
 sanitized.
 """
@@ -34,6 +34,7 @@ JOB_NAME = "family-mail-notifier"
 PARSE_JOB_NAME = "family-mail-parsing"
 TEMPLATE = "Kon geen datum vinden: {sender}, {subject} ({received}). Kijk de mail even na."
 QUARANTINE_TEMPLATE = "Kon de mail niet lezen: {sender}, {subject} ({received}). Kijk de mail even na."
+UNDATED_QUARANTINE_TEMPLATE = "Kon de mail niet lezen: {sender}, {subject}. Kijk de mail even na."
 SUBJECT_LIMIT = 80
 
 # Hermes 81a5543 writes an agent run as header, "**Prompt Characters:** N",
@@ -203,8 +204,10 @@ def run(state: State, output_dir: Path) -> Pass:
     for number, entry in enumerate(quarantined[start:], start + 1):
         if line := notice(QUARANTINE_TEMPLATE, entry.sender, entry.subject, entry.date, senders):
             result.lines.append(line)
+        elif (sender := address(entry.sender)) in senders:
+            result.lines.append(UNDATED_QUARANTINE_TEMPLATE.format(sender=sender, subject=clean_subject(entry.subject)))
         else:
-            result.failures.append(f"quarantine.txt line {number}: no allowlisted sender or no date")
+            result.failures.append(f"quarantine.txt line {number}: no allowlisted sender")
     state.set_quarantine_cursor(len(quarantined))
     return result
 
