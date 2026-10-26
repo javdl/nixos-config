@@ -23,7 +23,11 @@ creates a second job with a name it manages. Facts below are from Hermes
   which is the family group. `signal:+31600000001` is one chat
   (cron/scheduler_delivery.py:629-656, tools/send_message_targets.py:10-11,
   40-41). The evening brief and the digest go to `personal_deliver` from the
-  family file, which must name one chat.
+  family file, which must name one chat on a messaging platform: `local`
+  only writes the run file and `origin` follows the job's origin
+  (cron/scheduler_delivery.py:603-627), an unknown platform resolves to no
+  target (:629-640, :670-671, tools/send_message_targets.py:103-105), and a
+  comma separates targets (cron/scheduler_delivery.py:883).
 """
 
 from __future__ import annotations
@@ -45,6 +49,14 @@ from typing import Callable, Iterator
 
 FAMILY_GROUP = "signal"
 PERSONAL = "<personal>"
+# The messaging platforms Hermes 81a5543's cron delivery knows by name, its
+# home-target list (cron/scheduler_delivery.py:41-44). The other platforms it
+# delivers to are not chats: webhook, wecom_callback (:26-30) and bot-chat
+# (:808-812).
+MESSAGING_PLATFORMS = frozenset({
+    "matrix", "telegram", "discord", "slack", "signal", "mattermost", "sms", "email", "dingtalk",
+    "feishu", "wecom", "weixin", "bluebubbles", "qqbot", "whatsapp", "whatsapp_cloud",
+})
 LOCK_TIMEOUT_S = 30.0
 # A job that jobs-sync creates stays paused with this reason until its
 # toolsets are set. If a run stops in between, the next run resumes it.
@@ -157,16 +169,18 @@ def resolve(spec: JobSpec, personal_deliver: str) -> JobSpec:
 
 
 def personal_deliver(family_file: Path) -> str:
-    """`personal_deliver` from the family file: one chat as `<platform>:<chat>`.
-    Bare `signal` (the family group), `local` and `origin` are refused."""
+    """`personal_deliver` from the family file: one chat as `<platform>:<chat>`
+    on one of MESSAGING_PLATFORMS. Bare `signal` (the family group), `local`,
+    `origin` and any other platform are refused, whatever follows the colon."""
     try:
         data = json.loads(Path(family_file).read_text())
     except (OSError, json.JSONDecodeError) as error:
         raise ValueError(f"cannot read the family file {family_file}: {error}") from error
     target = data.get("personal_deliver") if isinstance(data, dict) else None
     platform, _, chat = target.strip().partition(":") if isinstance(target, str) else ("", "", "")
-    if not platform or not chat.strip():
-        raise ValueError("the family file's personal_deliver must name one chat, for example signal:+31600000001")
+    if platform not in MESSAGING_PLATFORMS or not chat.strip() or "," in chat:
+        raise ValueError("the family file's personal_deliver must name one chat on a messaging platform, "
+                         "for example signal:+31600000001")
     return target.strip()
 
 

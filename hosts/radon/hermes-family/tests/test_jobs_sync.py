@@ -225,7 +225,9 @@ class MainTest(unittest.TestCase):
         out = io.StringIO()
         with mock.patch.dict(os.environ, {"HERMES_HOME": str(self.dir / "home")}), \
                 redirect_stdout(out), redirect_stderr(out):
-            code = jobs_sync.main(["--jobs-dir", "/j", "--family", str(family), *flags])
+            # A missing binary: a run that gets past validation fails instead of reaching a real hermes.
+            code = jobs_sync.main(["--jobs-dir", "/j", "--family", str(family),
+                                   "--hermes", str(self.dir / "no-hermes"), *flags])
         return code, out.getvalue()
 
     def test_personal_deliver_must_name_one_chat(self):
@@ -234,6 +236,20 @@ class MainTest(unittest.TestCase):
             self.assertEqual(code, 1, target)
             self.assertIn("personal_deliver must name one chat", output)
         self.assertFalse((self.dir / "home" / "scripts").exists())
+
+    def test_personal_deliver_must_be_a_messaging_platform(self):
+        for target in ("local:any", "origin:any", "typo:chat", "webhook:hook", "bot-chat:other",
+                       "signal:+31600000001,local"):
+            code, output = self.main(target)
+            self.assertEqual(code, 1, target)
+            self.assertIn("personal_deliver must name one chat", output)
+            self.assertNotIn(target, output)
+        self.assertFalse((self.dir / "home" / "scripts").exists())
+
+    def test_personal_deliver_accepts_one_chat_on_a_messaging_platform(self):
+        for target in ("signal:+31600000001", "telegram:123456789", "matrix:!kamer:example.org"):
+            code, output = self.main(target, "--dry-run")
+            self.assertEqual(code, 0, output)
 
     def test_dry_run_prints_the_plan(self):
         code, output = self.main(PERSONAL, "--dry-run")

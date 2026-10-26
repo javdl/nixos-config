@@ -102,7 +102,7 @@ In a group the bot answers only when it is mentioned (`signal.require_mention`).
 | `parents` | exactly two addresses, invited to every proposal | `["ouder1@example.org", "ouder2@example.org"]` |
 | `senders` | school and daycare addresses whose mail is read | `["groep5@school.example", "planning@opvang.example"]` |
 | `pickup_question` | optional: the 14:00 question; default `Wie haalt de kinderen vandaag op?` | `Wie haalt Kind A vandaag uit school?` |
-| `personal_deliver` | where the evening brief and the digest go: one chat, `<platform>:<chat>` | `signal:+31600000001` |
+| `personal_deliver` | where the evening brief and the digest go: one chat on a messaging platform, `<platform>:<chat>` | `signal:+31600000001` |
 
 ```json
 {
@@ -200,8 +200,10 @@ family group, so it gets only `gcal-family`.
 
 The evening brief reads the personal calendar, and the digest is Joost's, so
 both go to `personal_deliver`, never the family group. `jobs-sync` refuses a
-`personal_deliver` that names no single chat: bare `signal`, `local` and
-`origin` are refused.
+`personal_deliver` that names no single chat on a messaging platform: bare
+`signal`, a list with a comma, and `local:`, `origin:` or any platform
+outside the cron home-target list of Hermes 81a5543
+(`cron/scheduler_delivery.py:41-44`) are refused, whatever follows the colon.
 
 `hermes cron create/edit` cannot set `enabled_toolsets`. `jobs-sync` writes that
 one field into `cron/jobs.json` under the store's own lock
