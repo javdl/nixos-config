@@ -3,11 +3,17 @@
 
 Sends a Hermes cron system prompt, a forwarded school mail and a calendar tool
 to a chat-completions endpoint, the way the mail-parsing job will. Each run
-measures time to first token and decode speed of the first response, and checks
-that the run ends in exactly one create_calendar_event call with every argument
-the tool's schema requires, right: a title, the start and the ten-minute end
-(RFC 3339 times with an offset), the mail key and the appointment's position n
-from the mail.
+measures time to first token and decode speed of the first response. A run
+passes when both hold:
+
+- it makes exactly one create_calendar_event call, with every argument the
+  tool's schema requires right: a title, the start and the ten-minute end
+  (RFC 3339 times with an offset), the mail key and the appointment's position
+  n from the mail;
+- answered the way gcal-proposals answers a created proposal, it ends with a
+  final answer whose last fenced JSON block, found and parsed the way the
+  notifier finds and parses it, has exactly the keys processed and uncertain,
+  lists the mail key once in processed and has an empty uncertain list.
 
 A run follows Hermes's own loop for a tool name that does not exist: Hermes
 answers "Tool '<name>' does not exist. Available tools: ..." and lets the model
@@ -35,6 +41,7 @@ Hermes package the hermes-family command runs (its hermesVenv):
 from __future__ import annotations
 
 import argparse
+import collections
 import dataclasses
 import hashlib
 import json
@@ -58,11 +65,11 @@ MAX_INVALID_RETRIES = 3
 MESSAGE_ID = "<gate-fixture-0001@school.example>"
 MAIL_KEY = hashlib.sha256(MESSAGE_ID.encode()).hexdigest()[:32]
 
+# The block mail-fetch prints: the mail key, never the Message-ID.
 MAIL = f"""Mail-Key: {MAIL_KEY}
 From: groep5@school.example
 Date: Thu, 22 Oct 2026 16:05:00 +0200
 Subject: Tienminutengesprekken groep 5
-Message-ID: {MESSAGE_ID}
 
 Beste ouders van groep 5,
 
@@ -79,9 +86,20 @@ position among the appointments the mail lists. Do not create an event you
 cannot date with confidence. Today is Saturday 2026-10-24, and the timezone is
 Europe/Amsterdam.
 
+End your final answer with exactly one fenced JSON block and nothing after it:
+```json
+{{"processed": ["<Mail-Key>"], "uncertain": [{{"key": "<Mail-Key>", "from": "<sender address>", "subject": "<Subject line>", "received": "<Date line>"}}]}}
+```
+processed lists the Mail-Key of every mail you handled, including the uncertain ones and the
+ones without an appointment. uncertain lists the mails with an appointment you could not date.
+
 <mail>
 {MAIL}
 </mail>"""
+
+# The notifier's block rules (hosts/radon/hermes-family notifier.parse_block):
+# the last fenced block, with or without a json tag, parsed as one JSON object.
+FENCE_RE = re.compile(r"```[ \t]*(?:json)?[ \t]*\n(.*?)\n[ \t]*```", re.DOTALL | re.IGNORECASE)
 
 CALENDAR_TOOL = {
     "type": "function",
@@ -141,6 +159,8 @@ class RunResult:
     turns: list[Turn]
     first_response_passed: bool
     passed: bool
+    failure: str | None = None
+    retries: int = 0
 
     @property
     def first(self) -> Turn:
@@ -217,6 +237,40 @@ def call_passes(calls: list) -> bool:
     )
 
 
+def block_error(answer: str) -> str | None:
+    """Why the notifier would not ledger the fixture mail from this final
+    answer alone, or None when its last fenced block is exactly
+    {"processed": [MAIL_KEY], "uncertain": []} up to key order."""
+    blocks = FENCE_RE.findall(answer)
+    if not blocks:
+        return "no fenced JSON block"
+    try:
+        data = json.loads(blocks[-1])
+    except json.JSONDecodeError:
+        return "last fenced block is not JSON"
+    if not isinstance(data, dict):
+        return "last fenced block is not an object"
+    if set(data) != {"processed", "uncertain"}:
+        return "keys are not exactly processed and uncertain"
+    processed, uncertain = data["processed"], data["uncertain"]
+    if not isinstance(processed, list) or processed.count(MAIL_KEY) != 1:
+        return "processed does not list the mail key once"
+    if uncertain != []:
+        return "uncertain is not an empty list"
+    return None
+
+
+def proposal_reply(call: dict) -> str:
+    """What gcal-proposals answers for a created proposal, and for a 409 on
+    its own id: the event id hashes the mail key, the start in UTC and n."""
+    args = json.loads(call["arguments"])
+    start = _rfc3339(args["start"]).astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    event_id = hashlib.sha256(f"{args['mail_key']}|{start}|{args['n']}".encode()).hexdigest()[:32]
+    title = " ".join(args["title"].split())
+    return (f"Proposal {event_id} for mail {args['mail_key']} is in the Proposals calendar: {title} "
+            f"({args['start']} to {args['end']}); both parents are invited.")
+
+
 def stream_turn(model: str, max_tokens: int, reasoning_effort: str | None, tools: list, messages: list) -> Turn:
     body = {
         "model": model,
@@ -289,13 +343,25 @@ def run_case(fixture: Fixture, model: str, max_tokens: int, reasoning_effort: st
     system = fixture.system if cache == "warm" else f"[gate {uuid.uuid4().hex}]\n{fixture.system}"
     messages: list = [{"role": "system", "content": system}, {"role": "user", "content": TASK}]
     turns: list[Turn] = []
-    for _ in range(MAX_INVALID_RETRIES + 1):
+    retries = 0
+    proposed = False
+
+    def result(failure: str | None) -> RunResult:
+        return RunResult(run=run, turns=turns, first_response_passed=failure is None and retries == 0,
+                         passed=failure is None, failure=failure, retries=retries)
+
+    while True:
         turn = stream_turn(model, max_tokens, reasoning_effort, fixture.tools, messages)
         turns.append(turn)
-        invalid = [c for c in turn.tool_calls if c["name"] not in fixture.tool_names]
-        if turn.error or turn.http_status != 200 or not invalid:
-            break
-        available = ", ".join(sorted(fixture.tool_names))
+        if turn.error or turn.http_status != 200:
+            return result(f"http {turn.http_status}" if turn.http_status else "network")
+        if not turn.tool_calls:
+            if not proposed:
+                return result("call: no create_calendar_event call")
+            error = block_error(turn.content)
+            return result(None if error is None else f"block: {error}")
+        if proposed:
+            return result("call: a tool call after the proposal")
         messages.append({
             "role": "assistant",
             "content": turn.content or None,
@@ -304,14 +370,23 @@ def run_case(fixture: Fixture, model: str, max_tokens: int, reasoning_effort: st
                 for c in turn.tool_calls
             ],
         })
-        for call in turn.tool_calls:
-            reply = (f"Tool '{call['name']}' does not exist. Available tools: {available}"
-                     if call["name"] not in fixture.tool_names
-                     else "Skipped: another tool call in this turn used an invalid name. Please retry this tool call.")
-            messages.append({"role": "tool", "tool_call_id": call["id"], "name": call["name"], "content": reply})
-    last = turns[-1]
-    ok = lambda t: t.error is None and t.http_status == 200 and call_passes(t.tool_calls)
-    return RunResult(run=run, turns=turns, first_response_passed=ok(turns[0]), passed=ok(last))
+        if any(c["name"] not in fixture.tool_names for c in turn.tool_calls):
+            if retries == MAX_INVALID_RETRIES:
+                return result("call: a tool that does not exist, after every retry")
+            retries += 1
+            available = ", ".join(sorted(fixture.tool_names))
+            for call in turn.tool_calls:
+                reply = (f"Tool '{call['name']}' does not exist. Available tools: {available}"
+                         if call["name"] not in fixture.tool_names
+                         else "Skipped: another tool call in this turn used an invalid name. Please retry this tool call.")
+                messages.append({"role": "tool", "tool_call_id": call["id"], "name": call["name"], "content": reply})
+            continue
+        if not call_passes(turn.tool_calls):
+            return result("call: not the one expected create_calendar_event call")
+        proposed = True
+        call = turn.tool_calls[0]
+        messages.append({"role": "tool", "tool_call_id": call["id"], "name": call["name"],
+                         "content": proposal_reply(call)})
 
 
 def summarize(results: list[RunResult]) -> dict:
@@ -322,8 +397,9 @@ def summarize(results: list[RunResult]) -> dict:
         "runs": len(results),
         "passed": passed,
         "first_response_passed": sum(r.first_response_passed for r in results),
-        "runs_needing_a_retry": sum(len(r.turns) > 1 for r in results),
+        "runs_needing_a_retry": sum(r.retries > 0 for r in results),
         "errors": sum(any(t.error or t.http_status != 200 for t in r.turns) for r in results),
+        "failures": dict(collections.Counter(r.failure for r in results if r.failure)),
         "ttft_s_median": statistics.median(ttfts) if ttfts else None,
         "ttft_s_range": [min(ttfts), max(ttfts)] if ttfts else None,
         "decode_tok_s_median": statistics.median(decodes) if decodes else None,

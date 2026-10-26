@@ -2,6 +2,8 @@
 and the reasoning effort it sends."""
 
 import contextlib
+import dataclasses
+import hashlib
 import importlib.util
 import io
 import json
@@ -41,9 +43,18 @@ def call(arguments):
     return {"id": "call-1", "name": "create_calendar_event", "arguments": arguments}
 
 
-def turn(tool_calls):
+def turn(tool_calls, content=""):
     return gate.Turn(http_status=200, ttft_s=1.0, total_s=2.0, prompt_tokens=100, completion_tokens=20,
-                     reasoning_tokens=None, decode_tok_s=20.0, content="", tool_calls=tool_calls, error=None)
+                     reasoning_tokens=None, decode_tok_s=20.0, content=content, tool_calls=tool_calls, error=None)
+
+
+GOOD_BLOCK = {"processed": [gate.MAIL_KEY], "uncertain": []}
+
+
+def answer(block, before="One proposal created.\n\n", tag="json"):
+    if not isinstance(block, str):
+        block = json.dumps(block)
+    return f"{before}```{tag}\n{block}\n```\n"
 
 
 class CallPassesTests(unittest.TestCase):
@@ -94,6 +105,120 @@ class CallPassesTests(unittest.TestCase):
             result = gate.run_case(fixture, "spark/dsv41", 1024, None, 1, "warm")
         self.assertFalse(result.passed)
         self.assertFalse(result.first_response_passed)
+
+
+class BlockErrorTests(unittest.TestCase):
+    def test_the_expected_block_passes(self):
+        self.assertIsNone(gate.block_error(answer(GOOD_BLOCK)))
+        self.assertIsNone(gate.block_error(answer({"uncertain": [], "processed": [gate.MAIL_KEY]}, before="")))
+
+    def test_the_notifier_takes_a_fence_with_or_without_a_json_tag(self):
+        for tag in ("json", "JSON", "", " json "):
+            with self.subTest(tag=tag):
+                self.assertIsNone(gate.block_error(answer(GOOD_BLOCK, tag=tag)))
+
+    def test_only_the_last_block_counts(self):
+        bad = answer({"processed": [], "uncertain": []})
+        self.assertIsNone(gate.block_error(bad + answer(GOOD_BLOCK)))
+        self.assertIsNotNone(gate.block_error(answer(GOOD_BLOCK) + bad))
+
+    def test_an_answer_without_a_complete_block_fails(self):
+        for text in ("", "Done.", json.dumps(GOOD_BLOCK), f"```json\n{json.dumps(GOOD_BLOCK)}\n",
+                     f"```json\n{json.dumps(GOOD_BLOCK)[:-1]}\n```"):
+            with self.subTest(text=text):
+                self.assertIsNotNone(gate.block_error(text))
+
+    def test_the_block_must_be_exactly_the_expected_object(self):
+        key = gate.MAIL_KEY
+        other = "0" * 32
+        for block in ([GOOD_BLOCK], "null", {"processed": [key]}, {"uncertain": []},
+                      {"processed": [key], "uncertain": [], "notes": ""},
+                      {"processed": key, "uncertain": []}, {"processed": [], "uncertain": []},
+                      {"processed": [key, key], "uncertain": []}, {"processed": [key.upper()], "uncertain": []},
+                      {"processed": [other], "uncertain": []}, {"processed": [key], "uncertain": None},
+                      {"processed": [key], "uncertain": {}},
+                      {"processed": [key], "uncertain": [{"key": key, "from": "groep5@school.example",
+                                                          "subject": "Tienminutengesprekken groep 5",
+                                                          "received": "Thu, 22 Oct 2026 16:05:00 +0200"}]}):
+            with self.subTest(block=block):
+                self.assertIsNotNone(gate.block_error(answer(block)))
+
+
+class RunCaseTests(unittest.TestCase):
+    def run_turns(self, *turns):
+        fixture = gate.Fixture(system="system", tools=[gate.CALENDAR_TOOL], hermes_tool_count=0)
+        sent = []
+
+        def stream_turn(model, max_tokens, effort, tools, messages):
+            sent.append(json.loads(json.dumps(messages)))
+            return turns[len(sent) - 1]
+
+        with mock.patch.object(gate, "stream_turn", side_effect=stream_turn):
+            return gate.run_case(fixture, "spark/dsv41", 1024, "high", 1, "cold"), sent
+
+    def test_the_call_then_the_block_passes(self):
+        result, sent = self.run_turns(turn([call(GOOD_ARGS)]), turn([], answer(GOOD_BLOCK)))
+        self.assertEqual((result.passed, result.first_response_passed, result.failure, result.retries),
+                         (True, True, None, 0))
+        self.assertEqual(sent[1][-1], {"role": "tool", "tool_call_id": "call-1", "name": "create_calendar_event",
+                                        "content": gate.proposal_reply(call(GOOD_ARGS))})
+
+    def test_the_tool_answers_like_gcal_proposals(self):
+        event_id = hashlib.sha256(f"{gate.MAIL_KEY}|2026-11-12T14:30:00Z|1".encode()).hexdigest()[:32]
+        self.assertEqual(gate.proposal_reply(call(GOOD_ARGS)),
+                         f"Proposal {event_id} for mail {gate.MAIL_KEY} is in the Proposals calendar: "
+                         "Tienminutengesprek groep 5 (2026-11-12T15:30:00+01:00 to 2026-11-12T15:40:00+01:00); "
+                         "both parents are invited.")
+
+    def test_the_right_call_without_a_valid_block_fails(self):
+        for content in ("Done.", answer({"processed": [gate.MAIL_KEY]})):
+            with self.subTest(content=content):
+                result, _ = self.run_turns(turn([call(GOOD_ARGS)]), turn([], content))
+                self.assertFalse(result.passed)
+                self.assertFalse(result.first_response_passed)
+                self.assertTrue(result.failure.startswith("block: "))
+
+    def test_a_block_without_a_call_fails(self):
+        result, sent = self.run_turns(turn([], answer(GOOD_BLOCK)))
+        self.assertFalse(result.passed)
+        self.assertTrue(result.failure.startswith("call: "))
+        self.assertEqual(len(sent), 1)
+
+    def test_a_second_call_fails(self):
+        result, _ = self.run_turns(turn([call(GOOD_ARGS)]), turn([call(GOOD_ARGS)], answer(GOOD_BLOCK)))
+        self.assertFalse(result.passed)
+        self.assertTrue(result.failure.startswith("call: "))
+
+    def test_a_wrong_call_fails_without_a_tool_answer(self):
+        result, sent = self.run_turns(turn([call(dict(GOOD_ARGS, n=2))]), turn([], answer(GOOD_BLOCK)))
+        self.assertFalse(result.passed)
+        self.assertEqual(len(sent), 1)
+
+    def test_a_retry_after_an_unknown_tool_passes_but_not_on_the_first_response(self):
+        unknown = {"id": "call-0", "name": "create_proposal", "arguments": json.dumps(GOOD_ARGS)}
+        result, sent = self.run_turns(turn([unknown]), turn([call(GOOD_ARGS)]), turn([], answer(GOOD_BLOCK)))
+        self.assertEqual((result.passed, result.first_response_passed, result.retries), (True, False, 1))
+        self.assertTrue(sent[1][-1]["content"].startswith("Tool 'create_proposal' does not exist."))
+
+    def test_an_http_error_fails_the_run(self):
+        error = dataclasses.replace(turn([]), http_status=400, error="bad request")
+        result, _ = self.run_turns(turn([call(GOOD_ARGS)]), error)
+        self.assertEqual((result.passed, result.failure), (False, "http 400"))
+
+    def test_the_summary_counts_failure_kinds(self):
+        results = [self.run_turns(turn([call(GOOD_ARGS)]), turn([], content))[0]
+                   for content in (answer(GOOD_BLOCK), "Done.", "Done.")]
+        summary = gate.summarize(results)
+        self.assertEqual((summary["passed"], summary["first_response_passed"]), (1, 1))
+        self.assertEqual(summary["failures"], {"block: no fenced JSON block": 2})
+        self.assertFalse(summary["gate"])
+
+
+class MailFixtureTests(unittest.TestCase):
+    def test_the_model_sees_the_mail_key_and_no_message_id(self):
+        self.assertIn(f"Mail-Key: {gate.MAIL_KEY}\n", gate.TASK)
+        self.assertNotIn("Message-ID", gate.TASK)
+        self.assertNotIn(gate.MESSAGE_ID, gate.TASK)
 
 
 class ReasoningEffortTests(unittest.TestCase):
