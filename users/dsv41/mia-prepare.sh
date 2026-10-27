@@ -81,15 +81,19 @@ worker_up() {
 }
 
 models_up() {
-  local fstype
+  local fstype line
   [ -d "$MIA_MODELS" ] || return 1
-  # Accessing the path trips the NAS automount. nfs* means the export is
-  # actually mounted; autofs alone is not enough.
+  # Accessing the path trips the NAS automount. findmnt -T then prints one
+  # FSTYPE per line: autofs for the automount, and nfs4 once the export is
+  # stacked on top. A line that starts with nfs means the export is
+  # mounted. autofs alone is not enough.
   fstype=$(timeout 15 "$(findmnt_bin)" -T "$MIA_MODELS" -n -o FSTYPE 2>/dev/null || true)
-  case "$fstype" in
-    nfs*) return 0 ;;
-    *) return 1 ;;
-  esac
+  while IFS= read -r line || [ -n "$line" ]; do
+    case "$line" in
+      nfs*) return 0 ;;
+    esac
+  done <<< "$fstype"
+  return 1
 }
 
 unit_active() {

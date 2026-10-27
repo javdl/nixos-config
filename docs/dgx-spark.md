@@ -282,7 +282,9 @@ toward the limit below) until all of these are true:
 - `192.168.100.10/24` is on `enp1s0f0np0` (up to 120s)
 - `ssh -o BatchMode=yes joost@192.168.100.11 true` works (up to 180s)
 - `/mnt/models/mia29` is a directory on an nfs mount (up to 120s). A stat
-  trips the automount
+  trips the automount. `findmnt -T` prints one fstype per line: `autofs`,
+  then `nfs4` once the export is stacked on it. nfs on any line counts.
+  `autofs` alone keeps waiting, then the start fails
 - the same image is present on spark2, and `/mnt/models/mia29` is a
   directory there
 - nothing is listening on port 8000, and the transient unit `mia29-tf` is

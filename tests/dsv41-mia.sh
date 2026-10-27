@@ -77,6 +77,12 @@ exit 0
 EOF
   cat >"$work/findmnt" <<'EOF'
 #!/bin/sh
+# FINDMNT_FSTYPE is the literal stdout, including a stacked autofs+nfs4
+# listing. Unset, NFS_OK selects the single-line fixture.
+if [ -n "${FINDMNT_FSTYPE+x}" ]; then
+  printf '%s\n' "$FINDMNT_FSTYPE"
+  exit 0
+fi
 if [ "${NFS_OK:-1}" = 1 ]; then
   echo nfs4
 else
@@ -171,6 +177,7 @@ prepare_env() {
   export REMOTE_IMAGE_OK=1
   export REMOTE_MODELS_OK=1
   export NFS_OK=1
+  unset FINDMNT_FSTYPE
   export ACTIVE=
   export SYSLOG=$work/syslog
   : >"$SYSLOG"
@@ -300,6 +307,33 @@ fi
 mkdir -p "$models"
 MIA_MODELS_WAIT_SEC=120
 run_prepare wait-models
+
+# Spark NAS: the automount and the export are stacked, so findmnt prints
+# autofs and then nfs4. nfs on any line is enough, and it must not wait
+# out the deadline.
+FINDMNT_FSTYPE=$'autofs\nnfs4'
+export FINDMNT_FSTYPE
+MIA_MODELS_WAIT_SEC=1
+if ! run_prepare wait-models >"$work/out" 2>"$work/err"; then
+  fail "wait-models rejected stacked autofs+nfs4"
+fi
+if [ -s "$work/err" ]; then
+  fail "wait-models logged an error for stacked autofs+nfs4"
+fi
+
+# Idle automount: only autofs. The directory stat still runs, then the
+# bounded wait expires and the start fails.
+FINDMNT_FSTYPE=autofs
+start=$SECONDS
+if run_prepare wait-models >"$work/out" 2>"$work/err"; then
+  fail "wait-models accepted an idle autofs mount"
+fi
+if [ $((SECONDS - start)) -lt 1 ]; then
+  fail "wait-models failed an idle autofs mount without waiting"
+fi
+grep -q 'not an nfs mount' "$work/err"
+unset FINDMNT_FSTYPE
+MIA_MODELS_WAIT_SEC=120
 
 # Raw key handoff. The value is the production VLLM_API_KEY, unquoted, mode 600.
 src=$work/api.env
