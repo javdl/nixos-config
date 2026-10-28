@@ -1,6 +1,6 @@
-# Family Hermes agent on radon: the Signal gateway, its signal-cli daemon, the
-# family cron jobs and calendar MCP servers, Joost's X bookmark jobs, the cron
-# run log and the hermes-family command (javdl/joost
+# Family Hermes agent on radon: the Telegram gateway, the family cron jobs and
+# calendar MCP servers, Joost's X bookmark jobs, the cron run log and the
+# hermes-family command (javdl/joost
 # docs/plans/active/hermes-family-mac-mini.md, Milestones 4 to 6).
 # README: radon/hermes-family/README.md.
 #
@@ -33,10 +33,6 @@ let
     model = "spark/dsv41";
     model_provider = "aperture-local";
   };
-  # Free on radon (2026-10-25). signal-cli's default, 8080, is taken.
-  signalCliPort = 18080;
-  signalCliAddress = "127.0.0.1:${toString signalCliPort}";
-  signalCliConfig = "${hermesHome}/signal-cli";
   hermesDir = "${hermesHome}/.hermes";
   logDir = "${agentRoot}/logs";
   tmpDir = "${agentRoot}/tmp";
@@ -151,10 +147,6 @@ let
             "mcp"
           ];
           environmentFiles = [ (secret "hermes-env") ];
-          # Not a secret, so it comes from the store. The Signal adapter takes
-          # its URL and account from the environment, and only when both are
-          # set (plugins/platforms/signal/gateway_env.py:135-145).
-          environment.SIGNAL_HTTP_URL = "http://${signalCliAddress}";
           settings = {
             timezone = "Europe/Amsterdam";
             providers = {
@@ -194,10 +186,10 @@ let
               }
             ];
             # No approval-gated toolset (terminal, file, code_execution,
-            # browser, computer_use, cronjob) on Signal or in cron runs.
+            # browser, computer_use, cronjob) on Telegram or in cron runs.
             # no_mcp keeps every MCP server off unless a cron job names one.
             platform_toolsets = {
-              signal = [
+              telegram = [
                 "web"
                 "vision"
                 "skills"
@@ -212,8 +204,10 @@ let
               ];
             };
             # In the family group, answer only when mentioned
-            # (gateway/config_loader.py:479-484).
-            signal.require_mention = true;
+            # (plugins/platforms/telegram/adapter.py:7309-7311). Telegram's
+            # privacy mode, on by default, already keeps every other group
+            # message from reaching the bot.
+            telegram.require_mention = true;
             # Only cron jobs that name a server get it (no_mcp above).
             # gcal-family lists the family calendar alone, for jobs that
             # answer in the family group; gcal-read adds the personal one.
@@ -245,10 +239,9 @@ let
     }:/usr/bin:/bin:/usr/sbin:/sbin";
   };
 
-  # The anchor hosts/radon.nix's hermes-pf loads, with the signal-cli rules
-  # below merged in. After loading it, hermes-pf writes this boot's time and
-  # the anchor's store path to hermesPfMarker, so a marker from an earlier
-  # boot or an older anchor does not count.
+  # The anchor hosts/radon.nix's hermes-pf loads. After loading it, hermes-pf
+  # writes this boot's time and the anchor's store path to hermesPfMarker, so
+  # a marker from an earlier boot or an older anchor does not count.
   hermesPfAnchor = config.environment.etc."pf.anchors/hermes".source;
   hermesPfMarker = "/var/run/hermes-pf.loaded";
   hermesPfLoaded = pkgs.writeShellScript "hermes-pf-loaded" ''
@@ -257,9 +250,9 @@ let
 
   # launchd starts the daemons at boot, before agent-volume-unlock has mounted
   # the volume, before sops-nix has installed the secrets, and in no order
-  # with hermes-pf: signal-cli must not listen, nor hermes reach the tailnet,
-  # before the anchor is in force. Until then a daemon's output goes to its
-  # launch log in /var/log; after, to the volume.
+  # with hermes-pf: hermes must not reach the tailnet before the anchor is in
+  # force. Until then a daemon's output goes to its launch log in /var/log;
+  # after, to the volume.
   waitFor = name: condition: ''
     waited=0
     until ${agentVolumeMounted} && [ -d ${hermesHome} ] && ${hermesPfLoaded} ${condition}; do
@@ -311,20 +304,6 @@ let
     exec ${lib.escapeShellArgs (hermesCommon.gatewayArgv hermes)}
   '';
 
-  # Multi-account mode: Hermes names the account in every call and in the
-  # events URL (plugins/platforms/signal/adapter.py:299, 563, 712), and
-  # signal-cli 0.14.7 routes on it (HttpServerHandler.java:259-276,
-  # SignalJsonRpcCommandHandler.java:66-72, 126-138). --no-receive-stdout keeps
-  # message text out of the log.
-  signalCliJob = pkgs.writeShellScript "hermes-signal-cli" ''
-    set -eu
-    ${waitFor "hermes-signal-cli" ""}
-    export HOME=${hermesHome} TMPDIR=${tmpDir} JAVA_OPTS=-Djava.io.tmpdir=${tmpDir}
-    umask 077
-    exec ${pkgs.signal-cli}/bin/signal-cli --config ${signalCliConfig} \
-      daemon --http ${signalCliAddress} --no-receive-stdout
-  '';
-
   runLogJob = pkgs.writeShellScript "hermes-run-log" ''
     set -eu
     ${waitFor "hermes-run-log" ""}
@@ -358,10 +337,6 @@ let
   daemons = {
     hermes-gateway = {
       job = gatewayJob;
-      serviceConfig.KeepAlive = true;
-    };
-    hermes-signal-cli = {
-      job = signalCliJob;
       serviceConfig.KeepAlive = true;
     };
     hermes-run-log = {
@@ -398,16 +373,9 @@ lib.mkIf enableHermesFamily {
 
   environment.systemPackages = [ hermesFamilyCommand ];
 
-  # signal-cli's HTTP API has no authentication: whoever reaches it can send
-  # as the bot, so only hermes may. Merges into the anchor in hosts/radon.nix.
-  environment.etc."pf.anchors/hermes".text = ''
-    pass out quick on lo0 proto tcp from any to 127.0.0.1 port ${toString signalCliPort} user hermes
-    block drop out quick on lo0 proto tcp from any to 127.0.0.1 port ${toString signalCliPort}
-  '';
-
-  # Appended to hosts/radon.nix's hermes-pf script, which loads the anchor
-  # above. Loading it again here is harmless and gives this step its own exit
-  # status: the marker is written only when the anchor loaded and pf is on.
+  # Appended to hosts/radon.nix's hermes-pf script, which loads the anchor.
+  # Loading it again here is harmless and gives this step its own exit status:
+  # the marker is written only when the anchor loaded and pf is on.
   launchd.daemons.hermes-pf.script = lib.mkAfter ''
     if /sbin/pfctl -a com.apple/hermes -f ${hermesPfAnchor} &&
       /sbin/pfctl -s info | /usr/bin/grep -q '^Status: Enabled'; then

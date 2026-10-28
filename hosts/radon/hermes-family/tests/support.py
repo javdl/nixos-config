@@ -90,7 +90,7 @@ FAMILY = {
     "parents": ["ouder1@example.org", "ouder2@example.org"],
     "senders": ["groep5@school.example", "planning@opvang.example"],
     "pickup_question": "Wie haalt Kind A vandaag uit school, en wie haalt Kind B van de opvang?",
-    "personal_deliver": "signal:+31600000001",
+    "personal_deliver": "telegram:123456789",
     "schedules": {
         "family-pickup": "30 12 * * 1-5",
         "family-mail-parsing": "*/20 8-20 * * *",

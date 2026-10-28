@@ -104,11 +104,11 @@ class JobsSyncTest(unittest.TestCase):
                         job["provider"], job["enabled_toolsets"], job["enabled"])
                  for name, job in jobs.items()}
         self.assertEqual(table, {
-            "family-pickup": ("pickup.sh", True, "signal", None, None, None, True),
+            "family-pickup": ("pickup.sh", True, "telegram", None, None, None, True),
             "family-mail-parsing": ("mail-fetch.sh", False, "local", "spark/dsv41",
                                     "aperture-local", ["gcal-proposals"], True),
-            "family-mail-notifier": ("notifier.sh", True, "signal", None, None, None, True),
-            "family-plan-ahead": ("plan-ahead-weather.sh", False, "signal", None, None,
+            "family-mail-notifier": ("notifier.sh", True, "telegram", None, None, None, True),
+            "family-plan-ahead": ("plan-ahead-weather.sh", False, "telegram", None, None,
                                   ["web", "gcal-family"], True),
             "family-evening-brief": (None, False, PERSONAL, None, None, ["gcal-read"], True),
             "agent-tooling-digest": (None, False, PERSONAL, None, None,
@@ -163,7 +163,7 @@ class JobsSyncTest(unittest.TestCase):
         jobs = self.hermes.jobs()
         for job in jobs:
             if job["name"] == "family-mail-parsing":
-                job.update(model=None, provider=None, deliver="signal", enabled_toolsets=["web", "gcal-proposals"])
+                job.update(model=None, provider=None, deliver="telegram", enabled_toolsets=["web", "gcal-proposals"])
                 parse_id = job["id"]
             if job["name"] == "family-pickup":
                 job["schedule"] = {"kind": "cron", "expr": "0 15 * * 1-5"}
@@ -238,7 +238,7 @@ class MainTest(unittest.TestCase):
         return code, out.getvalue()
 
     def test_personal_deliver_must_name_one_chat(self):
-        for target in ("signal", "local", "origin", "signal:", "", None):
+        for target in ("telegram", "local", "origin", "telegram:", "", None):
             code, output = self.main(target)
             self.assertEqual(code, 1, target)
             self.assertIn("personal_deliver must name one chat", output)
@@ -246,7 +246,7 @@ class MainTest(unittest.TestCase):
 
     def test_personal_deliver_must_be_a_messaging_platform(self):
         for target in ("local:any", "origin:any", "typo:chat", "webhook:hook", "bot-chat:other",
-                       "signal:+31600000001,local"):
+                       "telegram:123456789,local"):
             code, output = self.main(target)
             self.assertEqual(code, 1, target)
             self.assertIn("personal_deliver must name one chat", output)
@@ -254,7 +254,7 @@ class MainTest(unittest.TestCase):
         self.assertFalse((self.dir / "home" / "scripts").exists())
 
     def test_personal_deliver_accepts_one_chat_on_a_messaging_platform(self):
-        for target in ("signal:+31600000001", "telegram:123456789", "matrix:!kamer:example.org"):
+        for target in ("telegram:123456789", "signal:+31600000001", "matrix:!kamer:example.org"):
             code, output = self.main(target, "--dry-run")
             self.assertEqual(code, 0, output)
 

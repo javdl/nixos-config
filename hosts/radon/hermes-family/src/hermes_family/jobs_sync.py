@@ -18,13 +18,15 @@ creates a second job with a name it manages. Facts below are from Hermes
   runs with the platform default toolsets. A job still paused with
   jobs-sync's own reason (an earlier run stopped in between) is resumed; a
   job paused by hand is reported and left paused.
-- Deliver target `signal` is the Signal home channel, SIGNAL_HOME_CHANNEL
-  (cron/scheduler_delivery.py:657-673, plugins/platforms/signal/register.py:68),
-  which is the family group. `signal:+31600000001` is one chat
-  (cron/scheduler_delivery.py:629-656, tools/send_message_targets.py:10-11,
-  40-41). The evening brief, the digests and the X bookmark jobs go to
-  `personal_deliver` from the family file, which must name one chat on a
-  messaging platform: `local` only writes the run file and `origin` follows
+- Deliver target `telegram` is the Telegram home channel,
+  TELEGRAM_HOME_CHANNEL (cron/scheduler_delivery.py:657-673,
+  plugins/platforms/telegram/adapter.py:7364), which is the family group.
+  `telegram:123456789` is one chat: a user id is the id of that user's chat
+  with the bot (cron/scheduler_delivery.py:629-656,
+  plugins/platforms/telegram/telegram_ids.py:36-45). The evening brief, the
+  digests and the X bookmark jobs go to `personal_deliver` from the family
+  file, which must name one chat on a messaging platform: `local` only
+  writes the run file and `origin` follows
   the job's origin (cron/scheduler_delivery.py:603-627), an unknown
   platform resolves to no target (:629-640, :670-671,
   tools/send_message_targets.py:103-105), and a comma separates targets
@@ -50,7 +52,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable, Iterator
 
-FAMILY_GROUP = "signal"
+FAMILY_GROUP = "telegram"
 PERSONAL = "<personal>"
 # The messaging platforms Hermes 81a5543's cron delivery knows by name, its
 # home-target list (cron/scheduler_delivery.py:41-44). The other platforms it
@@ -193,13 +195,13 @@ def _family_data(family_file: Path) -> dict:
 
 def personal_deliver(family_file: Path) -> str:
     """`personal_deliver` from the family file: one chat as `<platform>:<chat>`
-    on one of MESSAGING_PLATFORMS. Bare `signal` (the family group), `local`,
+    on one of MESSAGING_PLATFORMS. Bare `telegram` (the family group), `local`,
     `origin` and any other platform are refused, whatever follows the colon."""
     target = _family_data(family_file).get("personal_deliver")
     platform, _, chat = target.strip().partition(":") if isinstance(target, str) else ("", "", "")
     if platform not in MESSAGING_PLATFORMS or not chat.strip() or "," in chat:
         raise ValueError("the family file's personal_deliver must name one chat on a messaging platform, "
-                         "for example signal:+31600000001")
+                         "for example telegram:123456789")
     return target.strip()
 
 

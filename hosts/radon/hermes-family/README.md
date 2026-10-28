@@ -1,6 +1,6 @@
 # Family Hermes agent on radon
 
-`hosts/radon/hermes-family.nix` runs a Hermes gateway for the family on Signal,
+`hosts/radon/hermes-family.nix` runs a Hermes gateway for the family on Telegram,
 with the family's cron jobs and three calendar MCP servers (ExecPlan
 `hermes-family-mac-mini` in javdl/joost, Milestones 4 to 6). It is off until
 `enableHermesFamily` is set in that file. With the gate off, radon's system is
@@ -15,7 +15,6 @@ Every value in this README and in `tests/` is made up.
 | launchd daemon | Job | Log on the Agent volume |
 | --- | --- | --- |
 | `org.nixos.hermes-gateway` | prepares the state, then `hermes gateway` | `logs/hermes-gateway.log` |
-| `org.nixos.hermes-signal-cli` | `signal-cli --config /Volumes/Agent/hermes/signal-cli daemon --http 127.0.0.1:18080 --no-receive-stdout` | `logs/hermes-signal-cli.log` |
 | `org.nixos.hermes-run-log` | `scripts/hermes-run-log.py`, every 5 minutes | `logs/hermes-run-log.log` |
 
 Each runs as `hermes` through the Full Disk Access launcher
@@ -28,12 +27,11 @@ What it prints before then goes to `/var/log/<daemon>.launch.log`. The gateway
 starts the MCP servers `gcal-proposals`, `gcal-read` and `gcal-family` itself,
 over stdio.
 
-signal-cli runs in multi-account mode: Hermes names the account in every call,
-so the daemon needs no account of its own. Its HTTP API has no
-authentication, so the `hermes` pf anchor lets only user `hermes` connect to
-`127.0.0.1:18080` and drops everyone else's connections. launchd starts
-`hermes-pf` and the daemons in no particular order, which is why they wait
-for it.
+The gateway talks to Telegram's Bot API by long polling: outbound HTTPS to
+`api.telegram.org`, with no inbound port and no daemon of its own. The
+`hermes` pf anchor in `hosts/radon.nix` keeps user `hermes` off the tailnet
+except for Aperture and MagicDNS. launchd starts `hermes-pf` and the daemons
+in no particular order, which is why they wait for it.
 
 ## No Home Manager
 
@@ -48,8 +46,7 @@ Manager activation would do, with the upstream module's own code
    directories.
 3. Merge the Nix settings into `config.yaml`. Nix keys replace the keys on
    disk; keys Hermes wrote at runtime stay.
-4. Write `.env` (mode 0600): `SIGNAL_HTTP_URL` from the store, then the
-   `hermes-env` secret.
+4. Write `.env` (mode 0600) from the `hermes-env` secret.
 5. Link `/Volumes/Agent/hermes/jobs` to the job scripts in the store.
 6. Write `/Volumes/Agent/hermes/state/senders.txt` from `senders` in
    `hermes-family`. Without a valid list, a list of addresses only, there is
@@ -86,12 +83,14 @@ gets only the files it names.
 | Key | Format | Example |
 | --- | --- | --- |
 | `ANTHROPIC_API_KEY` | the family's own Anthropic key, for `aperture-claude` | `sk-ant-api03-example` |
-| `SIGNAL_ACCOUNT` | the bot's own number, E.164 | `+31600000009` |
-| `SIGNAL_ALLOWED_USERS` | who may message the bot: E.164 numbers or Signal UUIDs, comma-separated | `+31600000001,+31600000002` |
-| `SIGNAL_GROUP_ALLOWED_USERS` | the groups the bot answers in, by group id, comma-separated; unset means none | `ZXhhbXBsZS1ncm91cC1pZA==` |
-| `SIGNAL_HOME_CHANNEL` | where jobs with deliver target `signal` post: the family group as `group:<group id>` | `group:ZXhhbXBsZS1ncm91cC1pZA==` |
+| `TELEGRAM_BOT_TOKEN` | the bot's token from @BotFather | `123456789:AAExampleExampleExampleExampleExam` |
+| `TELEGRAM_ALLOWED_USERS` | who may message the bot directly: numeric Telegram user ids, comma-separated | `123456789,987654321` |
+| `TELEGRAM_GROUP_ALLOWED_CHATS` | the groups the bot answers in, by chat id, comma-separated; every member of a listed group may talk to it there | `-1001234567890` |
+| `TELEGRAM_HOME_CHANNEL` | where jobs with deliver target `telegram` post: the family group's chat id | `-1001234567890` |
 
-In a group the bot answers only when it is mentioned (`signal.require_mention`).
+In a group the bot answers only when it is mentioned (`telegram.require_mention`).
+With the bot's group privacy on, Telegram's default, other group messages do
+not reach the bot at all.
 
 `hermes-family`:
 
@@ -103,7 +102,7 @@ In a group the bot answers only when it is mentioned (`signal.require_mention`).
 | `parents` | exactly two addresses, invited to every proposal | `["ouder1@example.org", "ouder2@example.org"]` |
 | `senders` | school and daycare addresses whose mail is read | `["groep5@school.example", "planning@opvang.example"]` |
 | `pickup_question` | optional: the pickup question; default `Wie haalt de kinderen vandaag op?` | `Wie haalt Kind A vandaag uit school?` |
-| `personal_deliver` | where the evening brief, the digests and the X bookmark alerts go: one chat on a messaging platform, `<platform>:<chat>` | `signal:+31600000001` |
+| `personal_deliver` | where the evening brief, the digests and the X bookmark alerts go: one chat on a messaging platform, `<platform>:<chat>` | `telegram:123456789` |
 | `schedules` | a five-field cron expression per job in the job table, by job name; other keys are ignored | `{"family-pickup": "0 12 * * 1-5", ...}` |
 
 ```json
@@ -114,7 +113,7 @@ In a group the bot answers only when it is mentioned (`signal.require_mention`).
   "parents": ["ouder1@example.org", "ouder2@example.org"],
   "senders": ["groep5@school.example", "planning@opvang.example"],
   "pickup_question": "Wie haalt Kind A vandaag uit school, en wie haalt Kind B van de opvang?",
-  "personal_deliver": "signal:+31600000001",
+  "personal_deliver": "telegram:123456789",
   "schedules": {
     "family-pickup": "0 12 * * 1-5",
     "family-mail-parsing": "*/20 8-20 * * *",
@@ -128,32 +127,37 @@ In a group the bot answers only when it is mentioned (`signal.require_mention`).
 }
 ```
 
-## Signal setup
+## Telegram setup
 
-The bot has its own number. Register it before the gate is on, with
-`hermes-family-signal-cli` from `hosts/radon.nix`: the same signal-cli and the
-same account directory as the daemon.
+The bot is a new Telegram bot of its own: Telegram allows one poller per bot
+token, so it cannot share bali's bot or `@HermesRadonBot`. Set it up before the
+gate is on.
 
-```bash
-hermes-family-signal-cli -a +31600000009 register   # add --captcha <token> if asked
-hermes-family-signal-cli -a +31600000009 verify 123-456
-hermes-family-signal-cli -a +31600000009 updateProfile --given-name Hermes
-```
+1. In Telegram, send `/newbot` to @BotFather. The token it answers with goes
+   into `TELEGRAM_BOT_TOKEN`. Leave the bot's group privacy on, the default:
+   in a group, the bot then receives only commands addressed to it, messages
+   that mention it and replies to its own messages.
+2. Each parent opens the bot and sends `/start`. A bot cannot write to a user
+   first, so without it the jobs that go to `personal_deliver` cannot reach
+   that person.
+3. Create the family group with both parents and the bot, and mention the bot
+   there once.
+4. Read the ids from Telegram, while nothing else polls with this token:
 
-Add the bot to the family group from a phone. Once the daemon runs, read the
-group id from it:
+   ```bash
+   read -rs TOKEN   # paste the token; it stays out of the shell history
+   curl -s "https://api.telegram.org/bot$TOKEN/getUpdates" |
+     jq '.result[] | .message // empty | {chat: .chat.id, type: .chat.type, from: .from.id}'
+   ```
 
-```bash
-sudo -u hermes curl -s http://127.0.0.1:18080/api/v1/rpc \
-  -H 'Content-Type: application/json' \
-  -d '{"jsonrpc":"2.0","id":1,"method":"listGroups","params":{"account":"+31600000009"}}'
-```
+   A private chat's id is that parent's user id: they go into
+   `TELEGRAM_ALLOWED_USERS`, and Joost's into `personal_deliver` as
+   `telegram:<id>`. The group's id is negative and goes into both
+   `TELEGRAM_GROUP_ALLOWED_CHATS` and `TELEGRAM_HOME_CHANNEL`.
 
-While the daemon runs it holds the account. To use `hermes-family-signal-cli`
-on that account again, stop the daemon first with
-`sudo launchctl bootout system/org.nixos.hermes-signal-cli`, and start it
-again with
-`sudo launchctl bootstrap system /Library/LaunchDaemons/org.nixos.hermes-signal-cli.plist`.
+When Telegram converts the group to a supergroup, its id changes to one that
+starts with `-100`, and both group keys need the new id. Once the gateway
+runs, it holds the token's one poller, and `getUpdates` answers 409 Conflict.
 
 ## Google setup
 
@@ -206,10 +210,10 @@ message names the job, never the expression.
 
 | Name | Schedule | Mode | Deliver | Model | `enabled_toolsets` |
 | --- | --- | --- | --- | --- | --- |
-| `family-pickup` | `schedules` in hermes-family | no-agent, `pickup.sh` | `signal` (family group) | | |
+| `family-pickup` | `schedules` in hermes-family | no-agent, `pickup.sh` | `telegram` (family group) | | |
 | `family-mail-parsing` | `schedules` in hermes-family | agent, `mail-fetch.sh` injected | `local` | `spark/dsv41` on `aperture-local`, pinned | `gcal-proposals` |
-| `family-mail-notifier` | `schedules` in hermes-family | no-agent, `notifier.sh` | `signal` (family group) | | |
-| `family-plan-ahead` | `schedules` in hermes-family | agent, `plan-ahead-weather.sh` injected | `signal` (family group) | cron default | `web`, `gcal-family` |
+| `family-mail-notifier` | `schedules` in hermes-family | no-agent, `notifier.sh` | `telegram` (family group) | | |
+| `family-plan-ahead` | `schedules` in hermes-family | agent, `plan-ahead-weather.sh` injected | `telegram` (family group) | cron default | `web`, `gcal-family` |
 | `family-evening-brief` | `schedules` in hermes-family | agent | `personal_deliver` | cron default | `gcal-read` |
 | `agent-tooling-digest` | `schedules` in hermes-family | agent | `personal_deliver` | cron default | `web`, `skills`, `todo`, `no_mcp` |
 | `x-bookmarks` | `schedules` in hermes-family | no-agent, `x-bookmarks.sh` | `personal_deliver` | | |
@@ -222,7 +226,7 @@ family group, so it gets only `gcal-family`.
 The evening brief reads the personal calendar, and the digests and the X
 bookmarks are Joost's, so they go to `personal_deliver`, never the family
 group. `jobs-sync` refuses a `personal_deliver` that names no single chat on a
-messaging platform: bare `signal`, a list with a comma, and `local:`,
+messaging platform: bare `telegram`, a list with a comma, and `local:`,
 `origin:` or any platform outside the cron home-target list of Hermes 81a5543
 (`cron/scheduler_delivery.py:41-44`) are refused, whatever follows the colon.
 
