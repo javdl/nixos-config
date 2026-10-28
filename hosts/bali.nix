@@ -40,6 +40,7 @@ in
   imports = [
     ../modules/hetzner-dedicated-hardware.nix
     ../modules/disko-hetzner-dedicated.nix
+    ../modules/aperture-agents.nix
     # The dedicated full-flake evaluation runner pilots Determinate Nix's
     # parallel evaluator and continuous, low-impact Nixd garbage collector.
     inputs.determinate.nixosModules.default
@@ -397,22 +398,9 @@ in
     ];
   };
 
-  # Tailscale Aperture, the tailnet AI gateway (node `ai`, tag:aperture; the
-  # tailnet policy lets tag:devboxes reach it on tcp:80). bali runs with
-  # --accept-dns=false, so its MagicDNS name is pinned here.
-  networking.hosts."100.126.110.21" = [
-    "ai.stargazer-duck.ts.net"
-    "ai"
-  ];
-
-  # Anthropic inference (Claude Code, omp, SDKs) goes through Aperture's
-  # `anthropic-sub` provider, which passes each client's own subscription
-  # OAuth token or API key through to api.anthropic.com. OAuth login and
-  # token refresh still go to Anthropic directly. No OPENAI_BASE_URL: Aperture
-  # serves the ChatGPT subscription backend (`openai-sub`), which rejects
-  # platform API keys; Codex and omp point at it in their own config
-  # (javdl/dotfiles, bali only).
-  environment.variables.ANTHROPIC_BASE_URL = "http://ai.stargazer-duck.ts.net";
+  # Coding agents through Tailscale Aperture (modules/aperture-agents.nix).
+  # No users: chezmoi (javdl/dotfiles) owns joost's omp model config here.
+  services.apertureAgents.enable = true;
 
   # Allow Tailscale traffic through firewall
   networking.firewall = {
