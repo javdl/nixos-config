@@ -22,6 +22,27 @@ Some things I have added or changed:
 - my own cachix cache
 - AMD NVidia support on bare metal host
 
+### Amp orbs
+
+`.agents/setup` prepares Debian-based Amp orbs with the existing
+`flake.lock`-pinned `devShells.default` (nixfmt, statix, deadnix, sops,
+ssh-to-age, and age), plus basic shell/Python test tools. It reuses installed
+tools, realizes the development shell under a persistent Nix GC root, and
+loads its complete environment in new Bash login shells inside this checkout
+or its subdirectories. Amp snapshots retain the toolchain and download caches;
+setup can safely run again when the snapshot is stale.
+
+`.agents/resume` only checks that the cached development environment exists.
+No secrets, authentication, databases, or application services are required.
+Setup never runs `make switch`, changes the lockfile, or activates a managed
+host. Full multi-host evaluation remains a separate CI task, not startup work.
+
+Useful checks inside an orb are `bash tests/nix-performance-policy.sh`,
+`python3 -m unittest discover -s tests`, and
+`nix build --no-link .#checks.x86_64-linux.format .#checks.x86_64-linux.performance-policy`.
+For host builds, select the correct flake output explicitly: the orb is Debian,
+so `make test NIXNAME=...` takes the standalone Home Manager branch.
+
 TODO
 
 - CUDA / CuDNN support on bare metal

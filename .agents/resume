@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Dependencies and the login-shell hook persist in the snapshot. No credentials,
+# host activation, or background services are needed for repository development.
+if [[ ! -e "$HOME/.cache/nixos-config-orb/dev" ]]; then
+  printf 'Orb development environment is missing; rerun .agents/setup\n' >&2
+  exit 1
+fi
+printf '[orb resume] Cached Nix development environment is ready\n'

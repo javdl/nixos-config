@@ -69,6 +69,7 @@ directory in older guidance do not describe the current layout.
 
 | Need | Source |
 | --- | --- |
+| Prepare an Amp orb for repository development | [Orb setup](../README.md#amp-orbs), [.agents/setup](../.agents/setup), [.agents/resume](../.agents/resume) |
 | Current CI evaluation and build checks | [Flake checker workflow](../.github/workflows/flake-checker.yml), `checks` in [flake.nix](../flake.nix) |
 | Performance policy checks | [Policy test](../tests/nix-performance-policy.sh) |
 | Automated dependency updates | [Lock updater workflow](../.github/workflows/lock-updater.yml) |
