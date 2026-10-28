@@ -148,6 +148,7 @@ let
     "webstorm"
     "yubico-authenticator" # YubiKey GUI; Linux desktops get yubioath-flutter
     "zed"
+    "zed-delta" # Delta (delta.dev) app; the `delta` CLI shim is below
   ];
 
   # Creative and personal casks (skip on minimal machines)
@@ -263,6 +264,19 @@ in
     home = "/Users/joost";
     shell = pkgs.zsh;
   };
+
+  # The zed-delta cask ships the Delta CLI inside the app bundle. Put it on
+  # PATH as `delta`, ahead of the git pager (git-delta) of the same name, so the
+  # Delta Claude Code plugin finds it with `command -v delta`; git reaches
+  # git-delta by store path. exec, not a symlink: the CLI locates the app next
+  # to its own executable. Linux desktops get Delta from users/joost/home-manager.nix.
+  home-manager.users.joost.home.packages = lib.optionals (!isMinimal) [
+    (lib.hiPrio (
+      pkgs.writeShellScriptBin "delta" ''
+        exec /Applications/Delta.app/Contents/MacOS/delta "$@"
+      ''
+    ))
+  ];
 
   # Required for some settings like homebrew to know what user to apply to.
   system.primaryUser = "joost";

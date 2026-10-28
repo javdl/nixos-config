@@ -139,6 +139,43 @@ let
     else
       pkgs.yubioath-flutter;
 
+  # Delta (delta.dev) app and CLI. The CLI is `delta`, the same name as the git
+  # pager (git-delta) in home.packages. hiPrio puts this one on PATH: the Delta
+  # Claude Code plugin runs whatever `command -v delta` finds, and Home Manager
+  # points git at git-delta by store path, so git diffs keep their pager.
+  #
+  # The CLI starts the app in the background, so it needs no GPU, but it keeps
+  # credentials in the Secret Service keyring. Servers have none (bali:
+  # "credential_store_unavailable"), so only desktops get Delta.
+  #
+  # On Omarchy the Nix build cannot load Arch's Vulkan drivers (upstream expects
+  # /run/opengl-driver), so the window would fail with "No GPU adapters found".
+  # Force Nix mesa's lavapipe instead. That renders on the CPU, which Delta
+  # accepts. The CLI exports the variable to the app it starts, and the desktop
+  # entry is rewritten to launch through the wrapper.
+  deltaApp = lib.hiPrio (
+    if isOmarchy then
+      pkgs.symlinkJoin {
+        name = "zed-delta-omarchy";
+        paths = [ pkgs.zed-delta ];
+        nativeBuildInputs = [ pkgs.makeWrapper ];
+        postBuild = ''
+          for program in delta delta-app; do
+            wrapProgram "$out/bin/$program" \
+              --set-default VK_DRIVER_FILES ${pkgs.mesa}/share/vulkan/icd.d/lvp_icd.${pkgs.stdenv.hostPlatform.uname.processor}.json
+          done
+          for entry in "$out"/share/applications/*.desktop; do
+            target="$(readlink -f "$entry")"
+            rm "$entry"
+            substitute "$target" "$entry" \
+              --replace-fail "Exec=${pkgs.zed-delta}/bin/" "Exec=$out/bin/"
+          done
+        '';
+      }
+    else
+      pkgs.zed-delta
+  );
+
   # Import shared configuration
   shared = import ../shared-home-manager.nix {
     inherit
@@ -455,6 +492,7 @@ in
       # windsurf  # Replaced with VS Code
       baobab # Disk usage, gnome only
       yubicoAuthenticator # YubiKey GUI (Yubico Authenticator)
+      deltaApp # Delta (delta.dev) desktop app + `delta` CLI; see the let binding
 
       # DGX Spark client software; Macs get the same set as casks in
       # users/joost/darwin.nix. Nsight from the newest CUDA 13 set so the GUIs

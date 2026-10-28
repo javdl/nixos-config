@@ -694,6 +694,15 @@ changing any of it.
   profiles guard it with `lib.optional`.
 - **omp** release assets are dynamically linked against glibc (unlike the static-PIE `grok`
   and `herdr` binaries), so its derivation needs `autoPatchelfHook` on Linux.
+- **Delta** ([delta.dev](https://delta.dev), Zed Industries) goes to the workstations: the
+  `zed-delta` cask plus a `delta` exec shim on non-minimal Macs (`users/joost/darwin.nix`),
+  and the `zed-delta` flake input (`pkgs.zed-delta`) on Linux desktops, Omarchy included.
+  Its CLI shares the name `delta` with the git pager (git-delta), so both installs use
+  `lib.hiPrio`: the Delta Claude Code plugin runs whatever `command -v delta` finds, and
+  git reaches git-delta by store path. On Omarchy the wrapper forces Nix mesa's
+  lavapipe (`VK_DRIVER_FILES`), because the Nix build cannot load Arch's Vulkan drivers.
+  Servers are left out: the CLI keeps credentials in the Secret Service keyring and
+  fails with `credential_store_unavailable` without one.
 - **DGX Spark client tools** go to every workstation: `nvidia-sync`, `nvidia-nsight-systems`
   and `nvidia-nsight-compute` casks on non-server Macs (`users/joost/darwin.nix`), and
   `nvidia-sync` (overlay, repackaged .deb) plus `cudaPackages_13_3` Nsight on Linux desktops.

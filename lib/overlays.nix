@@ -1678,6 +1678,12 @@ in
               extraDependencyGroups = [ "anthropic" ];
             };
 
+          # zed-delta - Delta (delta.dev) app + `delta` CLI, from the flake input.
+          # Linux only upstream; null on Darwin, where the zed-delta cask ships
+          # the app (users/joost/darwin.nix). Not to be confused with `delta`,
+          # the git pager (git-delta), which owns the same binary name.
+          zed-delta = (inputs.zed-delta.packages.${prev.stdenv.hostPlatform.system} or { }).delta or null;
+
           # pt - process triage (intelligent process termination with Bayesian scoring)
           process-triage = if ptSource != null then prev.stdenv.mkDerivation {
             pname = "process-triage";

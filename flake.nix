@@ -55,6 +55,15 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Delta (delta.dev, Zed Industries): desktop app plus the `delta` CLI,
+    # Linux only (Macs use the zed-delta cask). Upstream asks embedding flakes
+    # to follow their own nixpkgs so the binary matches the host's graphics
+    # stack. Update with `nix flake update zed-delta`.
+    zed-delta = {
+      url = "github:zed-industries/delta-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     nix-index-database.url = "github:nix-community/nix-index-database";
     nix-index-database.inputs.nixpkgs.follows = "nixpkgs";
 
