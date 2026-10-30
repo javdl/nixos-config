@@ -139,6 +139,9 @@ let
     else
       pkgs.yubioath-flutter;
 
+  # Linux desktops carry Delta (deltaApp below); WSL has no desktop.
+  hasDeltaApp = isLinux && !isWSL;
+
   # Delta (delta.dev) app and CLI. The CLI is `delta`, the same name as the git
   # pager (git-delta) in home.packages. hiPrio puts this one on PATH: the Delta
   # Claude Code plugin runs whatever `command -v delta` finds, and Home Manager
@@ -640,8 +643,10 @@ in
       fi
       echo "Syncing dotfiles from chezmoi repo..."
       # moshi-hook first on PATH: dot_claude/settings.json.tmpl resolves its
-      # store path for the Moshi hooks (see users/agent-clis.nix).
-      if ! $DRY_RUN_CMD env ''${sshAgentOpt:+"GIT_SSH_COMMAND=ssh $sshAgentOpt"} PATH="${pkgs.moshi-hook}/bin:${pkgs.bitwarden-cli}/bin:${pkgs.git}/bin:$PATH" ${pkgs.chezmoi}/bin/chezmoi update; then
+      # store path for the Moshi hooks (see users/agent-clis.nix). Delta's
+      # delta-app is there too, so the template enables the Delta plugin on
+      # the first switch, before the new profile reaches PATH.
+      if ! $DRY_RUN_CMD env ''${sshAgentOpt:+"GIT_SSH_COMMAND=ssh $sshAgentOpt"} PATH="${pkgs.moshi-hook}/bin:${lib.optionalString hasDeltaApp "${deltaApp}/bin:"}${pkgs.bitwarden-cli}/bin:${pkgs.git}/bin:$PATH" ${pkgs.chezmoi}/bin/chezmoi update; then
         echo "chezmoi apply incomplete (unlock Bitwarden, then re-run 'make switch')."
         # A locked vault aborts the whole apply, but ~/.ssh/config needs no
         # secrets and nothing else writes it, so apply that target on its own.
@@ -650,6 +655,29 @@ in
       fi
     fi
   '';
+
+  # Delta Claude Code plugin, on the machines with Delta: Linux desktops
+  # (deltaApp above) and Macs with the zed-delta cask (users/joost/darwin.nix;
+  # Homebrew may land after this runs, so the next switch catches up).
+  # chezmoi's settings template already enables delta@zed-industries there;
+  # this downloads the plugin into ~/.claude/plugins. Skipped once installed,
+  # because `claude plugin install` rewrites the chezmoi-owned settings.json.
+  home.activation.deltaClaudePlugin =
+    lib.hm.dag.entryAfter
+      [
+        "writeBoundary"
+        "chezmoiSync"
+      ]
+      ''
+        if ${
+          if hasDeltaApp then "true" else "[ -d /Applications/Delta.app ]"
+        } && ! ${pkgs.gnugrep}/bin/grep -qF '"delta@zed-industries"' \
+          "$HOME/.claude/plugins/installed_plugins.json" 2>/dev/null; then
+          $DRY_RUN_CMD ${pkgs.claude-code}/bin/claude plugin install delta \
+            --marketplace zed-industries/delta-claude --scope user || \
+            echo "claude: Delta plugin install failed; retry on next switch" >&2
+        fi
+      '';
 
   # Symlink nushell configs to macOS default location (~/Library/Application Support/nushell/)
   # so nushell finds the home-manager-managed configs regardless of how it's launched
