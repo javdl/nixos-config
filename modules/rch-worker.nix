@@ -39,8 +39,9 @@ in
       type = types.str;
       default = "joost";
       description = ''
-        The SSH user trusted clients' rchd connects as (from workers.toml),
-        such as bali's. Gets the ~/.local/bin/rch-wkr and rustup links.
+        The account that gets the ~/.local/bin/rch-wkr and rustup links.
+        Offloading itself is limited to the rch account, which owns the
+        worker's source-claim registry (see rchSourceLocks below).
       '';
     };
   };
@@ -78,7 +79,25 @@ in
       ip6tables -w -D OUTPUT -o tailscale0 -m owner --uid-owner ${orbUser} -j REJECT 2>/dev/null || true
     '';
 
+    # rch keeps a per-worker source-claim registry at the hardcoded
+    # /tmp/rch-source-authority-locks, created umask 077 and coordinated with
+    # flock, so only the account that created it can offload to this worker.
+    # Claim it for ${orbUser}: drop a copy another account created, and let
+    # tmpfiles recreate it ${orbUser}-owned. A trusted client that wants to
+    # build here has to log in as ${orbUser} too.
+    system.activationScripts.rchSourceLocks = {
+      deps = [ "users" ];
+      text = ''
+        rchLocks=/tmp/rch-source-authority-locks
+        if [ -e "$rchLocks" ] && [ "$(stat -c %U "$rchLocks")" != ${orbUser} ]; then
+          rm -rf -- "$rchLocks"
+        fi
+      '';
+    };
+
     systemd.tmpfiles.rules = [
+      "d /tmp/rch-source-authority-locks 0700 ${orbUser} users -"
+
       # rch canonical project root — rchd rsyncs the client project tree here.
       # Sticky and world-writable like /tmp: cfg.user and ${orbUser} each
       # create their own mirrors and cannot touch the other's.
