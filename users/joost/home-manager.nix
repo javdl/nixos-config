@@ -402,7 +402,6 @@ in
       fastfetch # neofetch removed (unmaintained) in nixpkgs 26.05
       transmission_4
       # spotify
-      # telegram-desktop
     ])
     ++ [
 
@@ -491,6 +490,7 @@ in
       rpi-imager
       # sublime4 # do not install, needs old openssl?
       signal-desktop
+      telegram-desktop # Macs get the telegram-desktop cask (users/joost/darwin.nix)
       tailscale-systray
       # windsurf  # Replaced with VS Code
       baobab # Disk usage, gnome only
