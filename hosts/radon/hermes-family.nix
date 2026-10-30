@@ -203,10 +203,11 @@ let
                 "no_mcp"
               ];
             };
-            # In the family group, answer only when mentioned
-            # (plugins/platforms/telegram/adapter.py:7309-7311). Telegram's
-            # privacy mode, on by default, already keeps every other group
-            # message from reaching the bot.
+            # In the family group, answer only a mention of the bot or a reply
+            # to it (plugins/platforms/telegram/adapter.py:7309-7311); other
+            # group messages are ignored. Mentions reach the bot only with
+            # BotFather's group privacy off: privacy mode passes a bot only
+            # commands and replies (core.telegram.org/bots/features#privacy-mode).
             telegram.require_mention = true;
             # Only cron jobs that name a server get it (no_mcp above).
             # gcal-family lists the family calendar alone, for jobs that
