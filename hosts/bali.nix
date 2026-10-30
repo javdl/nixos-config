@@ -521,6 +521,9 @@ in
           // {
             name = "bali-javdl-${toString idx}";
             workDir = "/var/lib/github-runner-work/javdl-runner-${toString idx}";
+            # javdl/joost's Home Assistant deploy job runs only here (runs-on:
+            # ha-deploy); see infra/home-assistant/README.md in that repo.
+            extraLabels = common.extraLabels ++ [ "ha-deploy" ];
           }
         )
       ) javdlRunnerCount
