@@ -63,6 +63,26 @@ in
       "d /home/${cfg.user}/.local 0755 ${cfg.user} users -"
       "d /home/${cfg.user}/.local/bin 0755 ${cfg.user} users -"
       "L+ /home/${cfg.user}/.local/bin/rch-wkr - - - - /run/current-system/sw/bin/rch-wkr"
+
+      # rchd pins the client's toolchain with `rustup run <channel> …` and
+      # installs missing ones with `rch workers sync-toolchain` into
+      # ~/.rustup (nixpkgs' rustup patchelfs them for NixOS). Only the rustup
+      # binary goes in ~/.local/bin, so plain `cargo` stays the system one.
+      # Cargo then calls `rustc` from PATH; `rustup run` puts ~/.cargo/bin
+      # first, so the proxies there select the pinned rustc instead of the
+      # system rustc. ~/.cargo/bin is not on this user's login PATH.
+      "L+ /home/${cfg.user}/.local/bin/rustup - - - - ${pkgs.rustup}/bin/rustup"
+      "d /home/${cfg.user}/.cargo 0755 ${cfg.user} users -"
+      "d /home/${cfg.user}/.cargo/bin 0755 ${cfg.user} users -"
+    ]
+    ++ map (proxy: "L+ /home/${cfg.user}/.cargo/bin/${proxy} - - - - ${pkgs.rustup}/bin/rustup") [
+      "cargo"
+      "rustc"
+      "rustdoc"
+      "cargo-clippy"
+      "clippy-driver"
+      "rustfmt"
+      "cargo-fmt"
     ];
   };
 }
