@@ -88,9 +88,9 @@ gets only the files it names.
 | `TELEGRAM_GROUP_ALLOWED_CHATS` | the groups the bot answers in, by chat id, comma-separated; every member of a listed group may talk to it there | `-1001234567890` |
 | `TELEGRAM_HOME_CHANNEL` | where jobs with deliver target `telegram` post: the family group's chat id | `-1001234567890` |
 
-In a group the bot answers only when it is mentioned (`telegram.require_mention`).
-With the bot's group privacy on, Telegram's default, other group messages do
-not reach the bot at all.
+In a group the bot answers only a message that mentions it or replies to it
+(`telegram.require_mention`), and ignores the rest. Mentions reach it only
+with the bot's group privacy off; see Telegram setup.
 
 `hermes-family`:
 
@@ -134,26 +134,44 @@ token, so it cannot share bali's bot or `@HermesRadonBot`. Set it up before the
 gate is on.
 
 1. In Telegram, send `/newbot` to @BotFather. The token it answers with goes
-   into `TELEGRAM_BOT_TOKEN`. Leave the bot's group privacy on, the default:
-   in a group, the bot then receives only commands addressed to it, messages
-   that mention it and replies to its own messages.
-2. Each parent opens the bot and sends `/start`. A bot cannot write to a user
+   into `TELEGRAM_BOT_TOKEN`.
+2. Turn the bot's group privacy off: `/setprivacy` to @BotFather, then
+   **Disable**. With privacy on, Telegram gives a bot in a group only commands
+   meant for it and replies to its own messages, never a plain mention
+   ([privacy mode](https://core.telegram.org/bots/features#privacy-mode)).
+   With it off the bot receives every message in the family group, and Hermes
+   answers only those that mention it or reply to it. Telegram applies the
+   change only when the bot joins a group, so remove and re-add the bot in a
+   group it joined before.
+3. Each parent opens the bot and sends `/start`. A bot cannot write to a user
    first, so without it the jobs that go to `personal_deliver` cannot reach
    that person.
-3. Create the family group with both parents and the bot, and mention the bot
-   there once.
-4. Read the ids from Telegram, while nothing else polls with this token:
+4. Create the family group with both parents and the bot.
+5. Read the ids from Telegram, within 24 hours of steps 3 and 4 (Telegram
+   keeps a bot's updates that long) and while nothing else polls with this
+   token. This works in bash and zsh, and reports a wrong token or a network
+   error instead of printing nothing:
 
    ```bash
-   read -rs TOKEN   # paste the token; it stays out of the shell history
-   curl -s "https://api.telegram.org/bot$TOKEN/getUpdates" |
-     jq '.result[] | .message // empty | {chat: .chat.id, type: .chat.type, from: .from.id}'
+   {
+     printf 'Bot token: '; read -rs TOKEN; echo
+     curl -sS "https://api.telegram.org/bot$TOKEN/getMe" |
+       jq -r 'if .ok then "Token works for @\(.result.username)" else "Token rejected: \(.description)" end'
+     curl -sS "https://api.telegram.org/bot$TOKEN/getUpdates" |
+       jq -r 'if .ok != true then "Telegram error: \(.description)"
+         elif (.result | length) == 0 then "Nothing waiting. Send the bot a message, then run this again (Telegram keeps messages for 24 hours)."
+         else .result[] | (.message // .my_chat_member // empty) | .chat | [.type, .id, (.title // .first_name // "")] | @tsv end' |
+       sort -u
+     unset TOKEN
+   }
    ```
 
-   A private chat's id is that parent's user id: they go into
+   A `private` line's id is that parent's user id: they go into
    `TELEGRAM_ALLOWED_USERS`, and Joost's into `personal_deliver` as
-   `telegram:<id>`. The group's id is negative and goes into both
-   `TELEGRAM_GROUP_ALLOWED_CHATS` and `TELEGRAM_HOME_CHANNEL`.
+   `telegram:<id>`. The `group` line's id is negative and goes into both
+   `TELEGRAM_GROUP_ALLOWED_CHATS` and `TELEGRAM_HOME_CHANNEL`. The group
+   shows up even without a message in it: adding the bot sends a
+   `my_chat_member` update.
 
 When Telegram converts the group to a supergroup, its id changes to one that
 starts with `-100`, and both group keys need the new id. Once the gateway
