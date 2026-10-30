@@ -83,6 +83,7 @@ let
     # However, non-App Store version is required for SSH agent to work
     "bitwarden"
     "airfoil"
+    "amp-app" # Amp (ampcode.com) desktop app; macOS only
     "beeper"
     "caffeine"
     "brave-browser"
