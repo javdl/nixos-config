@@ -77,14 +77,21 @@ exit 0
 EOF
   cat >"$work/findmnt" <<'EOF'
 #!/bin/sh
+<<<<<<< Updated upstream
 # FINDMNT_FSTYPE is the literal stdout, including a stacked autofs+nfs4
 # listing. Unset, NFS_OK selects the single-line fixture.
 if [ -n "${FINDMNT_FSTYPE+x}" ]; then
   printf '%s\n' "$FINDMNT_FSTYPE"
   exit 0
 fi
+=======
+# A mounted systemd automount: findmnt -T lists the autofs trigger and the
+# nfs4 mount stacked on it, autofs first (spark, 2026-10-26).
+>>>>>>> Stashed changes
 if [ "${NFS_OK:-1}" = 1 ]; then
-  echo nfs4
+  printf 'autofs\nnfs4\n'
+elif [ "${NFS_OK}" = autofs ]; then
+  echo autofs
 else
   echo ext4
 fi
@@ -297,6 +304,12 @@ MIA_MODELS_WAIT_SEC=1
 NFS_OK=0
 if run_prepare wait-models >"$work/out" 2>"$work/err"; then
   fail "wait-models accepted a non-nfs path"
+fi
+grep -q 'not an nfs mount' "$work/err"
+# An automount that has not mounted the export yet is not ready either.
+NFS_OK=autofs
+if run_prepare wait-models >"$work/out" 2>"$work/err"; then
+  fail "wait-models accepted a bare autofs trigger"
 fi
 grep -q 'not an nfs mount' "$work/err"
 NFS_OK=1

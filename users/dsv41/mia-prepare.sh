@@ -83,6 +83,7 @@ worker_up() {
 models_up() {
   local fstype line
   [ -d "$MIA_MODELS" ] || return 1
+<<<<<<< Updated upstream
   # Accessing the path trips the NAS automount. findmnt -T then prints one
   # FSTYPE per line: autofs for the automount, and nfs4 once the export is
   # stacked on top. A line that starts with nfs means the export is
@@ -93,6 +94,14 @@ models_up() {
       nfs*) return 0 ;;
     esac
   done <<< "$fstype"
+=======
+  # Accessing the path trips the NAS automount. nfs* means the export is
+  # actually mounted; autofs alone is not enough. With a systemd automount
+  # findmnt -T prints both stacked mounts on /mnt/models, autofs first, so
+  # look for an nfs line rather than matching the whole output.
+  fstype=$(timeout 15 "$(findmnt_bin)" -T "$MIA_MODELS" -n -o FSTYPE 2>/dev/null || true)
+  printf '%s\n' "$fstype" | grep -q '^nfs' && return 0
+>>>>>>> Stashed changes
   return 1
 }
 
