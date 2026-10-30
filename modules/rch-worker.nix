@@ -22,6 +22,7 @@
 
 let
   cfg = config.services.rchWorker;
+  orbUser = "rch";
   inherit (lib)
     mkEnableOption
     mkOption
@@ -38,8 +39,8 @@ in
       type = types.str;
       default = "joost";
       description = ''
-        The SSH user rchd connects as (from workers.toml). Owns /data/projects
-        and the ~/.local/bin/rch-wkr symlink.
+        The SSH user trusted clients' rchd connects as (from workers.toml),
+        such as bali's. Gets the ~/.local/bin/rch-wkr and rustup links.
       '';
     };
   };
@@ -51,9 +52,37 @@ in
       pkgs.remote-compilation-helper
     ];
 
+    # Untrusted clients (Amp orbs, tag:amp-orb in the fashionunited.com
+    # tailnet policy) Tailscale SSH in as this account instead of cfg.user,
+    # who has passwordless sudo and docker. zsh reads /etc/zshenv even for
+    # `ssh host cmd`, which puts the per-user profile's rustup and its
+    # cargo/rustc proxies ahead of the system cargo and rustc.
+    users.users.${orbUser} = {
+      isNormalUser = true;
+      description = "rch builds for Amp orbs";
+      shell = pkgs.zsh;
+      packages = [ pkgs.rustup ];
+    };
+    programs.zsh.enable = true;
+
+    # A shell on a runner would otherwise reach everything the runner's
+    # tag:github-runner identity may reach in the tailnet. Builds only need
+    # the internet (crates.io); the SSH session itself is tailscaled's, not
+    # this user's, so it is unaffected.
+    networking.firewall.extraCommands = ''
+      ip46tables -D OUTPUT -o tailscale0 -m owner --uid-owner ${orbUser} -j REJECT 2>/dev/null || true
+      ip46tables -I OUTPUT -o tailscale0 -m owner --uid-owner ${orbUser} -j REJECT
+    '';
+    networking.firewall.extraStopCommands = ''
+      iptables -w -D OUTPUT -o tailscale0 -m owner --uid-owner ${orbUser} -j REJECT 2>/dev/null || true
+      ip6tables -w -D OUTPUT -o tailscale0 -m owner --uid-owner ${orbUser} -j REJECT 2>/dev/null || true
+    '';
+
     systemd.tmpfiles.rules = [
       # rch canonical project root — rchd rsyncs the client project tree here.
-      "d /data/projects 0755 ${cfg.user} users -"
+      # Sticky and world-writable like /tmp: cfg.user and ${orbUser} each
+      # create their own mirrors and cannot touch the other's.
+      "d /data/projects 1777 root root -"
       "L+ /dp - - - - /data/projects"
 
       # rchd runs `~/.local/bin/rch-wkr`; point it at the native (rooted) binary
