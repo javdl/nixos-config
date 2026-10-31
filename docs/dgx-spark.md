@@ -25,6 +25,51 @@ then `make test` / `make switch`. The Makefile takes the non-NixOS branch on
 Ubuntu and runs Home Manager. After the first switch both hosts update
 themselves nightly ([Nightly update](#nightly-update)).
 
+## Personal Amp orb SSH access
+
+`users/joost/ssh/personal-amp-orbs.pub` is the canonical authorization for
+the personal Amp orb credential on spark, spark2, and radon only. Do not add
+it to `herdr-fleet-keys.nix`. The private key stays in Amp's personal secret,
+never on these hosts or in this repository.
+
+On the Sparks, root sync replaces `/etc/ssh/personal-amp-orbs-authorized_keys`
+with a root-owned `0644` regular file. The SSH drop-in adds that file only
+for `joost` on TCP 2222, alongside the existing `.ssh/authorized_keys`.
+It does not replace or append to the user's keys. Radon's separate 2222
+daemon uses the same public-key source through its existing runtime copy.
+
+The key accepts only Tailscale source ranges `100.64.0.0/10` and
+`fd7a:115c:a1e0::/48`. Agent, port, and X11 forwarding and SSH user rc files
+are disabled. PTYs and coding shells remain available. This is a normal
+`joost` login, not an unprivileged sandbox. Both Sparks already grant joost
+passwordless sudo; radon's existing admin and sudo policy still applies.
+Source restrictions do not replace tailnet ACLs or host-key verification.
+
+To roll out after review and approval, use the existing build and switch
+procedure on each host. Merging to `main` also reaches their scheduled
+updaters. Keep an existing administrative session open during the first
+switch. On each Spark, inspect the effective configuration:
+
+```bash
+sudo sshd -t
+sudo sshd -T -C user=joost,addr=100.64.0.1,laddr=100.64.0.2,lport=2222 | grep authorizedkeysfile
+```
+
+Expect `.ssh/authorized_keys /etc/ssh/personal-amp-orbs-authorized_keys`.
+Repeat with `lport=22` and another user to confirm the extra file is absent.
+From the enrolled orb, connect with its pinned host key, dedicated identity,
+`IdentitiesOnly=yes`, and `-p 2222` to each host's tailnet name. Confirm
+`id -un` prints `joost` and `ssh -tt` permits a PTY. Do not disable strict
+host-key checking for this test.
+
+To revoke, empty the canonical public-key file and apply the resulting
+generation on all three hosts. Keep the managed file and consumers in place
+so activation replaces stale authorization with an empty file. Radon's
+changed source restarts its 2222 daemon and replaces its runtime key copy.
+Verify that a fresh connection with only the revoked identity fails on each
+host. Revocation does not terminate established sessions. Removing the Amp
+secret alone does not revoke copies of the credential.
+
 ## What this profile contains
 
 Nothing from the workstation or Omarchy package set. It does not import
@@ -108,15 +153,18 @@ the binary until the Sparks have switched.
 
 `users/dgx-spark.nix` adds an activation step that runs one script as root
 (`sudo -n`) on every switch, including the nightly one. The script compares
-each managed file with `/etc` and rewrites only the ones whose content or
-mode differ, then runs that file's follow-up. A run with nothing to change
-touches nothing, so it is safe to repeat and it corrects drift overnight.
+each managed file with `/etc` and rewrites only the ones whose content,
+mode, or ownership differ, then runs that file's follow-up. A run with
+nothing to change touches nothing, so it is safe to repeat and it corrects
+drift overnight.
 None of it restarts Docker, `dgx-dashboard`, or a running model.
 
 | File or setting | Host | After a change |
 |---|---|---|
 | `/etc/systemd/system/mnt-models.{mount,automount}` (NAS `172.20.0.14:/mnt/tank/models` on `/mnt/models`) | both | `daemon-reload`; the automount is enabled if it is not |
-| `/etc/ssh/sshd_config.d/50-fallback-2222.conf`, `/etc/systemd/system/ssh.socket.d/50-fallback-2222.conf` | both | `daemon-reload`, `sshd -t`, restart `ssh.socket` |
+| `/etc/ssh/sshd_config.d/50-fallback-2222.conf`, `/etc/systemd/system/ssh.socket.d/50-fallback-2222.conf` | both | `daemon-reload`, `sshd -t`, restart `ssh.socket`, reload active `ssh.service` |
+| `/etc/ssh/sshd_config.d/90-personal-amp-orbs.conf` | both | `daemon-reload`, `sshd -t`, restart `ssh.socket`, reload active `ssh.service` |
+| `/etc/ssh/personal-amp-orbs-authorized_keys` | both | replace contents, mode, and root ownership; sshd reads it on each authentication |
 | `/etc/netplan/40-cx7.yaml` | spark | `netplan generate`, `netplan apply` |
 | NetworkManager profiles `Wired connection 1` and `4` | spark2 | `nmcli connection modify`; the link is brought up only if it is not already active |
 | Linger for `joost` | both | `loginctl enable-linger joost` |

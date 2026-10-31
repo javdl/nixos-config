@@ -63,9 +63,7 @@ let
       '';
       onChange = "daemon_reload=1";
     }
-    # sshd and its socket keep the exact bytes already on both hosts, so the
-    # first sync does not restart ssh.socket under a live session. On Ubuntu
-    # 24.04 the socket's ports come from sshd_config through
+    # On Ubuntu 24.04 the socket's ports come from sshd_config through
     # sshd-socket-generator, so either file needs a daemon-reload and a socket
     # restart.
     {
@@ -78,6 +76,25 @@ let
         PasswordAuthentication no
         KbdInteractiveAuthentication no
         PermitRootLogin no
+      '';
+      onChange = "daemon_reload=1; sshd_changed=1";
+    }
+    {
+      # A separate root-owned file preserves native/CX7 and Herdr keys.
+      # Replacing its contents on every change also makes revocation converge.
+      path = "/etc/ssh/personal-amp-orbs-authorized_keys";
+      mode = "0644";
+      text = builtins.readFile ./joost/ssh/personal-amp-orbs.pub;
+      onChange = ":";
+    }
+    {
+      path = "/etc/ssh/sshd_config.d/90-personal-amp-orbs.conf";
+      mode = "0644";
+      text = ''
+        # Managed by nixos-config. Personal Amp orbs use only joost on 2222.
+        Match User joost LocalPort 2222
+          AuthorizedKeysFile .ssh/authorized_keys /etc/ssh/personal-amp-orbs-authorized_keys
+        Match all
       '';
       onChange = "daemon_reload=1; sshd_changed=1";
     }
@@ -209,7 +226,8 @@ let
     sync_file() {
       local dest=$1 mode=$2 src=$3
       if [ -f "$dest" ] && [ ! -L "$dest" ] && cmp -s "$src" "$dest" \
-        && [ "$(stat -c %a "$dest")" = "''${mode#0}" ]; then
+        && [ "$(stat -c %a "$dest")" = "''${mode#0}" ] \
+        && [ "$(stat -c %u:%g "$dest")" = 0:0 ]; then
         return 1
       fi
       log "writing $dest"
@@ -227,6 +245,11 @@ let
     if [ "$sshd_changed" = 1 ]; then
       /usr/sbin/sshd -t
       "$systemctl" restart ssh.socket
+      # An already-running listener must reread Match/AuthorizedKeysFile too.
+      # Reload keeps existing coding and CX7 sessions alive.
+      if "$systemctl" is-active --quiet ssh.service; then
+        "$systemctl" reload ssh.service
+      fi
     fi
     if [ "$netplan_changed" = 1 ]; then
       /usr/sbin/netplan generate
