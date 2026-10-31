@@ -77,17 +77,13 @@ exit 0
 EOF
   cat >"$work/findmnt" <<'EOF'
 #!/bin/sh
-<<<<<<< Updated upstream
-# FINDMNT_FSTYPE is the literal stdout, including a stacked autofs+nfs4
-# listing. Unset, NFS_OK selects the single-line fixture.
+# FINDMNT_FSTYPE is the literal stdout. Unset, NFS_OK selects a fixture:
+# 1 is a mounted systemd automount (autofs trigger with nfs4 stacked on
+# it, autofs first, as on spark), autofs is the bare trigger, else ext4.
 if [ -n "${FINDMNT_FSTYPE+x}" ]; then
   printf '%s\n' "$FINDMNT_FSTYPE"
   exit 0
 fi
-=======
-# A mounted systemd automount: findmnt -T lists the autofs trigger and the
-# nfs4 mount stacked on it, autofs first (spark, 2026-10-26).
->>>>>>> Stashed changes
 if [ "${NFS_OK:-1}" = 1 ]; then
   printf 'autofs\nnfs4\n'
 elif [ "${NFS_OK}" = autofs ]; then
