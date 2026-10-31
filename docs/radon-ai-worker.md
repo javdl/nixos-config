@@ -2,6 +2,20 @@
 
 Radon is managed by `darwinConfigurations.radon` (macOS/nix-darwin), not NixOS.
 
+## Personal Amp orb SSH access
+
+Radon's tailnet-only OpenSSH daemon on TCP 2222 accepts the dedicated
+personal Amp orb key as `joost`. The canonical public-key file is
+`users/joost/ssh/personal-amp-orbs.pub`, shared only with spark and spark2.
+The existing daemon installs its complete key set as a root-owned `0644`
+runtime file at `/var/db/sshd-bali-authorized_keys`; a changed source restarts
+the daemon and replaces that copy. Existing keys stay in the set.
+
+Follow [Personal Amp orb SSH access](dgx-spark.md#personal-amp-orb-ssh-access)
+for restrictions, rollout, and revocation. This grants joost's normal shell
+and existing admin/sudo permissions, not an unprivileged sandbox. Do not
+confuse this login with the separate `hermes` service account.
+
 ## Scope
 
 - Homebrew applications: Bitwarden, Blender, Brave Origin, Chrome and NVIDIA PAIR.
