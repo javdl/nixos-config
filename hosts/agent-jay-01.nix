@@ -27,6 +27,7 @@
   imports = [
     ./hardware/agent-jay-01.nix
     ../modules/agent-dev-box.nix
+    ../modules/aperture-agents.nix
   ];
 
   # Hostname
@@ -34,6 +35,12 @@
 
   # Auto-update from this host's flake target (daily at 04:00, see the module)
   services.nixosAutoUpdate.flake = "github:javdl/nixos-config#agent-jay-01";
+
+  # rondo's Claude Code through Tailscale Aperture (modules/aperture-agents.nix).
+  services.apertureAgents = {
+    enable = true;
+    users = [ "agent-jay" ];
+  };
 
   # Peter operates this agent box. He logs in as himself (peter@) and uses
   # `sudo -iu agent-jay` for agent ops (claude /login, rondo). Tailscale SSH also
@@ -181,6 +188,8 @@
       EnvironmentFile = config.sops.templates."rondo.env".path;
       Environment = [
         "HOME=/home/agent-jay"
+        # A system unit does not see environment.variables.
+        "ANTHROPIC_BASE_URL=${config.services.apertureAgents.url}"
         # Runtime comes from the nixpkgs beam in agent-jay's profile (not mise).
         # ~/.local/bin: beislid policy stub + claude (native installer).
         "PATH=/home/agent-jay/.local/bin:/etc/profiles/per-user/agent-jay/bin:/run/current-system/sw/bin"
