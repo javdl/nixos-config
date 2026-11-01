@@ -158,11 +158,11 @@ class CollectorTests(unittest.TestCase):
         self.assertEqual(s.collect(), 1)
         [row] = s.rows()
         self.assertEqual(list(row), ["ts", "job", "model", "provider", "input_tokens", "output_tokens", "cost",
-                                     "duration_s", "status", "model_host_failure", "error", "execution_id"])
+                                     "duration_s", "status", "model_host_failure", "empty_response", "error", "execution_id"])
         self.assertEqual(row, {
             "ts": "2026-10-24T12:00:07Z", "job": "Reply with OK", "model": "spark/dsv41",
             "provider": "aperture-local", "input_tokens": 1500, "output_tokens": 42, "cost": 0.0,
-            "duration_s": 7.5, "status": "completed", "model_host_failure": False, "error": None,
+            "duration_s": 7.5, "status": "completed", "model_host_failure": False, "empty_response": False, "error": None,
             "execution_id": execution,
         })
 
@@ -207,6 +207,32 @@ class CollectorTests(unittest.TestCase):
         [row] = s.rows()
         self.assertEqual(row["status"], "failed")
         self.assertIs(row["model_host_failure"], False)
+
+    def test_empty_reply_is_distinct_from_a_wrong_block_or_a_host_failure(self):
+        s = self.stores
+        s.add_job(job_record("mail00000001", "mail parsing"))
+        cases = [
+            ("failed", "Agent completed but produced empty response (model error, timeout, or misconfiguration)", True),
+            ("failed", "RuntimeError: missing or invalid processed/uncertain JSON block", False),
+            ("failed", "APIConnectionError: Connection error.", False),
+            ("failed", "RuntimeError: Agent completed but produced empty response (model error, timeout, or misconfiguration)", False),
+            ("completed", None, False),
+        ]
+        for status, error, _ in cases:
+            s.add_execution("mail00000001", status=status, error=error,
+                            started="2026-10-24T14:15:00+02:00", finished="2026-10-24T14:16:00+02:00")
+
+        s.add_job(job_record("script000001", "script", no_agent=True))
+        s.add_execution("script000001", status="failed", error=cases[0][1],
+                        started="2026-10-24T14:15:00+02:00", finished="2026-10-24T14:16:00+02:00")
+        self.assertEqual(s.collect(), len(cases) + 1)
+        rows = {row["error"]: row for row in s.rows() if row["job"] == "mail parsing"}
+        for _, error, expected in cases:
+            with self.subTest(error=error):
+                self.assertIs(rows[error]["empty_response"], expected)
+        [script] = [row for row in s.rows() if row["job"] == "script"]
+        self.assertIs(script["empty_response"], False)
+        self.assertEqual(s.collect(), 0)
 
     def test_no_agent_run_has_status_and_duration_only(self):
         s = self.stores
@@ -444,6 +470,20 @@ class RealHermesStoreTests(unittest.TestCase):
                              ("real ok", "completed", "spark/dsv41", "aperture-local"))
             self.assertEqual((row["input_tokens"], row["output_tokens"], row["cost"]), (900, 7, 0.0))
             self.assertGreaterEqual(row["duration_s"], 0)
+
+            from types import SimpleNamespace
+            from cron.scheduler_bookkeeping import fail_empty_response
+
+            empty = executions.create_execution(job["id"], source="direct")
+            executions.mark_execution_running(empty["id"])
+            delivery = SimpleNamespace(success=True, error=None)
+            fail_empty_response(delivery, "")
+            executions.finish_execution(empty["id"], success=delivery.success, error=delivery.error)
+            self.assertEqual(run_log.collect(home, out, ROUTE), 1)
+            empty_row = json.loads(out.read_text().splitlines()[-1])
+            self.assertEqual(empty_row["execution_id"], empty["id"])
+            self.assertIs(empty_row["empty_response"], True)
+            self.assertIs(empty_row["model_host_failure"], False)
 
 
 if __name__ == "__main__":

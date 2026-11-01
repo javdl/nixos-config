@@ -47,6 +47,10 @@ from typing import Optional
 TERMINAL_STATUSES = ("completed", "failed", "unknown")
 CRON_PRINCIPAL_ID = "cron-owner"
 MAX_ERROR_CHARS = 500
+# cron/scheduler_bookkeeping.py at 81a55437 sets this only after an otherwise
+# successful run returns a blank final response. This is an observable empty
+# answer, not proof of the raw HTTP status or of a server-side parser fault.
+EMPTY_RESPONSE_ERROR = "Agent completed but produced empty response (model error, timeout, or misconfiguration)"
 
 # Hermes records an agent run's failure as "<exception type>: <message>"
 # (cron/scheduler.py:2652-2653 at hermes-agent 81a55437). A model call that
@@ -165,6 +169,7 @@ def build_row(execution: Execution, job: Optional[Job], usage: Optional[Usage], 
         "duration_s": round((finished - started).total_seconds(), 3) if started else None,
         "status": execution.status,
         "model_host_failure": agent_run and failed and is_model_host_failure(execution.error),
+        "empty_response": agent_run and execution.status == "failed" and execution.error == EMPTY_RESPONSE_ERROR,
         "error": _clean_error(execution.error) if failed else None,
         "execution_id": execution.id,
     }

@@ -46,7 +46,7 @@ class FakeNet:
         self.routes.append((method, url_part, responder))
         return self
 
-    def send(self, method, url, *, params=None, headers=None, data=None) -> net.Response:
+    def send(self, method, url, *, params=None, headers=None, data=None, follow_redirects=True) -> net.Response:
         body = None
         if data is not None:
             content_type = (headers or {}).get("content-type", "")

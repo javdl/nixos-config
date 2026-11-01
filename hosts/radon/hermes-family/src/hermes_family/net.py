@@ -13,6 +13,11 @@ from typing import Any
 TIMEOUT_S = 30
 
 
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
 @dataclass(frozen=True)
 class Response:
     status: int
@@ -33,26 +38,29 @@ def send(
     params: dict[str, Any] | None = None,
     headers: dict[str, str] | None = None,
     data: bytes | None = None,
+    follow_redirects: bool = True,
 ) -> Response:
     """An HTTP error status is a Response, not an exception. Only transport
     failures (DNS, refused, timeout) raise."""
     if params:
         url = f"{url}?{urllib.parse.urlencode(params, doseq=True)}"
     request = urllib.request.Request(url, data=data, method=method, headers=headers or {})
+    open_url = urllib.request.urlopen if follow_redirects else urllib.request.build_opener(_NoRedirect()).open
     try:
-        with urllib.request.urlopen(request, timeout=TIMEOUT_S) as response:
+        with open_url(request, timeout=TIMEOUT_S) as response:
             return Response(response.status, response.read())
     except urllib.error.HTTPError as error:
         return Response(error.code, error.read())
 
 
-def send_json(method: str, url: str, body: Any, *, params=None, headers=None) -> Response:
+def send_json(method: str, url: str, body: Any, *, params=None, headers=None, follow_redirects=True) -> Response:
     return send(
         method,
         url,
         params=params,
         headers={"content-type": "application/json", **(headers or {})},
         data=json.dumps(body).encode(),
+        follow_redirects=follow_redirects,
     )
 
 

@@ -63,6 +63,19 @@ then run `sudo launchctl kickstart -k system/org.nixos.hermes-gateway`.
 environment, for checks such as `hermes-family config`,
 `hermes-family fallback list` or `hermes-family cron list`.
 
+## Empty replies in the run log
+
+Each new collector row in `runs.jsonl` has an `empty_response` boolean. It is
+true only for a failed agent run with Hermes's exact empty-response error
+from `cron/scheduler_bookkeeping.py`. A nonempty answer with a missing or
+invalid mail JSON block, a connection failure, and a no-agent script do not
+set it. The notifier's separate mail-validation rows do not have this field.
+
+This records a blank final response, not the raw HTTP status or the cause of
+the blank response. Do not count it as proof that the server dropped a tool
+call. The usage audit's `response_silent` also includes intentional cron
+silence, so the collector does not use it. Existing rows are not rewritten.
+
 ## Secrets
 
 `secrets/radon.yaml`, encrypted to radon and bali (`.sops.yaml`). Each key is
@@ -397,6 +410,39 @@ this one ended, and a late or repeated run sends no bookmark twice. If a model
 run fails, Hermes alerts `personal_deliver`, and those bookmarks stay in the
 archive but are not sent again. The job has no toolsets, so the post text it
 reads can reach nothing.
+
+## Model-route DM alerts
+
+`hermes-model-health` is a launchd daemon, not a Hermes cron. With
+`enableHermesFamily` enabled, it checks the configured cron model through
+the personal Aperture every five minutes, independently of the gateway
+process. It requests a real completion with high reasoning, rejects blank
+replies and unexpected model names, and never selects a fallback.
+
+After at least 15 minutes of failed checks, it sends one outage DM using
+`hermes-env`'s Telegram bot and `hermes-family.personal_deliver`. That target
+must be a positive Telegram user id in `TELEGRAM_ALLOWED_USERS`; `getChat`
+must confirm it is private before any message is sent. The user must first
+send the bot `/start`. No group receives health notices. One recovery DM
+follows a delivered outage notice. Short outages and recovery before an
+outage notice was delivered send nothing.
+
+State and a process lock live under `state/model-health` on the Agent
+volume. Failed deliveries retry on later checks, respecting Telegram's
+`retry_after`. A crash between Telegram accepting a message and saving its
+acknowledgement can duplicate it. Requests do not follow redirects, errors
+do not print credentials, and each check has a two-minute runtime limit
+after the volume, secrets and pf readiness checks. The monitor adds no
+automatic restart or rollback. Existing service restart policies are unchanged.
+
+This detects the route as radon's `hermes` user sees it, not every Hermes
+failure or a stopped gateway. It cannot report while radon, its Agent
+volume, the required secrets, the network or Telegram are unavailable;
+delivery resumes when they recover. With a five-minute interval, detection
+normally takes 15–20 minutes plus request time. Configuration and delivery
+errors go to `logs/hermes-model-health.log` on the Agent volume (or the
+launch log before readiness). The family enable gate also gates the monitor;
+neither is active while `enableHermesFamily` is false.
 
 ## Tests
 

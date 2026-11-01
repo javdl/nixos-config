@@ -318,6 +318,19 @@ let
       --cron-provider ${cronRoute.model_provider}
   '';
 
+  modelHealthJob = pkgs.writeShellScript "hermes-model-health" ''
+    set -eu
+    ${waitFor "hermes-model-health" "&& [ -r ${secret "hermes-env"} ] && [ -r ${secret "hermes-family"} ]"}
+    export TMPDIR=${tmpDir}
+    umask 077
+    exec ${jobs.modelHealth}/bin/model-health \
+      --env-file ${secret "hermes-env"} \
+      --family ${secret "hermes-family"} \
+      --state-dir ${stateDir}/model-health \
+      --base-url ${aperture} \
+      --model ${cronRoute.model}
+  '';
+
   # The family Hermes for Joost's checks, for example `hermes-family config`
   # or `hermes-family cron list`: as hermes, with the gateway's environment.
   # Its HOME, HERMES_HOME and TMPDIR are on the Agent volume, so it refuses to
@@ -342,6 +355,10 @@ let
     };
     hermes-run-log = {
       job = runLogJob;
+      serviceConfig.StartInterval = 300;
+    };
+    hermes-model-health = {
+      job = modelHealthJob;
       serviceConfig.StartInterval = 300;
     };
   };
