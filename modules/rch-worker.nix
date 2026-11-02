@@ -22,11 +22,9 @@
 
 let
   cfg = config.services.rchWorker;
-  orbUser = "rch";
+  user = "rch";
   inherit (lib)
     mkEnableOption
-    mkOption
-    types
     mkIf
     optionals
     ;
@@ -34,16 +32,6 @@ in
 {
   options.services.rchWorker = {
     enable = mkEnableOption "rch remote-compilation worker support";
-
-    user = mkOption {
-      type = types.str;
-      default = "joost";
-      description = ''
-        The account that gets the ~/.local/bin/rch-wkr and rustup links.
-        Offloading itself is limited to the rch account, which owns the
-        worker's source-claim registry (see rchSourceLocks below).
-      '';
-    };
   };
 
   config = mkIf cfg.enable {
@@ -53,14 +41,16 @@ in
       pkgs.remote-compilation-helper
     ];
 
-    # Untrusted clients (Amp orbs, tag:amp-orb in the fashionunited.com
-    # tailnet policy) Tailscale SSH in as this account instead of cfg.user,
-    # who has passwordless sudo and docker. zsh reads /etc/zshenv even for
-    # `ssh host cmd`, which puts the per-user profile's rustup and its
-    # cargo/rustc proxies ahead of the system cargo and rustc.
-    users.users.${orbUser} = {
+    # Every rch client (bali from tag:devboxes, Amp orbs from tag:amp-orb in
+    # the fashionunited.com tailnet policy) Tailscale SSHes in as this
+    # account, which has no sudo or docker. All clients must share it: the
+    # source-authority registry below is usable by one account only. zsh
+    # reads /etc/zshenv even for `ssh host cmd`, which puts the per-user
+    # profile's rustup and its cargo/rustc proxies ahead of the system cargo
+    # and rustc.
+    users.users.${user} = {
       isNormalUser = true;
-      description = "rch builds for Amp orbs";
+      description = "rch remote builds";
       shell = pkgs.zsh;
       packages = [ pkgs.rustup ];
     };
@@ -71,36 +61,36 @@ in
     # the internet (crates.io); the SSH session itself is tailscaled's, not
     # this user's, so it is unaffected.
     networking.firewall.extraCommands = ''
-      ip46tables -D OUTPUT -o tailscale0 -m owner --uid-owner ${orbUser} -j REJECT 2>/dev/null || true
-      ip46tables -I OUTPUT -o tailscale0 -m owner --uid-owner ${orbUser} -j REJECT
+      ip46tables -D OUTPUT -o tailscale0 -m owner --uid-owner ${user} -j REJECT 2>/dev/null || true
+      ip46tables -I OUTPUT -o tailscale0 -m owner --uid-owner ${user} -j REJECT
     '';
     networking.firewall.extraStopCommands = ''
-      iptables -w -D OUTPUT -o tailscale0 -m owner --uid-owner ${orbUser} -j REJECT 2>/dev/null || true
-      ip6tables -w -D OUTPUT -o tailscale0 -m owner --uid-owner ${orbUser} -j REJECT 2>/dev/null || true
+      iptables -w -D OUTPUT -o tailscale0 -m owner --uid-owner ${user} -j REJECT 2>/dev/null || true
+      ip6tables -w -D OUTPUT -o tailscale0 -m owner --uid-owner ${user} -j REJECT 2>/dev/null || true
     '';
 
     # rch keeps a per-worker source-claim registry at the hardcoded
     # /tmp/rch-source-authority-locks, created umask 077 and coordinated with
     # flock, so only the account that created it can offload to this worker.
-    # Claim it for ${orbUser}: drop a copy another account created, and let
-    # tmpfiles recreate it ${orbUser}-owned. A trusted client that wants to
-    # build here has to log in as ${orbUser} too.
+    # Claim it for ${user}: drop a copy another account created, and let
+    # tmpfiles recreate it ${user}-owned. A trusted client that wants to
+    # build here has to log in as ${user} too.
     system.activationScripts.rchSourceLocks = {
       deps = [ "users" ];
       text = ''
         rchLocks=/tmp/rch-source-authority-locks
-        if [ -e "$rchLocks" ] && [ "$(stat -c %U "$rchLocks")" != ${orbUser} ]; then
+        if [ -e "$rchLocks" ] && [ "$(stat -c %U "$rchLocks")" != ${user} ]; then
           rm -rf -- "$rchLocks"
         fi
       '';
     };
 
     systemd.tmpfiles.rules = [
-      "d /tmp/rch-source-authority-locks 0700 ${orbUser} users -"
+      "d /tmp/rch-source-authority-locks 0700 ${user} users -"
 
       # rch canonical project root — rchd rsyncs the client project tree here.
-      # Sticky and world-writable like /tmp: cfg.user and ${orbUser} each
-      # create their own mirrors and cannot touch the other's.
+      # Sticky and world-writable like /tmp, so accounts cannot touch each
+      # other's mirrors.
       "d /data/projects 1777 root root -"
       "L+ /dp - - - - /data/projects"
 
@@ -108,9 +98,9 @@ in
       # so it survives reboots / Nix GC / a client nixpkgs bump. `L+` reasserts
       # the symlink even if `rch workers deploy-binary` previously dropped a
       # foreign binary there.
-      "d /home/${cfg.user}/.local 0755 ${cfg.user} users -"
-      "d /home/${cfg.user}/.local/bin 0755 ${cfg.user} users -"
-      "L+ /home/${cfg.user}/.local/bin/rch-wkr - - - - /run/current-system/sw/bin/rch-wkr"
+      "d /home/${user}/.local 0755 ${user} users -"
+      "d /home/${user}/.local/bin 0755 ${user} users -"
+      "L+ /home/${user}/.local/bin/rch-wkr - - - - /run/current-system/sw/bin/rch-wkr"
 
       # rchd pins the client's toolchain with `rustup run <channel> …` and
       # installs missing ones with `rch workers sync-toolchain` into
@@ -119,11 +109,11 @@ in
       # Cargo then calls `rustc` from PATH; `rustup run` puts ~/.cargo/bin
       # first, so the proxies there select the pinned rustc instead of the
       # system rustc. ~/.cargo/bin is not on this user's login PATH.
-      "L+ /home/${cfg.user}/.local/bin/rustup - - - - ${pkgs.rustup}/bin/rustup"
-      "d /home/${cfg.user}/.cargo 0755 ${cfg.user} users -"
-      "d /home/${cfg.user}/.cargo/bin 0755 ${cfg.user} users -"
+      "L+ /home/${user}/.local/bin/rustup - - - - ${pkgs.rustup}/bin/rustup"
+      "d /home/${user}/.cargo 0755 ${user} users -"
+      "d /home/${user}/.cargo/bin 0755 ${user} users -"
     ]
-    ++ map (proxy: "L+ /home/${cfg.user}/.cargo/bin/${proxy} - - - - ${pkgs.rustup}/bin/rustup") [
+    ++ map (proxy: "L+ /home/${user}/.cargo/bin/${proxy} - - - - ${pkgs.rustup}/bin/rustup") [
       "cargo"
       "rustc"
       "rustdoc"

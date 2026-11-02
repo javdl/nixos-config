@@ -913,4 +913,38 @@ in
 
   # Ensure ~/.ssh directory exists for agent socket symlink
   home.file.".ssh/.keep".text = "";
+
+  # bali's rchd offloads builds to the runners as rch (modules/rch-worker.nix),
+  # the same account as the Amp orbs (fuww/fashionunited .agents/resume).
+  # Tailscale SSH authenticates the tailnet node, not a key: rch requires
+  # identity_file, but the file does not need to exist.
+  xdg.configFile."rch/workers.toml" = lib.mkIf (currentSystemName == "bali") {
+    force = true;
+    text =
+      lib.concatMapStrings
+        (worker: ''
+          [[workers]]
+          id = "${worker.id}"
+          host = "${worker.host}"
+          user = "rch"
+          identity_file = "~/.ssh/rch-tailscale-ssh-unused"
+          total_slots = 20
+          priority = 100
+
+        '')
+        [
+          {
+            id = "runner03";
+            host = "100.126.150.43";
+          }
+          {
+            id = "runner04";
+            host = "100.97.77.46";
+          }
+          {
+            id = "runner05";
+            host = "100.108.96.124";
+          }
+        ];
+  };
 }
