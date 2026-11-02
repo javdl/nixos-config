@@ -317,22 +317,33 @@
   # and starved the Nx Cloud heartbeat process past its 30s deadline, aborting the whole run
   # group ("Nx Cloud heartbeat process failed to report its status in time"), and earlier
   # 16-slot attempts OOM-killed workers outright. Those heavy jobs now run ONLY on the
-  # dedicated fuww-runner-16cores slot below (sole holder of the self-hosted-16-cores label,
-  # targeted by 20+ fuww workflows), one at a time with the whole machine — so the 6 general
+  # fuww-runner-16cores slots below (the only holders of the self-hosted-16-cores label,
+  # targeted by 20+ fuww workflows), at most four at a time — so the 6 general
   # slots only serve lighter jobs and can safely exceed the old 4-slot heartbeat cap.
   # See github-runner-02.nix for full design rationale (ephemeral=false, workDir off tmpfs).
   systemd.tmpfiles.rules =
     let
       runnerCount = 6;
+      extraHeavySlots = lib.range 2 4;
     in
     lib.genList (
       i: "d /var/lib/github-runner-work/fuww-runner-${toString (i + 1)} 0700 github-runner users -"
     ) runnerCount
-    ++ [ "d /var/lib/github-runner-work/fuww-runner-16cores 0700 github-runner users -" ];
+    ++ [ "d /var/lib/github-runner-work/fuww-runner-16cores 0700 github-runner users -" ]
+    ++ map (
+      n: "d /var/lib/github-runner-work/fuww-runner-16cores-${toString n} 0700 github-runner users -"
+    ) extraHeavySlots;
 
   services.github-runners =
     let
       runnerCount = 6;
+      extraHeavySlots = lib.range 2 4;
+      heavyLabels = [
+        "hetzner"
+        "nixos"
+        "ex63"
+        "self-hosted-16-cores"
+      ];
       common = {
         enable = true;
         ephemeral = false;
@@ -375,20 +386,31 @@
       ) runnerCount
     )
     // {
-      # Dedicated slot for heavy jobs: sole holder of self-hosted-16-cores on
-      # this host, so one heavy job gets the whole machine to itself instead of
-      # four of them contending for 8 physical cores.
+      # Heavy-job slots: the only holders of self-hosted-16-cores on this host.
       fuww-runner-16cores = common // {
         name = "github-runner-03-16cores";
         workDir = "/var/lib/github-runner-work/fuww-runner-16cores";
-        extraLabels = [
-          "hetzner"
-          "nixos"
-          "ex63"
-          "self-hosted-16-cores"
-        ];
+        extraLabels = heavyLabels;
       };
-    };
+    }
+    # fuww/fashionunited's CI fans out about 18 short Rust jobs (15-60s each
+    # on this box) onto self-hosted-16-cores; with one slot per host they
+    # queued for minutes behind each other. Three more slots per host carry
+    # the label. The existing slot keeps its name and config, so it does not
+    # re-register.
+    // lib.listToAttrs (
+      map (
+        n:
+        lib.nameValuePair "fuww-runner-16cores-${toString n}" (
+          common
+          // {
+            name = "github-runner-03-16cores-${toString n}";
+            workDir = "/var/lib/github-runner-work/fuww-runner-16cores-${toString n}";
+            extraLabels = heavyLabels;
+          }
+        )
+      ) extraHeavySlots
+    );
 
   # Personal javdl/joost runners (2), alongside the fuww org runners above.
   # Token lives under key github-runner-javdl-token in the host secrets file.
