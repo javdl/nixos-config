@@ -48,7 +48,7 @@ require 'isServer' lib/mksystem.nix modules/cachix.nix
 
 reject 'keep-outputs|keep-derivations' hosts modules
 reject 'darwinNixGC|darwin-nix-gc' hosts modules
-reject 'nix-collect-garbage|nixKeepDays' modules/disk-cleanup.nix modules/ci-disk-cleanup.nix
+reject 'nix-collect-garbage|nixKeepDays' modules/disk-cleanup.nix
 require 'inputs\.determinate\.nixosModules\.default' hosts/bali.nix
 
 printf 'Nix performance policy checks passed.\n'

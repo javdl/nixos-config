@@ -434,90 +434,13 @@ $ wsl -s nixos
 After the `wsl -d` command, you should be dropped into the Nix environment.
 _Voila!_
 
-## Hetzner Dev Servers
+## FashionUnited servers
 
-Colleague development servers (Hetzner CPX32, Nuremberg):
-
-| Colleague | Hostname       | Flake Target     | User Config                             |
-|-----------|----------------|------------------|-----------------------------------------|
-| Desmond   | desmondroid    | `#desmondroid`   | `users/desmond/home-manager-server.nix` |
-| Jackson   | jacksonator    | `#jacksonator`   | `users/jackson/home-manager-server.nix` |
-| Peter     | peterbot       | `#peterbot`      | `users/peter/home-manager-server.nix`   |
-
-All servers auto-update from `main` at 4 AM UTC daily via the `nixosAutoUpdate` module.
-
-## GitHub Actions Runner (Hetzner)
-
-Dedicated self-hosted GitHub Actions runner for the `fuww` organization:
-
-| Server             | Hostname           | Flake Target           | Instance | Purpose |
-|--------------------|--------------------|------------------------|----------|---------|
-| github-runner-03   | github-runner-03   | `#github-runner-03`    | EX63     | GitHub Actions runner for fuww org |
-| github-runner-04   | github-runner-04   | `#github-runner-04`    | EX63     | GitHub Actions runner for fuww org |
-| github-runner-05   | github-runner-05   | `#github-runner-05`    | EX63     | GitHub Actions runner for fuww org |
-
-Each runner includes the full CI package set (Docker, languages, build tools, browsers, cloud CLIs) via the `github-actions-runner` module. Runner tokens are **org-level registration tokens** (NOT PATs: get from GitHub Settings > Actions > Runners > New), SOPS-encrypted in `secrets/`. Tokens expire in 1 hour and are single-use per registration. See [docs/github-runner-hetzner-setup.md](docs/github-runner-hetzner-setup.md) for the full setup guide, including the SOPS chicken-and-egg workaround for new servers and token lifecycle details.
-
-### Making changes to your own server
-
-You can customise your dev server by editing your config and rebuilding. The steps below use Jackson / `jacksonator` as an example; substitute your own name and hostname.
-
-**1. Clone the repo on your server:**
-
-```bash
-git clone https://github.com/javdl/nixos-config.git ~/nixos-config
-cd ~/nixos-config
-```
-
-**2. Edit your config:**
-
-Your personal config lives in `users/jackson/home-manager-server.nix`. This controls your shell, git settings, tmux, installed packages, and more.
-
-```bash
-# Open your config in your preferred editor
-nano users/jackson/home-manager-server.nix
-```
-
-Common things you might want to change:
-- **Add packages**: find the `home.packages` list and add entries like `pkgs.htop` or `pkgs.nodejs`
-- **Git config**: update `programs.git.userName`, `userEmail`, or `github.user`
-- **Shell aliases**: add aliases in the zsh or bash configuration section
-- **Tmux settings**: change prefix key, mouse mode, etc. under `programs.tmux`
-
-The host-level config (networking, system services, etc.) is in `hosts/jacksonator.nix`. You probably don't need to touch this.
-
-**3. Apply your changes:**
-
-```bash
-# Test first (builds without activating)
-sudo nixos-rebuild test --flake ".#jacksonator"
-
-# If that works, apply for real
-sudo nixos-rebuild switch --flake ".#jacksonator"
-```
-
-**4. (Optional) Contribute your changes back:**
-
-If you want your changes to persist across auto-updates, push them to the repo:
-
-```bash
-cd ~/nixos-config
-git add users/jackson/home-manager-server.nix
-git commit -m "jackson: add nodejs to packages"
-git push
-```
-
-If you don't push, your local changes will be overwritten on the next auto-update at 4 AM.
-
-### Finding packages
-
-```bash
-# Search for a package
-nix search nixpkgs python
-
-# Check what's already installed
-grep "pkgs\." users/jackson/home-manager-server.nix
-```
+The colleague dev servers (`desmondroid`, `jacksonator`, `peterbot`), the
+`fuww` GitHub Actions runners (`github-runner-03/04/05`), `agent-jay-01` and
+`hermes-fu` are defined in the
+[fuww/fashionunited](https://github.com/fuww/fashionunited) monorepo under
+`infra/nixos/`. Its README covers making changes to your own server.
 
 ## Zellij Work Layout
 

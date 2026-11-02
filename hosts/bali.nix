@@ -419,9 +419,9 @@ in
   # modules/github-actions-runner.nix, shared with the fuww runner hosts.
   services.github-actions-runner.enable = enableRunners;
 
-  # bali is user="joost", so mkSystem does NOT load users/github-runner/nixos.nix
-  # (that file only loads on hosts whose mkSystem user is "github-runner"). Define
-  # the runner's unprivileged service account here. No password: the runner is
+  # bali is user="joost", so it has no runner user from mkSystem (the fuww
+  # runners get theirs from fuww/fashionunited infra/nixos/users/github-runner).
+  # Define the runner's unprivileged service account here. No password: the runner is
   # driven by systemd, never logged into.
   users.users.github-runner = lib.mkIf enableRunners {
     isNormalUser = true;

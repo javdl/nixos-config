@@ -513,26 +513,13 @@
         user = "joost";
       };
 
-      nixosConfigurations.github-runner-03 = mkServer "github-runner-03" "github-runner";
-      nixosConfigurations.github-runner-04 = mkServer "github-runner-04" "github-runner";
-      nixosConfigurations.github-runner-05 = mkServer "github-runner-05" "github-runner";
-
-      # github-runner-06 removed 2026-07-20 — its EX63 box was wiped and
-      # repurposed as bali.
-
-      # Agent dev box running rondo (autonomous Claude Code agent). Reuses the
-      # decommissioned github-runner-01 box. See modules/agent-dev-box.nix and
-      # users/agent-jay/ — both designed to scale to more jay machines and new
-      # agent users.
-      nixosConfigurations.agent-jay-01 = mkServer "agent-jay-01" "agent-jay";
+      # FashionUnited machines (github-runner-03/04/05, agent-jay-01, hermes-fu,
+      # desmondroid, jacksonator, peterbot) live in the fuww/fashionunited
+      # monorepo under infra/nixos.
 
       # Personal server on the former github-runner-06 EX63.
       # Hermes has run here since the 2026-07-20 cutover (hosts/bali.nix).
       nixosConfigurations.bali = mkServer "bali" "joost";
-
-      # FashionUnited company-wide hermes-agent host.
-      # Shares bali's hermes-agent module; see Plans/check-the-plan-for-misty-turtle.md.
-      nixosConfigurations.hermes-fu = mkServer "hermes-fu" "agent";
 
       nixosConfigurations.joostclaw = mkSystem "joostclaw" {
         system = "x86_64-linux";
@@ -540,13 +527,6 @@
         server = true;
         hmConfig = "home-manager-joostclaw";
       };
-
-      # Colleague AI dev servers (robot-themed names)
-      nixosConfigurations.desmondroid = mkServer "desmondroid" "desmond";
-
-      nixosConfigurations.jacksonator = mkServer "jacksonator" "jackson";
-
-      nixosConfigurations.peterbot = mkServer "peterbot" "peter";
 
       # All aarch64-darwin workstations share one definition (see mkDarwin).
       darwinConfigurations = nixpkgs.lib.genAttrs [

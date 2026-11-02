@@ -80,4 +80,4 @@ Import `../modules/aperture-agents.nix` and set
 `services.apertureAgents = { enable = true; users = [ "<user>" ]; };`. A
 system service that runs an agent does not see `environment.variables`, so
 set `ANTHROPIC_BASE_URL=${config.services.apertureAgents.url}` in its unit,
-as `hosts/agent-jay-01.nix` does for `rondo`.
+as `infra/nixos/hosts/agent-jay-01.nix` in fuww/fashionunited does for `rondo`.
