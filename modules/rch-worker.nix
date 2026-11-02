@@ -93,6 +93,10 @@ in
       # other's mirrors.
       "d /data/projects 1777 root root -"
       "L+ /dp - - - - /data/projects"
+      # Mirrors left by builds as another account (joost, before ${user} was
+      # the only build account) cannot be replaced by ${user} under the sticky
+      # bit, so rsync into them fails. Hand them to ${user}.
+      "Z /data/projects/* - ${user} users -"
 
       # rchd runs `~/.local/bin/rch-wkr`; point it at the native (rooted) binary
       # so it survives reboots / Nix GC / a client nixpkgs bump. `L+` reasserts
