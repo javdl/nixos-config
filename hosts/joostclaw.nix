@@ -17,6 +17,7 @@
   imports = [
     ../modules/hetzner-cloud-hardware.nix
     ../modules/disko-hetzner-cloud.nix
+    ../modules/aperture-agents.nix
     ../modules/cachix.nix
     ../modules/secrets.nix
     ../modules/automatic-nix-gc.nix
@@ -226,13 +227,12 @@
     ];
   };
 
-  # Anthropic inference through Tailscale Aperture (see hosts/bali.nix).
-  # --accept-dns=false, so the gateway's MagicDNS name is pinned here.
-  networking.hosts."100.126.110.21" = [
-    "ai.stargazer-duck.ts.net"
-    "ai"
-  ];
-  environment.variables.ANTHROPIC_BASE_URL = "http://ai.stargazer-duck.ts.net";
+  # Coding agents through Tailscale Aperture (modules/aperture-agents.nix).
+  # chezmoi leaves ~/.pi and ~/.omp/agent/models.yml alone on this host.
+  services.apertureAgents = {
+    enable = true;
+    users = [ "joost" ];
+  };
 
   # Allow Tailscale traffic through firewall
   networking.firewall = {

@@ -103,6 +103,8 @@ Each colleague has a dedicated NixOS server config with auto-update enabled:
 | Peter     | `peterbot`      | `#peterbot`      | `users/peter/home-manager-server.nix`   |
 | ~~Rajesh~~ | ~~`rajbot`~~    | N/A              | **DECOMMISSIONED 2026-10-23**: server gone; `hosts/rajbot.nix`, `hosts/hardware/rajbot.nix` and `users/rajesh/` deleted |
 
+Their coding agents (Claude Code, Codex, omp, opencode, pi) send inference through Tailscale Aperture for per-person usage tracking: `services.apertureAgents` in `modules/aperture-agents.nix`. See [`docs/aperture-agents.md`](docs/aperture-agents.md); new models must be listed by exact ID in Aperture, because `gpt-*`/`claude-*` are not wildcards there.
+
 ### GitHub Actions Runner
 Dedicated self-hosted runner for the `fuww` GitHub organization:
 
