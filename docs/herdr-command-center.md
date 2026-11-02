@@ -77,7 +77,7 @@ the mirror package, `hosts.toml`, and plugin activation are all gated on
   `fromCmdpane`).
 - `users/herdr-fleet-keys.nix` holds the controllers' public keys; fu137, the
   Sparks, the runners (2222) and radon (2222) authorize them from there.
-- `modules/herdr-fleet-node.nix` adds a minimal `joost` Home Manager profile to
+- `infra/nixos/modules/herdr-fleet-node.nix` (fuww/fashionunited) adds a minimal `joost` Home Manager profile to
   a NixOS node while leaving the `github-runner` CI account isolated.
 - `users/herdr-mirror-plugin.toml` is the local plugin manifest. The upstream
   network build step is removed because Nix supplies the verified binary.
@@ -155,7 +155,7 @@ work-tailnet nodes are cross-tailnet, so every destination is OpenSSH:
 
 | Node | Destination | Policy |
 |---|---|---|
-| runner03–05 | tailnet IP, port 2222 (`modules/herdr-fleet-node.nix`) | fuww: `tag://personal/cmdpane` → `tag:github-runner` tcp:2222 |
+| runner03–05 | tailnet IP, port 2222 (`infra/nixos/modules/herdr-fleet-node.nix` (fuww/fashionunited)) | fuww: `tag://personal/cmdpane` → `tag:github-runner` tcp:2222 |
 | fu137 | `100.92.74.63`, port 2222 (`sshd_config.d` drop-in) | fuww: `tag://personal/cmdpane` → `herdr-fu137` tcp:2222 |
 | radon | `100.92.105.21`, port 2222 (`sshd-bali`) | javdl/joost: `tag:cmdpane` → own devices, `tag:hermes` tcp:2222 |
 | spark, spark2 | tailnet IP, port 2222 | same grant |
@@ -200,10 +200,7 @@ Manager test target for fu137 itself:
 
 ```bash
 nix build --no-link \
-  '.#nixosConfigurations.bali.config.system.build.toplevel' \
-  '.#nixosConfigurations.github-runner-03.config.system.build.toplevel' \
-  '.#nixosConfigurations.github-runner-04.config.system.build.toplevel' \
-  '.#nixosConfigurations.github-runner-05.config.system.build.toplevel'
+  '.#nixosConfigurations.bali.config.system.build.toplevel'
 make test NIXNAME=fu137
 ```
 
@@ -212,9 +209,9 @@ auto-update. For an immediate rollout:
 
 ```bash
 ssh bali 'sudo nixos-rebuild switch --flake "github:javdl/nixos-config#bali"'
-ssh joost@100.126.150.43 'sudo nixos-rebuild switch --flake "github:javdl/nixos-config#github-runner-03"'
-ssh joost@100.97.77.46 'sudo nixos-rebuild switch --flake "github:javdl/nixos-config#github-runner-04"'
-ssh joost@100.108.96.124 'sudo nixos-rebuild switch --flake "github:javdl/nixos-config#github-runner-05"'
+
+# The runners live in fuww/fashionunited; deploy them from its infra/nixos:
+nixos-rebuild switch --flake .#github-runner-03 --target-host joost@100.126.150.43 --sudo
 ```
 
 Apply the standalone Home Manager output on fu137:
@@ -358,7 +355,7 @@ session. Use raw SSH for non-Herdr administration.
 1. Give the machine a stable SSH target and verify Bali can use non-interactive
    SSH. Tailnet nodes use their stable IP; exe.dev team VMs use a dotless alias
    so the correct account identity wins.
-2. Import `modules/herdr-fleet-node.nix` from the NixOS host. For a non-NixOS
+2. Import `infra/nixos/modules/herdr-fleet-node.nix` (fuww/fashionunited) from the NixOS host. For a non-NixOS
    host, import `users/herdr-fleet.nix` from its Home Manager profile with
    `provisionAgentRuntime = true`.
 3. Add one entry to `fleetNodes` in `users/herdr-fleet.nix`, including its role,

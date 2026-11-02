@@ -91,30 +91,15 @@ Apply config from GitHub: `darwin-rebuild switch --flake "github:javdl/nixos-con
 - `make hetzner/secrets NIXADDR=<ip>` - Copy SSH/GPG keys to server
 - `make hetzner/tailscale-auth NIXADDR=<ip> TAILSCALE_AUTHKEY=<key>` - Set up Tailscale
 
-### Colleague Dev Servers
-Each colleague has a dedicated NixOS server config with auto-update enabled:
+### FashionUnited machines
 
-| Colleague | Host Config     | Flake Target     | User Config                           |
-|-----------|-----------------|------------------|---------------------------------------|
-| Desmond   | `desmondroid`   | `#desmondroid`   | `users/desmond/home-manager-server.nix` |
-| Jackson   | `jacksonator`   | `#jacksonator`   | `users/jackson/home-manager-server.nix` |
-| ~~Jeevan~~ | ~~`jeevanator`~~ | N/A           | **DECOMMISSIONED 2026-10-23**: server gone; `hosts/jeevanator.nix`, `hosts/hardware/jeevanator.nix` and `users/jeevan/` deleted |
-| ~~Lennard~~ | ~~`lennardroid`~~ | N/A            | **DECOMMISSIONED 2026-07-28**: server gone; `hosts/lennardroid.nix`, `hosts/hardware/lennardroid.nix` and `users/lennard/` deleted |
-| Peter     | `peterbot`      | `#peterbot`      | `users/peter/home-manager-server.nix`   |
-| ~~Rajesh~~ | ~~`rajbot`~~    | N/A              | **DECOMMISSIONED 2026-10-23**: server gone; `hosts/rajbot.nix`, `hosts/hardware/rajbot.nix` and `users/rajesh/` deleted |
-
-Their coding agents (Claude Code, Codex, omp, opencode, pi) send inference through Tailscale Aperture for per-person usage tracking: `services.apertureAgents` in `modules/aperture-agents.nix`. See [`docs/aperture-agents.md`](docs/aperture-agents.md); new models must be listed by exact ID in Aperture, because `gpt-*`/`claude-*` are not wildcards there.
-
-### GitHub Actions Runner
-Dedicated self-hosted runner for the `fuww` GitHub organization:
-
-| Server           | Host Config          | Flake Target          | Instance         | User Config                              |
-|------------------|----------------------|-----------------------|------------------|------------------------------------------|
-| ~~github-runner-02~~ | `github-runner-02`   | `#github-runner-02`   | CPX62 (cloud)    | **DECOMMISSIONED 2026-07-28**: cloud VM deleted; fleet is dedicated-EX63 only |
-| github-runner-03 | `github-runner-03`   | `#github-runner-03`   | EX63 (dedicated) | `users/github-runner/home-manager-server.nix` |
-| github-runner-04 | `github-runner-04`   | `#github-runner-04`   | EX63 (dedicated, 178.63.233.19) | `users/github-runner/home-manager-server.nix` |
-| github-runner-05 | `github-runner-05`   | `#github-runner-05`   | EX63 (dedicated, 144.76.86.24)  | `users/github-runner/home-manager-server.nix` |
-| ~~github-runner-06~~ | `github-runner-06`   | `#github-runner-06`   | EX63 (dedicated, 136.243.104.36) | **DECOMMISSIONED 2026-07-20**: box repurposed as `bali` |
+The FashionUnited hosts (CI runners `github-runner-03/04/05`, the
+`agent-jay-01` agent box, `hermes-fu`, and the colleague dev servers
+`desmondroid`, `jacksonator` and `peterbot`) are defined in the
+[fuww/fashionunited](https://github.com/fuww/fashionunited) monorepo under
+`infra/nixos/`, together with their users, secrets, runbooks and the modules
+only they use (`agent-dev-box`, `ci-disk-cleanup`, `herdr-fleet-node`,
+`javdl-runners`, `netdata`, `rch-worker`). Change them there, not here.
 
 ### bali (personal server)
 
@@ -123,8 +108,8 @@ ex-github-runner-06) runs the personal Hermes gateway. Its root disk is pinned
 by NVMe EUI because disk enumeration is unstable across boots. Keep the shared
 platform tokens on this gateway only to avoid duplicate replies.
 
-Bali is also the SOPS bootstrap/editing host; `agent-jay-01.yaml` is encrypted
-to agent-jay-01 and bali. **SSH is tailnet-only** (public 22/2222 closed;
+Bali is also the SOPS bootstrap/editing host; it can decrypt the monorepo's
+`infra/nixos/secrets/agent-jay-01.yaml`. **SSH is tailnet-only** (public 22/2222 closed;
 recovery = Hetzner Robot rescue): `ssh bali` or headless
 `ssh -i ~/.ssh/id_ed25519_nopass joost@100.113.194.113`. Port 2222 allows
 password auth for key-less apps (Codex).
@@ -132,149 +117,6 @@ password auth for key-less apps (Codex).
 The predecessor server was destroyed; its configuration was removed on
 2026-09-22. Historical plans describe the earlier migration, not current
 build or deployment targets.
-
-The runners use `modules/github-actions-runner.nix` for CI packages (Docker, languages, build tools, browsers, cloud CLIs) and `services.github-runners` for runner registration. Tokens are SOPS-encrypted in `secrets/github-runner-{01,03,04,05,06}.yaml`. See `docs/github-runner-hetzner-setup.md` for full setup/scaling guide.
-
-**Cloud (CPX/CCX) vs dedicated (EX) hardware:** runner-01 is a Hetzner Cloud VM and imports `modules/hetzner-cloud-hardware.nix` + `modules/disko-hetzner-cloud.nix` (qemu-guest profile, single `/dev/sda`). runner-03 is bare-metal EX63 and imports `modules/hetzner-dedicated-hardware.nix` + `modules/disko-hetzner-dedicated.nix` (no qemu-guest, NVMe initrd, `/dev/nvme0n1`). The second NVMe (`/dev/nvme1n1`) is intentionally left unmanaged so a future host can mount it at `/var/lib/github-runner-work` without rebuilding the root layout.
-
-**EX63 provisioning notes:**
-- **SSH access**: rescue mode only ships the SSH key registered at order time (e.g. `j8 mac studio`). Run `make hetzner/provision NIXADDR=<ip> NIXNAME=github-runner-03` from a machine that holds the matching private key, or add an extra pubkey to rescue via Hetzner Robot first.
-- **Pre-provision disk prep** (in rescue, before `make hetzner/provision`): EX-series Robot orders sometimes include software RAID superblocks from the installimage step. Wipe both NVMes so disko has a clean canvas: `for d in /dev/nvme0n1 /dev/nvme1n1; do mdadm --stop --scan; mdadm --zero-superblock --force "$d" 2>/dev/null || true; wipefs -af "$d"; done`. Also confirm UEFI boot before proceeding: `[ -d /sys/firmware/efi ] && echo UEFI || echo BIOS`. If BIOS-only, swap `boot.loader.systemd-boot` for `boot.loader.grub` (devices = `[ "/dev/nvme0n1" ]`) before provisioning.
-- **Disk-name stability**: the disko module hardcodes `/dev/nvme0n1`. If a particular EX63 enumerates the boot disk as `nvme1n1`, override per-host with `disko.devices.disk.main.device = lib.mkForce "/dev/disk/by-id/nvme-<eui>";`.
-- **SOPS re-key after first boot**: the secrets file is initially encrypted to bali's age key. After provisioning succeeds, derive the server's real age key and re-encrypt:
-  ```
-  ssh-keyscan <ip> 2>/dev/null | grep ed25519 | ssh-to-age
-  # replace the &github-runner-03 anchor in .sops.yaml with the printed key
-  sops updatekeys secrets/github-runner-03.yaml
-  make hetzner/copy NIXADDR=<ip> NIXUSER=joost
-  make hetzner/switch NIXADDR=<ip> NIXNAME=github-runner-03 NIXUSER=joost
-  ```
-- **Token rotation**: the placeholder token in `secrets/github-runner-03.yaml` must be replaced with a fresh org runner registration token from https://github.com/organizations/fuww/settings/actions/runners/new (29-char `AAU5P4...`, expires in 1 hour, single-use). Edit via `sops secrets/github-runner-03.yaml`, then rebuild on the server.
-
-**Runner token type:** The `tokenFile` must contain an **org-level runner registration token** (format: `AAU5P4...`, 29 chars), NOT a GitHub PAT. Get it from https://github.com/organizations/fuww/settings/actions/runners/new → copy the `--token` value. Tokens expire in 1 hour and are single-use.
-
-**SOPS chicken-and-egg for new runners:** New servers don't have SSH host keys until provisioned, but the NixOS build needs an encrypted secrets file. Solution: temporarily use a known age key (e.g., bali's) in `.sops.yaml`, encrypt secrets, provision, then re-key with the server's real age key after provisioning.
-
-**SSH after provisioning:** Root SSH has no authorized keys. Always SSH as `joost@<ip>` and use `sudo`. Run `ssh-keygen -R <ip>` first since the host key changes.
-
-To scale: copy `hosts/github-runner-03.nix`, change hostname/runner name/sops path/instance label, reuse `users/github-runner/`, add flake.nix + `.sops.yaml` entries. New runners use disko + nixos-anywhere (no rescue mode).
-
-**Deployment:** All colleague machines have `nixosAutoUpdate` pulling from `github:javdl/nixos-config#<hostname>` at 4 AM daily. To deploy changes:
-1. Edit the relevant `users/<name>/home-manager-server.nix` or `hosts/<hostname>.nix`
-2. Commit and push to `main`; machines auto-update on next scheduled check
-
-**Immediate deployment** (if you can't wait for auto-update):
-- `make hetzner/copy NIXADDR=<ip> NIXUSER=<user>` then `make hetzner/switch NIXADDR=<ip> NIXNAME=<hostname>`
-- Or SSH in and run: `sudo nixos-rebuild switch --flake "github:javdl/nixos-config#<hostname>"`
-
-**Bootstrap a new colleague server (full guide):**
-
-Prerequisites: Order a Hetzner Cloud CPX32 server. Note the IP, root password, and server ID.
-
-**Step 1: Create the NixOS configuration files**
-
-Pick a robot-themed hostname (pattern: `<name>` + `-roid`/`-ator`/`-bot`). Create 3 files based on an existing colleague (e.g., copy Desmond's):
-
-| File | What to change |
-|------|----------------|
-| `hosts/<hostname>.nix` | `networking.hostName`, `services.nixosAutoUpdate.flake`, `services.repoUpdater.user`/`projectsDir`, `users.users.<name>.shell` line, IP in comment. Import `../modules/hetzner-cloud-hardware.nix` and `../modules/disko-hetzner-cloud.nix` in the hardware config. |
-| `users/<name>/nixos.nix` | `users.users.<name>` block (username, home dir, SSH keys, hashedPassword) |
-| `users/<name>/home-manager-server.nix` | `programs.git` (userName, userEmail, github.user) |
-
-New hosts no longer need a separate `hosts/hardware/<hostname>.nix`. They import the shared `modules/hetzner-cloud-hardware.nix` and `modules/disko-hetzner-cloud.nix` modules directly.
-
-Then add to `flake.nix`:
-```nix
-nixosConfigurations.<hostname> = mkSystem "<hostname>" {
-  system = "x86_64-linux";
-  user   = "<name>";
-  server = true;
-};
-```
-
-Update the colleague table in this file.
-
-TODOs to fill in later: SSH public key, `hashedPassword` (generate with `mkpasswd -m sha-512`), git email/GitHub username.
-
-**Step 2: Provision the server (single command, no rescue mode)**
-
-```bash
-# Provision directly from any running Linux (e.g., Hetzner's default Ubuntu)
-# Uses nixos-anywhere + disko for declarative partitioning
-make hetzner/provision NIXADDR=<ip> NIXNAME=<hostname>
-```
-
-One command does all of it: SSH into the server, kexec into a NixOS installer, partition the disk with disko, install NixOS with the full flake config, and reboot.
-
-Expected warnings after first boot:
-- `repo-updater` fails (gh not authenticated yet), which is normal
-- `tailscaled-autoconnect` fails (no auth key yet), which is normal
-
-**Step 3: Post-provisioning**
-
-```bash
-# Set up Tailscale (generate key at https://login.tailscale.com/admin/settings/keys)
-make hetzner/tailscale-auth NIXADDR=<ip> TAILSCALE_AUTHKEY=tskey-auth-xxx
-
-# Commit and push config so auto-update works
-git add -A
-git commit -m "feat: add <name> colleague server (<hostname>)"
-git push
-```
-
-After push, the server's `nixosAutoUpdate` will pull from `github:javdl/nixos-config#<hostname>` daily at 4 AM.
-
-<details>
-<summary>Legacy bootstrap (rescue mode required, for non-disko hosts)</summary>
-
-The `make hetzner/bootstrap0` command requires interactive SSH (for password auth to rescue system). If running from Claude Code (non-interactive), use this script-based approach:
-
-```bash
-# 1. Create /tmp/bootstrap-<hostname>.sh with the full install script:
-#    - Mount partitions (or partition first if fresh disk)
-#    - Install Nix: curl ... | sh -s -- install linux --no-confirm --init none
-#    - Source nix profile, start nix-daemon in background
-#    - nix-env -f '<nixpkgs>' -iA nixos-install-tools  (CRITICAL: nix doesn't include these)
-#    - nixos-generate-config --root /mnt
-#    - Write minimal bootstrap configuration.nix (SSH enabled, root password "nixos")
-#    - nixos-install --root /mnt --no-root-passwd
-#    - reboot
-
-# 2. Copy and run:
-scp /tmp/bootstrap-<hostname>.sh root@<ip>:/tmp/bootstrap.sh
-ssh root@<ip> "bash /tmp/bootstrap.sh"
-```
-
-Key gotchas for non-interactive (Claude Code) SSH:
-- Use `expect` with `-o PreferredAuthentications=password` (agent has too many keys, hangs)
-- Use `parted -s` (not `parted`) to avoid interactive confirmation prompts
-- Use `mkfs.ext4 -F` to force without confirmation
-- The Determinate Nix installer does NOT include `nixos-generate-config` or `nixos-install`. You MUST install `nixos-install-tools` via `nix-env` first
-- After sourcing nix-daemon.sh, start the daemon manually: `/nix/var/nix/profiles/default/bin/nix-daemon &`
-
-After bootstrap0, apply full config:
-
-```bash
-rsync -av -e 'ssh -o StrictHostKeyChecking=no -o PreferredAuthentications=password' \
-  --exclude={vendor/,.git/,.git-crypt/,.jj/,.beads/,iso/} \
-  /path/to/nixos-config/ root@<ip>:/nix-config
-
-ssh root@<ip> "nixos-rebuild switch --flake /nix-config#<hostname>"
-```
-
-</details>
-
-### Agent Dev Boxes (rondo)
-
-Boxes that run autonomous coding agents (currently [rondo](https://github.com/sandsower/rondo), a Claude Code agent that polls Linear and works issues in isolated git-worktree workspaces).
-
-| Server        | Host Config        | Flake Target          | Instance        | User Config         |
-|---------------|--------------------|-----------------------|-----------------|---------------------|
-| agent-jay-01  | `agent-jay-01`     | `#agent-jay-01`       | CCX33 (reused github-runner-01, TS 100.78.158.57) | `users/agent-jay/` |
-
-Built for reuse: `modules/agent-dev-box.nix` holds the common host config and `users/agent-lib/home-manager.nix` the shared (git-identity-parameterized) home-manager profile, so host and per-agent files are thin. **To add another machine for an agent, or a new agent user, see `docs/agent-dev-box-setup.md`.**
-
-rondo runs in the **deps + manual run** model: NixOS provides the dev box (+ Docker + `mise`); the agent operator installs the runtime via `mise`, runs `claude` /login (OAuth), exports `LINEAR_API_KEY`, and launches rondo by hand. No rondo secrets live in the repo.
 
 ## Architecture
 

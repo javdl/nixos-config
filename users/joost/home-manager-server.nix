@@ -914,7 +914,7 @@ in
   # Ensure ~/.ssh directory exists for agent socket symlink
   home.file.".ssh/.keep".text = "";
 
-  # bali's rchd offloads builds to the runners as rch (modules/rch-worker.nix),
+  # bali's rchd offloads builds to the runners as rch (fuww/fashionunited infra/nixos/modules/rch-worker.nix),
   # the same account as the Amp orbs (fuww/fashionunited .agents/resume).
   # Tailscale SSH authenticates the tailnet node, not a key: rch requires
   # identity_file, but the file does not need to exist.

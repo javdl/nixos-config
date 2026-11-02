@@ -32,9 +32,7 @@ target host and current source before running them.
 | Change user packages or settings | [users/](../users/), [shared settings](../users/shared-home-manager.nix) | Confirm the selected user profile and its imports first |
 | Update a package, release binary, or hash | [lib/overlays.nix](../lib/overlays.nix), [flake.lock](../flake.lock) | [Overlay packaging](../AGENTS.md#overlay-packaging-patterns), [update-overlays skill](../skills/update-overlays/SKILL.md) |
 | Build or activate a host | [Makefile](../Makefile) | [Build commands](../AGENTS.md#build-commands), [testing workflow](../AGENTS.md#testing-workflow); pass `NIXNAME` explicitly and check the OS branch |
-| Provision a colleague server | [hosts/](../hosts/), [shared colleague profile](../users/colleague-lib/home-manager-server.nix) | [Colleague servers](../AGENTS.md#colleague-dev-servers) and the bootstrap procedure under [Build commands](../AGENTS.md#build-commands) |
-| Provision, scale, or retire a CI runner | [Runner module](../modules/github-actions-runner.nix), [runner user](../users/github-runner/) | [Setup](github-runner-hetzner-setup.md), [EX63 provisioning](github-runner-03-provisioning.md), [decommissioning](github-runner-decommission.md) |
-| Add an autonomous agent box/user | [Agent box module](../modules/agent-dev-box.nix), [shared agent profile](../users/agent-lib/home-manager.nix) | [Agent dev box setup](agent-dev-box-setup.md) |
+| Change a FashionUnited server (CI runners, colleague dev servers, agent-jay-01, hermes-fu) | [fuww/fashionunited `infra/nixos/`](https://github.com/fuww/fashionunited/tree/main/infra/nixos) | Its README and `docs/operations.md` |
 | Change encrypted secrets or recipients | [SOPS configuration](../.sops.yaml), [secrets module](../modules/secrets.nix) | [Secrets guide](../secrets/README.md), [Bitwarden handoff rules](../AGENTS.md#bitwarden-session-handoff-for-agents) |
 | Change automatic system or repository updates | [NixOS updates](../modules/nixos-auto-update.nix), [Darwin updates](../modules/darwin-auto-update.nix), [repo updater](../modules/repo-updater.nix) | Read the module and the target host's settings for schedules and activation behavior |
 
@@ -51,7 +49,7 @@ directory in older guidance do not describe the current layout.
 | Install Grok Bot desktop | [Mac application lists](../users/joost/darwin.nix) | `grok-bot` and its required Cursor desktop app (`cursor`) are included on non-minimal Macs and radon; other minimal hosts stay unchanged. On Omarchy the app is the `grok-bot` package from Omarchy's own pacman repo (`omacom/omarchy-pkgs`); update it with `omarchy-update` or `sudo pacman -Syu`, never through Nix. The separate `gbot` CLI remains radon-only in [Joost's profile](../users/joost/home-manager.nix). Sign in through the app after installation. |
 | Automatically update workstation Codex and Claude | [Workstation updater](../users/joost/agent-cli-updates.nix) | [Ownership, schedules, and operation](agent-cli-updates.md) |
 | Route coding agents through Tailscale Aperture (usage tracking) | [Aperture module](../modules/aperture-agents.nix), host files that enable `services.apertureAgents` | [Per-agent mechanism, model names, verification](aperture-agents.md) |
-| Operate or extend the Herdr fleet | [Fleet inventory](../users/herdr-fleet.nix), [node module](../modules/herdr-fleet-node.nix) | [Command center runbook](herdr-command-center.md) |
+| Operate or extend the Herdr fleet | [Fleet inventory](../users/herdr-fleet.nix), [node module](https://github.com/fuww/fashionunited/blob/main/infra/nixos/modules/herdr-fleet-node.nix) | [Command center runbook](herdr-command-center.md) |
 | Run Cua Bots on the fleet (Spaces hosts, controller Mac) | [Host module](../modules/cua-spaces-host.nix), [fu137 profile](../users/cua-spaces-host-omarchy.nix), [app build](../scripts/build-cua-bots.sh) | [Cua Bots fleet](cua-bots-fleet.md) |
 | Change Hermes gateway deployment | [bali](../hosts/bali.nix), [flake inputs](../flake.nix) | [Bali gateway constraints](../AGENTS.md#bali-personal-server); distinguish the gateway from the packaged CLI |
 | Change the family Hermes agent on radon | [Module](../hosts/radon/hermes-family.nix) (gated by `enableHermesFamily`), [launcher](../hosts/radon/agent-launcher.nix), [run-log collector](../scripts/hermes-run-log.py), [its test](../tests/test_hermes_run_log.py) | [Family agent README](../hosts/radon/hermes-family/README.md): daemons, secrets, Telegram setup; plan in javdl/joost `docs/plans/active/hermes-family-mac-mini.md` |
@@ -91,8 +89,8 @@ presence does not establish approval, completion, or current deployed state.
 - [Security audit (2026-03-06)](security-audit-2026-03-06.md).
 - [fu137 inference measurements](fu137-local-inference.md) and
   [round 2 measurements](fu137-local-inference-round2.md).
-- [Legacy Hetzner rescue bootstrap](hetzner-devbox-setup.md): consult when
-  working on the legacy bootstrap path; compare with current Makefile targets.
+- Legacy Hetzner rescue bootstrap: moved to fuww/fashionunited
+  `infra/nixos/docs/hetzner-devbox-setup.md` with the colleague servers.
 - [Historical Hermes bootstrap on loom](hermes-loom-bootstrap.md): migration
   context; read the current Bali gateway constraints before using its commands.
 - [Package refresh, Sitegeist setup, and DataGrip installation](package-refresh-2026-10-06.md):

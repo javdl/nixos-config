@@ -50,7 +50,7 @@ flowchart LR
 | Omarchy host (fu137) | `users/cua-spaces-host-omarchy.nix`, imported by `users/joost/home-manager.nix` |
 | Controller Mac | `hosts/radon.nix` (`cua` CLI), `scripts/build-cua-bots.sh` |
 | App patch | `patches/cua-bots-host-placement.patch` |
-| Prune protection on runners | `--filter label!=ai.cua.managed=true` in `modules/ci-disk-cleanup.nix` and the runner pre-job hooks |
+| Prune protection on runners | `--filter label!=ai.cua.managed=true` in `infra/nixos/modules/ci-disk-cleanup.nix` (fuww/fashionunited) and the runner pre-job hooks |
 
 ## Inventory
 
