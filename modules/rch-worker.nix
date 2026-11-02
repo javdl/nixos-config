@@ -98,6 +98,12 @@ in
       # bit, so rsync into them fails. Hand them to ${user}.
       "Z /data/projects/* - ${user} users -"
 
+      # rch-wkr's remote base (transfer.remote_base, /data/tmp/rch in rch
+      # 2.1.34) holds per-build recovery markers. Builds as joost left it
+      # joost-owned, so ${user} builds could not confirm completion.
+      "d /data/tmp/rch 0700 ${user} users -"
+      "Z /data/tmp/rch - ${user} users -"
+
       # rchd runs `~/.local/bin/rch-wkr`; point it at the native (rooted) binary
       # so it survives reboots / Nix GC / a client nixpkgs bump. `L+` reasserts
       # the symlink even if `rch workers deploy-binary` previously dropped a
