@@ -212,6 +212,8 @@ ssh bali 'sudo nixos-rebuild switch --flake "github:javdl/nixos-config#bali"'
 
 # The runners live in fuww/fashionunited; deploy them from its infra/nixos:
 nixos-rebuild switch --flake .#github-runner-03 --target-host joost@100.126.150.43 --sudo
+nixos-rebuild switch --flake .#github-runner-04 --target-host joost@100.97.77.46 --sudo
+nixos-rebuild switch --flake .#github-runner-05 --target-host joost@100.108.96.124 --sudo
 ```
 
 Apply the standalone Home Manager output on fu137:
