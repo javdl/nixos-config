@@ -99,10 +99,15 @@ in
       "Z /data/projects/* - ${user} users -"
 
       # rch-wkr's remote base (transfer.remote_base, /data/tmp/rch in rch
-      # 2.1.34) holds per-build recovery markers. Builds as joost left it
-      # joost-owned, so ${user} builds could not confirm completion.
+      # 2.1.34) holds per-build recovery markers.
       "d /data/tmp/rch 0700 ${user} users -"
-      "Z /data/tmp/rch - ${user} users -"
+      # rch-wkr also uses fixed paths such as /tmp/rch-run (per-build process
+      # records), /data/tmp/rch-sync and /data/tmp/rch-targets. Builds as
+      # joost left them joost-owned, so ${user} builds failed with
+      # "Permission denied". Hand every rch path in both roots to ${user}
+      # instead of chasing them one at a time.
+      "Z /tmp/rch* - ${user} users -"
+      "Z /data/tmp/rch* - ${user} users -"
 
       # rchd runs `~/.local/bin/rch-wkr`; point it at the native (rooted) binary
       # so it survives reboots / Nix GC / a client nixpkgs bump. `L+` reasserts
