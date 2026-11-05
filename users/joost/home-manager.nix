@@ -284,6 +284,7 @@ in
       gemini-cli
       gh
       hcloud
+      awscli2 # Tigris S3/IAM (fuww/fashionunited infra/tigris)
       posthog-cli
       graphite-cli
       # ghostty
