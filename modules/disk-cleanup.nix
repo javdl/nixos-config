@@ -12,6 +12,7 @@
 
 let
   cfg = config.services.diskCleanup;
+  pruneUnmanaged = pkgs.callPackage ../lib/docker-prune-unmanaged.nix { };
   inherit (lib)
     mkEnableOption
     mkOption
@@ -68,9 +69,9 @@ in
         find /tmp -mindepth 1 -maxdepth 1 -mtime +7 ! -name 'systemd-private-*' -exec rm -rf {} + 2>/dev/null || true
         echo "Cleaned old tmp files"
 
-        # 4. Docker prune (if running)
+        # 4. Docker prune (if running); keeps Cua Spaces and Amp orbs
         if command -v docker &>/dev/null && systemctl is-active docker &>/dev/null; then
-          docker system prune --all --force --filter "until=168h" 2>/dev/null || true
+          ${lib.getExe pruneUnmanaged} --until 168h 2>/dev/null || true
           echo "Pruned Docker"
         fi
 
