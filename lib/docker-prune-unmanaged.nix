@@ -61,7 +61,7 @@ writeShellApplication {
         | xargs --no-run-if-empty docker container inspect --format '{{.Image}}' | sort -u
     }
     removed=0
-    for id in $(comm -23 <(docker image ls --quiet --no-trunc | sort -u) <(sort -u <(kept image) <(in_use))); do
+    for id in $(comm -23 <(docker image ls --all --quiet --no-trunc | sort -u) <(sort -u <(kept image) <(in_use))); do
       older_than_cutoff image "$id" || continue
       read -ra refs <<< "$(docker image inspect --format '{{join .RepoTags " "}}' "$id")"
       [ "''${#refs[@]}" -gt 0 ] || refs=("$id")
