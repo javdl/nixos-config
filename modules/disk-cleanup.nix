@@ -70,7 +70,7 @@ in
         echo "Cleaned old tmp files"
 
         # 4. Docker prune (if running); keeps Cua Spaces and Amp orbs
-        if command -v docker &>/dev/null && systemctl is-active docker &>/dev/null; then
+        if systemctl is-active docker &>/dev/null; then
           ${lib.getExe pruneUnmanaged} --until 168h 2>/dev/null || true
           echo "Pruned Docker"
         fi

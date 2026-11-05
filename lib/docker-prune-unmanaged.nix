@@ -4,6 +4,8 @@
 # their snapshot images (label ai.amp.orb=true, modules/amp-orb-provider.nix).
 # Docker ANDs repeated `label!=` filters, so one prune command cannot spare two
 # labels; this script picks the candidates itself and removes them one by one.
+# `--drop-orb-snapshots`, for the low-disk paths, also removes the orb snapshot
+# images no container uses; a spawn then starts from the base image instead.
 {
   writeShellApplication,
   docker,
@@ -17,17 +19,20 @@ writeShellApplication {
     coreutils
   ];
   text = ''
-    usage="usage: docker-prune-unmanaged --until <hours>h"
+    usage="usage: docker-prune-unmanaged --until <hours>h [--drop-orb-snapshots]"
     until=""
+    drop_orb_snapshots=0
     while [ $# -gt 0 ]; do
       case "$1" in
         --until) until="$2"; shift 2 ;;
+        --drop-orb-snapshots) drop_orb_snapshots=1; shift ;;
         *) echo "$usage" >&2; exit 2 ;;
       esac
     done
     [[ "$until" =~ ^([0-9]+)h$ ]] || { echo "$usage" >&2; exit 2; }
     cutoff=$(( $(date +%s) - BASH_REMATCH[1] * 3600 ))
-    keep_labels=(ai.cua.managed=true ai.amp.orb=true)
+    orb_label=ai.amp.orb=true
+    keep_labels=(ai.cua.managed=true "$orb_label")
 
     kept() {
       for l in "''${keep_labels[@]}"; do
@@ -64,7 +69,18 @@ writeShellApplication {
     done
     echo "removed $removed images"
 
-    docker network prune --force --filter "until=$until" >/dev/null
+    # A pause that re-commits an orb under the same snapshot tag leaves the
+    # previous snapshot untagged; those go with the rest. Tagged snapshots no
+    # orb uses go only on --drop-orb-snapshots.
+    orb_images=(--filter "label=$orb_label" --filter "until=$until")
+    docker image prune --force "''${orb_images[@]}" >/dev/null
+    if [ "$drop_orb_snapshots" = 1 ]; then
+      docker image prune --all --force "''${orb_images[@]}" >/dev/null
+    fi
+
+    # Cua's per-tree networks carry ai.cua.home (not ai.cua.managed), and a
+    # stopped Space cannot start again once its network is gone.
+    docker network prune --force --filter "until=$until" --filter "label!=ai.cua.home" >/dev/null
     docker builder prune --all --force --filter "until=$until" >/dev/null
   '';
 }

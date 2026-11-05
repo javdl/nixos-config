@@ -13,7 +13,8 @@
 # deletes it; `amp-orb-reaper` removes orbs paused longer than
 # `pausedOrbMaxDays` so they cannot fill the disk. Every container and
 # snapshot image carries the label `ai.amp.orb=true`, which the disk cleanup
-# jobs (lib/docker-prune-unmanaged.nix) leave alone.
+# jobs (lib/docker-prune-unmanaged.nix) leave alone, except for superseded
+# snapshots and, when the disk runs low, snapshots no orb uses.
 {
   config,
   lib,
