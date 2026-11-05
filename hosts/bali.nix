@@ -78,6 +78,7 @@ in
     key = "amp-orb-provider-token";
     mode = "0400";
     owner = "root";
+    restartUnits = [ "amp-orb-provider.service" ];
   };
 
   # EX63 NVMe enumeration is not stable across boots — the first provision

@@ -50,7 +50,7 @@ let
 
       case "$op" in
         spawn)
-          image="''${ORB_IMAGE:-${cfg.image}}"
+          image="$ORB_IMAGE"
           if [ -n "''${ORB_SNAPSHOT_ID:-}" ] && docker image inspect "$ORB_SNAPSHOT_ID" >/dev/null 2>&1; then
             image="$ORB_SNAPSHOT_ID"
           fi
@@ -221,8 +221,12 @@ in
       ];
       wants = [ "network-online.target" ];
       requires = [ "docker.service" ];
-      # The CLI writes its log under $HOME/.cache/amp.
-      environment.HOME = home;
+      # The CLI writes its log under $HOME/.cache/amp. Amp passes ORB_IMAGE from
+      # the provider's environment to every spawn job, its own default otherwise.
+      environment = {
+        HOME = home;
+        ORB_IMAGE = cfg.image;
+      };
       serviceConfig = {
         User = user;
         Group = user;

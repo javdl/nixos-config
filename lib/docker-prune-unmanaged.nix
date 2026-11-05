@@ -48,11 +48,16 @@ writeShellApplication {
     done
     echo "removed $removed containers"
 
+    # Images are removed tag by tag, and Docker only refuses the last tag of an
+    # image a container uses, so images any container references are excluded
+    # up front rather than left to that refusal.
+    in_use() {
+      docker container ls --all --quiet --no-trunc \
+        | xargs --no-run-if-empty docker container inspect --format '{{.Image}}' | sort -u
+    }
     removed=0
-    for id in $(comm -23 <(docker image ls --quiet --no-trunc | sort -u) <(kept image)); do
+    for id in $(comm -23 <(docker image ls --quiet --no-trunc | sort -u) <(sort -u <(kept image) <(in_use))); do
       older_than_cutoff image "$id" || continue
-      # Untagging the last tag deletes the image. Without --force, an image a
-      # container still uses is refused and stays.
       read -ra refs <<< "$(docker image inspect --format '{{join .RepoTags " "}}' "$id")"
       [ "''${#refs[@]}" -gt 0 ] || refs=("$id")
       docker image rm "''${refs[@]}" >/dev/null 2>&1 && removed=$((removed + 1))
