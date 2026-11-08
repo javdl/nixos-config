@@ -77,13 +77,17 @@ let
     "nvidia-nsight-compute" # CUDA kernel profiler GUI
   ];
 
+  # On every Mac workstation (fu146 included) but not the headless servers.
+  workstationCasks = [
+    "amp-app" # Amp (ampcode.com) desktop app; Linux gets amp-desktop (lib/overlays.nix)
+  ];
+
   # Core casks installed on all non-minimal machines
   coreCasks = [
     # "bitwarden" Must be installed via Mac App Store for browser integration to work
     # However, non-App Store version is required for SSH agent to work
     "bitwarden"
     "airfoil"
-    "amp-app" # Amp (ampcode.com) desktop app; macOS only
     "beeper"
     "caffeine"
     "brave-browser"
@@ -248,7 +252,7 @@ in
           coreCasks ++ personalCasks ++ lib.optionals (!noAudio) audioCasks
       )
       ++ extraCasks
-      ++ lib.optionals (!builtins.elem currentSystemName serversMacos) dgxSparkCasks
+      ++ lib.optionals (!builtins.elem currentSystemName serversMacos) (dgxSparkCasks ++ workstationCasks)
     );
     masApps = {
       # to find ID, App Store > Share > Copy link

@@ -637,7 +637,25 @@ in
           };
           nvpairSource = nvpairSources.${prev.stdenv.hostPlatform.system} or null;
 
-          # Libraries the Electron .deb apps above (nvidia-sync, nvpair) link
+          # amp-desktop - Amp (ampcode.com) desktop app for Linux, Amp's own
+          # Electron .deb; macOS gets the `amp-app` cask (users/joost/darwin.nix).
+          # The current version is pkgver in the AUR amp-desktop-bin PKGBUILD,
+          # which Amp publishes:
+          # https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=amp-desktop-bin
+          ampDesktopVersion = "0.1.29901961";
+          ampDesktopSources = {
+            "x86_64-linux" = {
+              arch = "amd64";
+              sha256 = "0vd52d08z91k36jn0fiw3nacs35cwbzzqxsn2d05cqir323a1lpg";
+            };
+            "aarch64-linux" = {
+              arch = "arm64";
+              sha256 = "12ji1grblv1z4gxn1mnsfach43f42rfl1652dwig4dd5nciigj89";
+            };
+          };
+          ampDesktopSource = ampDesktopSources.${prev.stdenv.hostPlatform.system} or null;
+
+          # Libraries the Electron .deb apps above (nvidia-sync, nvpair, amp-desktop) link
           # against, and the ones Chromium dlopens at runtime.
           electronDebLibs = with prev; [
             alsa-lib
@@ -1936,6 +1954,58 @@ in
               sourceProvenance = [ sourceTypes.binaryNativeCode ];
               platforms = [ "x86_64-linux" "aarch64-linux" ];
               mainProgram = "nvpair-desktop";
+            };
+          } else null;
+
+          # amp-desktop - Amp desktop app (see ampDesktopVersion)
+          amp-desktop = if ampDesktopSource != null then prev.stdenv.mkDerivation {
+            pname = "amp-desktop";
+            version = ampDesktopVersion;
+
+            src = prev.fetchurl {
+              url = "https://static.ampcode.com/linux/${ampDesktopVersion}/amp-desktop-${ampDesktopVersion}-${ampDesktopSource.arch}.deb";
+              sha256 = ampDesktopSource.sha256;
+            };
+
+            nativeBuildInputs = with prev; [ dpkg autoPatchelfHook makeWrapper ];
+            buildInputs = electronDebLibs;
+            runtimeDependencies = electronDebRuntimeDeps;
+            dontStrip = true;
+
+            unpackPhase = ''
+              dpkg-deb -x $src .
+            '';
+
+            installPhase = ''
+              runHook preInstall
+
+              mkdir -p $out/opt $out/bin $out/share
+              cp -r opt/amp $out/opt/amp
+              # The store is read-only: no electron-updater feed. Bump
+              # ampDesktopVersion instead.
+              rm $out/opt/amp/resources/app-update.yml
+
+              # xdg-open completes the browser sign-in and opens links.
+              makeWrapper $out/opt/amp/amp-desktop $out/bin/amp-desktop \
+                --suffix PATH : ${prev.lib.makeBinPath [ prev.xdg-utils ]}
+
+              cp -r usr/share/icons $out/share/icons
+              # Keeps the sign-in callback scheme handler and the jump-list actions.
+              install -Dm644 usr/share/applications/amp-desktop.desktop \
+                $out/share/applications/amp-desktop.desktop
+              substituteInPlace $out/share/applications/amp-desktop.desktop \
+                --replace-fail /opt/amp/amp-desktop $out/bin/amp-desktop
+
+              runHook postInstall
+            '';
+
+            meta = with prev.lib; {
+              description = "Amp, the frontier coding agent, as a desktop app";
+              homepage = "https://ampcode.com/app";
+              license = licenses.unfree;
+              sourceProvenance = [ sourceTypes.binaryNativeCode ];
+              platforms = [ "x86_64-linux" "aarch64-linux" ];
+              mainProgram = "amp-desktop";
             };
           } else null;
 

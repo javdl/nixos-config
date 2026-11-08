@@ -139,6 +139,30 @@ let
     else
       pkgs.yubioath-flutter;
 
+  # Amp desktop app (lib/overlays.nix). Same EGL problem on Omarchy as above:
+  # Chromium's GPU process exits with "Failed to get system egl display" and
+  # mesa looks for its GBM backend under /run/opengl-driver. Point both at
+  # Nix's mesa; the desktop entry is rewritten to launch through the wrapper.
+  ampDesktop =
+    if isOmarchy then
+      pkgs.symlinkJoin {
+        name = "amp-desktop-omarchy";
+        paths = [ pkgs.amp-desktop ];
+        nativeBuildInputs = [ pkgs.makeWrapper ];
+        postBuild = ''
+          wrapProgram $out/bin/amp-desktop \
+            --set-default __EGL_VENDOR_LIBRARY_DIRS ${pkgs.mesa}/share/glvnd/egl_vendor.d \
+            --set-default GBM_BACKENDS_PATH ${pkgs.mesa}/lib/gbm
+          entry=$out/share/applications/amp-desktop.desktop
+          target="$(readlink -f "$entry")"
+          rm "$entry"
+          substitute "$target" "$entry" \
+            --replace-fail "${pkgs.amp-desktop}/bin/" "$out/bin/"
+        '';
+      }
+    else
+      pkgs.amp-desktop;
+
   # Linux desktops carry Delta (deltaApp below); WSL has no desktop.
   hasDeltaApp = isLinux && !isWSL;
 
@@ -498,6 +522,7 @@ in
       baobab # Disk usage, gnome only
       yubicoAuthenticator # YubiKey GUI (Yubico Authenticator)
       deltaApp # Delta (delta.dev) desktop app + `delta` CLI; see the let binding
+      ampDesktop # Amp desktop app; see the let binding. Macs get the amp-app cask
 
       # DGX Spark client software; Macs get the same set as casks in
       # users/joost/darwin.nix. Nsight from the newest CUDA 13 set so the GUIs
