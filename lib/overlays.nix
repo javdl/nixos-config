@@ -2315,6 +2315,10 @@ in
           # gh CLI on stable has bugs.
           gh = pkgs-unstable.gh;
 
+          # `amp orb provider` (modules/amp-orb-provider.nix) is only in unstable's
+          # amp-cli; the stable one has no `orb` command.
+          amp-cli = pkgs-unstable.amp-cli;
+
           # nixos-26.05 macmon is 0.6.1, which panics on startup on
           # aarch64-darwin (NixOS/nixpkgs#562942), so CPU/GPU temperatures
           # never get read. Unstable has 0.8.2.

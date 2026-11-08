@@ -35,6 +35,11 @@ let
   # runners on github-runner-02..05.
   enableRunners = true;
   javdlRunnerCount = 2;
+
+  # Amp self-hosted orbs on bali's Docker (modules/amp-orb-provider.nix), gated
+  # the same way: keep false until `amp-orb-provider-token` is in
+  # secrets/bali.yaml, then flip to true.
+  enableAmpOrbs = false;
 in
 {
   imports = [
@@ -55,11 +60,26 @@ in
     ../modules/github-actions-runner.nix
     # Cua Spaces host; enabled below.
     ../modules/cua-spaces-host.nix
+    ../modules/amp-orb-provider.nix
     inputs.hermes-agent.nixosModules.default
   ];
 
   # Provides Linux Spaces to the Cua Bots app (docs/cua-bots-fleet.md).
   services.cuaSpacesHost.enable = true;
+
+  # Runbook: fuww/fashionunited infra/nixos/docs/operations.md, "Amp Orb Provider".
+  services.ampOrbProvider = lib.mkIf enableAmpOrbs {
+    enable = true;
+    tokenFile = config.sops.secrets.amp-orb-provider-token.path;
+  };
+  sops.secrets.amp-orb-provider-token = lib.mkIf enableAmpOrbs {
+    sopsFile = ../secrets/bali.yaml;
+    format = "yaml";
+    key = "amp-orb-provider-token";
+    mode = "0400";
+    owner = "root";
+    restartUnits = [ "amp-orb-provider.service" ];
+  };
 
   # EX63 NVMe enumeration is not stable across boots — the first provision
   # landed on the old disk via duplicate partlabels after a name swap. Pin the

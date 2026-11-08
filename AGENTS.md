@@ -108,6 +108,11 @@ ex-github-runner-06) runs the personal Hermes gateway. Its root disk is pinned
 by NVMe EUI because disk enumeration is unstable across boots. Keep the shared
 platform tokens on this gateway only to avoid duplicate replies.
 
+bali can also run Amp self-hosted orbs on its Docker
+(`modules/amp-orb-provider.nix`, gated by `enableAmpOrbs` in `hosts/bali.nix`
+until the token is in `secrets/bali.yaml`). The runbook is "Amp Orb Provider"
+in fuww/fashionunited `infra/nixos/docs/operations.md`.
+
 Bali is also the SOPS bootstrap/editing host; it can decrypt the monorepo's
 `infra/nixos/secrets/agent-jay-01.yaml`. **SSH is tailnet-only** (public 22/2222 closed;
 recovery = Hetzner Robot rescue): `ssh bali` or headless
@@ -516,9 +521,10 @@ Cua Bots app on radon, through the cua.ai relay
 app is upstream's sample with `patches/cua-bots-host-placement.patch`, built
 by `scripts/build-cua-bots.sh`. Joining the relay takes a one-time device code
 per host (`sudo cua-spaces-host-setup`). The runners share Docker with fuww
-CI, so their prune commands skip `label=ai.cua.managed=true`; keep that
-filter. Read [`docs/cua-bots-fleet.md`](docs/cua-bots-fleet.md) before
-changing any of it.
+CI, so every prune there and in `modules/disk-cleanup.nix` goes through
+`lib/docker-prune-unmanaged.nix`, which spares `ai.cua.managed=true` and Amp
+orbs; keep it that way. Read [`docs/cua-bots-fleet.md`](docs/cua-bots-fleet.md)
+before changing any of it.
 
 ### Installation notes
 
