@@ -1,7 +1,7 @@
 # Companion on fu137
 
 `homeConfigurations.fu137` (and its `omarchy` alias) installs Companion 5.0.5
-and VICREO Listener 10.3.1, matching the apps installed on j9. Both appear in
+and VICREO Listener 11.4.1. Both appear in
 the application menu and start at graphical login. The module is
 `users/companion-omarchy.nix`; j9's existing manual installation and the Macs
 are not changed.

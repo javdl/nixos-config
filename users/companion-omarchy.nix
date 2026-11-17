@@ -35,13 +35,13 @@ let
       '';
 
   vicreo =
-    pkgs.runCommand "vicreo-listener-omarchy-10.3.1"
+    pkgs.runCommand "vicreo-listener-omarchy-11.4.1"
       {
         src = pkgs.fetchurl {
           # Upstream only publishes a moving Linux URL; the hash pins its contents.
           # A changed upstream download must fail rather than silently updating.
           url = "https://vicreolistener.s3.eu-west-2.amazonaws.com/VICREO-Listener/VICREO-Listener-Linux-Latest-amd64.deb";
-          hash = "sha256-MzYzaRl9PcEOpElHQt3kW/ABOWKPvQplF2u1aitZPKM=";
+          hash = "sha256-eBdnNEc37HW1h29ugdNk+M0s4OYFFiij76sj75dsvtY=";
         };
         nativeBuildInputs = [
           pkgs.binutils
