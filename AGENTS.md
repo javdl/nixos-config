@@ -178,6 +178,16 @@ leaves out gollama. The agent CLIs themselves stay.
 
 `omarchy` remains a compatibility alias for `fu137`.
 
+**Workday auto-update.** `mkOmarchyHome` enables `services.homeAutoUpdate`
+(`users/home-auto-update.nix`) on every Omarchy box: Monday to Friday at
+06:00, a user timer builds `github:javdl/nixos-config#homeConfigurations.<host>`
+from `main` and activates it, so a push to `main` lands before the working
+day. `Persistent=true` runs a missed update at the next boot or login. It
+does not run `omarchy update`; pacman packages stay manual. Check it with
+`systemctl --user list-timers home-auto-update.timer` and
+`journalctl --user -u home-auto-update`. Unlike `make switch` it passes no
+`-b backup`, so a file collision fails the run and leaves the old generation.
+
 **Two tailnets from one Omarchy box.** `tailscaled` serves one tailnet at a
 time, and j9 must stay on `buri-hoki` so the `j9` SSH alias keeps resolving.
 The second tailnet comes from tailmix, whose unit is rendered into

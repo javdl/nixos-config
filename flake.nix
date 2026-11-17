@@ -172,6 +172,7 @@
             # Same agent CLI toolset the NixOS/Darwin hosts get from
             # lib/mksystem.nix; this profile has no system layer to inherit it.
             ./users/agent-clis.nix
+            ./users/home-auto-update.nix
             (
               { lib, ... }:
               {
@@ -191,6 +192,16 @@
                 home.file.".config/ghostty".enable = false;
                 home.file.".config/kitty".enable = false;
                 home.file.".config/btop/themes".enable = false;
+
+                # Switch to main from GitHub every workday at 06:00, before the
+                # machine is used; Persistent catches up on the next boot or
+                # login when it was off or asleep then.
+                services.homeAutoUpdate = {
+                  enable = true;
+                  flake = "github:javdl/nixos-config#homeConfigurations.${hostName}";
+                  dates = "Mon..Fri 06:00";
+                  randomizedDelaySec = "0";
+                };
 
                 # Disable nixpkgs module's <nixpkgs> lookup for pure evaluation
                 _module.args.pkgsPath = lib.mkForce nixpkgs;

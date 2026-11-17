@@ -1,7 +1,9 @@
-# Nightly Home Manager switch for hosts that are neither NixOS nor nix-darwin
-# (the DGX Sparks on Ubuntu). Same schedule as services.darwinAutoUpdate on
-# radon and services.nixosAutoUpdate on the Linux servers: rebuild from the
-# GitHub flake at 04:00, so a push to main reaches the host overnight.
+# Scheduled Home Manager switch for hosts that are neither NixOS nor
+# nix-darwin: the DGX Sparks on Ubuntu (nightly at 04:00, like
+# services.darwinAutoUpdate on radon and services.nixosAutoUpdate on the Linux
+# servers) and the Omarchy workstations (workdays at 06:00, set in
+# mkOmarchyHome in flake.nix). The run rebuilds from the GitHub flake, so a
+# push to main reaches the host on its next run.
 #
 # The run builds `<flake>.activationPackage`, points the Home Manager profile
 # at it when it changed, and runs its activate script, which is what
@@ -38,7 +40,7 @@ let
 in
 {
   options.services.homeAutoUpdate = {
-    enable = lib.mkEnableOption "a nightly Home Manager switch from a flake";
+    enable = lib.mkEnableOption "a scheduled Home Manager switch from a flake";
 
     flake = lib.mkOption {
       type = lib.types.str;
@@ -77,7 +79,7 @@ in
     };
 
     systemd.user.timers.home-auto-update = {
-      Unit.Description = "Nightly Home Manager switch";
+      Unit.Description = "Scheduled Home Manager switch";
       Timer = {
         OnCalendar = cfg.dates;
         RandomizedDelaySec = cfg.randomizedDelaySec;
