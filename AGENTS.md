@@ -184,6 +184,8 @@ Only add CLI tools that complement Omarchy without conflicting. `playerctl` is t
 
 Yubico Authenticator (`yubioath-flutter`) is installed on Linux desktops from `users/joost/home-manager.nix`. On Omarchy it is wrapped to use Nix's mesa EGL vendor, because the Nix build cannot load Arch's NVIDIA one. OATH and PIV need pcscd: NixOS desktops enable `services.pcscd` in `lib/mksystem.nix`, while Omarchy needs a one-time `sudo systemctl enable --now pcscd.socket` (`pcsclite` and `ccid` already come from pacman).
 
+The [Auto Theme](https://github.com/mwikala/omarchy-auto-theme) bar plugin (light/dark at sunrise/sunset) goes to every Omarchy box from `users/joost/omarchy-auto-theme.nix`. Nix supplies `sunwait` (upstream uses the AUR). On activation, if `~/.config/omarchy/plugins/mwikala.auto-theme` is missing and the Omarchy shell is running, the module runs `omarchy plugin add` and places the widget in the bar's `tray` section. Without a session, as with the 06:00 auto-update, the install waits for the next switch. Updates go through `omarchy plugin update mwikala.auto-theme`. Theme pair, location and Auto mode are per-machine plugin state and are not managed.
+
 ### NVIDIA DGX Spark (DGX OS, Ubuntu)
 
 `spark` and `spark2` are Grace-Blackwell DGX Sparks (DGX OS, Ubuntu 24.04,
