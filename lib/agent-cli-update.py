@@ -1,11 +1,11 @@
 """Update only the global workstation agent CLIs, then publish verified paths."""
 
 import fcntl
+import json
 import os
 from pathlib import Path
 import subprocess
 import sys
-import tomllib
 
 
 def main():
@@ -21,17 +21,20 @@ def main():
             print("Agent CLI update already running; skipping.", flush=True)
             return
 
-        with config.open("rb") as source:
-            tools = tomllib.load(source).get("tools", {})
-        for tool in ("codex", "claude"):
-            if tools.get(tool) != "latest":
-                raise ValueError(f"Expected {tool} = 'latest' in {config}; update the chezmoi source first")
-
         env = os.environ.copy()
         env["MISE_GLOBAL_CONFIG_FILE"] = str(config)
         env["MISE_MINIMUM_RELEASE_AGE"] = "24h"
         # / has no project config. Never resolve tools from the caller's repo.
         command = [mise, "--cd", "/"]
+        # Chezmoi's config.toml requests latest on most workstations; on
+        # Omarchy /etc/mise/conf.d does, and chezmoi leaves the tools out.
+        for tool in ("codex", "claude"):
+            result = subprocess.run(command + ["ls", "--current", "--json", tool], env=env,
+                                    check=True, capture_output=True, text=True, timeout=60)
+            requested = {entry.get("requested_version") for entry in json.loads(result.stdout)}
+            if requested != {"latest"}:
+                raise ValueError(f"Expected mise to request {tool}@latest, got {sorted(map(str, requested))}; "
+                                 f"update the chezmoi source of {config}")
         subprocess.run(
             # install @latest refreshes without pruning on both the Nix-pinned
             # mise and newer Omarchy releases (older upgrade lacks --no-prune).

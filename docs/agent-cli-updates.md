@@ -8,8 +8,13 @@ server and colleague profiles do not import it.
 
 ## Ownership and schedule
 
-- Chezmoi owns `~/.config/mise/config.toml`. Its global tools must include
-  `codex = "latest"` and `claude = "latest"`.
+- Chezmoi owns `~/.config/mise/config.toml`. Mise must resolve `codex` and
+  `claude` to a `latest` request; the updater checks with `mise ls --current`.
+  Elsewhere the chezmoi config requests them. On Omarchy,
+  `/etc/mise/conf.d/omarchy-tools.toml` requests them (plus gh, node,
+  Playwright and `upgrade.auto_prune = false`). Omarchy migrations delete
+  those entries from the user's config, so the chezmoi template leaves them
+  out when that file exists, and chezmoi never sees drift.
 - Nix owns the updater, launchers, and schedule. Omarchy still provides
   `/usr/bin/mise`; other platforms use the Nix mise package.
 - NixOS workstation profiles enable `nix-ld` for upstream dynamically linked
