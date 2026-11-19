@@ -254,6 +254,7 @@ in
     )
     (import ./omarchy-startup.nix { inherit isOmarchy currentSystemName; })
     (import ./omarchy-auto-theme.nix { inherit isOmarchy; })
+    (import ./bitwarden-omarchy.nix { inherit isOmarchy; })
     ./cachix-daemon.nix # auto-push locally-built paths to javdl-nixos-config cachix
     (import ../herdr-fleet.nix { inherit currentSystemName; })
     (import ../cua-spaces-host-omarchy.nix { inherit currentSystemName; })
