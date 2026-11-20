@@ -2312,6 +2312,8 @@ in
           # LM Studio desktop app (Linux only, macOS uses brew cask)
           lmstudio = if prev.stdenv.isLinux then pkgs-unstable.lmstudio else null;
 
+          antigravity-cli = pkgs-unstable.antigravity-cli;
+
           # Google Antigravity desktop app (agent manager), Linux desktops only;
           # Macs get the antigravity cask (users/joost/darwin.nix). Not in
           # nixos-26.05, whose `antigravity` is the old 1.x IDE.
