@@ -2341,6 +2341,19 @@ in
             disabledTestPaths = (old.disabledTestPaths or []) ++ [ "tests/test_package_specifier.py" ];
           });
 
+          # crush's internal/agent tests work in the fixed dir /tmp/crush-test
+          # and leave it behind. Darwin builds share /private/tmp across the
+          # _nixbldN users, so the next build under another user fails with
+          # "mkdir /tmp/crush-test/...: permission denied". crush is unfree
+          # (FSL-1.1-MIT), so cache.nixos.org never has it and every Mac builds
+          # and tests it locally. Point the tests at the build's own TMPDIR.
+          crush = prev.crush.overrideAttrs (old: {
+            postPatch = (old.postPatch or "") + ''
+              substituteInPlace internal/agent/common_test.go \
+                --replace-fail '"/tmp/crush-test/"' 'os.TempDir(), "crush-test"'
+            '';
+          });
+
           # nixpkgs 26.05 wires only the node24 externals into github-runner
           # (Node 20 is EOL). But the runner still uses node20 for its built-in
           # hashFiles() helper (and for node20 JS actions before GitHub's
