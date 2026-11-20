@@ -57,6 +57,18 @@ Software that cannot (yet) be installed via Nix or Brew or Mac App Store:
 - `skhd --install-service && skhd --start-service`
 - [VICREO Listener](https://vicreo-listener.com/downloads) - Receives keystroke commands from Bitfocus Companion (see below)
 
+### Antigravity CLI
+
+The shared agent profile installs Google's terminal CLI as `agy` on bali,
+joostclaw, NixOS and macOS workstations, Omarchy, and the standalone Ubuntu
+runner. The minimal DGX Spark profiles stay unchanged. This is separate from
+the Antigravity desktop app.
+
+After activating the machine's configuration, open a new shell and run `agy`.
+Complete [Google's sign-in flow](https://antigravity.google/docs/install?tab=cli)
+on each machine. Nix pins the package through `nixpkgs-unstable` in `flake.lock`;
+`AGY_CLI_DISABLE_AUTO_UPDATE=true` keeps the CLI's self-updater off.
+
 ### Sitegeist browser extension
 
 [Sitegeist](https://github.com/badlogic/sitegeist) is an AI assistant in the
@@ -776,3 +788,4 @@ Run `ntm deps -v` to check the health status of all tools.
 |------|---------|--------|--------------|
 | pi | `pi` | [badlogic/pi-mono](https://github.com/badlogic/pi-mono) | `pi-coding-agent` from nixpkgs-unstable (bumped with `flake.lock`) |
 | Oh My Pi | `omp` | [can1357/oh-my-pi](https://github.com/can1357/oh-my-pi) / [omp.sh](https://omp.sh) | Overlay, prebuilt release binary (`update-overlays` skill) |
+| Antigravity CLI | `agy` | [Google Antigravity](https://antigravity.google/docs/getting-started?tab=cli) | `antigravity-cli` from nixpkgs-unstable (bumped with `flake.lock`) |
