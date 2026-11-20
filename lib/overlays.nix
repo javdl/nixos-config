@@ -2197,11 +2197,11 @@ in
           # gemini-cli - Google Gemini coding agent CLI (pre-built JS bundle)
           gemini-cli = prev.stdenv.mkDerivation {
             pname = "gemini-cli";
-            version = "0.65.0";
+            version = "0.70.0";
 
             src = prev.fetchzip {
-              url = "https://github.com/google-gemini/gemini-cli/releases/download/v0.65.0/gemini-cli-bundle.zip";
-              hash = "sha256-dlAv349AGi8Yve0KvxozTAN8m1YoY2oWeYjsAUpN2EY=";
+              url = "https://github.com/google-gemini/gemini-cli/releases/download/v0.70.0/gemini-cli-bundle.zip";
+              hash = "sha256-Jdn9TB4hW8XlpvI3NbTUqypAK29HLR0JrrJoxTd4Foc=";
               stripRoot = false;
             };
 
@@ -2311,6 +2311,11 @@ in
 
           # LM Studio desktop app (Linux only, macOS uses brew cask)
           lmstudio = if prev.stdenv.isLinux then pkgs-unstable.lmstudio else null;
+
+          # Google Antigravity desktop app (agent manager), Linux desktops only;
+          # Macs get the antigravity cask (users/joost/darwin.nix). Not in
+          # nixos-26.05, whose `antigravity` is the old 1.x IDE.
+          antigravity-hub = if prev.stdenv.isLinux then pkgs-unstable.antigravity-hub else null;
 
           # gh CLI on stable has bugs.
           gh = pkgs-unstable.gh;

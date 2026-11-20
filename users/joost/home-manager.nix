@@ -163,6 +163,24 @@ let
     else
       pkgs.amp-desktop;
 
+  # Google Antigravity desktop app (lib/overlays.nix). Electron, so it hits the
+  # same EGL/GBM problem on Omarchy as Amp above. Its desktop entry runs
+  # `antigravity` from PATH, so wrapping the binary covers the launcher too.
+  antigravityDesktop =
+    if isOmarchy then
+      pkgs.symlinkJoin {
+        name = "antigravity-hub-omarchy";
+        paths = [ pkgs.antigravity-hub ];
+        nativeBuildInputs = [ pkgs.makeWrapper ];
+        postBuild = ''
+          wrapProgram $out/bin/antigravity \
+            --set-default __EGL_VENDOR_LIBRARY_DIRS ${pkgs.mesa}/share/glvnd/egl_vendor.d \
+            --set-default GBM_BACKENDS_PATH ${pkgs.mesa}/lib/gbm
+        '';
+      }
+    else
+      pkgs.antigravity-hub;
+
   # Linux desktops carry Delta (deltaApp below); WSL has no desktop.
   hasDeltaApp = isLinux && !isWSL;
 
@@ -525,6 +543,7 @@ in
       yubicoAuthenticator # YubiKey GUI (Yubico Authenticator)
       deltaApp # Delta (delta.dev) desktop app + `delta` CLI; see the let binding
       ampDesktop # Amp desktop app; see the let binding. Macs get the amp-app cask
+      antigravityDesktop # Google Antigravity; see the let binding. Macs get the antigravity cask
 
       # DGX Spark client software; Macs get the same set as casks in
       # users/joost/darwin.nix. Nsight from the newest CUDA 13 set so the GUIs

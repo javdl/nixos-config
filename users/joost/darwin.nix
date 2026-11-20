@@ -80,6 +80,7 @@ let
   # On every Mac workstation (fu146 included) but not the headless servers.
   workstationCasks = [
     "amp-app" # Amp (ampcode.com) desktop app; Linux gets amp-desktop (lib/overlays.nix)
+    "antigravity" # Google Antigravity agent manager; Linux gets antigravity-hub (lib/overlays.nix)
   ];
 
   # Core casks installed on all non-minimal machines

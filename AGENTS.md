@@ -527,6 +527,10 @@ changing any of it.
   lavapipe (`VK_DRIVER_FILES`), because the Nix build cannot load Arch's Vulkan drivers.
   Servers are left out: the CLI keeps credentials in the Secret Service keyring and
   fails with `credential_store_unavailable` without one.
+- **Antigravity** (Google's agent manager) goes to every workstation: the `antigravity`
+  cask on non-server Macs (`users/joost/darwin.nix`) and `antigravity-hub` from
+  nixpkgs-unstable on Linux desktops (stable's `antigravity` is the old 1.x IDE). On
+  Omarchy it is wrapped with Nix mesa's EGL/GBM paths, like the Amp desktop app.
 - **DGX Spark client tools** go to every workstation: `nvidia-sync`, `nvidia-nsight-systems`
   and `nvidia-nsight-compute` casks on non-server Macs (`users/joost/darwin.nix`), and
   `nvidia-sync` (overlay, repackaged .deb) plus `cudaPackages_13_3` Nsight on Linux desktops.
