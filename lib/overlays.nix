@@ -1700,7 +1700,21 @@ in
           # Linux only upstream; null on Darwin, where the zed-delta cask ships
           # the app (users/joost/darwin.nix). Not to be confused with `delta`,
           # the git pager (git-delta), which owns the same binary name.
-          zed-delta = (inputs.zed-delta.packages.${prev.stdenv.hostPlatform.system} or { }).delta or null;
+          # The aarch64 tarball bundles a libxcb.so.1 whose libXau/libXdmcp
+          # dependencies are not on upstream's RPATH, which fails the
+          # package's own ldd check; add them to the bundled library.
+          zed-delta =
+            let
+              upstream = (inputs.zed-delta.packages.${prev.stdenv.hostPlatform.system} or { }).delta or null;
+            in
+            if upstream == null then null else upstream.overrideAttrs (old: {
+              postInstall = (old.postInstall or "") + ''
+                if [ -e "$out/opt/delta/lib/libxcb.so.1" ]; then
+                  ${prev.patchelf}/bin/patchelf --add-rpath ${prev.lib.makeLibraryPath [ prev.libxau prev.libxdmcp ]} \
+                    "$out/opt/delta/lib/libxcb.so.1"
+                fi
+              '';
+            });
 
           # pt - process triage (intelligent process termination with Bayesian scoring)
           process-triage = if ptSource != null then prev.stdenv.mkDerivation {
