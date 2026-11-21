@@ -50,7 +50,7 @@ flowchart LR
 | Omarchy host (fu137) | `users/cua-spaces-host-omarchy.nix`, imported by `users/joost/home-manager.nix` |
 | Controller Mac | `hosts/radon.nix` (`cua` CLI), `scripts/build-cua-bots.sh` |
 | App patch | `patches/cua-bots-host-placement.patch` |
-| Prune protection on runners | `--filter label!=ai.cua.managed=true` in `infra/nixos/modules/ci-disk-cleanup.nix` (fuww/fashionunited) and the runner pre-job hooks |
+| Prune protection | `lib/docker-prune-unmanaged.nix` (the same file in fuww/fashionunited `infra/nixos/lib/`) replaces `docker system prune` in `modules/disk-cleanup.nix`, fuww's `ci-disk-cleanup.nix` and the runner pre-job hooks; it spares `ai.cua.managed=true` and Amp orbs (`ai.amp.orb=true`) |
 
 ## Inventory
 
@@ -145,7 +145,7 @@ NixOS already restarts `cua-daemon`.
   `docker exec` into a bot's Space and read what the bot holds: harness API
   keys and signed-in sessions. Docker group access on those boxes amounts to
   root, so a separate daemon would not isolate them. Keep sensitive bots on bali
-  or fu137. The prune label filter only stops our own cleanup from deleting
+  or fu137. The prune helper only stops our own cleanup from deleting
   stopped Spaces; a workflow that runs `docker system prune` can still delete
   them.
 - **The relay sees connection metadata.** See upstream's
