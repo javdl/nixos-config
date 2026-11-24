@@ -51,7 +51,9 @@
     # Hermes Agent — personal AI gateway (Telegram/Discord/Slack + cron).
     # Exposes nixosModules.default for declarative system-service deployment.
     hermes-agent = {
-      url = "github:NousResearch/hermes-agent";
+      # Newer Hermes wraps pnpm without the .override that fetchPnpmDeps in
+      # nixos-26.05 needs. Remove the pin once fu137 builds with newer Hermes.
+      url = "github:NousResearch/hermes-agent/81a55437f3f31a9f12a30c53b6c5d49d420898aa";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
