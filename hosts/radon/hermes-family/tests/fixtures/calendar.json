@@ -59,6 +59,23 @@
    }
   ]
  },
+ "work": {
+  "kind": "calendar#events",
+  "items": [
+   {
+    "id": "ev5",
+    "status": "confirmed",
+    "summary": "Projectoverleg",
+    "location": "Kantoor",
+    "start": {
+     "dateTime": "2026-10-28T10:00:00+01:00"
+    },
+    "end": {
+     "dateTime": "2026-10-28T11:00:00+01:00"
+    }
+   }
+  ]
+ },
  "created": {
   "kind": "calendar#event",
   "id": "a3f1c2d4e5f60718293a4b5c6d7e8f90",

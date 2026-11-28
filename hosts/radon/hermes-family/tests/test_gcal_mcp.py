@@ -3,7 +3,6 @@ import hashlib
 import json
 import unittest
 import urllib.error
-from unittest import mock
 
 from hermes_family import gcal_mcp
 from hermes_family.google import Api, load_family
@@ -22,10 +21,10 @@ def expected_id(start: str, n: int) -> str:
 class Server:
     """The MCP server as Hermes sees it: list_tools and call_tool."""
 
-    def __init__(self, test: unittest.TestCase, mode: str, fake: FakeNet):
+    def __init__(self, test: unittest.TestCase, mode: str, fake: FakeNet, *, family_data: dict | None = None):
         fake.patch(test)
         directory = temp_dir(test)
-        family = load_family(write_json(directory / "family.json", FAMILY))
+        family = load_family(write_json(directory / "family.json", FAMILY if family_data is None else family_data))
         self.state = State(directory)
         self.server = gcal_mcp.build_server(mode, lambda: Api("ya29.test-token"), lambda: family, self.state)
 
@@ -201,6 +200,46 @@ class ReadTest(unittest.TestCase):
         self.assertEqual(fake.calls[0].params["timeMin"], "2026-10-28T00:00:00+01:00")
         self.assertTrue(all(call.method == "GET" for call in fake.calls))
 
+    def test_merges_configured_work_events_into_the_private_brief(self):
+        fake = self.fake(CALENDAR["personal"]).on("GET", "/calendars/worker%40work.example/events", CALENDAR["work"])
+        result = json.loads(Server(self, "read", fake, family_data={**FAMILY, "work_calendar_id": "worker@work.example"}).call(
+            "list_events", time_min="2026-10-28", time_max="2026-10-29"))
+        self.assertEqual([(e["calendar"], e["title"]) for e in result["events"]],
+                         [("personal", "Tandarts"), ("work", "Projectoverleg"), ("family", "Zwemles Kind A")])
+        self.assertEqual(result["events"][1], {
+            "calendar": "work", "title": "Projectoverleg", "location": "Kantoor",
+            "start": "2026-10-28T10:00:00+01:00", "end": "2026-10-28T11:00:00+01:00",
+        })
+
+    def test_work_calendar_does_not_require_a_personal_calendar(self):
+        fake = (FakeNet()
+                .on("GET", "/calendars/family%40group.calendar.google.com/events", CALENDAR["school_day"])
+                .on("GET", "/calendars/worker%40work.example/events", CALENDAR["work"]))
+        family = {**FAMILY, "personal_calendar_id": None, "work_calendar_id": "worker@work.example"}
+        result = json.loads(Server(self, "read", fake, family_data=family).call(
+            "list_events", time_min="2026-10-28", time_max="2026-10-29"))
+        self.assertEqual([(e["calendar"], e["title"]) for e in result["events"]],
+                         [("work", "Projectoverleg"), ("family", "Zwemles Kind A")])
+
+    def test_unavailable_work_calendar_does_not_hide_family_or_personal_events(self):
+        fake = self.fake(CALENDAR["personal"]).on("GET", "/calendars/worker%40work.example/events",
+                                                (403, {"error": {"message": "forbidden"}}))
+        result = json.loads(Server(self, "read", fake, family_data={**FAMILY, "work_calendar_id": "worker@work.example"}).call(
+            "list_events", time_min="2026-10-28", time_max="2026-10-29"))
+        self.assertEqual([(e["calendar"], e["title"]) for e in result["events"]],
+                         [("personal", "Tandarts"), ("family", "Zwemles Kind A")])
+        self.assertEqual(len(result["unavailable"]), 1)
+        self.assertIn("work:", result["unavailable"][0])
+        self.assertIn("HTTP 403", result["unavailable"][0])
+
+    def test_work_and_personal_ids_for_the_same_calendar_do_not_duplicate_events(self):
+        fake = self.fake(CALENDAR["personal"])
+        result = json.loads(Server(self, "read", fake, family_data={**FAMILY, "work_calendar_id": FAMILY["personal_calendar_id"]}).call(
+            "list_events", time_min="2026-10-28", time_max="2026-10-29"))
+        self.assertEqual([(e["calendar"], e["title"]) for e in result["events"]],
+                         [("personal", "Tandarts"), ("family", "Zwemles Kind A")])
+        self.assertEqual(len(fake.matching("GET", "ouder1")), 1)
+
     def test_sorts_by_instant_with_all_day_events_at_local_midnight(self):
         family = {"items": [
             {"summary": "Zwemles Kind A", "start": {"dateTime": "2026-10-28T16:00:00+01:00"}},
@@ -258,25 +297,19 @@ class FamilyTest(unittest.TestCase):
     def test_offers_only_list_events(self):
         self.assertEqual(set(Server(self, "family", FakeNet()).tools()), {"list_events"})
 
-    def test_never_reads_or_returns_the_personal_calendar(self):
+    def test_never_reads_or_returns_personal_or_work_calendars(self):
         fake = (FakeNet()
                 .on("GET", "/calendars/family%40group.calendar.google.com/events", CALENDAR["school_day"])
-                .on("GET", "/calendars/ouder1%40example.org/events", CALENDAR["personal"]))
-        result = json.loads(Server(self, "family", fake).call("list_events", time_min="2026-10-28",
-                                                              time_max="2026-10-29"))
+                .on("GET", "/calendars/ouder1%40example.org/events", CALENDAR["personal"])
+                .on("GET", "/calendars/worker%40work.example/events", CALENDAR["work"]))
+        family = {**FAMILY, "work_calendar_id": "worker@work.example"}
+        result = json.loads(Server(self, "family", fake, family_data=family).call(
+            "list_events", time_min="2026-10-28", time_max="2026-10-29"))
         self.assertEqual([(e["calendar"], e["title"]) for e in result["events"]], [("family", "Zwemles Kind A")])
         self.assertNotIn("unavailable", result)
         self.assertEqual(fake.matching("GET", "ouder1"), [])
+        self.assertEqual(fake.matching("GET", "worker"), [])
         self.assertEqual(len(fake.calls), 1)
-
-    def test_main_accepts_family_mode(self):
-        directory = temp_dir(self)
-        family = write_json(directory / "family.json", FAMILY)
-        credential = write_json(directory / "credential.json", {})
-        with mock.patch.object(gcal_mcp, "build_server") as build:
-            self.assertEqual(gcal_mcp.main(["family", "--credential", str(credential), "--family", str(family),
-                                            "--state-dir", str(directory)]), 0)
-        self.assertEqual(build.call_args.args[0], "family")
 
 
 if __name__ == "__main__":

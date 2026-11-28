@@ -112,6 +112,7 @@ with the bot's group privacy off; see Telegram setup.
 | `family_calendar_id` | the family Google calendar, shared read-only with the Hermes account | `abc123@group.calendar.google.com` |
 | `proposals_calendar_id` | the Hermes account's own Proposals calendar | `def456@group.calendar.google.com` |
 | `personal_calendar_id` | optional: Joost's calendar, shared read-only, for the evening brief | `ouder1@example.org` |
+| `work_calendar_id` | optional: a work calendar, shared read-only, for the private evening brief | `worker@work.example` |
 | `parents` | exactly two addresses, invited to every proposal | `["ouder1@example.org", "ouder2@example.org"]` |
 | `senders` | school and daycare addresses whose mail is read | `["groep5@school.example", "planning@opvang.example"]` |
 | `pickup_question` | optional: the pickup question; default `Wie haalt de kinderen vandaag op?` | `Wie haalt Kind A vandaag uit school?` |
@@ -123,6 +124,7 @@ with the bot's group privacy off; see Telegram setup.
   "family_calendar_id": "abc123@group.calendar.google.com",
   "proposals_calendar_id": "def456@group.calendar.google.com",
   "personal_calendar_id": "ouder1@example.org",
+  "work_calendar_id": "worker@work.example",
   "parents": ["ouder1@example.org", "ouder2@example.org"],
   "senders": ["groep5@school.example", "planning@opvang.example"],
   "pickup_question": "Wie haalt Kind A vandaag uit school, en wie haalt Kind B van de opvang?",
@@ -250,14 +252,23 @@ message names the job, never the expression.
 | `x-bookmarks` | `schedules` in hermes-family | no-agent, `x-bookmarks.sh` | `personal_deliver` | | |
 | `x-bookmarks-digest` | `schedules` in hermes-family | agent, `x-bookmarks-digest.sh` injected | `personal_deliver` | cron default | none (`[]`) |
 
-`gcal-read` lists the family calendar and the personal calendar;
-`gcal-family` lists the family calendar alone. The plan-ahead answers in the
-family group, so it gets only `gcal-family`.
+`gcal-read` lists the family calendar and any configured personal and work
+calendars; `gcal-family` lists the family calendar alone. The plan-ahead answers
+in the family group, so it gets only `gcal-family`. Each calendar ID is fetched
+once, even when configured under more than one name.
 
-The evening brief reads the personal calendar, and the digests and the X
-bookmarks are Joost's, so they go to `personal_deliver`, never the family
-group. `jobs-sync` refuses a `personal_deliver` that names no single chat on a
-messaging platform: bare `telegram`, a list with a comma, and `local:`,
+Personal and work calendar IDs may be omitted or empty. Share each configured
+calendar read-only with the Hermes account; setting its ID does not grant access.
+If an optional calendar is unavailable, the read keeps the other calendars'
+events and reports the unavailable calendar rather than treating it as empty.
+A family-calendar failure still fails the read.
+
+The evening brief can read personal and work event titles, times, and locations.
+These details are passed to the brief's model and may appear in the private
+brief, so configure a work calendar only if its policy permits that processing.
+The brief, the digests and the X bookmarks go to `personal_deliver`, never the
+family group. `jobs-sync` refuses a `personal_deliver` that names no single chat
+on a messaging platform: bare `telegram`, a list with a comma, and `local:`,
 `origin:` or any platform outside the cron home-target list of Hermes 81a5543
 (`cron/scheduler_delivery.py:41-44`) are refused, whatever follows the colon.
 

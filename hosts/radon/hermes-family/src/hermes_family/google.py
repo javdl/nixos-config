@@ -33,6 +33,7 @@ class Family:
     family_calendar_id: str
     proposals_calendar_id: str
     personal_calendar_id: str | None
+    work_calendar_id: str | None
     parents: tuple[str, str]
     pickup_question: str | None
 
@@ -77,6 +78,7 @@ def load_family(path: Path) -> Family:
         family_calendar_id=_text(data, "family_calendar_id", "family file"),
         proposals_calendar_id=_text(data, "proposals_calendar_id", "family file"),
         personal_calendar_id=_optional_text(data, "personal_calendar_id"),
+        work_calendar_id=_optional_text(data, "work_calendar_id"),
         parents=(parents[0].strip(), parents[1].strip()),
         pickup_question=_optional_text(data, "pickup_question"),
     )
