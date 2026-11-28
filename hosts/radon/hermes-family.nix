@@ -211,7 +211,7 @@ let
             telegram.require_mention = true;
             # Only cron jobs that name a server get it (no_mcp above).
             # gcal-family lists the family calendar alone, for jobs that
-            # answer in the family group; gcal-read adds the personal one.
+            # answer in the family group; gcal-read adds personal/work calendars.
             mcp_servers = {
               gcal-proposals = gcalServer "proposals" "hermes-google-proposals";
               gcal-read = gcalServer "read" "hermes-google-read";
