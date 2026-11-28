@@ -3,11 +3,6 @@
 # Wired in from lib/mksystem.nix via home-manager.sharedModules (so it reaches
 # every user on every NixOS and Darwin host) and from the two standalone Home
 # Manager configs in flake.nix, which have no system layer to inherit from.
-#
-# The set is deliberately the intersection of what Herdr and moshi-hook can
-# drive: claude, codex, opencode, cursor, grok and omp. pi ships two ways: the
-# upstream TypeScript pi-coding-agent owns `pi`, and the Rust pi-agent port is
-# `pi-rs`. Both install as plain binaries; no Herdr `pi` integration yet.
 {
   config,
   pkgs,
@@ -16,8 +11,7 @@
 }:
 
 let
-  # omp and pi-agent evaluate to null on platforms upstream does not build for
-  # (see lib/overlays.nix); the rest cover all four systems.
+  # omp and pi-agent evaluate to null where upstream publishes no binary.
   optionalPkg = p: lib.optional (p != null) p;
 
   # Hook targets for both `herdr integration install <target>` and
@@ -54,7 +48,10 @@ let
   ];
 in
 {
+  home.sessionVariables.AGY_CLI_DISABLE_AUTO_UPDATE = "true";
+
   home.packages = [
+    pkgs.antigravity-cli
     pkgs.claude-code
     pkgs.codex
     pkgs.cursor-cli

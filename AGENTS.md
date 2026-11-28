@@ -475,6 +475,7 @@ All dev servers include the following AI agent tooling. Run `ntm deps -v` to che
 | omp | `omp` | oh-my-pi: terminal coding agent with LSP/DAP and hash-anchored edits |
 | opencode | `opencode` | Terminal coding agent (SST) |
 | grok | `grok` | xAI Grok Build CLI: coding agent harness + TUI |
+| Antigravity CLI | `agy` | Google's terminal coding agent; [installation and sign-in](README.md#antigravity-cli) |
 | hermes | `hermes` | Hermes Agent CLI/TUI (NousResearch), minimal package with native Anthropic support |
 | am | `am` | Agent Mail: MCP HTTP server for async multi-agent coordination (systemd service) |
 | ru | `ru` | Repo Updater: parallel GitHub repo clone/pull sync |
