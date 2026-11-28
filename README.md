@@ -745,8 +745,8 @@ nix run home-manager/release-26.05 -- switch -b backup --flake ".#spark"
 ```
 
 The switch installs that package set, the `herdr-agents` user service, and
-appends the Herdr controller keys to `~/.ssh/authorized_keys`. On spark it
-also starts `dsv41-mia` (Mia TensorFold, served as `dsv41` on
+appends the Herdr controller keys and radon's sparks key to
+`~/.ssh/authorized_keys`. On spark it also starts `dsv41-mia` (Mia TensorFold, served as `dsv41` on
 `127.0.0.1:8000`) and keeps Tailscale Serve on `:8443`. spark2 has no model
 unit. The sybil EXL3 head and worker are not installed. The switch also
 syncs the root-owned files (NAS automount, ConnectX-7 link, sshd fallback)
