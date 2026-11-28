@@ -491,7 +491,7 @@ verification, authentication, and adding nodes.
 
 ### Beacon fleet capture
 
-Every joost machine sweeps agent session stores with Beacon every 5 minutes and
+joost's machines in this repo (not the Sparks, joostclaw, or runner users) sweep agent session stores with Beacon every 5 minutes and
 ships the events to bali, which keeps `~/.local/share/beacon-fleet/runtime.jsonl`
 and serves the dashboard on `127.0.0.1:8766` (`ssh -L 8766:127.0.0.1:8766 bali`).
 `sweptRuntimes` in `users/beacon.nix` is the one list of swept runtimes. Read

@@ -13,9 +13,13 @@ let
   home = config.home.homeDirectory;
   beacon = pkgs.beacon;
   isReceiver = currentSystemName == "bali";
+  # The Darwin release archives ship no beacon-vector.
+  vectorBin = if isDarwin then "${pkgs.vector}/bin/vector" else "${beacon}/bin/beacon-vector";
 
   receiverAddress = "100.113.194.113:6100";
-  receiverListen = "0.0.0.0:6100";
+  # Bind the tailnet address only; hosts/bali.nix also refuses 6100 on every
+  # other interface (cni0 is a trusted interface there).
+  receiverListen = receiverAddress;
   dashboardAddr = "127.0.0.1:8766";
   logDir = "${home}/.beacon/endpoint/logs";
   stateDir = "${home}/.local/state/beacon-fleet";
@@ -23,37 +27,43 @@ let
   fleetLog = "${fleetDir}/runtime.jsonl";
   historyDb = "${fleetDir}/history.db";
 
-  # name = the `beacon endpoint <name> sync` subcommand; store = default store
-  # path relative to $HOME (Beacon cli/beacon/internal/<name>session).
-  # cursor reads ~/.cursor/projects and the IDE's state.vscdb, so gate on ~/.cursor.
-  sweptRuntimes = [
+  # name = the `beacon endpoint <name> sync` subcommand; stores = default
+  # store paths relative to $HOME (Beacon cli/beacon/internal/<name>session).
+  # A runtime is swept when any of its stores exists. cursor reads
+  # ~/.cursor/projects and the IDE's state.vscdb, which can exist alone.
+  # hermes is skipped on bali: HERMES_HOME there is the shared gateway.
+  sweptRuntimes = lib.filter (rt: !(isReceiver && rt.name == "hermes")) [
     {
       name = "claude";
-      store = ".claude/projects";
+      stores = [ ".claude/projects" ];
     }
     {
       name = "codex";
-      store = ".codex/sessions";
+      stores = [ ".codex/sessions" ];
     }
     {
       name = "cursor";
-      store = ".cursor";
+      stores = [
+        ".cursor"
+        ".config/Cursor"
+        "Library/Application Support/Cursor"
+      ];
     }
     {
       name = "opencode";
-      store = ".local/share/opencode";
+      stores = [ ".local/share/opencode" ];
     }
     {
       name = "grok";
-      store = ".grok/sessions";
+      stores = [ ".grok/sessions" ];
     }
     {
       name = "hermes";
-      store = ".hermes/state.db";
+      stores = [ ".hermes/state.db" ];
     }
     {
       name = "pi";
-      store = ".pi/agent/sessions";
+      stores = [ ".pi/agent/sessions" ];
     }
   ];
 
@@ -103,23 +113,27 @@ let
   runVector =
     name: dirs: configFile:
     pkgs.writeShellScript "beacon-${name}" ''
+      umask 077
       mkdir -p ${lib.escapeShellArgs dirs}
-      exec ${beacon}/bin/beacon-vector --config ${configFile}
+      chmod 0700 ${lib.escapeShellArgs dirs}
+      export VECTOR_LOG=warn
+      exec ${vectorBin} --config ${configFile}
     '';
 
   shipper = runVector "shipper" [ "${stateDir}/shipper" ] shipperConfig;
   receiver = runVector "receiver" [ "${stateDir}/receiver" fleetDir ] receiverConfig;
 
   sync = pkgs.writeShellScript "beacon-sync" ''
+    umask 077
+    mkdir -p "$HOME/.beacon"
+    chmod -R go-rwx "$HOME/.beacon"
     failed=0
     ${lib.concatMapStrings (rt: ''
-      if [ -e "$HOME/${rt.store}" ]; then
+      if ${lib.concatMapStringsSep " || " (s: "[ -e \"$HOME/${s}\" ]") rt.stores}; then
         if ! ${beacon}/bin/beacon endpoint ${rt.name} sync; then
           echo "beacon-sync: ${rt.name} sync failed" >&2
           failed=1
         fi
-      else
-        echo "beacon-sync: skipping ${rt.name}, no ~/${rt.store}"
       fi
     '') sweptRuntimes}
     exit $failed
@@ -151,6 +165,7 @@ in
           ExecStart = "${shipper}";
           Restart = "on-failure";
           RestartSec = 10;
+          UMask = "0077";
         };
         Install.WantedBy = [ "default.target" ];
       };
@@ -164,6 +179,7 @@ in
         Service = {
           Type = "oneshot";
           ExecStart = "${sync}";
+          UMask = "0077";
         };
       };
     }
@@ -178,6 +194,7 @@ in
           ExecStart = "${receiver}";
           Restart = "on-failure";
           RestartSec = 10;
+          UMask = "0077";
         };
         Install.WantedBy = [ "default.target" ];
       };
@@ -193,11 +210,13 @@ in
           ExecStartPre = [
             "${pkgs.coreutils}/bin/mkdir -p ${fleetDir}"
             "${pkgs.coreutils}/bin/touch ${fleetLog}"
+            "${pkgs.coreutils}/bin/chmod -R go-rwx ${fleetDir}"
             "${beacon}/bin/beacon endpoint traces reindex --log-path ${fleetLog} --retention-days 36500 --max-size-mb 51200"
           ];
           ExecStart = "${beacon}/bin/beacon endpoint dashboard --log-path ${fleetLog} --addr ${dashboardAddr}";
           Restart = "on-failure";
           RestartSec = 10;
+          UMask = "0077";
         };
         Install.WantedBy = [ "default.target" ];
       };
@@ -223,6 +242,7 @@ in
         KeepAlive = true;
         ThrottleInterval = 10;
         ProcessType = "Background";
+        Umask = 63;
         StandardOutPath = "${home}/Library/Logs/beacon-shipper.log";
         StandardErrorPath = "${home}/Library/Logs/beacon-shipper.log";
       };
@@ -234,6 +254,7 @@ in
         RunAtLoad = true;
         StartInterval = 300;
         ProcessType = "Background";
+        Umask = 63;
         StandardOutPath = "${home}/Library/Logs/beacon-sync.log";
         StandardErrorPath = "${home}/Library/Logs/beacon-sync.log";
       };
