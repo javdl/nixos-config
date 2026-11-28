@@ -35,6 +35,9 @@ let
   # runners on github-runner-02..05.
   enableRunners = true;
   javdlRunnerCount = 2;
+
+  # Loopback rule for the Beacon dashboard (users/beacon.nix).
+  beaconDashboardRule = "-o lo -p tcp --dport 8766 -m owner ! --uid-owner joost -j REJECT";
 in
 {
   imports = [
@@ -410,6 +413,17 @@ in
       "cni0"
     ];
     allowedUDPPorts = [ config.services.tailscale.port ];
+    # Beacon (users/beacon.nix): the fleet receiver takes 6100 from the
+    # tailnet only, even though cni0 is trusted above. The dashboard on
+    # 127.0.0.1:8766 is unauthenticated, so only joost may connect.
+    extraCommands = ''
+      ip46tables -I nixos-fw -p tcp --dport 6100 ! -i tailscale0 -j nixos-fw-refuse
+      iptables -w -D OUTPUT ${beaconDashboardRule} 2>/dev/null || true
+      iptables -w -I OUTPUT ${beaconDashboardRule}
+    '';
+    extraStopCommands = ''
+      iptables -w -D OUTPUT ${beaconDashboardRule} 2>/dev/null || true
+    '';
   };
 
   # ── Personal GitHub Actions runners (javdl/joost) ──────────────────────────

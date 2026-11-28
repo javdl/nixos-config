@@ -39,6 +39,7 @@ in
       controller = currentSystemName == "bali";
     })
     (import ../amp-runner.nix { inherit currentSystemName; })
+    (import ../beacon.nix { inherit currentSystemName; })
   ];
 
   # Home-manager state version
